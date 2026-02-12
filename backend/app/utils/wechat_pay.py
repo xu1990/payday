@@ -171,4 +171,31 @@ def parse_payment_notify(xml_data: str) -> dict[str, Any]:
     if data.get("return_code") != "SUCCESS" or data.get("result_code") != "SUCCESS":
         raise Exception(f"Payment failed: {data.get('err_code_des', 'Unknown error')}")
 
+    # 验证时间戳，防止重放攻击
+    # time_end 格式: YYYYMMDDHHMMSS (例如: 20241212143000)
+    time_end = data.get("time_end")
+    if time_end:
+        try:
+            from datetime import datetime
+
+            # 解析微信时间格式: YYYYMMDDHHMMSS
+            notify_time = datetime.strptime(time_end, "%Y%m%d%H%M%S")
+
+            # 检查通知时间是否在合理范围内（15分钟内）
+            # 注意：微信服务器可能有时间偏差，给予一定容错空间
+            from datetime import timedelta
+            max_acceptable_delay = timedelta(minutes=15)
+            current_time = datetime.utcnow()
+
+            # 如果通知时间超过当前时间15分钟以上，拒绝
+            if notify_time > current_time + max_acceptable_delay:
+                raise Exception(f"Invalid notification time: future timestamp detected ({time_end})")
+
+            # 如果通知时间早于当前时间超过1天，也拒绝
+            if current_time - notify_time > timedelta(days=1):
+                raise Exception(f"Invalid notification time: stale timestamp detected ({time_end})")
+
+        except (ValueError, TypeError) as e:
+            raise Exception(f"Invalid time_end format: {time_end}, error: {e}")
+
     return data

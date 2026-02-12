@@ -52,8 +52,8 @@ function isTokenExpired(token: string): boolean {
 
     // exp是秒级时间戳，转换为毫秒比较
     const now = Math.floor(Date.now() / 1000)
-    // 提前 5 分钟判定过期，避免临界点问题
-    return now >= (payload.exp - 300)
+    // 提前 30 秒判定过期，避免临界点问题
+    return now >= (payload.exp - 30)
   } catch {
     return true
   }
@@ -106,17 +106,11 @@ function defaultErrorHandler(error: Error): boolean {
     // 清除 token
     clearToken()
 
-    // 跳转到登录页（需要根据实际路由调整）
-    uni.navigateTo({
+    // 使用 reLaunch 清除页面栈并跳转到登录页
+    uni.reLaunch({
       url: '/pages/login/index',
-      fail: () => {
-        // 如果 navigateTo 失败，尝试 switchTab
-        uni.switchTab({
-          url: '/pages/index/index',
-          fail: () => {
-            console.error('跳转登录页失败')
-          },
-        })
+      fail: (err) => {
+        console.error('[Request] 跳转登录页失败:', err)
       },
     })
 
@@ -174,6 +168,7 @@ export async function request<T = unknown>(options: RequestOptions): Promise<T> 
       ...rawOptions,
       url,
       header,
+      timeout: 30000,  // 30秒超时，防止请求长时间挂起
       success: (res) => {
         // 隐藏 loading
         if (shouldShowLoading) {

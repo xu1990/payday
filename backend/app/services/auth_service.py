@@ -101,13 +101,21 @@ async def refresh_access_token(refresh_token: str, user_id: str) -> Optional[Tup
     new_access_token = create_access_token(data={"sub": user_id})
     new_refresh_token = create_refresh_token(data={"sub": user_id})
 
-    # 更新 Redis 中的 Refresh Token
+    # 使用 Redis 管道确保原子性操作
     if redis:
-        await redis.setex(
+        pipe = redis.pipeline()
+        # 将旧 refresh token 添加到已撤销列表（用于检测重放）
+        pipe.sadd(f"revoked_tokens:{user_id}", refresh_token)
+        # 设置已撤销列表的过期时间为7天
+        pipe.expire(f"revoked_tokens:{user_id}", 7 * 24 * 60 * 60)
+        # 更新当前有效的 refresh token
+        pipe.setex(
             f"refresh_token:{user_id}",
             7 * 24 * 60 * 60,  # 7天
             new_refresh_token
         )
+        # 执行管道中的所有命令
+        await pipe.execute()
 
     return new_access_token, new_refresh_token
 
@@ -121,4 +129,10 @@ async def revoke_refresh_token(user_id: str) -> None:
     """
     redis = await get_redis_client()
     if redis:
-        await redis.delete(f"refresh_token:{user_id}")
+        pipe = redis.pipeline()
+        # 删除当前有效的 refresh token
+        pipe.delete(f"refresh_token:{user_id}")
+        # 清除已撤销的 tokens 列表
+        pipe.delete(f"revoked_tokens:{user_id}")
+        # 执行管道命令
+        await pipe.execute()

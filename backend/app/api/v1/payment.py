@@ -25,23 +25,37 @@ def _get_client_ip(request: Request) -> str:
     """
     从请求中获取客户端真实 IP
 
-    优先级: X-Forwarded-For > X-Real-IP > client
+    优先级: client > X-Real-IP > X-Forwarded-For (最右侧)
+    SECURITY: X-Forwarded-For 可以被客户端伪造，只信任最右侧的 IP（第一个代理）
     """
-    # 检查代理头
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    if forwarded_for:
-        # X-Forwarded-For 可能包含多个 IP，取第一个
-        return forwarded_for.split(",")[0].strip()
+    # 首先尝试直接连接的 IP（最可靠）
+    if request.client and request.client.host:
+        direct_ip = request.client.host
+        # 验证IP格式（简单验证）
+        if direct_ip and not direct_ip.startswith(('127.', '192.168.', '10.')):
+            return direct_ip
 
+    # X-Real-IP: 通常由反向代理设置，相对可信
     real_ip = request.headers.get("X-Real-IP")
     if real_ip:
-        return real_ip.strip()
+        ip = real_ip.strip()
+        # 验证IP格式
+        if ip and not ip.startswith(('127.', '192.168.', '10.')):
+            return ip
 
-    # 如果没有代理头，返回默认值
-    # 在实际部署环境中应该从 request.client.host 获取
-    if request.client and request.client.host:
-        return request.client.host
+    # X-Forwarded-For: 可能包含多个 IP，格式: client, proxy1, proxy2
+    # 只信任最右侧的 IP（第一个代理看到的真实 IP）
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        ips = [ip.strip() for ip in forwarded_for.split(",")]
+        # 取最后一个 IP（最右侧）
+        if ips:
+            trusted_ip = ips[-1]
+            # 验证IP格式
+            if not trusted_ip.startswith(('127.', '192.168.', '10.')):
+                return trusted_ip
 
+    # 如果所有方法都失败，返回默认值
     return "127.0.0.1"
 
 

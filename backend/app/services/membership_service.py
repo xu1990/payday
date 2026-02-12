@@ -31,6 +31,26 @@ async def create_order(
     transaction_id: Optional[str] = None,
 ) -> MembershipOrder:
     """创建会员订单"""
+    # 幂等性检查：防止重复创建pending订单
+    recent_time = datetime.utcnow() - timedelta(minutes=15)
+    existing_order = await db.execute(
+        select(MembershipOrder)
+        .where(
+            and_(
+                MembershipOrder.user_id == user_id,
+                MembershipOrder.membership_id == membership_id,
+                MembershipOrder.status == "pending",
+                MembershipOrder.created_at >= recent_time
+            )
+        )
+    ).scalar_one_or_none()
+
+    if existing_order:
+        raise BusinessException(
+            f"已有pending订单（订单号: {existing_order.id}），请先完成或取消该订单后再试，"
+            f"或等待15分钟后重试"
+        )
+
     # 获取套餐信息
     membership = await db.execute(
         select(Membership).where(Membership.id == membership_id)

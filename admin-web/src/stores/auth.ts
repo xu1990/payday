@@ -22,8 +22,17 @@ function encryptToken(token: string): string {
 function decryptToken(encrypted: string): string {
   try {
     const bytes = CryptoJS.AES.decrypt(encrypted, ENCRYPTION_KEY)
-    return bytes.toString(CryptoJS.enc.Utf8)
-  } catch {
+    const decrypted = bytes.toString(CryptoJS.enc.Utf8)
+
+    if (!decrypted) {
+      console.error('[Auth] Token decryption resulted in empty string')
+      return ''
+    }
+
+    return decrypted
+  } catch (error) {
+    console.error('[Auth] Token decryption failed:', error)
+    // 可能是密钥不匹配或数据损坏，需要重新登录
     return ''
   }
 }
