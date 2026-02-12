@@ -41,12 +41,18 @@ class Settings(BaseSettings):
     wechat_pay_notify_url: str = ""
 
     # JWT（技术方案 2.1 认证）
-    jwt_secret_key: str = "change-me-in-production"
+    # SECURITY: 必须从环境变量设置，生产环境至少32字节
+    jwt_secret_key: str  # 移除默认值，强制从环境变量读取
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60 * 24 * 7  # 7 天
 
     # 金额加密（技术方案 2.2.3）
-    encryption_secret_key: str = "change-me-32-bytes-key-for-fernet!!"
+    # SECURITY: 必须从环境变量设置，必须是32字节URL安全的base64编码密钥
+    encryption_secret_key: str  # 移除默认值，强制从环境变量读取
+
+    # CORS白名单（技术方案 安全）
+    # SECURITY: 生产环境必须设置具体的允许源，多个用逗号分隔
+    cors_origins: str = "http://localhost:5174,http://127.0.0.1:5174"
 
     # 腾讯云 COS（技术方案 1.2.2）
     cos_secret_id: str = ""

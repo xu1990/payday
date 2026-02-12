@@ -5,6 +5,7 @@ from datetime import date
 from typing import List, Optional
 
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.salary import SalaryRecord
@@ -41,37 +42,47 @@ async def get_by_id(db: AsyncSession, record_id: str, user_id: str) -> Optional[
 
 
 async def create(db: AsyncSession, user_id: str, data: SalaryRecordCreate) -> SalaryRecord:
-    amount_encrypted = encrypt_amount(data.amount)
-    record = SalaryRecord(
-        user_id=user_id,
-        config_id=data.config_id,
-        amount_encrypted=amount_encrypted,
-        payday_date=data.payday_date,
-        salary_type=data.salary_type,
-        images=data.images,
-        note=data.note,
-        mood=data.mood,
-    )
-    db.add(record)
-    await db.commit()
-    await db.refresh(record)
-    return record
+    try:
+        amount_encrypted = encrypt_amount(data.amount)
+        record = SalaryRecord(
+            user_id=user_id,
+            config_id=data.config_id,
+            amount_encrypted=amount_encrypted,
+            payday_date=data.payday_date,
+            salary_type=data.salary_type,
+            images=data.images,
+            note=data.note,
+            mood=data.mood,
+        )
+        db.add(record)
+        await db.flush()
+        await db.commit()
+        await db.refresh(record)
+        return record
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def update(
     db: AsyncSession, record_id: str, user_id: str, data: SalaryRecordUpdate
 ) -> Optional[SalaryRecord]:
-    record = await get_by_id(db, record_id, user_id)
-    if not record:
-        return None
-    d = data.model_dump(exclude_unset=True)
-    if "amount" in d:
-        d["amount_encrypted"] = encrypt_amount(d.pop("amount"))
-    for k, v in d.items():
-        setattr(record, k, v)
-    await db.commit()
-    await db.refresh(record)
-    return record
+    try:
+        record = await get_by_id(db, record_id, user_id)
+        if not record:
+            return None
+        d = data.model_dump(exclude_unset=True)
+        if "amount" in d:
+            d["amount_encrypted"] = encrypt_amount(d.pop("amount"))
+        for k, v in d.items():
+            setattr(record, k, v)
+        await db.flush()
+        await db.commit()
+        await db.refresh(record)
+        return record
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def delete(db: AsyncSession, record_id: str, user_id: str) -> bool:

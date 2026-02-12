@@ -224,9 +224,11 @@ async def search_posts(
     )
 
     # 按关键词搜索
+    # SECURITY: 转义SQL通配符防止注入
     if keyword:
-        search_pattern = f"%{keyword}%"
-        query = query.where(Post.content.ilike(search_pattern))
+        escaped_keyword = keyword.replace("%", "\\%").replace("_", "\\_")
+        search_pattern = f"%{escaped_keyword}%"
+        query = query.where(Post.content.ilike(search_pattern, escape="\\"))
 
     # 按标签搜索（JSON查询）
     if tags:

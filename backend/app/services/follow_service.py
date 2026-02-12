@@ -4,6 +4,7 @@
 from typing import List, Optional, Tuple
 
 from sqlalchemy import select, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.follow import Follow
@@ -15,46 +16,58 @@ async def follow_user(db: AsyncSession, follower_id: str, following_id: str) -> 
     """关注用户。已关注则返回 False；不能关注自己。"""
     if follower_id == following_id:
         return False
-    exists = await db.execute(
-        select(Follow).where(
-            Follow.follower_id == follower_id,
-            Follow.following_id == following_id,
-        )
-    )
-    if exists.scalar_one_or_none():
+
+    try:
+        # 直接尝试插入，依赖唯一约束防止重复
+        db.add(Follow(follower_id=follower_id, following_id=following_id))
+        await db.flush()
+
+        u_following = (await db.execute(select(User).where(User.id == following_id))).scalar_one_or_none()
+        u_follower = (await db.execute(select(User).where(User.id == follower_id))).scalar_one_or_none()
+
+        if u_following:
+            u_following.follower_count = (u_following.follower_count or 0) + 1
+        if u_follower:
+            u_follower.following_count = (u_follower.following_count or 0) + 1
+
+        await db.commit()
+        return True
+    except IntegrityError:
+        # 并发情况下，唯一约束冲突说明已关注
+        await db.rollback()
         return False
-    db.add(Follow(follower_id=follower_id, following_id=following_id))
-    u_following = (await db.execute(select(User).where(User.id == following_id))).scalar_one_or_none()
-    u_follower = (await db.execute(select(User).where(User.id == follower_id))).scalar_one_or_none()
-    if u_following:
-        u_following.follower_count = (u_following.follower_count or 0) + 1
-    if u_follower:
-        u_follower.following_count = (u_follower.following_count or 0) + 1
-    await db.commit()
-    return True
 
 
 async def unfollow_user(db: AsyncSession, follower_id: str, following_id: str) -> bool:
     """取关。不存在关系则返回 False。"""
-    r = (
-        await db.execute(
-            select(Follow).where(
-                Follow.follower_id == follower_id,
-                Follow.following_id == following_id,
+    try:
+        r = (
+            await db.execute(
+                select(Follow).where(
+                    Follow.follower_id == follower_id,
+                    Follow.following_id == following_id,
+                )
             )
-        )
-    ).scalar_one_or_none()
-    if not r:
-        return False
-    await db.delete(r)
-    u_following = (await db.execute(select(User).where(User.id == following_id))).scalar_one_or_none()
-    u_follower = (await db.execute(select(User).where(User.id == follower_id))).scalar_one_or_none()
-    if u_following and (u_following.follower_count or 0) > 0:
-        u_following.follower_count -= 1
-    if u_follower and (u_follower.following_count or 0) > 0:
-        u_follower.following_count -= 1
-    await db.commit()
-    return True
+        ).scalar_one_or_none()
+        if not r:
+            return False
+
+        await db.delete(r)
+        await db.flush()
+
+        u_following = (await db.execute(select(User).where(User.id == following_id))).scalar_one_or_none()
+        u_follower = (await db.execute(select(User).where(User.id == follower_id))).scalar_one_or_none()
+
+        if u_following and (u_following.follower_count or 0) > 0:
+            u_following.follower_count -= 1
+        if u_follower and (u_follower.following_count or 0) > 0:
+            u_follower.following_count -= 1
+
+        await db.commit()
+        return True
+    except Exception:
+        await db.rollback()
+        raise
 
 
 async def get_followers(

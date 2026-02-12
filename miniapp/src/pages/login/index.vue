@@ -64,18 +64,20 @@ async function handleLogin() {
   try {
     isLoading.value = true
 
-    // 调用微信登录
-    const loginRes = await uni.login({
+    // 调用微信登录 - uni-app 返回 [error, result]
+    const [err, loginRes] = await uni.login({
       provider: 'weixin'
     })
 
-    if (!loginRes[1].code) {
-      showError('获取微信授权失败')
+    // 检查错误
+    if (err || !loginRes?.code) {
+      console.error('微信登录失败:', err)
+      showError(err?.errMsg || '获取微信授权失败')
       return
     }
 
     // 调用后端登录接口
-    const success = await authStore.login(loginRes[1].code)
+    const success = await authStore.login(loginRes.code)
 
     if (success) {
       showSuccess('登录成功')
@@ -92,9 +94,10 @@ async function handleLogin() {
     } else {
       showError('登录失败，请重试')
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('登录失败:', error)
-    showError(error.message || '登录失败，请重试')
+    const message = error instanceof Error ? error.message : '登录失败，请重试'
+    showError(message)
   } finally {
     isLoading.value = false
   }
@@ -104,16 +107,18 @@ async function handleLogin() {
  * 跳转用户协议
  */
 function goToUserAgreement() {
-  // TODO: 实现用户协议页面
-  showError('用户协议页面待实现')
+  uni.navigateTo({
+    url: '/pages/user-agreement/index'
+  })
 }
 
 /**
  * 跳转隐私政策
  */
 function goToPrivacyPolicy() {
-  // TODO: 实现隐私政策页面
-  showError('隐私政策页面待实现')
+  uni.navigateTo({
+    url: '/pages/privacy-policy/index'
+  })
 }
 </script>
 
