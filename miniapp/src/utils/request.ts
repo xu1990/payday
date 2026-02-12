@@ -109,9 +109,6 @@ function defaultErrorHandler(error: Error): boolean {
     // 使用 reLaunch 清除页面栈并跳转到登录页
     uni.reLaunch({
       url: '/pages/login/index',
-      fail: (err) => {
-        console.error('[Request] 跳转登录页失败:', err)
-      },
     })
 
     return true // 已处理

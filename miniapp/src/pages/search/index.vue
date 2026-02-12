@@ -164,14 +164,13 @@ const performSearch = async () => {
     const data = await searchPosts({
       keyword: keyword.value,
       tags: selectedTags.value.length > 0 ? selectedTags.value : undefined,
-      sort: sortBy.value
+      sort: sortBy.value,
       limit: limit
     })
     results.value = data.items
     hasSearched.value = true
     hasMore.value = data.items.length === limit
   } catch (error) {
-    console.error('Search failed:', error)
     uni.showToast({ title: '搜索失败', icon: 'none' })
   } finally {
     loading.value = false

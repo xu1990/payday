@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from sqlalchemy import select, func, update
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.topic import Topic
@@ -86,8 +87,12 @@ async def update_topic(
         await db.execute(
             update(Topic).where(Topic.id == topic_id).values(**update_data)
         )
-        await db.commit()
-        await db.refresh(topic)
+        try:
+            await db.commit()
+            await db.refresh(topic)
+        except SQLAlchemyError:
+            await db.rollback()
+            raise
 
     return topic
 
@@ -97,8 +102,12 @@ async def delete_topic(db: AsyncSession, topic_id: str) -> bool:
     from sqlalchemy import delete
 
     result = await db.execute(delete(Topic).where(Topic.id == topic_id))
-    await db.commit()
-    return result.rowcount > 0
+    try:
+        await db.commit()
+        return result.rowcount > 0
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def increment_post_count(db: AsyncSession, topic_id: str) -> bool:
@@ -108,8 +117,12 @@ async def increment_post_count(db: AsyncSession, topic_id: str) -> bool:
         .where(Topic.id == topic_id)
         .values(post_count=Topic.post_count + 1)
     )
-    await db.commit()
-    return result.rowcount > 0
+    try:
+        await db.commit()
+        return result.rowcount > 0
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def decrement_post_count(db: AsyncSession, topic_id: str) -> bool:
@@ -119,5 +132,9 @@ async def decrement_post_count(db: AsyncSession, topic_id: str) -> bool:
         .where(Topic.id == topic_id)
         .values(post_count=func.max(Topic.post_count - 1, 0))
     )
-    await db.commit()
-    return result.rowcount > 0
+    try:
+        await db.commit()
+        return result.rowcount > 0
+    except SQLAlchemyError:
+        await db.rollback()
+        raise

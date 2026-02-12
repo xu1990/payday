@@ -94,7 +94,6 @@ onMounted(async () => {
     packages.value = pkgsRes.items.filter(pkg => pkg.is_active)
     activeMembership.value = active as ActiveMembership
   } catch (error) {
-    console.error('Failed to load memberships:', error)
     uni.showToast({ title: '加载失败', icon: 'none' })
   } finally {
     loading.value = false
@@ -154,7 +153,6 @@ const selectPackage = async (pkg: MembershipItem) => {
             }, 1000)
 
           } catch (paymentError: any) {
-            console.error('Payment failed:', paymentError)
             if (paymentError.errMsg && paymentError.errMsg.includes('cancel')) {
               uni.showToast({ title: '已取消支付', icon: 'none' })
             } else {
@@ -162,7 +160,6 @@ const selectPackage = async (pkg: MembershipItem) => {
             }
           }
         } catch (error: any) {
-          console.error('Order creation failed:', error)
           uni.showToast({ title: '创建订单失败，请重试', icon: 'none' })
         }
       }

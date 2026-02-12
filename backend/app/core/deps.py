@@ -19,6 +19,7 @@ from .rate_limit import (
     RATE_LIMIT_POST,
     RATE_LIMIT_COMMENT,
 )
+from .csrf import csrf_manager, CSRFException
 from app.models.user import User
 from app.models.admin import AdminUser
 
@@ -83,6 +84,36 @@ async def get_current_admin(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return admin
+
+
+async def verify_csrf_token(
+    request: Request,
+    admin: AdminUser = Depends(get_current_admin),
+) -> bool:
+    """
+    验证 CSRF token（用于状态变更操作）
+
+    使用方式:
+        @router.delete("/admin/endpoint")
+        async def endpoint(..., _csrf: bool = Depends(verify_csrf_token)):
+            ...
+
+    安全说明:
+        - GET 和登录操作不需要 CSRF 验证
+        - POST/PUT/DELETE 等状态变更操作需要验证
+        - 使用 Redis 存储 token，避免内存多实例问题
+        - 使用常量时间比较防止时序攻击
+    """
+    # 跳过 GET 请求（只读操作）
+    if request.method == "GET":
+        return True
+
+    # 验证 CSRF token
+    is_valid = await csrf_manager.validate_token(request, str(admin.id))
+    if not is_valid:
+        raise CSRFException("CSRF token 无效或已过期，请重新登录")
+
+    return True
 
 
 async def verify_request_signature(
@@ -203,6 +234,7 @@ __all__ = [
     "get_db",
     "get_current_user",
     "get_current_admin",
+    "verify_csrf_token",
     "verify_request_signature",
     "rate_limit_general",
     "rate_limit_login",

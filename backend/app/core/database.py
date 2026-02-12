@@ -3,6 +3,8 @@
 支持同步和异步会话，优化连接池配置
 技术方案 4.2.2 - 数据库连接池优化
 """
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
@@ -70,3 +72,31 @@ async def get_db():
     _get_async_engine()
     async with _AsyncSessionLocal() as session:
         yield session
+
+
+@asynccontextmanager
+async def transactional(db: AsyncSession) -> AsyncGenerator[AsyncSession, None]:
+    """
+    事务管理上下文管理器 - 自动提交或回滚
+
+    Usage:
+        async with transactional(db) as session:
+            session.add(user)
+            # 自动提交或异常时回滚
+
+    Args:
+        db: AsyncSession 实例
+
+    Yields:
+        AsyncSession: 同一个会话实例
+
+    Raises:
+        Exception: 事务中的任何异常都会触发回滚并重新抛出
+    """
+    try:
+        yield db
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
+

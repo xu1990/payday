@@ -46,7 +46,7 @@ export async function saveToken(token: string): Promise<void> {
   try {
     uni.setStorageSync('token', token)
   } catch (e) {
-    console.error('保存 token 失败:', e)
+    // Token save failed
   }
 }
 
@@ -68,7 +68,7 @@ export function clearToken(): void {
   try {
     uni.removeStorageSync('token')
   } catch (e) {
-    console.error('清除 token 失败:', e)
+    // Token clear failed
   }
 }
 

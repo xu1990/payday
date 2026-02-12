@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import get_current_admin
+from app.core.deps import get_current_admin, verify_csrf_token
 from app.core.database import get_db
 from app.models.admin import AdminUser
 from app.schemas.admin import (
@@ -52,11 +52,16 @@ async def admin_login(
     body: AdminLoginRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    """管理员登录，返回 JWT"""
-    token = await login_admin(db, body.username, body.password)
-    if not token:
+    """管理员登录，返回 JWT 和 CSRF token"""
+    tokens = await login_admin(db, body.username, body.password)
+    if not tokens:
         raise HTTPException(status_code=401, detail="用户名或密码错误")
-    return AdminTokenResponse(access_token=token, token_type="bearer")
+    jwt_token, csrf_token = tokens
+    return AdminTokenResponse(
+        access_token=jwt_token,
+        token_type="bearer",
+        csrf_token=csrf_token
+    )
 
 
 @router.get("/users", response_model=dict)
@@ -131,9 +136,10 @@ async def admin_salary_list(
 async def admin_salary_delete(
     record_id: str,
     _: AdminUser = Depends(get_current_admin),
+    __: bool = Depends(verify_csrf_token),
     db: AsyncSession = Depends(get_db),
 ):
-    """管理端删除工资记录"""
+    """管理端删除工资记录（需要 CSRF token）"""
     ok = await delete_for_admin(db, record_id)
     if not ok:
         raise HTTPException(status_code=404, detail="记录不存在")
@@ -143,10 +149,11 @@ async def admin_salary_delete(
 async def admin_salary_update_risk(
     record_id: str,
     body: AdminSalaryRecordUpdateRiskRequest,
-    _: AdminUser = Depends(get_current_admin),
+    _admin: AdminUser = Depends(get_current_admin),
+    __: bool = Depends(verify_csrf_token),
     db: AsyncSession = Depends(get_db),
 ):
-    """管理端人工审核工资记录（通过/拒绝）"""
+    """管理端人工审核工资记录（通过/拒绝）（需要 CSRF token）"""
     record = await update_risk_for_admin(db, record_id, body.risk_status)
     if not record:
         raise HTTPException(status_code=404, detail="记录不存在")
@@ -235,10 +242,11 @@ async def admin_post_detail(
 async def admin_post_update_status(
     post_id: str,
     body: AdminPostUpdateStatusRequest,
-    _: AdminUser = Depends(get_current_admin),
+    _admin: AdminUser = Depends(get_current_admin),
+    __: bool = Depends(verify_csrf_token),
     db: AsyncSession = Depends(get_db),
 ):
-    """管理端更新帖子状态（隐藏/恢复）或人工审核（通过/拒绝）"""
+    """管理端更新帖子状态（隐藏/恢复）或人工审核（通过/拒绝）（需要 CSRF token）"""
     post = await update_post_status_for_admin(
         db,
         post_id,
@@ -255,9 +263,10 @@ async def admin_post_update_status(
 async def admin_post_delete(
     post_id: str,
     _: AdminUser = Depends(get_current_admin),
+    __: bool = Depends(verify_csrf_token),
     db: AsyncSession = Depends(get_db),
 ):
-    """管理端软删帖子（status=deleted）"""
+    """管理端软删帖子（status=deleted）（需要 CSRF token）"""
     ok = await delete_post_for_admin(db, post_id)
     if not ok:
         raise HTTPException(status_code=404, detail="帖子不存在")
@@ -300,10 +309,11 @@ async def admin_comment_list(
 async def admin_comment_update_risk(
     comment_id: str,
     body: AdminCommentUpdateRiskRequest,
-    _: AdminUser = Depends(get_current_admin),
+    _admin: AdminUser = Depends(get_current_admin),
+    __: bool = Depends(verify_csrf_token),
     db: AsyncSession = Depends(get_db),
 ):
-    """管理端人工审核评论（通过/拒绝）"""
+    """管理端人工审核评论（通过/拒绝）（需要 CSRF token）"""
     comment = await update_comment_risk_for_admin(
         db, comment_id, risk_status=body.risk_status, risk_reason=body.risk_reason
     )

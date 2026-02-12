@@ -49,7 +49,6 @@ onMounted(async () => {
     themes.value = themesRes.items
     currentThemeId.value = settings.theme_id
   } catch (error) {
-    console.error('Failed to load themes:', error)
     uni.showToast({ title: '加载失败', icon: 'none' })
   } finally {
     loading.value = false
@@ -62,7 +61,6 @@ const selectTheme = async (themeId: string) => {
     currentThemeId.value = themeId
     uni.showToast({ title: '主题已应用', icon: 'success' })
   } catch (error) {
-    console.error('Failed to update theme:', error)
     uni.showToast({ title: '设置失败', icon: 'none' })
   }
 }

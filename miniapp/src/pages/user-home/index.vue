@@ -50,7 +50,7 @@ async function loadProfileData() {
       checkins.value = checkinsResult.items || []
     }
   } catch (e) {
-    console.error('加载用户主页失败', e)
+    // Failed to load user profile
   } finally {
     loading.value = false
   }
@@ -80,7 +80,7 @@ async function loadMore() {
       hasMore.value = (result.items || []).length >= checkinPage.value.limit
     }
   } catch (e) {
-    console.error('加载更多失败', e)
+    // Failed to load more
   } finally {
     loadingMore.value = false
   }

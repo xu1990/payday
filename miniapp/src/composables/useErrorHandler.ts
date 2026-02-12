@@ -20,8 +20,6 @@ export function useErrorHandler() {
         duration: 3000,
       })
     }
-
-    console.error('Error:', e)
   }
 
   /**

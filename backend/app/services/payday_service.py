@@ -4,6 +4,7 @@
 from typing import List, Optional
 
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.payday import PaydayConfig
@@ -34,10 +35,14 @@ async def create(db: AsyncSession, user_id: str, data: PaydayConfigCreate) -> Pa
         estimated_salary=data.estimated_salary,
         is_active=data.is_active,
     )
-    db.add(config)
-    await db.commit()
-    await db.refresh(config)
-    return config
+    try:
+        db.add(config)
+        await db.commit()
+        await db.refresh(config)
+        return config
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def update(
@@ -49,9 +54,13 @@ async def update(
     d = data.model_dump(exclude_unset=True)
     for k, v in d.items():
         setattr(config, k, v)
-    await db.commit()
-    await db.refresh(config)
-    return config
+    try:
+        await db.commit()
+        await db.refresh(config)
+        return config
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def delete(db: AsyncSession, config_id: str, user_id: str) -> bool:
@@ -59,5 +68,9 @@ async def delete(db: AsyncSession, config_id: str, user_id: str) -> bool:
     if not config:
         return False
     await db.delete(config)
-    await db.commit()
-    return True
+    try:
+        await db.commit()
+        return True
+    except SQLAlchemyError:
+        await db.rollback()
+        raise

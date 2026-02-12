@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 
 from sqlalchemy import select, func, and_
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.membership import Membership, MembershipOrder, User
@@ -75,10 +76,14 @@ async def create_order(
         start_date=start_date,
         end_date=end_date,
     )
-    db.add(order)
-    await db.commit()
-    await db.refresh(order)
-    return order
+    try:
+        db.add(order)
+        await db.commit()
+        await db.refresh(order)
+        return order
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def get_my_orders(db: AsyncSession, user_id: str) -> List[MembershipOrder]:
@@ -168,5 +173,9 @@ async def cancel_order(db: AsyncSession, order_id: str, user_id: str) -> bool:
         .where(MembershipOrder.id == order_id)
         .values(status="cancelled")
     )
-    await db.commit()
-    return True
+    try:
+        await db.commit()
+        return True
+    except SQLAlchemyError:
+        await db.rollback()
+        raise

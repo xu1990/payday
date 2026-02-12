@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.comment import Comment
@@ -43,8 +43,12 @@ async def like_post(db: AsyncSession, user_id: str, post_id: str) -> tuple["Like
                     db, str(post.user_id), "like", "新点赞", "", post_id
                 )
 
-        await db.commit()
-        await db.refresh(like)
+        try:
+            await db.commit()
+            await db.refresh(like)
+        except SQLAlchemyError:
+            await db.rollback()
+            raise
 
         # 更新缓存
         try:
@@ -76,7 +80,11 @@ async def unlike_post(db: AsyncSession, user_id: str, post_id: str) -> bool:
         if post:
             post.like_count = max(0, (post.like_count or 0) - 1)
 
-        await db.commit()
+        try:
+            await db.commit()
+        except SQLAlchemyError:
+            await db.rollback()
+            raise
 
         # 移除缓存
         try:
@@ -107,8 +115,12 @@ async def like_comment(db: AsyncSession, user_id: str, comment_id: str) -> tuple
                     db, str(comment.user_id), "like", "新点赞", "", comment_id
                 )
 
-        await db.commit()
-        await db.refresh(like)
+        try:
+            await db.commit()
+            await db.refresh(like)
+        except SQLAlchemyError:
+            await db.rollback()
+            raise
 
         # 更新缓存
         try:
@@ -140,7 +152,11 @@ async def unlike_comment(db: AsyncSession, user_id: str, comment_id: str) -> boo
         if comment:
             comment.like_count = max(0, (comment.like_count or 0) - 1)
 
-        await db.commit()
+        try:
+            await db.commit()
+        except SQLAlchemyError:
+            await db.rollback()
+            raise
 
         # 移除缓存
         try:

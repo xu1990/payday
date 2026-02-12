@@ -90,12 +90,17 @@ async def update(
 
 
 async def delete(db: AsyncSession, record_id: str, user_id: str) -> bool:
-    record = await get_by_id(db, record_id, user_id)
-    if not record:
-        return False
-    await db.delete(record)
-    await db.commit()
-    return True
+    """删除工资记录（带事务管理）"""
+    try:
+        record = await get_by_id(db, record_id, user_id)
+        if not record:
+            return False
+        await db.delete(record)
+        await db.commit()
+        return True
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def get_by_id_for_admin(db: AsyncSession, record_id: str) -> Optional[SalaryRecord]:
@@ -105,31 +110,39 @@ async def get_by_id_for_admin(db: AsyncSession, record_id: str) -> Optional[Sala
 
 
 async def delete_for_admin(db: AsyncSession, record_id: str) -> bool:
-    """管理端：删除任意工资记录"""
-    record = await get_by_id_for_admin(db, record_id)
-    if not record:
-        return False
-    await db.delete(record)
-    await db.commit()
-    return True
+    """管理端：删除任意工资记录（带事务管理）"""
+    try:
+        record = await get_by_id_for_admin(db, record_id)
+        if not record:
+            return False
+        await db.delete(record)
+        await db.commit()
+        return True
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def update_risk_for_admin(
     db: AsyncSession, record_id: str, risk_status: str
 ) -> Optional[SalaryRecord]:
-    """管理端：人工审核工资记录（通过/拒绝）"""
+    """管理端：人工审核工资记录（通过/拒绝）（带事务管理）"""
     from datetime import datetime
 
-    record = await get_by_id_for_admin(db, record_id)
-    if not record:
-        raise NotFoundException("工资记录不存在")
-    if risk_status not in ("approved", "rejected"):
-        raise ValidationException("risk_status 必须是 approved 或 rejected")
-    record.risk_status = risk_status
-    record.risk_check_time = datetime.utcnow()
-    await db.commit()
-    await db.refresh(record)
-    return record
+    try:
+        record = await get_by_id_for_admin(db, record_id)
+        if not record:
+            raise NotFoundException("工资记录不存在")
+        if risk_status not in ("approved", "rejected"):
+            raise ValidationException("risk_status 必须是 approved 或 rejected")
+        record.risk_status = risk_status
+        record.risk_check_time = datetime.utcnow()
+        await db.commit()
+        await db.refresh(record)
+        return record
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def list_all_for_admin(

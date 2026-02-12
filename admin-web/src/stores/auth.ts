@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 
 const TOKEN_KEY = 'payday_admin_token'
+const CSRF_KEY = 'payday_admin_csrf'
 
 /**
  * SECURITY NOTE: Client-side token encryption is removed
@@ -12,7 +13,7 @@ const TOKEN_KEY = 'payday_admin_token'
  * 1. JWT cryptographic signatures (already implemented on backend)
  * 2. Short token expiration (15 min) with refresh token rotation
  * 3. Backend validation and revocation
- * 4. In production: Use HttpOnly cookies instead of localStorage
+ * 4. CSRF tokens for state-changing operations (newly implemented)
  */
 
 /**
@@ -60,6 +61,13 @@ export const useAuthStore = defineStore('auth', {
         return ''
       }
     })(),
+    csrfToken: (() => {
+      try {
+        return localStorage.getItem(CSRF_KEY) || ''
+      } catch {
+        return ''
+      }
+    })(),
   }),
   getters: {
     isLoggedIn: (state) => !!state.token && !isTokenExpired(state.token),
@@ -78,24 +86,34 @@ export const useAuthStore = defineStore('auth', {
     },
   },
   actions: {
-    setToken(t: string) {
+    setToken(t: string, csrfToken?: string) {
       this.token = t
+      if (csrfToken) {
+        this.csrfToken = csrfToken
+      }
       try {
         if (t) {
           localStorage.setItem(TOKEN_KEY, t)
         } else {
           localStorage.removeItem(TOKEN_KEY)
         }
+        if (csrfToken) {
+          localStorage.setItem(CSRF_KEY, csrfToken)
+        } else {
+          localStorage.removeItem(CSRF_KEY)
+        }
       } catch (error) {
-        console.error('Failed to save token to localStorage:', error)
+        // Silently fail - console removed for production
       }
     },
     logout() {
       this.token = ''
+      this.csrfToken = ''
       try {
         localStorage.removeItem(TOKEN_KEY)
+        localStorage.removeItem(CSRF_KEY)
       } catch (error) {
-        console.error('Failed to remove token from localStorage:', error)
+        // Silently fail
       }
     },
   },

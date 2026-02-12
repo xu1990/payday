@@ -59,7 +59,6 @@ export const usePostStore = defineStore('post', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : '获取热门帖子失败'
-      console.error('获取热门帖子失败:', e)
       return false
     } finally {
       isLoading.value = false
@@ -99,7 +98,6 @@ export const usePostStore = defineStore('post', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : '获取最新帖子失败'
-      console.error('获取最新帖子失败:', e)
       return false
     } finally {
       isLoading.value = false
@@ -119,7 +117,6 @@ export const usePostStore = defineStore('post', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : '获取帖子详情失败'
-      console.error('获取帖子详情失败:', e)
       return false
     } finally {
       isLoading.value = false
@@ -142,7 +139,6 @@ export const usePostStore = defineStore('post', () => {
       return data
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : '发布帖子失败'
-      console.error('发布帖子失败:', e)
       return null
     } finally {
       isLoading.value = false

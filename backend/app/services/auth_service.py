@@ -4,15 +4,17 @@
 """
 import random
 import string
+import hmac
 from typing import Optional, Tuple
 
-from sqlalchemy import select
+from sqlalchemy import select, exc as sqlalchemy_exc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
 from app.utils.wechat import code2session
 from app.core.security import create_access_token, create_refresh_token
 from app.core.cache import get_redis_client
+from app.core.exceptions import BusinessException
 
 
 def _gen_anonymous_name() -> str:
@@ -22,19 +24,35 @@ def _gen_anonymous_name() -> str:
 
 
 async def get_or_create_user(db: AsyncSession, openid: str, unionid: Optional[str] = None) -> User:
-    """根据 openid 查询或创建用户"""
+    """根据 openid 查询或创建用户（带事务管理）"""
     result = await db.execute(select(User).where(User.openid == openid))
     user = result.scalar_one_or_none()
     if user:
         return user
+
+    # 创建新用户
     user = User(
         openid=openid,
         unionid=unionid,
         anonymous_name=_gen_anonymous_name(),
     )
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
+
+    try:
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+    except sqlalchemy_exc.IntegrityError:
+        # 并发创建：回滚并重新查询
+        await db.rollback()
+        result = await db.execute(select(User).where(User.openid == openid))
+        user = result.scalar_one_or_none()
+        if user:
+            return user
+        raise BusinessException("用户创建失败")
+    except Exception as e:
+        await db.rollback()
+        raise BusinessException(f"用户创建失败: {str(e)}")
+
     return user
 
 
@@ -101,7 +119,8 @@ async def refresh_access_token(refresh_token: str, user_id: str) -> Optional[Tup
     if redis:
         try:
             stored_token = await redis.get(f"refresh_token:{user_id}")
-            if not stored_token or stored_token != refresh_token:
+            # 使用常量时间比较防止时序攻击
+            if not stored_token or not hmac.compare_digest(stored_token, refresh_token):
                 return None
         except Exception as e:
             from app.utils.logger import get_logger

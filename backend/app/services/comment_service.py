@@ -4,6 +4,7 @@
 from typing import List, Optional, Tuple
 
 from sqlalchemy import select, update, func
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.comment import Comment
@@ -97,9 +98,13 @@ async def create(
             await notification_service.create_notification(
                 db, str(parent.user_id), "reply", "新回复", content or "", comment.id
             )
-    await db.commit()
-    await db.refresh(comment)
-    return comment
+    try:
+        await db.commit()
+        await db.refresh(comment)
+        return comment
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def get_by_id(db: AsyncSession, comment_id: str) -> Optional[Comment]:
@@ -119,8 +124,12 @@ async def delete(db: AsyncSession, comment_id: str) -> bool:
     post = r.scalar_one_or_none()
     if post:
         post.comment_count = max(0, (post.comment_count or 0) - 1)
-    await db.commit()
-    return True
+    try:
+        await db.commit()
+        return True
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def list_comments_for_admin(
@@ -161,6 +170,10 @@ async def update_comment_risk_for_admin(
             pass  # Comment 模型若无 risk_reason 字段则忽略
         else:
             comment.risk_reason = risk_reason
-    await db.commit()
-    await db.refresh(comment)
-    return comment
+    try:
+        await db.commit()
+        await db.refresh(comment)
+        return comment
+    except SQLAlchemyError:
+        await db.rollback()
+        raise

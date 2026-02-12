@@ -195,7 +195,6 @@ onMounted(async () => {
       }
     }
   } catch (error) {
-    console.error('Failed to load insights:', error)
     uni.showToast({ title: '加载失败', icon: 'none' })
   } finally {
     loading.value = false

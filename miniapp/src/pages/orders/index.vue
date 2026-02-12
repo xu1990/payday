@@ -79,7 +79,6 @@ onMounted(async () => {
     const res = await getMyOrders()
     orders.value = res.items
   } catch (error) {
-    console.error('Failed to load orders:', error)
     uni.showToast({ title: '加载失败', icon: 'none' })
   } finally {
     loading.value = false
@@ -137,7 +136,6 @@ const handlePay = async (order: MembershipOrderItem) => {
     }, 1000)
 
   } catch (error: any) {
-    console.error('Payment failed:', error)
     if (error.errMsg && error.errMsg.includes('cancel')) {
       uni.showToast({ title: '已取消支付', icon: 'none' })
     } else {
@@ -162,7 +160,6 @@ const handleCancel = async (order: MembershipOrderItem) => {
             orders.value = ordersRes.items
           }, 500)
         } catch (error: any) {
-          console.error('Cancel order failed:', error)
           uni.showToast({
             title: error?.message || '取消失败',
             icon: 'none'

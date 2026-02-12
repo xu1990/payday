@@ -24,8 +24,18 @@ export const adminApi = axios.create({
 })
 
 adminApi.interceptors.request.use((config) => {
-  const token = useAuthStore().token
+  const authStore = useAuthStore()
+  const token = authStore.token
   if (token) config.headers.Authorization = `Bearer ${token}`
+
+  // 为状态变更操作添加 CSRF token
+  const csrfToken = authStore.csrfToken
+  if (csrfToken && config.method) {
+    const method = config.method.toUpperCase()
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+      config.headers['X-CSRF-Token'] = csrfToken
+    }
+  }
 
   return config
 })
@@ -49,6 +59,7 @@ export interface LoginReq {
 export interface TokenRes {
   access_token: string
   token_type: string
+  csrf_token: string
 }
 
 export interface AdminUserListItem {

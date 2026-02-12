@@ -20,6 +20,7 @@ const replyInput = ref('')
 const replyingTo = ref<{ id: string; name: string } | null>(null)
 const commentContent = ref('')
 const submitLoading = ref(false)
+const keyboardHeight = ref(0)
 
 onMounted(() => {
   const pages = getCurrentPages()
@@ -32,17 +33,9 @@ onMounted(() => {
     loading.value = false
   }
 
-  // 监听键盘高度变化，调整输入框位置
+  // 监听键盘高度变化，使用响应式变量
   uni.onKeyboardHeightChange((res) => {
-    const bottomBar = document.querySelector('.bottom-bar')
-    if (bottomBar) {
-      if (res.height > 0) {
-        // 键盘弹起，确保输入框可见
-        bottomBar.classList.add('keyboard-up')
-      } else {
-        bottomBar.classList.remove('keyboard-up')
-      }
-    }
+    keyboardHeight.value = res.height
   })
 })
 
@@ -56,7 +49,6 @@ async function load() {
   try {
     post.value = await getPostDetail(id.value)
   } catch (error) {
-    console.error('Failed to load post:', error)
     post.value = null
     uni.showToast({ title: '加载帖子失败', icon: 'none' })
   } finally {
@@ -70,7 +62,6 @@ async function loadComments() {
   try {
     comments.value = await getCommentList(id.value, { limit: 50, offset: 0 })
   } catch (error) {
-    console.error('Failed to load comments:', error)
     comments.value = []
     uni.showToast({ title: '加载评论失败', icon: 'none' })
   } finally {
@@ -102,7 +93,6 @@ async function onPostLike() {
       postLiked.value = true
     }
   } catch (error) {
-    console.error('Failed to toggle post like:', error)
     uni.showToast({ title: '操作失败', icon: 'none' })
   }
 }
@@ -120,7 +110,6 @@ async function onCommentLike(c: CommentItem) {
       c.like_count += 1
     }
   } catch (error) {
-    console.error('Failed to toggle comment like:', error)
     uni.showToast({ title: '操作失败', icon: 'none' })
   }
 }
@@ -154,7 +143,6 @@ async function submitComment() {
     post.value.comment_count += 1
     await loadComments()
   } catch (error) {
-    console.error('Failed to submit comment:', error)
     uni.showToast({ title: '评论失败', icon: 'none' })
   } finally {
     submitLoading.value = false
@@ -171,16 +159,11 @@ async function shareToWeChat() {
     // 使用微信小程序分享功能
     uni.showShareMenu({
       withShareTicket: true,
-      success: () => {
-        console.log('Share menu shown')
-      },
       fail: (err: any) => {
-        console.error('Failed to show share menu:', err)
         uni.showToast({ title: '分享失败', icon: 'none' })
       }
     })
   } catch (error) {
-    console.error('Share to WeChat failed:', error)
     uni.showToast({ title: '分享失败', icon: 'none' })
   }
 }
@@ -196,7 +179,6 @@ async function shareToMoments() {
   uni.navigateTo({
     url: `/pages/poster/index?postId=${post.value.id}`,
     fail: (err: any) => {
-      console.error('Failed to navigate to poster page:', err)
       uni.showToast({ title: '跳转失败', icon: 'none' })
     }
   })
@@ -287,7 +269,7 @@ async function shareToMoments() {
       </view>
     </view>
     <!-- 底部发评论 -->
-    <view v-if="post" class="bottom-bar">
+    <view v-if="post" class="bottom-bar" :class="{ 'keyboard-up': keyboardHeight > 0 }">
       <view v-if="replyingTo" class="reply-hint">
         <text>回复 {{ replyingTo.name }}</text>
         <text class="cancel" @tap="cancelReply">取消</text>
@@ -436,6 +418,9 @@ async function shareToMoments() {
   background: #fff;
   border-top: 1rpx solid #eee;
   transition: transform 0.3s ease;
+}
+.bottom-bar.keyboard-up {
+  transform: translateY(0);
 }
 .reply-hint {
   position: absolute;

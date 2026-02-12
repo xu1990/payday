@@ -13,6 +13,7 @@ class AdminLoginRequest(BaseModel):
 class AdminTokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    csrf_token: str  # CSRF token 用于保护状态变更操作
 
 
 class AdminUserListItem(BaseModel):

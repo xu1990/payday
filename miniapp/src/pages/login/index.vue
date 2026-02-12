@@ -71,7 +71,6 @@ async function handleLogin() {
 
     // 检查错误
     if (err || !loginRes?.code) {
-      console.error('微信登录失败:', err)
       showError(err?.errMsg || '获取微信授权失败')
       return
     }
@@ -95,7 +94,6 @@ async function handleLogin() {
       showError('登录失败，请重试')
     }
   } catch (error: unknown) {
-    console.error('登录失败:', error)
     const message = error instanceof Error ? error.message : '登录失败，请重试'
     showError(message)
   } finally {

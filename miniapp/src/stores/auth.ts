@@ -45,7 +45,6 @@ export const useAuthStore = defineStore('auth', () => {
 
       return true
     } catch (error) {
-      console.error('登录失败:', error)
       return false
     } finally {
       isLoading.value = false

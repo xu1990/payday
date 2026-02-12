@@ -121,7 +121,7 @@ const loadStats = async () => {
   try {
     stats.value = await getCheckInStats()
   } catch (error) {
-    console.error('Failed to load stats:', error)
+    // Failed to load stats
   }
 }
 
@@ -130,7 +130,7 @@ const loadCalendar = async () => {
     const res = await getCheckInCalendar(currentYear.value, currentMonth.value)
     calendar.value = res.items
   } catch (error) {
-    console.error('Failed to load calendar:', error)
+    // Failed to load calendar
   }
 }
 
@@ -151,7 +151,6 @@ const handleCheckIn = async () => {
     await loadStats()
     await loadCalendar()
   } catch (error) {
-    console.error('Failed to check in:', error)
     uni.showToast({ title: '打卡失败', icon: 'none' })
   }
 }

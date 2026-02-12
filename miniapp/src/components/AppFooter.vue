@@ -1,14 +1,22 @@
 <script setup lang="ts">
 function handleClickGithub() {
-  if (window?.open) {
-    window.open('https://github.com/uni-helper/create-uni')
-  }
-  else {
-    uni.showToast({
-      icon: 'none',
-      title: '请使用浏览器打开',
-    })
-  }
+  // #ifdef H5
+  // H5环境可以直接打开链接
+  window.open('https://github.com/uni-helper/create-uni', '_blank')
+  // #endif
+
+  // #ifdef MP-WEIXIN
+  // 微信小程序环境：复制链接到剪贴板
+  uni.setClipboardData({
+    data: 'https://github.com/uni-helper/create-uni',
+    success: () => {
+      uni.showToast({
+        icon: 'none',
+        title: '链接已复制，请在浏览器打开',
+      })
+    }
+  })
+  // #endif
 }
 </script>
 

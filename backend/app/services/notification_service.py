@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from sqlalchemy import select, update, func
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.notification import Notification
@@ -82,8 +83,12 @@ async def mark_read(
         )
         .values(is_read=True)
     )
-    await db.commit()
-    return r.rowcount
+    try:
+        await db.commit()
+        return r.rowcount
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def mark_all_read(db: AsyncSession, user_id: str) -> int:
@@ -93,8 +98,12 @@ async def mark_all_read(db: AsyncSession, user_id: str) -> int:
         .where(Notification.user_id == user_id, Notification.is_read == False)
         .values(is_read=True)
     )
-    await db.commit()
-    return r.rowcount
+    try:
+        await db.commit()
+        return r.rowcount
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def mark_one_read(
@@ -111,8 +120,12 @@ async def mark_one_read(
         )
         .values(is_read=True)
     )
-    await db.commit()
-    return r.rowcount > 0
+    try:
+        await db.commit()
+        return r.rowcount > 0
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def delete_notifications(
@@ -137,5 +150,9 @@ async def delete_notifications(
         )
     else:
         return 0
-    await db.commit()
-    return r.rowcount
+    try:
+        await db.commit()
+        return r.rowcount
+    except SQLAlchemyError:
+        await db.rollback()
+        raise

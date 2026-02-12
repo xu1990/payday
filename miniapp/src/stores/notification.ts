@@ -74,7 +74,6 @@ export const useNotificationStore = defineStore('notification', () => {
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : '获取通知失败'
-      console.error('获取通知失败:', e)
       return false
     } finally {
       isLoading.value = false
@@ -91,7 +90,6 @@ export const useNotificationStore = defineStore('notification', () => {
       unreadCount.value = data.count
       return true
     } catch (e: unknown) {
-      console.error('获取未读数量失败:', e)
       return false
     }
   }
@@ -111,7 +109,6 @@ export const useNotificationStore = defineStore('notification', () => {
       }
       return true
     } catch (e: unknown) {
-      console.error('标记已读失败:', e)
       return false
     }
   }
@@ -132,7 +129,6 @@ export const useNotificationStore = defineStore('notification', () => {
       unreadCount.value = 0
       return true
     } catch (e: unknown) {
-      console.error('全部标记已读失败:', e)
       return false
     }
   }
@@ -155,7 +151,6 @@ export const useNotificationStore = defineStore('notification', () => {
       }
       return true
     } catch (e: unknown) {
-      console.error('删除通知失败:', e)
       return false
     }
   }
@@ -170,7 +165,6 @@ export const useNotificationStore = defineStore('notification', () => {
       unreadCount.value = 0
       return true
     } catch (e: unknown) {
-      console.error('清空通知失败:', e)
       return false
     }
   }

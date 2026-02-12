@@ -4,7 +4,7 @@
 from typing import List, Optional, Tuple
 
 from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.follow import Follow
@@ -30,8 +30,12 @@ async def follow_user(db: AsyncSession, follower_id: str, following_id: str) -> 
         if u_follower:
             u_follower.following_count = (u_follower.following_count or 0) + 1
 
-        await db.commit()
-        return True
+        try:
+            await db.commit()
+            return True
+        except SQLAlchemyError:
+            await db.rollback()
+            raise
     except IntegrityError:
         # 并发情况下，唯一约束冲突说明已关注
         await db.rollback()
@@ -63,8 +67,12 @@ async def unfollow_user(db: AsyncSession, follower_id: str, following_id: str) -
         if u_follower and (u_follower.following_count or 0) > 0:
             u_follower.following_count -= 1
 
-        await db.commit()
-        return True
+        try:
+            await db.commit()
+            return True
+        except SQLAlchemyError:
+            await db.rollback()
+            raise
     except Exception:
         await db.rollback()
         raise

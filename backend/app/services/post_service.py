@@ -5,6 +5,7 @@ from typing import List, Literal, Optional, Tuple
 from datetime import datetime
 
 from sqlalchemy import select, func
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.post import Post
@@ -37,10 +38,14 @@ async def create(
         status="normal",
         risk_status="pending",
     )
-    db.add(post)
-    await db.commit()
-    await db.refresh(post)
-    return post
+    try:
+        db.add(post)
+        await db.commit()
+        await db.refresh(post)
+        return post
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def get_by_id(
@@ -201,9 +206,13 @@ async def update_post_status_for_admin(
         post.risk_status = risk_status
     if risk_reason is not None:
         post.risk_reason = risk_reason
-    await db.commit()
-    await db.refresh(post)
-    return post
+    try:
+        await db.commit()
+        await db.refresh(post)
+        return post
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def delete_post_for_admin(db: AsyncSession, post_id: str) -> bool:
@@ -212,8 +221,12 @@ async def delete_post_for_admin(db: AsyncSession, post_id: str) -> bool:
     if not post:
         return False
     post.status = "deleted"
-    await db.commit()
-    return True
+    try:
+        await db.commit()
+        return True
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def search_posts(

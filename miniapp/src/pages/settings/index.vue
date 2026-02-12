@@ -80,7 +80,6 @@ onMounted(async () => {
   try {
     settings.value = await getUserSettings()
   } catch (error) {
-    console.error('Failed to load settings:', error)
     uni.showToast({ title: '加载失败', icon: 'none' })
   } finally {
     loading.value = false
@@ -92,7 +91,6 @@ const updateSetting = async (key: keyof UserSettingsUpdateReq, value: number | s
     await updateUserSettings({ [key]: value })
     uni.showToast({ title: '设置已保存', icon: 'success' })
   } catch (error) {
-    console.error('Failed to update setting:', error)
     uni.showToast({ title: '保存失败', icon: 'none' })
   }
 }

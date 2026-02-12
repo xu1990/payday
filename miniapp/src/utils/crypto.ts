@@ -71,7 +71,6 @@ export async function encrypt(text: string): Promise<string> {
     // Base64 编码
     return uni.arrayBufferToBase64(combined.buffer)
   } catch (error) {
-    console.error('Encryption failed:', error)
     throw new Error('加密失败')
   }
 }
@@ -100,7 +99,6 @@ export async function decrypt(encoded: string): Promise<string> {
     const decoder = new TextDecoder()
     return decoder.decode(decrypted)
   } catch (error) {
-    console.error('Decryption failed:', error)
     return ''
   }
 }

@@ -132,7 +132,6 @@ const loadUsers = async () => {
     followerCount.value = activeTab.value === 'followers' ? res.total : 0
     followingCount.value = activeTab.value === 'following' ? res.total : 0
   } catch (error) {
-    console.error('Failed to load users:', error)
     uni.showToast({ title: '加载失败', icon: 'none' })
   } finally {
     loading.value = false
@@ -161,7 +160,6 @@ const toggleFollow = async (user: UserItem) => {
       user.follower_count++
     }
   } catch (error) {
-    console.error('Failed to toggle follow:', error)
     uni.showToast({ title: '操作失败', icon: 'none' })
   }
 }

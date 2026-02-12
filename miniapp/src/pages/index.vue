@@ -97,7 +97,6 @@ async function loadPaydayData() {
     const daysList = solar.length ? solar.map((c) => daysToNextPayday(c.payday)) : [999]
     daysToPayday.value = Math.min(...daysList)
   } catch (error) {
-    console.error('加载发薪日失败:', error)
     hasPaydayConfig.value = false
     daysToPayday.value = null
   } finally {
@@ -115,7 +114,7 @@ function loadSavedMood() {
       selectedMood.value = saved
     }
   } catch (error) {
-    console.error('Failed to load saved mood:', error)
+    // Failed to load saved mood
   }
 }
 
@@ -134,7 +133,7 @@ function setMood(mood: MoodType) {
   try {
     uni.setStorageSync(MOOD_STORAGE_KEY, mood)
   } catch (error) {
-    console.error('Failed to save mood:', error)
+    // Failed to save mood
   }
 }
 

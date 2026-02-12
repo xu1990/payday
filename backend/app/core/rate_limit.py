@@ -3,7 +3,9 @@
 防止 DDoS 和滥用
 """
 import time
-from typing import Optional
+from typing import Optional, Dict
+from collections import defaultdict, deque
+from datetime import datetime
 
 from fastapi import HTTPException, Request, status
 from app.core.cache import get_redis_client
@@ -12,7 +14,7 @@ from app.utils.request import get_client_ip
 
 
 class RateLimiter:
-    """速率限制器"""
+    """速率限制器（Redis主 + 内存后备）"""
 
     def __init__(
         self,
@@ -21,6 +23,25 @@ class RateLimiter:
     ):
         self.times = times
         self.max_requests = max_requests
+        # 内存后备：{key: deque([timestamp1, timestamp2, ...])}
+        self._fallback_store: Dict[str, deque] = defaultdict(lambda: deque())
+
+    def _cleanup_fallback(self, key: str) -> None:
+        """清理内存后备中过期的请求记录"""
+        now = time.time()
+        cutoff = now - self.times
+        # 移除时间窗口外的记录
+        while self._fallback_store[key] and self._fallback_store[key][0] < cutoff:
+            self._fallback_store[key].popleft()
+
+    def _check_fallback(self, key: str) -> bool:
+        """检查内存后备中的速率限制"""
+        self._cleanup_fallback(key)
+        return len(self._fallback_store[key]) < self.max_requests
+
+    def _record_fallback(self, key: str) -> None:
+        """在内存后备中记录请求"""
+        self._fallback_store[key].append(time.time())
 
     async def check(
         self,
@@ -28,7 +49,7 @@ class RateLimiter:
         request: Request,
     ) -> None:
         """
-        检查速率限制
+        检查速率限制（Redis主 + 内存后备）
 
         Args:
             key: 限制键（如用户ID、IP地址）
@@ -42,37 +63,49 @@ class RateLimiter:
         # Redis 键：rate_limit:{key}
         redis_key = f"rate_limit:{key}"
 
-        try:
-            # 获取当前计数
-            current = await redis.get(redis_key)
-            current = int(current) if current else 0
+        if redis:
+            try:
+                # 获取当前计数
+                current = await redis.get(redis_key)
+                current = int(current) if current else 0
 
-            if current >= self.max_requests:
-                # 获取过期时间
-                ttl = await redis.ttl(redis_key)
-                raise RateLimitException(
-                    f"请求过于频繁，请在 {ttl} 秒后重试",
-                    details={
-                        "limit": self.max_requests,
-                        "window": self.times,
-                        "retry_after": ttl,
-                    }
-                )
+                if current >= self.max_requests:
+                    # 获取过期时间
+                    ttl = await redis.ttl(redis_key)
+                    raise RateLimitException(
+                        f"请求过于频繁，请在 {ttl} 秒后重试",
+                        details={
+                            "limit": self.max_requests,
+                            "window": self.times,
+                            "retry_after": ttl,
+                        }
+                    )
 
-            # 增加计数
-            pipe = redis.pipeline()
-            pipe.incr(redis_key)
-            pipe.expire(redis_key, self.times)
-            await pipe.execute()
+                # 增加计数
+                pipe = redis.pipeline()
+                pipe.incr(redis_key)
+                pipe.expire(redis_key, self.times)
+                await pipe.execute()
+                return  # Redis 正常工作，直接返回
 
-        except Exception as e:
-            # Redis 故障时记录日志但不限制请求
-            from app.utils.logger import get_logger
-            logger = get_logger(__name__)
-            logger.warning(f"Rate limiter Redis error: {e}")
-            # 可选：集成 Sentry
-            # from app.utils.sentry import capture_exception
-            # capture_exception(e, tags={"component": "rate_limiter"})
+            except Exception as e:
+                # Redis 故障，降级到内存限流
+                from app.utils.logger import get_logger
+                logger = get_logger(__name__)
+                logger.warning(f"Rate limiter Redis error, using fallback: {e}")
+
+        # Redis 不可用，使用内存后备
+        if not self._check_fallback(key):
+            raise RateLimitException(
+                f"请求过于频繁（限流服务降级中）",
+                details={
+                    "limit": self.max_requests,
+                    "window": self.times,
+                    "retry_after": self.times,
+                    "fallback": True,
+                }
+            )
+        self._record_fallback(key)
 
 
 async def get_client_identifier(request: Request) -> str:

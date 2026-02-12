@@ -37,7 +37,6 @@ export function usePagination(options: PaginationOptions) {
         total.value = res.total || 0
       }
     } catch (e: unknown) {
-      console.error('Load failed:', e)
       uni.showToast({
         title: e instanceof Error ? e.message : '加载失败',
         icon: 'none',
