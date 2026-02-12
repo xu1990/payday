@@ -79,6 +79,19 @@ export const useAuthStore = defineStore('auth', {
   }),
   getters: {
     isLoggedIn: (state) => !!state.token && !isTokenExpired(state.token),
+    /** 验证当前 token 是否具有 admin scope */
+    hasAdminScope: (state) => {
+      if (!state.token || isTokenExpired(state.token)) return false
+      try {
+        // JWT格式: header.payload.signature
+        const parts = state.token.split('.')
+        if (parts.length !== 3) return false
+        const payload = JSON.parse(atob(parts[1]))
+        return payload.scope === 'admin'
+      } catch {
+        return false
+      }
+    },
   },
   actions: {
     setToken(t: string) {

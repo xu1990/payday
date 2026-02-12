@@ -3,6 +3,21 @@ import { useAuthStore } from '@/stores/auth'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 
+/**
+ * CSRF 保护说明：
+ *
+ * 当前实现使用 JWT + localStorage 存储 token，通过 Authorization header 发送。
+ * 这种方式相比 cookie-based 认证已经降低了 CSRF 风险，但仍建议添加额外保护：
+ *
+ * 1. 后端应验证 Origin/Referer 头，确保请求来自可信来源
+ * 2. 敏感操作（如删除、修改）可添加 CSRF token 双重提交验证
+ * 3. 考虑实施 SameSite cookie 策略（如果使用 cookie）
+ *
+ * 如需实现完整的 CSRF token 机制：
+ * - 后端在登录响应中返回 csrf_token
+ * - 前端存储并在请求头 X-CSRF-Token 中发送
+ * - 后端验证该 token 的有效性
+ */
 export const adminApi = axios.create({
   baseURL,
   headers: { 'Content-Type': 'application/json' },
@@ -11,6 +26,11 @@ export const adminApi = axios.create({
 adminApi.interceptors.request.use((config) => {
   const token = useAuthStore().token
   if (token) config.headers.Authorization = `Bearer ${token}`
+
+  // 可选：添加 CSRF token（如果后端支持）
+  // const csrfToken = getCsrfToken()
+  // if (csrfToken) config.headers['X-CSRF-Token'] = csrfToken
+
   return config
 })
 

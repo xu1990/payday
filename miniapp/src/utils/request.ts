@@ -4,6 +4,7 @@
  */
 import { hideLoading, showLoading, showError } from './toast'
 import { hmacSha256 } from './crypto'
+import { getToken as getStoredToken, clearToken } from '@/api/auth'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || ''
 
@@ -75,8 +76,12 @@ async function signRequest(url: string, method: string, data: any, timestamp: nu
   // 拼接字符串
   const str = sorted.map(k => `${k}=${params[k]}`).join('&')
 
-  // 从环境变量获取 API 密钥
-  const apiSecret = import.meta.env.VITE_API_SECRET || 'default-api-secret-change-in-production'
+  // 从环境变量获取 API 密钥（必须设置，否则抛出错误）
+  const apiSecret = import.meta.env.VITE_API_SECRET
+  if (!apiSecret) {
+    console.error('VITE_API_SECRET 环境变量未设置')
+    throw new Error('API Secret 未配置')
+  }
 
   // 使用 HMAC-SHA256 签名
   return await hmacSha256(str, apiSecret)
@@ -85,13 +90,15 @@ async function signRequest(url: string, method: string, data: any, timestamp: nu
 /**
  * 从本地取 token（带过期检查）
  */
-function getToken(): string {
+async function getToken(): Promise<string> {
   try {
-    const token = uni.getStorageSync('token') || ''
+    // 使用 auth.ts 中的 getToken（会自动解密）
+    const token = await getStoredToken()
 
     // 检查是否过期
     if (token && isTokenExpired(token)) {
-      uni.removeStorageSync('token')
+      // 清除过期的 token
+      clearToken()
       return ''
     }
 
@@ -125,9 +132,7 @@ function defaultErrorHandler(error: Error): boolean {
   // 401 错误特殊处理 - 跳转到登录页
   if (error.message.includes('登录已过期')) {
     // 清除 token
-    try {
-      uni.removeStorageSync('token')
-    } catch {}
+    clearToken()
 
     // 跳转到登录页（需要根据实际路由调整）
     uni.navigateTo({
@@ -179,7 +184,7 @@ export async function request<T = unknown>(options: RequestOptions): Promise<T> 
   } = options
 
   const url = resolveUrl(rawOptions.url)
-  const token = rawOptions.noAuth ? '' : getToken()
+  const token = rawOptions.noAuth ? '' : await getToken()
   const timestamp = Date.now()
   const nonce = generateNonce()
   const signature = await signRequest(url, rawOptions.method || 'GET', rawOptions.data, timestamp, nonce)

@@ -1,5 +1,6 @@
 /**
  * 加密和签名工具（小程序兼容性）
+ * 使用 AES-GCM 加密算法提供更强的安全性
  */
 
 /**
@@ -15,47 +16,87 @@ function randomString(length: number): string {
 }
 
 /**
- * 获取或生成设备唯一密钥
+ * 获取或生成设备唯一密钥（256位）
  */
-function getDeviceKey(): string {
-  let key = uni.getStorageSync('device_key')
-  if (!key) {
-    key = randomString(32)
-    uni.setStorageSync('device_key', key)
+async function getDeviceKey(): Promise<CryptoKey> {
+  let keyString = uni.getStorageSync('device_key')
+  if (!keyString) {
+    // 生成新的随机密钥
+    keyString = randomString(32)
+    uni.setStorageSync('device_key', keyString)
   }
-  return key
+
+  // 将字符串密钥转换为 CryptoKey
+  const encoder = new TextEncoder()
+  const keyBuffer = encoder.encode(keyString.padEnd(32, '0').slice(0, 32))
+
+  return await crypto.subtle.importKey(
+    'raw',
+    keyBuffer,
+    { name: 'AES-GCM' },
+    false,
+    ['encrypt', 'decrypt']
+  )
 }
 
 /**
- * 简单 XOR 加密
- * 注意：生产环境建议使用更强大的加密方案
+ * AES-GCM 加密
+ * 用于保护存储在本地的敏感数据（如 token）
  */
-export function encrypt(text: string): string {
-  const key = getDeviceKey()
-  let result = ''
-  for (let i = 0; i < text.length; i++) {
-    result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length))
-  }
-  // Base64 编码
-  const base64 = uni.arrayBufferToBase64(new TextEncoder().encode(result).buffer)
-  return base64
-}
-
-/**
- * 解密
- */
-export function decrypt(encoded: string): string {
+export async function encrypt(text: string): Promise<string> {
   try {
-    const key = getDeviceKey()
+    const key = await getDeviceKey()
+    const encoder = new TextEncoder()
+    const data = encoder.encode(text)
+
+    // 生成随机初始化向量 (IV)
+    const iv = crypto.getRandomValues(new Uint8Array(12))
+
+    // 使用 AES-GCM 加密
+    const encrypted = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      data
+    )
+
+    // 合并 IV 和加密数据
+    const combined = new Uint8Array(iv.length + encrypted.byteLength)
+    combined.set(iv)
+    combined.set(new Uint8Array(encrypted), iv.length)
+
+    // Base64 编码
+    return uni.arrayBufferToBase64(combined.buffer)
+  } catch (error) {
+    console.error('Encryption failed:', error)
+    throw new Error('加密失败')
+  }
+}
+
+/**
+ * AES-GCM 解密
+ */
+export async function decrypt(encoded: string): Promise<string> {
+  try {
+    const key = await getDeviceKey()
+
     // Base64 解码
-    const buffer = uni.base64ToArrayBuffer(encoded)
-    const text = new TextDecoder().decode(new Uint8Array(buffer))
-    let result = ''
-    for (let i = 0; i < text.length; i++) {
-      result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length))
-    }
-    return result
-  } catch {
+    const combined = new Uint8Array(uni.base64ToArrayBuffer(encoded))
+
+    // 提取 IV (前12字节) 和加密数据
+    const iv = combined.slice(0, 12)
+    const encrypted = combined.slice(12)
+
+    // 使用 AES-GCM 解密
+    const decrypted = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      encrypted
+    )
+
+    const decoder = new TextDecoder()
+    return decoder.decode(decrypted)
+  } catch (error) {
+    console.error('Decryption failed:', error)
     return ''
   }
 }

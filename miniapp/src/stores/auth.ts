@@ -21,8 +21,8 @@ export const useAuthStore = defineStore('auth', () => {
   /**
    * 初始化 - 从本地存储恢复 token
    */
-  function init() {
-    const savedToken = authApi.getToken()
+  async function init() {
+    const savedToken = await authApi.getToken()
     if (savedToken) {
       token.value = savedToken
       // Token 存在但用户信息可能需要重新获取
@@ -40,7 +40,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       // 保存 token
       token.value = response.access_token
-      authApi.saveToken(response.access_token)
+      await authApi.saveToken(response.access_token)
 
       // 保存用户信息
       userInfo.value = response.user

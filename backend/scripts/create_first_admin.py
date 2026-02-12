@@ -31,17 +31,25 @@ def main():
             return
 
         # 从环境变量读取密码，或生成随机密码
+        # 生产环境应强制使用环境变量 ADMIN_DEFAULT_PASSWORD
+        env = os.getenv("ENV", "development")
         default_password = os.getenv("ADMIN_DEFAULT_PASSWORD")
+
+        if env == "production" and not default_password:
+            print("❌ 错误：生产环境必须设置 ADMIN_DEFAULT_PASSWORD 环境变量")
+            print("请设置环境变量后重试：export ADMIN_DEFAULT_PASSWORD='your_secure_password'")
+            sys.exit(1)
+
         if not default_password:
             default_password = generate_random_password()
-            print("=" * 60)
-            print("首次部署：随机生成的管理员密码")
-            print("=" * 60)
-            print(f"用户名: admin")
-            print(f"密码: {default_password}")
-            print("=" * 60)
-            print("⚠️  请妥善保管此密码，首次登录后请立即修改！")
-            print("=" * 60)
+            print("=" * 60, file=sys.stderr)
+            print("首次部署：随机生成的管理员密码", file=sys.stderr)
+            print("=" * 60, file=sys.stderr)
+            print(f"用户名: admin", file=sys.stderr)
+            print(f"密码: {default_password}", file=sys.stderr)
+            print("=" * 60, file=sys.stderr)
+            print("⚠️  请妥善保管此密码，首次登录后请立即修改！", file=sys.stderr)
+            print("=" * 60, file=sys.stderr)
 
             # 同时保存到文件供管理员查看
             password_file = "admin_password.txt"

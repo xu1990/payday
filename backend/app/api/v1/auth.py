@@ -36,29 +36,6 @@ async def login(
     )
 
 
-@router.post("/refresh", response_model=RefreshTokenResponse, dependencies=[Depends(rate_limit_general)])
-async def refresh(
-    body: RefreshTokenRequest,
-):
-    body: LoginRequest,
-    db: AsyncSession = Depends(get_db),
-):
-    result = await login_with_code(db, body.code)
-    if not result:
-        raise HTTPException(status_code=400, detail="微信登录失败，请重试")
-    access_token, refresh_token, user = result
-    user_info = {
-        "id": user.id,
-        "anonymous_name": user.anonymous_name,
-        "avatar": user.avatar,
-    }
-    return LoginResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        user=user_info
-    )
-
-
 @router.post("/refresh", response_model=RefreshTokenResponse)
 async def refresh(
     body: RefreshTokenRequest,

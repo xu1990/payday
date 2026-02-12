@@ -33,7 +33,17 @@ router.beforeEach((to, _from, next) => {
     if (auth.isLoggedIn && to.name === 'Login') return next({ path: '/' })
     return next()
   }
-  if (to.meta.requiresAuth && !auth.isLoggedIn) return next({ path: '/login', query: { redirect: to.fullPath } })
+  // 验证用户已登录且具有 admin scope
+  if (to.meta.requiresAuth) {
+    if (!auth.isLoggedIn) {
+      return next({ path: '/login', query: { redirect: to.fullPath } })
+    }
+    if (!auth.hasAdminScope) {
+      // token 缺少 admin scope，强制登出
+      auth.logout()
+      return next({ path: '/login', query: { redirect: to.fullPath } })
+    }
+  }
   next()
 })
 

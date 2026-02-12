@@ -12,6 +12,9 @@ export const useUserStore = defineStore('user', () => {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
+  // 请求去重：防止并发调用 fetchCurrentUser 导致多个请求
+  let fetchCurrentUserPromise: Promise<boolean> | null = null
+
   // 计算属性
   const userId = computed(() => currentUser.value?.id || '')
   const anonymousName = computed(() => currentUser.value?.anonymous_name || '')
@@ -27,19 +30,30 @@ export const useUserStore = defineStore('user', () => {
    * 获取当前用户信息
    */
   async function fetchCurrentUser(): Promise<boolean> {
-    try {
-      isLoading.value = true
-      error.value = null
-      const data = await userApi.getCurrentUser()
-      currentUser.value = data
-      return true
-    } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : '获取用户信息失败'
-      console.error('获取用户信息失败:', e)
-      return false
-    } finally {
-      isLoading.value = false
+    // 如果正在请求中，返回现有的 promise（防止并发）
+    if (fetchCurrentUserPromise) {
+      return fetchCurrentUserPromise
     }
+
+    // 创建新的请求 promise
+    fetchCurrentUserPromise = (async () => {
+      try {
+        isLoading.value = true
+        error.value = null
+        const data = await userApi.getCurrentUser()
+        currentUser.value = data
+        return true
+      } catch (e: unknown) {
+        error.value = e instanceof Error ? e.message : '获取用户信息失败'
+        console.error('获取用户信息失败:', e)
+        return false
+      } finally {
+        isLoading.value = false
+        fetchCurrentUserPromise = null  // 清除 promise 引用
+      }
+    })()
+
+    return fetchCurrentUserPromise
   }
 
   /**

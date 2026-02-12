@@ -11,6 +11,7 @@ from app.models.post import Post
 from app.schemas.post import PostCreate
 from app.core.cache import PostCacheService
 from app.core.exceptions import NotFoundException
+from app.utils.sanitize import sanitize_html
 
 
 async def create(
@@ -20,10 +21,13 @@ async def create(
     *,
     anonymous_name: str,
 ) -> Post:
+    # 净化用户输入的内容，防止 XSS 攻击
+    sanitized_content = sanitize_html(data.content)
+
     post = Post(
         user_id=user_id,
         anonymous_name=anonymous_name,
-        content=data.content,
+        content=sanitized_content,
         images=data.images,
         tags=data.tags,
         type=data.type,

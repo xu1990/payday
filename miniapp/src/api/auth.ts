@@ -37,9 +37,9 @@ export function login(code: string): Promise<LoginResponse> {
  */
 import { encrypt, decrypt } from '@/utils/crypto'
 
-export function saveToken(token: string): void {
+export async function saveToken(token: string): Promise<void> {
   try {
-    const encrypted = encrypt(token)
+    const encrypted = await encrypt(token)
     uni.setStorageSync('token', encrypted)
   } catch (e) {
     console.error('保存 token 失败:', e)
@@ -49,11 +49,11 @@ export function saveToken(token: string): void {
 /**
  * 获取本地存储的 Token（解密版本）
  */
-export function getToken(): string {
+export async function getToken(): Promise<string> {
   try {
     const encrypted = uni.getStorageSync('token') || ''
     if (!encrypted) return ''
-    return decrypt(encrypted)
+    return await decrypt(encrypted)
   } catch {
     return ''
   }
@@ -73,8 +73,9 @@ export function clearToken(): void {
 /**
  * 检查是否已登录
  */
-export function isLoggedIn(): boolean {
-  return !!getToken()
+export async function isLoggedIn(): Promise<boolean> {
+  const token = await getToken()
+  return !!token
 }
 
 export default {
