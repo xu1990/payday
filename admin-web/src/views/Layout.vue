@@ -37,6 +37,18 @@
           <el-icon><PriceTag /></el-icon>
           <span>话题管理</span>
         </el-menu-item>
+        <el-menu-item index="/memberships">
+          <el-icon><VIP /></el-icon>
+          <span>会员管理</span>
+        </el-menu-item>
+        <el-menu-item index="/themes">
+          <el-icon><Brush /></el-icon>
+          <span>主题配置</span>
+        </el-menu-item>
+        <el-menu-item index="/orders">
+          <el-icon><Tickets /></el-icon>
+          <span>订单管理</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>
@@ -54,7 +66,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DataAnalysis, User, List, Document, ChatDotRound, DocumentChecked, PriceTag } from '@element-plus/icons-vue'
+import { DataAnalysis, User, List, Document, ChatDotRound, DocumentChecked, PriceTag, VIP, Brush, Tickets } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
