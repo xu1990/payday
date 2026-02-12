@@ -1,0 +1,37 @@
+# Systemd Service - Celery Beat
+# 用于生产环境管理定时任务调度
+#
+# 使用方法:
+# 1. 修改 ExecStart 中的路径为实际部署路径
+# 2. 复制到 /etc/systemd/system/payday-beat.service
+# 3. 重载 systemd: systemctl daemon-reload
+# 4. 启用服务: systemctl enable payday-beat
+# 5. 启动服务: systemctl start payday-beat
+# 6. 查看状态: systemctl status payday-beat
+# 7. 查看日志: journalctl -u payday-beat -f
+
+[Unit]
+Description=Celery Beat for PayDay Backend
+After=network.target redis.service
+Requires=redis.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/path/to/payday/backend
+Environment="PATH=/path/to/venv/bin"
+Environment="PYTHONUNBUFFERED=1"
+ExecStart=/path/to/venv/bin/celery -A app.celery_app beat \
+    --pidfile=/var/run/celery/payday-beat.pid \
+    --logfile=/var/log/celery/payday-beat.log \
+    --loglevel=info
+ExecStop=/bin/kill -TERM $MAINPID
+Restart=always
+RestartSec=10s
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=payday-beat
+
+[Install]
+WantedBy=multi-user.target

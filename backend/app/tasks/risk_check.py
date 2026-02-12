@@ -1,7 +1,8 @@
 """
 发帖后异步风控检查：取帖子 → 文本/图片评分 → 更新 risk_status/risk_score/risk_reason；拒绝则下架并发系统通知
-使用同步 Session（与 app.core.database SessionLocal 一致），由 FastAPI BackgroundTasks 在线程池执行
+使用 Celery 异步任务处理
 """
+from celery import shared_task
 from sqlalchemy import select, update
 
 from app.core.database import SessionLocal
@@ -10,6 +11,7 @@ from app.models.post import Post
 from app.services.risk_service import evaluate_content, RiskResult
 
 
+@shared_task(name="tasks.run_risk_check_for_post")
 def run_risk_check_for_post(post_id: str) -> None:
     db = SessionLocal()
     try:
