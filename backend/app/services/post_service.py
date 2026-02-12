@@ -202,3 +202,69 @@ async def delete_post_for_admin(db: AsyncSession, post_id: str) -> bool:
     post.status = "deleted"
     await db.commit()
     return True
+
+
+async def search_posts(
+    db: AsyncSession,
+    keyword: Optional[str] = None,
+    tags: Optional[List[str]] = None,
+    user_id: Optional[str] = None,
+    industry: Optional[str] = None,
+    city: Optional[str] = None,
+    salary_range: Optional[str] = None,
+    sort: Literal["hot", "latest"] = "latest",
+    limit: int = 20,
+    offset: int = 0,
+) -> Tuple[List[Post], int]:
+    """搜索帖子：按关键词、标签、用户、行业、城市、工资区间筛选"""
+    # 构建基础查询
+    query = select(Post).where(
+        Post.status == "normal",
+        Post.risk_status == "approved"
+    )
+
+    # 按关键词搜索
+    if keyword:
+        search_pattern = f"%{keyword}%"
+        query = query.where(Post.content.ilike(search_pattern))
+
+    # 按标签搜索（JSON查询）
+    if tags:
+        # Post.tags 是 JSON 数组，使用 JSON_CONTAINS
+        for tag in tags:
+            query = query.where(Post.tags.contains(f'"{tag}"'))
+
+    # 按用户搜索
+    if user_id:
+        query = query.where(Post.user_id == user_id)
+
+    # 按行业筛选
+    if industry:
+        query = query.where(Post.industry == industry)
+
+    # 按城市筛选
+    if city:
+        query = query.where(Post.city == city)
+
+    # 按工资区间筛选
+    if salary_range:
+        query = query.where(Post.salary_range == salary_range)
+
+    # 排序
+    if sort == "hot":
+        query = query.order_by(Post.like_count.desc(), Post.created_at.desc())
+    else:  # latest
+        query = query.order_by(Post.created_at.desc())
+
+    # 先获取总数
+    from sqlalchemy import func
+    count_query = select(func.count()).select_from(query.subquery)
+    total_result = await db.execute(count_query)
+    total = total_result.scalar() or 0
+
+    # 应用分页和限制
+    query = query.limit(limit).offset(offset)
+    result = await db.execute(query)
+    posts = result.scalars().all()
+
+    return list(posts), total

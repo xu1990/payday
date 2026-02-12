@@ -10,10 +10,39 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.schemas.post import PostCreate, PostResponse
-from app.services.post_service import create as create_post, get_by_id, list_posts
+from app.services.post_service import create as create_post, get_by_id, list_posts, search_posts
 from app.tasks.risk_check import run_risk_check_for_post
 
 router = APIRouter(prefix="/posts", tags=["posts"])
+
+
+@router.get("/search", response_model=dict)
+async def post_search(
+    keyword: str | None = Query(None, description="搜索关键词"),
+    tags: str | None = Query(None, description="标签搜索，逗号分隔"),
+    user_id: str | None = Query(None, description="用户ID筛选"),
+    industry: str | None = Query(None, description="行业筛选"),
+    city: str | None = Query(None, description="城市筛选"),
+    salary_range: str | None = Query(None, description="工资区间筛选"),
+    sort: Literal["hot", "latest"] = Query("latest", description="hot=热门 latest=最新"),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+):
+    """搜索帖子"""
+    posts, total = await search_posts(
+        db,
+        keyword=keyword,
+        tags=tags.split(",") if tags else None,
+        user_id=user_id,
+        industry=industry,
+        city=city,
+        salary_range=salary_range,
+        sort=sort,
+        limit=limit,
+        offset=offset
+    )
+    return {"items": [PostResponse.model_validate(p) for p in posts], "total": total}
 
 
 @router.post("", response_model=PostResponse)
