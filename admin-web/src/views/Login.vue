@@ -56,8 +56,10 @@ async function onSubmit() {
     ElMessage.success('登录成功')
     const redirect = (route.query.redirect as string) || '/'
     router.replace(redirect)
-  } catch (e: any) {
-    error.value = e.response?.data?.detail || e.message || '登录失败'
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : '登录失败'
+    const errorDetail = (e as any).response?.data?.detail || errorMessage
+    error.value = errorDetail
   } finally {
     loading.value = false
   }

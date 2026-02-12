@@ -104,6 +104,7 @@ import {
   type AdminPostListItem,
   type AdminCommentListItem,
 } from '@/api/admin'
+import { formatDate } from '@/utils/format'
 
 const activeTab = ref<'posts' | 'comments'>('posts')
 
@@ -128,15 +129,6 @@ const rejectVisible = ref(false)
 const rejectReason = ref('')
 const rejectTargetPost = ref<AdminPostListItem | null>(null)
 const rejectTargetComment = ref<AdminCommentListItem | null>(null)
-
-function formatDate(s: string | null) {
-  if (!s) return '-'
-  try {
-    return new Date(s).toLocaleString('zh-CN')
-  } catch {
-    return s
-  }
-}
 
 async function fetchPosts() {
   postsLoading.value = true

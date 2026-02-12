@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.share import Share
 from app.schemas.share import ShareCreate, ShareResponse
+from app.core.exceptions import NotFoundException
 
 
 async def create_share(
@@ -40,11 +41,12 @@ async def update_share_status(
     error_message: Optional[str] = None,
 ) -> Optional[Share]:
     """更新分享状态（成功/失败）"""
-    share = await db.execute(
+    result = await db.execute(
         select(Share).where(Share.id == share_id)
     )
+    share = result.scalar_one_or_none()
     if not share:
-        return None
+        raise NotFoundException("分享记录不存在")
 
     share.share_status = status
     if status == "failed" and error_message:

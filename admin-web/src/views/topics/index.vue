@@ -9,6 +9,10 @@ import {
   type TopicItem,
   type TopicCreate,
 } from '@/api/topics'
+import BaseDataTable from '@/components/BaseDataTable.vue'
+import StatusTag from '@/components/StatusTag.vue'
+import ActionButtons from '@/components/ActionButtons.vue'
+import { formatDate } from '@/utils/format'
 
 const list = ref<TopicItem[]>([])
 const loading = ref(false)
@@ -36,8 +40,9 @@ async function loadData() {
     })
     list.value = res?.items || []
     total.value = res?.total || 0
-  } catch (e: any) {
-    ElMessage.error(e?.message || '加载失败')
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : '加载失败'
+    ElMessage.error(errorMessage)
   } finally {
     loading.value = false
   }
@@ -88,8 +93,9 @@ async function submit() {
     }
     showDialog.value = false
     await loadData()
-  } catch (e: any) {
-    ElMessage.error(e?.message || '操作失败')
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : '操作失败'
+    ElMessage.error(errorMessage)
   }
 }
 
@@ -104,8 +110,9 @@ function doDelete(item: TopicItem) {
         await deleteTopic(item.id)
         ElMessage.success('删除成功')
         await loadData()
-      } catch (e: any) {
-        ElMessage.error(e?.message || '删除失败')
+      } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : '删除失败'
+        ElMessage.error(errorMessage)
       }
     })
     .catch(() => {})
@@ -122,8 +129,9 @@ async function toggleActive(item: TopicItem) {
     })
     ElMessage.success(item.is_active ? '已禁用' : '已启用')
     await loadData()
-  } catch (e: any) {
-    ElMessage.error(e?.message || '操作失败')
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : '操作失败'
+    ElMessage.error(errorMessage)
   }
 }
 
@@ -144,7 +152,13 @@ onMounted(() => {
       <el-button type="primary" @click="openCreate">创建话题</el-button>
     </div>
 
-    <el-table v-loading="loading" :data="list" stripe>
+    <BaseDataTable
+      v-model:current-page="currentPage"
+      :items="list"
+      :total="total"
+      :loading="loading"
+      @page-change="handlePageChange"
+    >
       <el-table-column prop="name" label="话题名称" width="200" />
       <el-table-column prop="description" label="描述" show-overflow-tooltip />
       <el-table-column label="封面" width="120">
@@ -153,7 +167,7 @@ onMounted(() => {
             v-if="row.cover_image"
             :src="row.cover_image"
             fit="cover"
-            style="width: 60px; height: 40px; border-radius: 4px"
+            style="width: 60px; height: 40px; border-radius: var(--radius-sm)"
           />
           <span v-else class="text-muted">-</span>
         </template>
@@ -162,45 +176,25 @@ onMounted(() => {
       <el-table-column prop="sort_order" label="排序" width="80" align="center" />
       <el-table-column label="状态" width="100" align="center">
         <template #default="{ row }">
-          <el-tag :type="row.is_active ? 'success' : 'info'" size="small">
-            {{ row.is_active ? '启用' : '禁用' }}
-          </el-tag>
+          <StatusTag :status="row.is_active ? 'active' : 'inactive'" />
         </template>
       </el-table-column>
       <el-table-column label="创建时间" width="180">
         <template #default="{ row }">
-          {{ new Date(row.created_at).toLocaleString() }}
+          {{ formatDate(row.created_at) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="240" fixed="right">
+      <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" size="small" @click="openEdit(row)">
-            编辑
-          </el-button>
-          <el-button
-            link
-            :type="row.is_active ? 'warning' : 'success'"
-            size="small"
-            @click="toggleActive(row)"
-          >
-            {{ row.is_active ? '禁用' : '启用' }}
-          </el-button>
-          <el-button link type="danger" size="small" @click="doDelete(row)">
-            删除
-          </el-button>
+          <ActionButtons
+            :is-active="row.is_active"
+            @edit="openEdit(row)"
+            @toggle="toggleActive(row)"
+            @delete="doDelete(row)"
+          />
         </template>
       </el-table-column>
-    </el-table>
-
-    <div class="pagination">
-      <el-pagination
-        v-model:current-page="currentPage"
-        :page-size="pageSize"
-        :total="total"
-        layout="total, prev, pager, next"
-        @current-change="handlePageChange"
-      />
-    </div>
+    </BaseDataTable>
 
     <!-- 创建/编辑对话框 -->
     <el-dialog
@@ -239,25 +233,20 @@ onMounted(() => {
 
 <style scoped>
 .topics-page {
-  padding: 24px;
+  padding: var(--spacing-xl);
 }
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: var(--spacing-xl);
 }
 .header h2 {
   margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-}
-.pagination {
-  display: flex;
-  justify-content: center;
-  margin-top: 24px;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
 }
 .text-muted {
-  color: #999;
+  color: var(--color-text-secondary);
 }
 </style>

@@ -35,6 +35,14 @@ async def lifespan(app: FastAPI):
     # 初始化 Sentry
     init_on_startup()
 
+    # 初始化 Redis 连接
+    from app.core.cache import get_redis_client
+    try:
+        await get_redis_client()
+        logger.info("Redis connection initialized")
+    except Exception as e:
+        logger.warning(f"Redis initialization failed: {e}")
+
     # 设置应用信息
     import os
     git_commit = os.getenv('GIT_COMMIT', None)
@@ -81,6 +89,14 @@ async def lifespan(app: FastAPI):
 
     # 关闭时执行
     logger.info("Shutting down PayDay backend...")
+
+    # 关闭 Redis 连接
+    from app.core.cache import close_redis
+    try:
+        await close_redis()
+        logger.info("Redis connection closed")
+    except Exception as e:
+        logger.warning(f"Redis close failed: {e}")
 
 
 app = FastAPI(

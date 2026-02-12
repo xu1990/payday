@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.salary import SalaryRecord
 from app.schemas.salary import SalaryRecordCreate, SalaryRecordUpdate
 from app.utils.encryption import decrypt_amount, encrypt_amount
+from app.core.exceptions import NotFoundException, ValidationException
 
 
 async def list_by_user(
@@ -70,7 +71,7 @@ async def update(
     try:
         record = await get_by_id(db, record_id, user_id)
         if not record:
-            return None
+            raise NotFoundException("工资记录不存在")
         d = data.model_dump(exclude_unset=True)
         if "amount" in d:
             d["amount_encrypted"] = encrypt_amount(d.pop("amount"))
@@ -118,9 +119,9 @@ async def update_risk_for_admin(
 
     record = await get_by_id_for_admin(db, record_id)
     if not record:
-        return None
+        raise NotFoundException("工资记录不存在")
     if risk_status not in ("approved", "rejected"):
-        return None
+        raise ValidationException("risk_status 必须是 approved 或 rejected")
     record.risk_status = risk_status
     record.risk_check_time = datetime.utcnow()
     await db.commit()

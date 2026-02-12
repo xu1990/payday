@@ -28,9 +28,96 @@ function resolveUrl(url: string): string {
 }
 
 /** 从本地取 token（与登录逻辑一致即可） */
+/**
+ * 检查 JWT token是否过期
+ */
+function isTokenExpired(token: string): boolean {
+  if (!token) return true
+  try {
+    // JWT格式: header.payload.signature
+    const parts = token.split('.')
+    if (parts.length !== 3) return true
+
+    // 解码payload (Base64)
+    // 小程序环境可能没有 atob，使用 uni API
+    const payload = JSON.parse(
+      uni.arrayBufferToBase64(
+        uni.base64ToArrayBuffer(parts[1])
+          .then(buf => new TextDecoder().decode(buf))
+      ) || atob(parts[1]).replace(/-/g, '+').replace(/_/g, '/'))
+    )
+
+    if (!payload.exp) return true
+
+    // exp是秒级时间戳，转换为毫秒比较
+    const now = Math.floor(Date.now() / 1000)
+    // 提前 5 分钟判定过期，避免临界点问题
+    return now >= (payload.exp - 300)
+  } catch {
+    return true
+  }
+}
+
+/**
+ * 生成随机 nonce
+ */
+function generateNonce(): string {
+  return Date.now().toString(36) + Math.random().toString(36).substring(2)
+}
+
+/**
+ * 请求签名
+ */
+function signRequest(url: string, method: string, data: any, timestamp: number, nonce: string): string {
+  // 按字母顺序排序参数
+  const params: Record<string, any> = { url, method, timestamp, nonce, ...data }
+  const sorted = Object.keys(params).sort()
+
+  // 拼接字符串
+  const str = sorted.map(k => `${k}=${params[k]}`).join('&')
+
+  // 简单哈希（生产环境应使用 HMAC-SHA256）
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i)
+    hash |= 0
+  }
+  return hash.toString(36)
+}
+
+/**
+ * 从本地取 token（带过期检查）
+ */
 function getToken(): string {
   try {
-    return uni.getStorageSync('token') || ''
+    const token = uni.getStorageSync('token') || ''
+
+    // 检查是否过期
+    if (token && isTokenExpired(token)) {
+      uni.removeStorageSync('token')
+      return ''
+    }
+
+    return token
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * 从本地取 token（带过期检查）
+ */
+function getToken(): string {
+  try {
+    const token = uni.getStorageSync('token') || ''
+
+    // 检查是否过期
+    if (token && isTokenExpired(token)) {
+      uni.removeStorageSync('token')
+      return ''
+    }
+
+    return token
   } catch {
     return ''
   }
@@ -115,11 +202,18 @@ export function request<T = unknown>(options: RequestOptions): Promise<T> {
 
   const url = resolveUrl(rawOptions.url)
   const token = rawOptions.noAuth ? '' : getToken()
+  const timestamp = Date.now()
+  const nonce = generateNonce()
+  const signature = signRequest(url, rawOptions.method || 'GET', rawOptions.data, timestamp, nonce)
+
   const header: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(rawOptions.header as Record<string, string>),
   }
   if (token) header.Authorization = `Bearer ${token}`
+  header['X-Timestamp'] = timestamp.toString()
+  header['X-Nonce'] = nonce
+  header['X-Signature'] = signature
 
   // 显示 loading
   if (shouldShowLoading) {

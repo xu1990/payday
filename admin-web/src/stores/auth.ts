@@ -1,6 +1,28 @@
 import { defineStore } from 'pinia'
+import CryptoJS from 'crypto-js'
 
 const TOKEN_KEY = 'payday_admin_token'
+// 使用固定加密密钥（生产环境应从环境变量获取）
+const ENCRYPTION_KEY = import.meta.env.VITE_TOKEN_ENCRYPTION_KEY || 'payday-default-key-32-chars-long!'
+
+/**
+ * 加密 token
+ */
+function encryptToken(token: string): string {
+  return CryptoJS.AES.encrypt(token, ENCRYPTION_KEY).toString()
+}
+
+/**
+ * 解密 token
+ */
+function decryptToken(encrypted: string): string {
+  try {
+    const bytes = CryptoJS.AES.decrypt(encrypted, ENCRYPTION_KEY)
+    return bytes.toString(CryptoJS.enc.Utf8)
+  } catch {
+    return ''
+  }
+}
 
 /**
  * 检查JWT token是否过期
@@ -32,7 +54,11 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: (() => {
       try {
-        const token = localStorage.getItem(TOKEN_KEY) || ''
+        const encrypted = localStorage.getItem(TOKEN_KEY) || ''
+        if (!encrypted) return ''
+
+        // 解密 token
+        const token = decryptToken(encrypted)
 
         // 检查token是否过期
         if (token && isTokenExpired(token)) {
@@ -54,8 +80,12 @@ export const useAuthStore = defineStore('auth', {
     setToken(t: string) {
       this.token = t
       try {
-        if (t) localStorage.setItem(TOKEN_KEY, t)
-        else localStorage.removeItem(TOKEN_KEY)
+        if (t) {
+          const encrypted = encryptToken(t)
+          localStorage.setItem(TOKEN_KEY, encrypted)
+        } else {
+          localStorage.removeItem(TOKEN_KEY)
+        }
       } catch {}
     },
     logout() {

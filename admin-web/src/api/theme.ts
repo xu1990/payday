@@ -1,7 +1,7 @@
 /**
  * 主题配置管理 API
  */
-import request from '@/utils/request'
+import { request } from '@/utils/request'
 
 const PREFIX = '/api/v1/admin/config/themes'
 

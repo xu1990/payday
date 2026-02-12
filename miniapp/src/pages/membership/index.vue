@@ -79,7 +79,7 @@ import {
   type MembershipItem,
   type ActiveMembership
 } from '@/api/membership'
-import { createPayment, requestWeChatPayment } from '@/api/payment'
+import { createPayment, requestWeChatPayment, verifyPayment } from '@/api/payment'
 
 const packages = ref<MembershipItem[]>([])
 const activeMembership = ref<ActiveMembership>({} as ActiveMembership)
@@ -131,22 +131,39 @@ const selectPackage = async (pkg: MembershipItem) => {
           }
 
           // 3. 调起微信支付
-          await requestWeChatPayment(payRes.data)
-          uni.showToast({ title: '支付成功', icon: 'success' })
+          try {
+            await requestWeChatPayment(payRes.data)
 
-          // 4. 刷新会员状态
-          setTimeout(async () => {
-            const active = await getActiveMembership()
-            activeMembership.value = active as ActiveMembership
-          }, 1000)
+            // 4. 验证支付结果（确认服务器已确认支付）
+            uni.showLoading({ title: '确认支付结果...', mask: true })
 
-        } catch (error: any) {
-          console.error('Payment failed:', error)
-          if (error.errMsg && error.errMsg.includes('cancel')) {
-            uni.showToast({ title: '已取消支付', icon: 'none' })
-          } else {
-            uni.showToast({ title: '支付失败，请重试', icon: 'none' })
+            const verifyRes = await verifyPayment(orderId)
+
+            uni.hideLoading()
+
+            if (!verifyRes.success) {
+              uni.showToast({ title: verifyRes.message || '支付验证失败', icon: 'none' })
+              return
+            }
+
+            // 5. 支付成功，刷新会员状态
+            uni.showToast({ title: '支付成功', icon: 'success' })
+            setTimeout(async () => {
+              const active = await getActiveMembership()
+              activeMembership.value = active as ActiveMembership
+            }, 1000)
+
+          } catch (paymentError: any) {
+            console.error('Payment failed:', paymentError)
+            if (paymentError.errMsg && paymentError.errMsg.includes('cancel')) {
+              uni.showToast({ title: '已取消支付', icon: 'none' })
+            } else {
+              uni.showToast({ title: '支付失败，请重试', icon: 'none' })
+            }
           }
+        } catch (error: any) {
+          console.error('Order creation failed:', error)
+          uni.showToast({ title: '创建订单失败，请重试', icon: 'none' })
         }
       }
     }

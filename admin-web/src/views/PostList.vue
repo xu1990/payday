@@ -14,7 +14,15 @@
       </el-select>
       <el-button type="primary" @click="fetch">查询</el-button>
     </div>
-    <el-table v-loading="loading" :data="items" stripe>
+
+    <BaseDataTable
+      v-model:current-page="page"
+      v-model:page-size="pageSize"
+      :items="items"
+      :total="total"
+      :loading="loading"
+      @page-change="fetch"
+    >
       <el-table-column prop="id" label="ID" width="280" show-overflow-tooltip />
       <el-table-column prop="anonymous_name" label="匿名昵称" width="120" />
       <el-table-column prop="content" label="内容" min-width="200" show-overflow-tooltip />
@@ -22,8 +30,16 @@
       <el-table-column prop="view_count" label="浏览" width="70" />
       <el-table-column prop="like_count" label="点赞" width="70" />
       <el-table-column prop="comment_count" label="评论" width="70" />
-      <el-table-column prop="status" label="状态" width="80" />
-      <el-table-column prop="risk_status" label="风控" width="80" />
+      <el-table-column prop="status" label="状态" width="80">
+        <template #default="{ row }">
+          <StatusTag :status="row.status" />
+        </template>
+      </el-table-column>
+      <el-table-column prop="risk_status" label="风控" width="80">
+        <template #default="{ row }">
+          <StatusTag :status="row.risk_status" />
+        </template>
+      </el-table-column>
       <el-table-column prop="created_at" label="创建时间" width="170">
         <template #default="{ row }">{{ formatDate(row.created_at) }}</template>
       </el-table-column>
@@ -38,17 +54,8 @@
           <el-button type="danger" link @click="onDelete(row)">删除</el-button>
         </template>
       </el-table-column>
-    </el-table>
-    <el-pagination
-      v-model:current-page="page"
-      v-model:page-size="pageSize"
-      :total="total"
-      :page-sizes="[10, 20, 50]"
-      layout="total, sizes, prev, pager, next"
-      class="pagination"
-      @current-change="fetch"
-      @size-change="fetch"
-    />
+    </BaseDataTable>
+
     <el-dialog v-model="detailVisible" title="帖子详情" width="600px">
       <template v-if="currentPost">
         <p><strong>ID：</strong>{{ currentPost.id }}</p>
@@ -62,6 +69,7 @@
         <p v-if="currentPost.risk_reason"><strong>风控原因：</strong>{{ currentPost.risk_reason }}</p>
       </template>
     </el-dialog>
+
     <el-dialog v-model="rejectVisible" title="拒绝原因" width="400px">
       <el-input v-model="rejectReason" type="textarea" placeholder="选填" :rows="3" />
       <template #footer>
@@ -81,6 +89,10 @@ import {
   deletePost,
   type AdminPostListItem,
 } from '@/api/admin'
+import BaseDataTable from '@/components/BaseDataTable.vue'
+import StatusTag from '@/components/StatusTag.vue'
+import { formatDate } from '@/utils/format'
+import { getErrorMessage, getCommonApiErrorMessage } from '@/utils/error'
 
 const loading = ref(false)
 const items = ref<AdminPostListItem[]>([])
@@ -115,8 +127,7 @@ async function approve(row: AdminPostListItem) {
     ElMessage.success('已通过')
     await fetch()
   } catch (e: unknown) {
-    const err = e as { response?: { status: number } }
-    ElMessage.error(err.response?.status === 404 ? '帖子不存在' : '操作失败')
+    ElMessage.error(getCommonApiErrorMessage(e))
   }
 }
 
@@ -138,8 +149,7 @@ async function confirmReject() {
     rejectTarget = null
     await fetch()
   } catch (e: unknown) {
-    const err = e as { response?: { status: number } }
-    ElMessage.error(err.response?.status === 404 ? '帖子不存在' : '操作失败')
+    ElMessage.error(getCommonApiErrorMessage(e))
   }
 }
 
@@ -154,8 +164,7 @@ async function hide(row: AdminPostListItem) {
     ElMessage.success('已隐藏')
     await fetch()
   } catch (e: unknown) {
-    const err = e as { response?: { status: number } }
-    ElMessage.error(err.response?.status === 404 ? '帖子不存在' : '操作失败')
+    ElMessage.error(getCommonApiErrorMessage(e))
   }
 }
 
@@ -170,8 +179,7 @@ async function onDelete(row: AdminPostListItem) {
     ElMessage.success('已删除')
     await fetch()
   } catch (e: unknown) {
-    const err = e as { response?: { status: number } }
-    ElMessage.error(err.response?.status === 404 ? '帖子不存在' : '删除失败')
+    ElMessage.error(getCommonApiErrorMessage(e))
   }
 }
 
@@ -197,8 +205,5 @@ watch([page, pageSize], fetch)
 </script>
 
 <style scoped>
-.page-title { margin-bottom: 16px; font-size: 18px; }
-.toolbar { margin-bottom: 16px; display: flex; gap: 8px; align-items: center; }
-.pagination { margin-top: 16px; justify-content: flex-end; }
-.content-block { white-space: pre-wrap; background: #f5f5f5; padding: 8px; border-radius: 4px; margin: 8px 0; }
+.content-block { white-space: pre-wrap; background: var(--color-bg-base); padding: var(--spacing-md); border-radius: var(--radius-sm); margin: var(--spacing-sm) 0; }
 </style>

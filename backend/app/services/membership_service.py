@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.membership import Membership, MembershipOrder, User
 from app.schemas.membership import MembershipOrderCreate
+from app.core.exceptions import BusinessException, NotFoundException, ValidationException
 
 
 async def list_memberships(db: AsyncSession) -> List[Membership]:
@@ -36,9 +37,9 @@ async def create_order(
     )
     membership_obj = membership.scalar_one_or_none()
     if not membership_obj:
-        raise ValueError("Invalid membership ID")
+        raise NotFoundException("会员套餐不存在")
     if not membership_obj.is_active:
-        raise ValueError("Membership is not active")
+        raise BusinessException("会员套餐未启用")
 
     # 计算会员起止日期
     start_date = datetime.utcnow().date()
@@ -87,14 +88,14 @@ async def get_active_membership(db: AsyncSession, user_id: str) -> Optional[dict
     active_order = result.scalar_one_or_none()
 
     if not active_order:
-        return None
+        return None  # OK: 没有激活的会员是正常情况
 
     membership = await db.execute(
         select(Membership).where(Membership.id == active_order.membership_id)
     ).scalar_one_or_none()
 
     if not membership:
-        return None
+        raise NotFoundException("会员套餐信息不存在")
 
     return {
         "id": membership.id,
@@ -136,10 +137,10 @@ async def cancel_order(db: AsyncSession, order_id: str, user_id: str) -> bool:
     order = result.scalar_one_or_none()
 
     if not order:
-        raise ValueError("订单不存在")
+        raise NotFoundException("订单不存在")
 
     if order.status != "pending":
-        raise ValueError(f"订单状态为 {order.status}，无法取消")
+        raise BusinessException(f"订单状态为 {order.status}，无法取消")
 
     # 更新订单状态
     await db.execute(

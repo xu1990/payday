@@ -10,13 +10,25 @@
       </el-select>
       <el-button type="primary" @click="fetch">查询</el-button>
     </div>
-    <el-table v-loading="loading" :data="items" stripe>
+
+    <BaseDataTable
+      v-model:current-page="page"
+      v-model:page-size="pageSize"
+      :items="items"
+      :total="total"
+      :loading="loading"
+      @page-change="fetch"
+    >
       <el-table-column prop="id" label="ID" width="280" show-overflow-tooltip />
       <el-table-column prop="post_id" label="帖子ID" width="280" show-overflow-tooltip />
       <el-table-column prop="anonymous_name" label="匿名昵称" width="120" />
       <el-table-column prop="content" label="内容" min-width="200" show-overflow-tooltip />
       <el-table-column prop="like_count" label="点赞" width="70" />
-      <el-table-column prop="risk_status" label="风控" width="80" />
+      <el-table-column prop="risk_status" label="风控" width="80">
+        <template #default="{ row }">
+          <StatusTag :status="row.risk_status" />
+        </template>
+      </el-table-column>
       <el-table-column prop="created_at" label="创建时间" width="170">
         <template #default="{ row }">{{ formatDate(row.created_at) }}</template>
       </el-table-column>
@@ -28,17 +40,8 @@
           </template>
         </template>
       </el-table-column>
-    </el-table>
-    <el-pagination
-      v-model:current-page="page"
-      v-model:page-size="pageSize"
-      :total="total"
-      :page-sizes="[10, 20, 50]"
-      layout="total, sizes, prev, pager, next"
-      class="pagination"
-      @current-change="fetch"
-      @size-change="fetch"
-    />
+    </BaseDataTable>
+
     <el-dialog v-model="rejectVisible" title="拒绝原因" width="400px">
       <el-input v-model="rejectReason" type="textarea" placeholder="选填" :rows="3" />
       <template #footer>
@@ -57,6 +60,9 @@ import {
   updateCommentRisk,
   type AdminCommentListItem,
 } from '@/api/admin'
+import BaseDataTable from '@/components/BaseDataTable.vue'
+import StatusTag from '@/components/StatusTag.vue'
+import { formatDate } from '@/utils/format'
 
 const loading = ref(false)
 const items = ref<AdminCommentListItem[]>([])
@@ -131,9 +137,3 @@ async function fetch() {
 
 onMounted(fetch)
 </script>
-
-<style scoped>
-.page-title { margin-bottom: 16px; font-size: 18px; }
-.toolbar { margin-bottom: 16px; display: flex; gap: 8px; align-items: center; }
-.pagination { margin-top: 16px; justify-content: flex-end; }
-</style>

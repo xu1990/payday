@@ -31,8 +31,10 @@ def dict_to_xml(data: dict[str, Any]) -> str:
 
 
 def xml_to_dict(xml_str: str) -> dict[str, Any]:
-    """将 XML 转换为字典"""
-    root = ET.fromstring(xml_str)
+    """将 XML 转换为字典 - 防止 XXE 攻击"""
+    # 禁用 DTD 和实体解析，防止 XXE 攻击
+    parser = ET.XMLParser(resolve_entities=False, forbid_dtd=True)
+    root = ET.fromstring(xml_str, parser=parser)
     data = {}
     for child in root:
         data[child.tag] = child.text
@@ -139,18 +141,32 @@ async def create_mini_program_payment(
 
 def parse_payment_notify(xml_data: str) -> dict[str, Any]:
     """
-    解析支付回调通知
+    解析支付回调通知 - 增强安全验证
 
     Args:
         xml_data: 微信支付回调的 XML 数据
 
     Returns:
         解析后的字典数据
+
+    Raises:
+        Exception: 签名验证失败或缺少必需字段
     """
     data = xml_to_dict(xml_data)
 
     # 验证签名
     if not verify_sign(data, settings.wechat_pay_api_key):
         raise Exception("Invalid signature")
+
+    # 验证必需字段
+    required_fields = ["return_code", "result_code", "out_trade_no",
+                     "transaction_id", "total_fee", "time_end"]
+    missing_fields = [f for f in required_fields if not data.get(f)]
+    if missing_fields:
+        raise Exception(f"Missing required fields: {', '.join(missing_fields)}")
+
+    # 验证业务状态
+    if data.get("return_code") != "SUCCESS" or data.get("result_code") != "SUCCESS":
+        raise Exception(f"Payment failed: {data.get('err_code_des', 'Unknown error')}")
 
     return data

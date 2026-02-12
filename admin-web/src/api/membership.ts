@@ -1,7 +1,7 @@
 /**
  * 会员套餐管理 API
  */
-import request from '@/utils/request'
+import { request } from '@/utils/request'
 
 const PREFIX = '/api/v1/admin/config/memberships'
 

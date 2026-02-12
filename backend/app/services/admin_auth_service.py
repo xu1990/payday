@@ -16,9 +16,9 @@ async def get_admin_by_username(db: AsyncSession, username: str) -> Optional[Adm
 
 
 async def login_admin(db: AsyncSession, username: str, password: str) -> Optional[str]:
-    """校验用户名密码，成功返回 JWT（payload 含 sub=admin_id, scope=admin）"""
+    """校验用户名密码，成功返回 JWT（payload 含 sub=admin_id, scope=admin），失败返回 None"""
     admin = await get_admin_by_username(db, username)
     if not admin or not verify_password(password, admin.password_hash):
-        return None
+        return None  # OK: 登录失败返回 None 是正常流程
     token = create_access_token(data={"sub": str(admin.id), "scope": "admin"})
     return token

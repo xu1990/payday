@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.post import Post
 from app.schemas.post import PostCreate
 from app.core.cache import PostCacheService
+from app.core.exceptions import NotFoundException
 
 
 async def create(
@@ -182,7 +183,7 @@ async def update_post_status_for_admin(
     """管理端更新帖子状态（status 隐藏/恢复/删除）或风控人工通过/拒绝"""
     post = await get_by_id_for_admin(db, post_id)
     if not post:
-        return None
+        raise NotFoundException("帖子不存在")
     if status is not None:
         post.status = status
     if risk_status is not None:

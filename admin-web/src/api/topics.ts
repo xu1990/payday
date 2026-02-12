@@ -1,7 +1,7 @@
 /**
  * 话题管理 API
  */
-import request from '@/utils/request'
+import { request } from '@/utils/request'
 
 const PREFIX = '/api/v1/admin/topics'
 

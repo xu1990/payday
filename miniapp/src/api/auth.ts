@@ -33,22 +33,27 @@ export function login(code: string): Promise<LoginResponse> {
 }
 
 /**
- * 保存 Token 到本地存储
+ * 保存 Token 到本地存储（加密版本）
  */
+import { encrypt, decrypt } from '@/utils/crypto'
+
 export function saveToken(token: string): void {
   try {
-    uni.setStorageSync('token', token)
+    const encrypted = encrypt(token)
+    uni.setStorageSync('token', encrypted)
   } catch (e) {
     console.error('保存 token 失败:', e)
   }
 }
 
 /**
- * 获取本地存储的 Token
+ * 获取本地存储的 Token（解密版本）
  */
 export function getToken(): string {
   try {
-    return uni.getStorageSync('token') || ''
+    const encrypted = uni.getStorageSync('token') || ''
+    if (!encrypted) return ''
+    return decrypt(encrypted)
   } catch {
     return ''
   }

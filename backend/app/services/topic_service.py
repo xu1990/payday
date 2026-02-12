@@ -7,6 +7,7 @@ from sqlalchemy import select, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.topic import Topic
+from app.core.exceptions import NotFoundException
 
 
 async def create_topic(
@@ -67,7 +68,7 @@ async def update_topic(
     """更新话题。"""
     topic = await get_topic_by_id(db, topic_id)
     if not topic:
-        return None
+        raise NotFoundException("话题不存在")
 
     update_data = {}
     if name is not None:

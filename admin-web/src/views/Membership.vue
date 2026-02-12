@@ -9,6 +9,10 @@ import {
   type MembershipItem,
   type MembershipCreate,
 } from '@/api/membership'
+import BaseDataTable from '@/components/BaseDataTable.vue'
+import StatusTag from '@/components/StatusTag.vue'
+import ActionButtons from '@/components/ActionButtons.vue'
+import { formatDate, formatAmount } from '@/utils/format'
 
 const list = ref<MembershipItem[]>([])
 const loading = ref(false)
@@ -37,8 +41,9 @@ async function loadData() {
     })
     list.value = res?.items || []
     total.value = res?.total || 0
-  } catch (e: any) {
-    ElMessage.error(e?.message || '加载失败')
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : '加载失败'
+    ElMessage.error(errorMessage)
   } finally {
     loading.value = false
   }
@@ -63,7 +68,7 @@ function openEdit(item: MembershipItem) {
   form.value = {
     name: item.name,
     description: item.description || '',
-    price: Number(item.price) / 100, // 转换为元
+    price: Number(item.price) / 100,
     duration_days: item.duration_days,
     sort_order: item.sort_order,
   }
@@ -87,7 +92,7 @@ async function submit() {
   try {
     const payload = {
       ...form.value,
-      price: form.value.price * 100, // 转换为分
+      price: form.value.price * 100,
     }
 
     if (dialogMode.value === 'create') {
@@ -99,8 +104,9 @@ async function submit() {
     }
     showDialog.value = false
     await loadData()
-  } catch (e: any) {
-    ElMessage.error(e?.message || '操作失败')
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : '操作失败'
+    ElMessage.error(errorMessage)
   }
 }
 
@@ -115,8 +121,9 @@ function doDelete(item: MembershipItem) {
         await deleteMembership(item.id)
         ElMessage.success('删除成功')
         await loadData()
-      } catch (e: any) {
-        ElMessage.error(e?.message || '删除失败')
+      } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : '删除失败'
+        ElMessage.error(errorMessage)
       }
     })
     .catch(() => {})
@@ -134,18 +141,15 @@ async function toggleActive(item: MembershipItem) {
     })
     ElMessage.success(item.is_active ? '已禁用' : '已启用')
     await loadData()
-  } catch (e: any) {
-    ElMessage.error(e?.message || '操作失败')
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : '操作失败'
+    ElMessage.error(errorMessage)
   }
 }
 
 function handlePageChange(page: number) {
   currentPage.value = page
   loadData()
-}
-
-function formatPrice(priceInCents: number): string {
-  return (priceInCents / 100).toFixed(2)
 }
 
 onMounted(() => {
@@ -160,57 +164,44 @@ onMounted(() => {
       <el-button type="primary" @click="openCreate">创建套餐</el-button>
     </div>
 
-    <el-table v-loading="loading" :data="list" stripe>
+    <BaseDataTable
+      v-model:current-page="currentPage"
+      :items="list"
+      :total="total"
+      :loading="loading"
+      :show-pagination="true"
+      @page-change="handlePageChange"
+    >
       <el-table-column prop="name" label="套餐名称" width="200" />
       <el-table-column prop="description" label="权益说明" show-overflow-tooltip />
       <el-table-column label="价格" width="120">
         <template #default="{ row }">
-          <span class="price">¥{{ formatPrice(row.price) }}</span>
+          <span class="price">{{ formatAmount(row.price) }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="duration_days" label="有效期（天）" width="120" align="center" />
       <el-table-column prop="sort_order" label="排序" width="80" align="center" />
       <el-table-column label="状态" width="100" align="center">
         <template #default="{ row }">
-          <el-tag :type="row.is_active ? 'success' : 'info'" size="small">
-            {{ row.is_active ? '启用' : '禁用' }}
-          </el-tag>
+          <StatusTag :status="row.is_active ? 'active' : 'inactive'" />
         </template>
       </el-table-column>
       <el-table-column label="创建时间" width="180">
         <template #default="{ row }">
-          {{ new Date(row.created_at).toLocaleString() }}
+          {{ formatDate(row.created_at) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="280" fixed="right">
+      <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" size="small" @click="openEdit(row)">
-            编辑
-          </el-button>
-          <el-button
-            link
-            :type="row.is_active ? 'warning' : 'success'"
-            size="small"
-            @click="toggleActive(row)"
-          >
-            {{ row.is_active ? '禁用' : '启用' }}
-          </el-button>
-          <el-button link type="danger" size="small" @click="doDelete(row)">
-            删除
-          </el-button>
+          <ActionButtons
+            :is-active="row.is_active"
+            @edit="openEdit(row)"
+            @toggle="toggleActive(row)"
+            @delete="doDelete(row)"
+          />
         </template>
       </el-table-column>
-    </el-table>
-
-    <div class="pagination">
-      <el-pagination
-        v-model:current-page="currentPage"
-        :page-size="pageSize"
-        :total="total"
-        layout="total, prev, pager, next"
-        @current-change="handlePageChange"
-      />
-    </div>
+    </BaseDataTable>
 
     <!-- 创建/编辑对话框 -->
     <el-dialog
@@ -267,11 +258,6 @@ onMounted(() => {
 }
 .price {
   font-weight: 600;
-  color: #409eff;
-}
-.pagination {
-  display: flex;
-  justify-content: center;
-  margin-top: 24px;
+  color: var(--color-primary);
 }
 </style>

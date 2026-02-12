@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
 from app.schemas.user import UserUpdate
+from app.core.exceptions import NotFoundException
 
 
 async def get_user_by_id(db: AsyncSession, user_id: str) -> Optional[User]:
@@ -15,10 +16,10 @@ async def get_user_by_id(db: AsyncSession, user_id: str) -> Optional[User]:
     return result.scalar_one_or_none()
 
 
-async def update_user(db: AsyncSession, user_id: str, data: UserUpdate) -> Optional[User]:
+async def update_user(db: AsyncSession, user_id: str, data: UserUpdate) -> User:
     user = await get_user_by_id(db, user_id)
     if not user:
-        return None
+        raise NotFoundException("用户不存在")
     update_dict = data.model_dump(exclude_unset=True)
     for k, v in update_dict.items():
         setattr(user, k, v)
@@ -28,14 +29,16 @@ async def update_user(db: AsyncSession, user_id: str, data: UserUpdate) -> Optio
 
 
 async def get_user_profile_data(db: AsyncSession, user_id: str, target_user_id: str) -> dict:
-    """获取用户主页数据（帖子、打卡记录等）"""
+    """获取用户主页数据 - 优化N+1查询"""
+    import asyncio
     from app.models.post import Post
     from app.models.checkin import CheckIn
     from app.models.salary import SalaryRecord
     from app.models.follow import Follow
+    from sqlalchemy import func
 
-    # 获取用户发布的帖子（最近20条）
-    posts_result = await db.execute(
+    # 并发查询所有数据
+    posts_task = db.execute(
         select(Post)
         .where(
             Post.user_id == target_user_id,
@@ -45,20 +48,15 @@ async def get_user_profile_data(db: AsyncSession, user_id: str, target_user_id: 
         .order_by(Post.created_at.desc())
         .limit(20)
     )
-    posts = posts_result.scalars().all()
 
-    # 获取用户的打卡记录（最近30条）
-    checkins_result = await db.execute(
+    checkins_task = db.execute(
         select(CheckIn)
         .where(CheckIn.user_id == target_user_id)
         .order_by(CheckIn.check_date.desc())
         .limit(30)
     )
-    checkins = checkins_result.scalars().all()
 
-    # 获取粉丝数
-    from sqlalchemy import func
-    follower_count_result = await db.execute(
+    follower_count_task = db.execute(
         select(func.count(Follow.id))
         .select_from(Follow)
         .where(
@@ -66,10 +64,8 @@ async def get_user_profile_data(db: AsyncSession, user_id: str, target_user_id: 
             Follow.is_deleted == False
         )
     )
-    follower_count = follower_count_result.scalar() or 0
 
-    # 获取关注数
-    following_count_result = await db.execute(
+    following_count_task = db.execute(
         select(func.count(Follow.id))
         .select_from(Follow)
         .where(
@@ -77,6 +73,15 @@ async def get_user_profile_data(db: AsyncSession, user_id: str, target_user_id: 
             Follow.is_deleted == False
         )
     )
+
+    # 并发执行所有查询
+    posts_result, checkins_result, follower_count_result, following_count_result = await asyncio.gather(
+        posts_task, checkins_task, follower_count_task, following_count_task
+    )
+
+    posts = posts_result.scalars().all()
+    checkins = checkins_result.scalars().all()
+    follower_count = follower_count_result.scalar() or 0
     following_count = following_count_result.scalar() or 0
 
     return {

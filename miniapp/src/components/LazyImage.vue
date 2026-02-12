@@ -37,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 
 interface Props {
   src: string
@@ -57,7 +57,7 @@ const props = withDefaults(defineProps<Props>(), {
   skeletonColor: '#f5f5f5',
   errorText: '加载失败',
   showMenuByLongpress: false,
-  cache: true
+  cache: true,
 })
 
 const emit = defineEmits<{
@@ -70,36 +70,27 @@ const isLoaded = ref(false)
 const isError = ref(false)
 const displaySrc = ref('')
 
+// 图片缓存Map（内存缓存，更高效）
+const imageCache = new Map<string, string>()
+
 // 预加载图片
 onMounted(() => {
   if (props.cache) {
-    // 如果启用了缓存，尝试从缓存获取
-    try {
-      const cached = uni.getStorageSync(`img_cache_${props.src}`)
-      if (cached) {
-        displaySrc.value = cached
-      } else {
-        displaySrc.value = props.src
-      }
-    } catch {
-      displaySrc.value = props.src
+    if (imageCache.has(props.src)) {
+      displaySrc.value = imageCache.get(props.src)!
+      return
     }
-  } else {
-    displaySrc.value = props.src
   }
+  displaySrc.value = props.src
 })
 
 function handleLoad(e: any) {
   isLoaded.value = true
   isError.value = false
 
-  // 缓存图片
-  if (props.cache) {
-    try {
-      uni.setStorageSync(`img_cache_${props.src}`, props.src)
-    } catch {
-      // 缓存失败忽略
-    }
+  // 缓存图片（仅在未缓存时）
+  if (props.cache && !imageCache.has(props.src)) {
+    imageCache.set(props.src, props.src)
   }
 
   emit('load', e)

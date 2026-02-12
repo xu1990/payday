@@ -9,6 +9,11 @@ import {
   type ThemeItem,
   type ThemeCreate,
 } from '@/api/theme'
+import BaseDataTable from '@/components/BaseDataTable.vue'
+import StatusTag from '@/components/StatusTag.vue'
+import ActionButtons from '@/components/ActionButtons.vue'
+import { isValidUrl, sanitizeUrl } from '@/utils/validation'
+import { formatDate } from '@/utils/format'
 
 const list = ref<ThemeItem[]>([])
 const loading = ref(false)
@@ -37,8 +42,9 @@ async function loadData() {
     })
     list.value = res?.items || []
     total.value = res?.total || 0
-  } catch (e: any) {
-    ElMessage.error(e?.message || '加载失败')
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : '加载失败'
+    ElMessage.error(errorMessage)
   } finally {
     loading.value = false
   }
@@ -82,6 +88,15 @@ async function submit() {
     return
   }
 
+  // URL 验证
+  if (form.value.preview_image && !isValidUrl(form.value.preview_image)) {
+    ElMessage.warning('预览图URL格式不正确')
+    return
+  }
+
+  // 清理 URL
+  form.value.preview_image = sanitizeUrl(form.value.preview_image)
+
   try {
     if (dialogMode.value === 'create') {
       await createTheme(form.value)
@@ -92,8 +107,9 @@ async function submit() {
     }
     showDialog.value = false
     await loadData()
-  } catch (e: any) {
-    ElMessage.error(e?.message || '操作失败')
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : '操作失败'
+    ElMessage.error(errorMessage)
   }
 }
 
@@ -108,8 +124,9 @@ function doDelete(item: ThemeItem) {
         await deleteTheme(item.id)
         ElMessage.success('删除成功')
         await loadData()
-      } catch (e: any) {
-        ElMessage.error(e?.message || '删除失败')
+      } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : '删除失败'
+        ElMessage.error(errorMessage)
       }
     })
     .catch(() => {})
@@ -128,8 +145,9 @@ async function toggleActive(item: ThemeItem) {
     })
     ElMessage.success(item.is_active ? '已禁用' : '已启用')
     await loadData()
-  } catch (e: any) {
-    ElMessage.error(e?.message || '操作失败')
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : '操作失败'
+    ElMessage.error(errorMessage)
   }
 }
 
@@ -150,23 +168,29 @@ onMounted(() => {
       <el-button type="primary" @click="openCreate">创建主题</el-button>
     </div>
 
-    <el-table v-loading="loading" :data="list" stripe>
+    <BaseDataTable
+      v-model:current-page="currentPage"
+      :items="list"
+      :total="total"
+      :loading="loading"
+      @page-change="handlePageChange"
+    >
       <el-table-column prop="name" label="主题名称" width="200" />
       <el-table-column prop="code" label="主题代码" width="150" />
       <el-table-column label="预览图" width="120">
         <template #default="{ row }">
           <el-image
-            v-if="row.preview_image"
-            :src="row.preview_image"
+            v-if="row.preview_image && isValidUrl(row.preview_image)"
+            :src="sanitizeUrl(row.preview_image)"
             fit="cover"
-            style="width: 60px; height: 40px; border-radius: 4px"
+            style="width: 60px; height: 40px; border-radius: var(--radius-sm)"
           />
           <span v-else class="text-muted">-</span>
         </template>
       </el-table-column>
       <el-table-column prop="is_premium" label="类型" width="100" align="center">
         <template #default="{ row }">
-          <el-tag :type="row.is_premium ? 'warning' : ''" size="small">
+          <el-tag :type="row.is_premium ? 'warning' : 'info'" size="small">
             {{ row.is_premium ? '会员专属' : '免费' }}
           </el-tag>
         </template>
@@ -174,45 +198,25 @@ onMounted(() => {
       <el-table-column prop="sort_order" label="排序" width="80" align="center" />
       <el-table-column label="状态" width="100" align="center">
         <template #default="{ row }">
-          <el-tag :type="row.is_active ? 'success' : 'info'" size="small">
-            {{ row.is_active ? '启用' : '禁用' }}
-          </el-tag>
+          <StatusTag :status="row.is_active ? 'active' : 'inactive'" />
         </template>
       </el-table-column>
       <el-table-column label="创建时间" width="180">
         <template #default="{ row }">
-          {{ new Date(row.created_at).toLocaleString() }}
+          {{ formatDate(row.created_at) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="280" fixed="right">
+      <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" size="small" @click="openEdit(row)">
-            编辑
-          </el-button>
-          <el-button
-            link
-            :type="row.is_active ? 'warning' : 'success'"
-            size="small"
-            @click="toggleActive(row)"
-          >
-            {{ row.is_active ? '禁用' : '启用' }}
-          </el-button>
-          <el-button link type="danger" size="small" @click="doDelete(row)">
-            删除
-          </el-button>
+          <ActionButtons
+            :is-active="row.is_active"
+            @edit="openEdit(row)"
+            @toggle="toggleActive(row)"
+            @delete="doDelete(row)"
+          />
         </template>
       </el-table-column>
-    </el-table>
-
-    <div class="pagination">
-      <el-pagination
-        v-model:current-page="currentPage"
-        :page-size="pageSize"
-        :total="total"
-        layout="total, prev, pager, next"
-        @current-change="handlePageChange"
-      />
-    </div>
+    </BaseDataTable>
 
     <!-- 创建/编辑对话框 -->
     <el-dialog
@@ -269,12 +273,7 @@ onMounted(() => {
   font-size: 20px;
   font-weight: 600;
 }
-.pagination {
-  display: flex;
-  justify-content: center;
-  margin-top: 24px;
-}
 .text-muted {
-  color: #999;
+  color: var(--color-text-secondary);
 }
 </style>

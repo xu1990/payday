@@ -38,7 +38,7 @@
           <span>话题管理</span>
         </el-menu-item>
         <el-menu-item index="/memberships">
-          <el-icon><Vip /></el-icon>
+          <el-icon><UserFilled /></el-icon>
           <span>会员管理</span>
         </el-menu-item>
         <el-menu-item index="/themes">
@@ -66,7 +66,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DataAnalysis, User, List, Document, ChatDotRound, DocumentChecked, PriceTag, Vip, Brush, Tickets } from '@element-plus/icons-vue'
+import { DataAnalysis, User, List, Document, ChatDotRound, DocumentChecked, PriceTag, UserFilled, Brush, Tickets } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()

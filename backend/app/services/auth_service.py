@@ -39,12 +39,12 @@ async def get_or_create_user(db: AsyncSession, openid: str, unionid: Optional[st
 async def login_with_code(db: AsyncSession, code: str) -> Optional[Tuple[str, User]]:
     """
     微信 code 登录：code2session -> 获取或创建用户 -> 生成 JWT。
-    失败返回 None。
+    失败返回 None（OK: 登录失败返回 None 是正常流程）。
     """
     data = await code2session(code)
     openid = data.get("openid")
     if not openid:
-        return None
+        return None  # OK: 微信登录失败返回 None 是正常流程
     unionid = data.get("unionid")
     user = await get_or_create_user(db, openid=openid, unionid=unionid)
     token = create_access_token(data={"sub": user.id})

@@ -12,7 +12,7 @@ const currentPage = ref(1)
 const pageSize = 20
 const hasMore = ref(true)
 
-async function loadData() {
+async function loadData(append = false) {
   if (!authStore.isLoggedIn) {
     uni.navigateTo({ url: '/pages/login/index' })
     return
@@ -24,11 +24,19 @@ async function loadData() {
       limit: pageSize,
       offset: (currentPage.value - 1) * pageSize,
     })
-    posts.value = res?.items || []
-    total.value = res?.total || 0
-    hasMore.value = posts.value.length < total.value
-  } catch (e: any) {
-    uni.showToast({ title: e?.message || '加载失败', icon: 'none' })
+
+    const newPosts = res?.items || []
+
+    if (append) {
+      posts.value = [...posts.value, ...newPosts]
+    } else {
+      posts.value = newPosts
+    }
+
+    hasMore.value = posts.value.length < (res?.total || 0)
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : '加载失败'
+    uni.showToast({ title: errorMessage, icon: 'none' })
   } finally {
     loading.value = false
   }
@@ -37,7 +45,7 @@ async function loadData() {
 function loadMore() {
   if (!hasMore.value || loading.value) return
   currentPage.value++
-  loadData()
+  loadData(true) // 追加模式
 }
 
 function refresh() {

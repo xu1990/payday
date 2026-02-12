@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="statistics-page">
     <h2 class="page-title">数据统计</h2>
     <el-row :gutter="16" class="stats-row">
       <el-col :span="6">
@@ -51,8 +51,24 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.page-title { margin-bottom: 16px; font-size: 18px; }
-.stats-row { margin-bottom: 16px; }
-.stat-label { color: #909399; font-size: 14px; margin-bottom: 8px; }
-.stat-value { font-size: 24px; font-weight: 600; }
+.statistics-page {
+  padding: var(--spacing-lg);
+}
+.page-title {
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-lg);
+}
+.stats-row {
+  margin-bottom: var(--spacing-md);
+}
+.stat-label {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-sm);
+}
+.stat-value {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+}
 </style>

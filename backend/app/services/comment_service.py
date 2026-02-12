@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.comment import Comment
 from app.models.post import Post
 from app.services import notification_service
+from app.core.exceptions import NotFoundException
 
 
 async def list_by_post(
@@ -153,7 +154,7 @@ async def update_comment_risk_for_admin(
     """管理端人工审核评论（通过/拒绝）"""
     comment = await get_by_id(db, comment_id)
     if not comment:
-        return None
+        raise NotFoundException("评论不存在")
     comment.risk_status = risk_status
     if risk_reason is not None:
         if not hasattr(Comment, "risk_reason"):

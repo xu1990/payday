@@ -27,6 +27,22 @@ export interface CreatePaymentRes {
   message: string
 }
 
+/** 验证支付结果 */
+export interface VerifyPaymentRes {
+  success: boolean
+  message?: string
+}
+
+/**
+ * 验证支付结果
+ */
+export function verifyPayment(orderId: string): Promise<VerifyPaymentRes> {
+  return request<VerifyPaymentRes>({
+    url: `/payment/verify/${orderId}`,
+    method: 'GET',
+  })
+}
+
 /** 创建支付 */
 export function createPayment(data: CreatePaymentReq) {
   return request<CreatePaymentRes>({

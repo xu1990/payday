@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.payday import PaydayConfig
 from app.schemas.payday import PaydayConfigCreate, PaydayConfigUpdate
+from app.core.exceptions import NotFoundException
 
 
 async def list_by_user(db: AsyncSession, user_id: str) -> List[PaydayConfig]:
@@ -44,7 +45,7 @@ async def update(
 ) -> Optional[PaydayConfig]:
     config = await get_by_id(db, config_id, user_id)
     if not config:
-        return None
+        raise NotFoundException("发薪日配置不存在")
     d = data.model_dump(exclude_unset=True)
     for k, v in d.items():
         setattr(config, k, v)
