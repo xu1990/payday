@@ -15,8 +15,13 @@ export interface SalaryRecord {
   user_id: string
   config_id: string
   amount: number
+  before_tax: number | null
+  tax_amount: number | null
   payday_date: string
   salary_type: SalaryType
+  salary_source: string | null
+  delay_days: number | null
+  delay_reason: string | null
   images: string[] | null
   note: string | null
   mood: MoodType
@@ -28,8 +33,13 @@ export interface SalaryRecord {
 export interface SalaryRecordCreate {
   config_id: string
   amount: number
+  before_tax?: number | null
+  tax_amount?: number | null
   payday_date: string
   salary_type?: SalaryType
+  salary_source?: string | null
+  delay_days?: number | null
+  delay_reason?: string | null
   images?: string[] | null
   note?: string | null
   mood: MoodType
@@ -37,8 +47,13 @@ export interface SalaryRecordCreate {
 
 export interface SalaryRecordUpdate {
   amount?: number
+  before_tax?: number | null
+  tax_amount?: number | null
   payday_date?: string
   salary_type?: SalaryType
+  salary_source?: string | null
+  delay_days?: number | null
+  delay_reason?: string | null
   images?: string[] | null
   note?: string | null
   mood?: MoodType

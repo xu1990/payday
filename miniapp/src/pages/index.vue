@@ -94,6 +94,18 @@ function goPaydaySetting() {
 function goSalaryRecord() {
   uni.navigateTo({ url: '/pages/salary-record/index' })
 }
+
+function goInsights() {
+  uni.navigateTo({ url: '/pages/insights/index' })
+}
+
+function goMembership() {
+  uni.navigateTo({ url: '/pages/membership/index' })
+}
+
+function goCheckIn() {
+  uni.navigateTo({ url: '/pages/checkin/index' })
+}
 </script>
 
 <template>
@@ -136,6 +148,15 @@ function goSalaryRecord() {
     </view>
     <view class="entry-row">
       <button class="btn-outline" @click="goFeed">关注流</button>
+    </view>
+
+    <view class="entry-row">
+      <button class="btn-secondary" @click="goCheckIn">每日打卡</button>
+      <button class="btn-secondary" @click="goInsights">数据洞察</button>
+    </view>
+
+    <view class="entry-row">
+      <button class="btn-outline" @click="goMembership">会员中心</button>
     </view>
     <InputEntry />
     <AppFooter />

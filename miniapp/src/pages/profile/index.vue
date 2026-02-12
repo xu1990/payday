@@ -55,6 +55,14 @@ function goNotification() {
   uni.navigateTo({ url: '/pages/notification/list' })
 }
 
+function goSettings() {
+  uni.navigateTo({ url: '/pages/settings/index' })
+}
+
+function goCheckIn() {
+  uni.navigateTo({ url: '/pages/checkin/index' })
+}
+
 onMounted(load)
 </script>
 
@@ -86,6 +94,12 @@ onMounted(load)
         <text class="entry-label">消息</text>
         <text v-if="notificationUnread > 0" class="badge">{{ notificationUnread > 99 ? '99+' : notificationUnread }}</text>
       </view>
+    </view>
+
+    <view class="section-title-alt">更多功能</view>
+    <view class="entry-row">
+      <button class="btn-outline" @click="goCheckIn">每日打卡</button>
+      <button class="btn-outline" @click="goSettings">设置</button>
     </view>
 
     <view class="section">
@@ -146,6 +160,7 @@ onMounted(load)
 }
 .section { margin-top: 24rpx; }
 .section-title { font-size: 30rpx; font-weight: 600; display: block; margin-bottom: 16rpx; }
+.section-title-alt { font-size: 28rpx; font-weight: 600; color: #666; display: block; margin: 24rpx 0 16rpx; }
 .loading, .err, .empty { padding: 24rpx; text-align: center; color: #666; }
 .err { color: #e64340; }
 .list { display: flex; flex-direction: column; gap: 16rpx; }

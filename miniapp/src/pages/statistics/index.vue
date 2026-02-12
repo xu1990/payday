@@ -33,6 +33,10 @@ function monthLabel(item: TrendItem) {
   return `${item.year}年${item.month}月`
 }
 
+function goInsights() {
+  uni.navigateTo({ url: '/pages/insights/index' })
+}
+
 onMounted(load)
 </script>
 
@@ -41,6 +45,7 @@ onMounted(load)
     <view class="head">
       <text class="title">工资统计</text>
       <text class="tip">本月收入与近 6 月趋势</text>
+      <button class="btn-link" @click="goInsights">数据洞察 →</button>
     </view>
 
     <view v-if="loading" class="loading">加载中...</view>
@@ -68,9 +73,10 @@ onMounted(load)
 
 <style scoped>
 .page { padding: 24rpx; min-height: 100vh; }
-.head { margin-bottom: 24rpx; }
+.head { margin-bottom: 24rpx; display: flex; justify-content: space-between; align-items: flex-start; }
 .title { font-size: 36rpx; font-weight: 600; display: block; }
 .tip { display: block; margin-top: 8rpx; color: #666; font-size: 26rpx; }
+.btn-link { padding: 0; margin-top: 8rpx; background: none; border: none; color: #07c160; font-size: 26rpx; }
 .loading, .err { padding: 40rpx; text-align: center; color: #666; }
 .err { color: #e64340; }
 .summary-card {
