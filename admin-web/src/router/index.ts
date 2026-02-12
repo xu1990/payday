@@ -18,6 +18,7 @@ const router = createRouter({
         { path: 'posts', name: 'Posts', component: () => import('@/views/PostList.vue') },
         { path: 'comments', name: 'Comments', component: () => import('@/views/CommentList.vue') },
         { path: 'risk-pending', name: 'RiskPending', component: () => import('@/views/RiskPending.vue') },
+        { path: 'topics', name: 'Topics', component: () => import('@/views/topics/index.vue') },
       ],
     },
   ],

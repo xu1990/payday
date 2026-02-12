@@ -33,6 +33,10 @@
           <el-icon><DocumentChecked /></el-icon>
           <span>风控待审</span>
         </el-menu-item>
+        <el-menu-item index="/topics">
+          <el-icon><PriceTag /></el-icon>
+          <span>话题管理</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>
@@ -50,7 +54,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DataAnalysis, User, List, Document, ChatDotRound, DocumentChecked } from '@element-plus/icons-vue'
+import { DataAnalysis, User, List, Document, ChatDotRound, DocumentChecked, PriceTag } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
