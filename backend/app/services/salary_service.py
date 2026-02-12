@@ -2,7 +2,7 @@
 工资记录 - 增删改查；金额写入加密、读出解密
 使用统一的 transactional context manager 进行事务管理
 """
-from datetime import date
+from datetime import date, datetime
 from typing import List, Optional
 
 from sqlalchemy import select
@@ -93,7 +93,7 @@ async def create(db: AsyncSession, user_id: str, data: SalaryRecordCreate) -> Sa
         async with transactional(db) as session:
             session.add(record)
             # 自动提交或异常时回滚
-            await session.flush(record)
+            await session.flush()
             return record
     except SQLAlchemyError:
         raise
@@ -184,3 +184,35 @@ async def update_risk_for_admin(
             return record
     except SQLAlchemyError:
         raise
+
+
+async def list_all_for_admin(
+    db: AsyncSession,
+    limit: int = 20,
+    offset: int = 0,
+) -> tuple[List[dict], int]:
+    """
+    管理员查询所有工资记录（分页）
+
+    Args:
+        db: 数据库会话
+        limit: 每页数量
+        offset: 偏移量
+
+    Returns:
+        (工资记录列表, 总数)
+    """
+    result = await db.execute(
+        select(SalaryRecord)
+        .order_by(SalaryRecord.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    records = result.scalars().all()
+
+    count_result = await db.execute(
+        select(SalaryRecord.id)
+    )
+    total = len(count_result.all())
+
+    return [record_to_response(record) for record in records], total
