@@ -77,7 +77,6 @@ import { ref, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   getPosts,
-  getPost,
   updatePostStatus,
   deletePost,
   type AdminPostListItem,

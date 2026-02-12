@@ -45,7 +45,8 @@ async def post_get(
     post_id: str,
     db: AsyncSession = Depends(get_db),
 ):
-    post = await get_by_id(db, post_id, only_approved=True)
+    # 获取帖子详情并增加浏览量（从缓存计数）
+    post = await get_by_id(db, post_id, only_approved=True, increment_view=True)
     if not post:
         raise HTTPException(status_code=404, detail="帖子不存在或未通过")
     return PostResponse.model_validate(post)

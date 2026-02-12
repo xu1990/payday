@@ -2,12 +2,14 @@
 帖子服务 - 发帖、列表（热门/最新）、详情；管理端列表/状态/删除；与技术方案 2.2、3.3.1 一致
 """
 from typing import List, Literal, Optional, Tuple
+from datetime import datetime
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.post import Post
 from app.schemas.post import PostCreate
+from app.core.cache import PostCacheService
 
 
 async def create(
@@ -40,12 +42,25 @@ async def get_by_id(
     db: AsyncSession,
     post_id: str,
     only_approved: bool = True,
+    increment_view: bool = True,
 ) -> Optional[Post]:
+    """获取帖子详情，可选是否增加浏览量（从缓存计数）"""
     q = select(Post).where(Post.id == post_id, Post.status == "normal")
     if only_approved:
         q = q.where(Post.risk_status == "approved")
     result = await db.execute(q)
-    return result.scalar_one_or_none()
+    post = result.scalar_one_or_none()
+
+    # 增加浏览计数到 Redis（异步，不阻塞响应）
+    if post and increment_view:
+        try:
+            view_count = await PostCacheService.increment_view_count(post_id)
+            post.view_count = view_count
+        except Exception:
+            # Redis 故障时不影响主流程
+            pass
+
+    return post
 
 
 async def list_posts(
@@ -54,6 +69,22 @@ async def list_posts(
     limit: int = 20,
     offset: int = 0,
 ) -> List[Post]:
+    """帖子列表，热门从缓存获取，最新从数据库查询"""
+    if sort == "hot":
+        # 尝试从 Redis 获取热门帖子 ID 列表
+        try:
+            date = datetime.now().strftime("%Y-%m-%d")
+            hot_post_ids = await PostCacheService.get_hot_posts(date, 0, limit - 1)
+            if hot_post_ids:
+                # 按 ID 列表查询完整数据
+                posts = await get_posts_by_ids(db, hot_post_ids)
+                # 分页处理（offset 在缓存结果上处理）
+                return posts[offset:] if offset < len(posts) else []
+        except Exception:
+            # Redis 故障时降级到数据库查询
+            pass
+
+    # 最新或降级查询：从数据库获取
     q = (
         select(Post)
         .where(Post.status == "normal", Post.risk_status == "approved")
@@ -66,6 +97,50 @@ async def list_posts(
         q = q.order_by(Post.created_at.desc())
     result = await db.execute(q)
     return list(result.scalars().all())
+
+
+async def get_posts_by_ids(db: AsyncSession, post_ids: List[str]) -> List[Post]:
+    """根据 ID 列表批量查询帖子（保持顺序）"""
+    if not post_ids:
+        return []
+    # 查询所有帖子
+    result = await db.execute(
+        select(Post).where(
+            Post.id.in_(post_ids),
+            Post.status == "normal",
+            Post.risk_status == "approved"
+        )
+    )
+    posts_by_id = {p.id: p for p in result.scalars().all()}
+    # 按 ID 列表顺序返回
+    return [posts_by_id[pid] for pid in post_ids if pid in posts_by_id]
+
+
+async def update_hot_posts_ranking(db: AsyncSession) -> None:
+    """更新热门帖子排名（定时任务调用）
+    按分数 = like_count * 2 + comment_count 计算热度
+    """
+    # 获取近24小时的帖子
+    from datetime import timedelta
+    since = datetime.now() - timedelta(days=1)
+    result = await db.execute(
+        select(Post)
+        .where(
+            Post.status == "normal",
+            Post.risk_status == "approved",
+            Post.created_at >= since
+        )
+        .order_by(Post.like_count.desc())
+        .limit(100)
+    )
+    posts = result.scalars().all()
+
+    # 更新到 Redis ZSet
+    date = datetime.now().strftime("%Y-%m-%d")
+    for post in posts:
+        # 热度分数计算：点赞数 * 2 + 评论数
+        score = post.like_count * 2 + post.comment_count
+        await PostCacheService.add_to_hot_posts(post.id, score, date)
 
 
 async def list_posts_for_admin(

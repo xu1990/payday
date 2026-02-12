@@ -10,6 +10,7 @@ from app.models.comment import Comment
 from app.models.like import Like
 from app.models.post import Post
 from app.services import notification_service
+from app.core.cache import LikeCacheService
 
 
 async def _get_like(
@@ -43,6 +44,8 @@ async def like_post(db: AsyncSession, user_id: str, post_id: str) -> tuple["Like
             )
     await db.commit()
     await db.refresh(like)
+    # 更新缓存
+    LikeCacheService.set_like_status(user_id, "post", post_id)
     return like, True
 
 
@@ -58,6 +61,8 @@ async def unlike_post(db: AsyncSession, user_id: str, post_id: str) -> bool:
     if post:
         post.like_count = max(0, (post.like_count or 0) - 1)
     await db.commit()
+    # 移除缓存
+    LikeCacheService.remove_like_status(user_id, "post", post_id)
     return True
 
 
@@ -79,6 +84,8 @@ async def like_comment(db: AsyncSession, user_id: str, comment_id: str) -> tuple
             )
     await db.commit()
     await db.refresh(like)
+    # 更新缓存
+    LikeCacheService.set_like_status(user_id, "comment", comment_id)
     return like, True
 
 
@@ -94,11 +101,18 @@ async def unlike_comment(db: AsyncSession, user_id: str, comment_id: str) -> boo
     if comment:
         comment.like_count = max(0, (comment.like_count or 0) - 1)
     await db.commit()
+    # 移除缓存
+    LikeCacheService.remove_like_status(user_id, "comment", comment_id)
     return True
 
 
 async def is_liked(
     db: AsyncSession, user_id: str, target_type: str, target_id: str
 ) -> bool:
+    """检查是否已点赞，先查缓存，缓存未命中则查数据库"""
+    # 先检查缓存
+    if LikeCacheService.is_liked(user_id, target_type, target_id):
+        return True
+    # 缓存未命中，查数据库
     like = await _get_like(db, user_id, target_type, target_id)
     return like is not None
