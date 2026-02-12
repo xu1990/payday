@@ -70,9 +70,8 @@ class TestSanitizeHtml:
         """测试保留换行符和制表符"""
         input_html = "Line 1\nLine 2\tTabbed"
         result = sanitize_html(input_html)
-        assert "\n" in result or "
-" in result
-        assert "\t" in result or "	" in result
+        assert "\n" in result or "&#10;" in result or "<br>" in result
+        assert "\t" in result or "&#9;" in result or "	" in result
 
     def test_handles_empty_input(self):
         """测试空输入"""
