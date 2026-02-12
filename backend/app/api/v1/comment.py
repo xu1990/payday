@@ -1,7 +1,7 @@
 """
 评论 - 帖子下评论列表、发表评论/回复、删除；与技术方案 2.1.1 一致
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +16,7 @@ from app.services.comment_service import (
     get_by_id as get_comment,
     list_roots_with_replies,
 )
+from app.tasks.risk_check import run_risk_check_for_comment
 
 router = APIRouter(prefix="/posts", tags=["comments"])
 
@@ -36,6 +37,7 @@ async def comment_list(
 async def comment_create(
     post_id: str,
     body: CommentCreate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -56,6 +58,8 @@ async def comment_create(
         content=body.content,
         parent_id=body.parent_id,
     )
+    # 异步风控检查
+    background_tasks.add_task(run_risk_check_for_comment, comment.id)
     return CommentResponse.model_validate(comment)
 
 

@@ -9,6 +9,7 @@ from sqlalchemy import select, update
 from app.core.database import SessionLocal, async_session_maker
 from app.models.notification import Notification
 from app.models.post import Post
+from app.models.comment import Comment
 from app.services.risk_service import evaluate_content, RiskResult
 
 
@@ -22,8 +23,18 @@ def run_risk_check_for_post(post_id: str) -> None:
     return result
 
 
+@shared_task(name="tasks.run_risk_check_for_comment")
+def run_risk_check_for_comment(comment_id: str) -> None:
+    """
+    Celery 同步任务，对评论进行异步风控检查
+    """
+    # 在同步上下文中运行异步函数
+    result = asyncio.run(_async_risk_check_comment(comment_id))
+    return result
+
+
 async def _async_risk_check(post_id: str) -> None:
-    """异步风控检查逻辑"""
+    """异步风控检查逻辑 - 帖子"""
     async with async_session_maker() as db:
         result = await db.execute(select(Post).where(Post.id == post_id))
         post = result.scalar_one_or_none()
@@ -57,6 +68,46 @@ async def _async_risk_check(post_id: str) -> None:
                 title="内容未通过审核",
                 content=risk_result.reason,
                 related_id=post_id,
+            )
+            db.add(notif)
+
+        await db.commit()
+
+
+async def _async_risk_check_comment(comment_id: str) -> None:
+    """异步风控检查逻辑 - 评论"""
+    async with async_session_maker() as db:
+        result = await db.execute(select(Comment).where(Comment.id == comment_id))
+        comment = result.scalar_one_or_none()
+        if not comment:
+            return
+
+        # 评论只检查文本内容
+        risk_result: RiskResult = await evaluate_content(
+            content=comment.content,
+            images=None,  # 评论暂不支持图片
+        )
+
+        status = (
+            "approved"
+            if risk_result.action == "approve"
+            else ("rejected" if risk_result.action == "reject" else "pending")
+        )
+
+        await db.execute(
+            update(Comment)
+            .where(Comment.id == comment_id)
+            .values(risk_status=status)
+        )
+
+        # 如果评论被拒绝，发送通知
+        if risk_result.action == "reject" and risk_result.reason:
+            notif = Notification(
+                user_id=comment.user_id,
+                type="system",
+                title="评论未通过审核",
+                content=risk_result.reason,
+                related_id=comment_id,
             )
             db.add(notif)
 

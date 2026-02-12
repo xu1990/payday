@@ -54,6 +54,15 @@ class Settings(BaseSettings):
     cos_region: str = "ap-guangzhou"
     cos_bucket: str = "payday"
 
+    # 阿里云 OSS 对象存储
+    oss_access_key_id: str = ""
+    oss_access_key_secret: str = ""
+    oss_endpoint: str = ""  # 如: oss-cn-hangzhou.aliyuncs.com
+    oss_bucket: str = "payday"
+
+    # 存储服务选择: cos | oss
+    storage_provider: str = "cos"
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

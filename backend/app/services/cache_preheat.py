@@ -3,13 +3,12 @@
 """
 from sqlalchemy import select, func
 from typing import Dict, Any
+from datetime import datetime, timedelta
 
 from app.core.database import AsyncSession
 from app.models.user import User
 from app.models.post import Post
-from app.models.topic import Topic
-from app.models.membership import Membership
-from app.models.app_theme import AppTheme
+from app.models.membership import Membership, AppTheme
 from app.core.cache import (
     cache_service,
     UserCacheService,
@@ -26,8 +25,7 @@ async def preheat_hot_posts(db: AsyncSession, limit: int = 50) -> int:
     预热热门帖子缓存
     获取近期高互动的帖子并缓存
     """
-    today = func.current_date()
-    seven_days_ago = func.date_sub(today, func.interval("7 day"))
+    seven_days_ago = datetime.now() - timedelta(days=7)
 
     result = await db.execute(
         select(Post)
@@ -63,39 +61,6 @@ async def preheat_hot_posts(db: AsyncSession, limit: int = 50) -> int:
             logger.warning(f"Failed to cache post {post.id}: {e}")
 
     logger.info(f"Preheated {count} hot posts")
-    return count
-
-
-async def preheat_active_topics(db: AsyncSession, limit: int = 20) -> int:
-    """
-    预热活跃话题缓存
-    """
-    result = await db.execute(
-        select(Topic)
-        .where(Topic.is_active == True)
-        .order_by(Topic.post_count.desc(), Topic.sort_order)
-        .limit(limit)
-    )
-    topics = result.scalars().all()
-
-    count = 0
-    for topic in topics:
-        try:
-            cache_key = f"topic:detail:{topic.id}"
-            topic_data = {
-                "id": topic.id,
-                "name": topic.name,
-                "description": topic.description,
-                "cover_image": topic.cover_image,
-                "post_count": topic.post_count,
-                "sort_order": topic.sort_order,
-            }
-            await cache_service.set(cache_key, topic_data, ttl=7200)  # 2小时
-            count += 1
-        except Exception as e:
-            logger.warning(f"Failed to cache topic {topic.id}: {e}")
-
-    logger.info(f"Preheated {count} active topics")
     return count
 
 
@@ -197,9 +162,6 @@ async def preheat_all(db: AsyncSession) -> Dict[str, int]:
 
     # 预热热门帖子
     results["hot_posts"] = await preheat_hot_posts(db)
-
-    # 预热活跃话题
-    results["active_topics"] = await preheat_active_topics(db)
 
     # 预热会员套餐
     results["memberships"] = await preheat_memberships(db)

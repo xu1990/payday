@@ -16,6 +16,7 @@ from .recommendation import router as recommendation_router
 from .admin_config import router as admin_config_router
 from .payment import router as payment_router
 from .cache import router as cache_router
+from .storage import router as storage_router
 
 api_router = APIRouter(prefix="/api/v1", tags=["v1"])
 
@@ -35,6 +36,7 @@ api_router.include_router(recommendation_router)
 api_router.include_router(admin_config_router)
 api_router.include_router(payment_router)
 api_router.include_router(cache_router)
+api_router.include_router(storage_router)
 
 
 @api_router.get("/ping")

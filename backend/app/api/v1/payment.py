@@ -59,10 +59,17 @@ async def create_payment(
             message="支付参数生成成功",
         )
 
-    except Exception as e:
+    except ValueError as e:
+        # 业务逻辑错误（如订单不存在、状态不对）
         return PaymentErrorResponse(
             success=False,
             message=str(e),
+        )
+    except Exception:
+        # 其他未知错误，不暴露详细信息
+        return PaymentErrorResponse(
+            success=False,
+            message="创建支付失败，请稍后重试",
         )
 
 

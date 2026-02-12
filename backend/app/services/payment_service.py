@@ -26,6 +26,9 @@ async def create_membership_payment(
 
     Returns:
         小程序支付参数
+
+    Raises:
+        ValueError: 业务逻辑错误（订单不存在、状态不对等）
     """
     # 查询订单
     result = await db.execute(
@@ -34,10 +37,10 @@ async def create_membership_payment(
     order = result.scalar_one_or_none()
 
     if not order:
-        raise Exception("订单不存在")
+        raise ValueError("订单不存在")
 
     if order.status != "pending":
-        raise Exception("订单状态不正确")
+        raise ValueError("订单状态不正确")
 
     # 调用微信支付统一下单接口
     payment_params = await create_mini_program_payment(
@@ -57,6 +60,9 @@ async def handle_payment_notify(
     """
     处理支付回调通知
 
+    支持幂等性：同一笔交易的重复通知会被安全处理
+    使用数据库事务确保数据一致性
+
     Args:
         db: 数据库会话
         notify_data: 解析后的通知数据
@@ -64,6 +70,8 @@ async def handle_payment_notify(
     Returns:
         处理是否成功
     """
+    from sqlalchemy.exc import SQLAlchemyError
+
     out_trade_no = notify_data.get("out_trade_no")
     transaction_id = notify_data.get("transaction_id")
     total_fee = notify_data.get("total_fee")
@@ -71,33 +79,48 @@ async def handle_payment_notify(
     if not out_trade_no or not transaction_id:
         return False
 
-    # 查询订单
-    result = await db.execute(
-        select(MembershipOrder).where(MembershipOrder.id == out_trade_no)
-    )
-    order = result.scalar_one_or_none()
-
-    if not order:
-        return False
-
-    # 检查订单金额是否匹配
-    if int(total_fee) != order.amount:
-        return False
-
-    # 更新订单状态
-    if order.status == "pending":
-        await db.execute(
-            update(MembershipOrder)
-            .where(MembershipOrder.id == out_trade_no)
-            .values(
-                status="paid",
-                payment_method="wechat",
-                transaction_id=transaction_id,
+    try:
+        # 使用数据库事务确保原子性
+        async with db.begin():
+            # 查询订单并加锁（防止并发修改）
+            result = await db.execute(
+                select(MembershipOrder)
+                .where(MembershipOrder.id == out_trade_no)
+                .with_for_update()  # 行级锁
             )
-        )
-        await db.commit()
+            order = result.scalar_one_or_none()
 
-    return True
+            if not order:
+                return False
+
+            # 检查订单金额是否匹配（安全校验）
+            if int(total_fee) != order.amount:
+                return False
+
+            # 幂等性检查：如果订单已支付且交易ID相同，直接返回成功
+            if order.status == "paid" and order.transaction_id == transaction_id:
+                return True  # 重复通知，安全处理
+
+            # 如果订单已支付但交易ID不同，可能是异常情况
+            if order.status == "paid":
+                return False
+
+            # 更新订单状态为已支付
+            await db.execute(
+                update(MembershipOrder)
+                .where(MembershipOrder.id == out_trade_no)
+                .values(
+                    status="paid",
+                    payment_method="wechat",
+                    transaction_id=transaction_id,
+                )
+            )
+
+        return True
+
+    except SQLAlchemyError:
+        # 数据库错误，回滚事务（自动由 with 块处理）
+        return False
 
 
 def generate_payment_response(return_code: str, return_msg: str = "OK") -> str:

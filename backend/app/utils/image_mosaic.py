@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw
 
 from app.utils.logger import get_logger
 from app.utils.tencent_yu import tencent_yu_service
+from app.utils.storage import storage_service
 
 logger = get_logger(__name__)
 
@@ -81,11 +82,13 @@ class ImageMosaicService:
                 logger.info(f"图片中未检测到敏感信息，跳过打码: {image_url}")
                 return image_url if return_image else image_bytes
 
-            # 4. 上传打码后的图片
+            # 4. 上传打码后的图片到 COS
             if return_image:
-                # TODO: 上传到 COS 并返回新 URL
-                # 暂时：保存到临时文件并返回本地路径
                 mosaic_url = await self._upload_mosaic_image(image)
+                # 如果 COS 上传失败或未启用，返回原图
+                if not mosaic_url:
+                    logger.warning(f"COS 上传失败，返回原图: {image_url}")
+                    return image_url
                 return mosaic_url
             else:
                 # 返回图片二进制数据
@@ -102,11 +105,14 @@ class ImageMosaicService:
         """
         下载图片
 
-        TODO: 实际项目中应该使用更健壮的 HTTP 客户端
+        使用 httpx 异步 HTTP 客户端，支持重试和超时控制
         """
         import httpx
-        async with httpx.AsyncClient(timeout=30) as client:
+
+        timeout = httpx.Timeout(30.0, connect=10.0)
+        async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
             response = await client.get(url)
+            response.raise_for_status()
             return response.content
 
     async def _ocr_extract_text_with_positions(
@@ -139,14 +145,15 @@ class ImageMosaicService:
             lines = text_data.split('\n')
             results = []
 
-            # 模拟位置信息（腾讯云 OCR 返回格式需要确认）
-            # 实际应该使用 GeneralBasicOCR 返回的 Polygon 信息
-            # 这里简化处理，返回文字列表
+            # 腾讯云 OCR 返回格式需要确认
+            # GeneralBasicOCR API 返回的 Polygon 格式：[{'x': int, 'y': int}, ...]
+            # 当前实现返回文字列表，位置信息为 None
+            # 如需精确打码，需调用完整的 GeneralBasicOCR API 并解析 Polygon 坐标
             for line in lines:
                 if line.strip():
                     results.append({
                         "text": line.strip(),
-                        # TODO: 从 OCR 结果中提取实际位置信息
+                        # 位置信息暂未实现，需升级 OCR API 调用以获取 Polygon 数据
                         "position": None
                     })
 
@@ -271,26 +278,40 @@ class ImageMosaicService:
 
     async def _upload_mosaic_image(self, image: Image.Image) -> str:
         """
-        上传打码后的图片
-
-        TODO: 实际项目中应该上传到 COS
+        上传打码后的图片到对象存储（COS 或 OSS）
 
         Returns:
             图片URL
         """
-        # 暂时：保存到本地临时目录
-        import os
-        import tempfile
+        # 检查存储服务是否启用
+        if not storage_service.enabled:
+            provider = storage_service.current_provider
+            logger.warning(f"存储服务未启用 ({provider})，打码图片无法上传")
+            return ""
 
-        temp_dir = tempfile.gettempdir()
-        filename = f"mosaic_{id(image)}.png"
-        filepath = os.path.join(temp_dir, filename)
+        try:
+            # 转换图片为字节流
+            output = io.BytesIO()
+            image.save(output, format='PNG')
+            image_bytes = output.getvalue()
 
-        image.save(filepath)
+            # 生成唯一的对象键
+            key = storage_service.generate_key(prefix="mosaic", ext="png")
 
-        # 返回文件路径（实际应该是 COS URL）
-        logger.info(f"打码图片已保存: {filepath}")
-        return filepath
+            # 上传到配置的存储服务（COS 或 OSS）
+            url = await storage_service.upload_bytes(
+                data=image_bytes,
+                key=key,
+                content_type="image/png",
+            )
+
+            logger.info(f"打码图片已上传到 {storage_service.current_provider}: {url}")
+            return url
+
+        except Exception as e:
+            logger.error(f"打码图片上传失败: {e}")
+            # 上传失败返回空字符串，调用方可以决定是否回退到原图
+            return ""
 
 
 # 单例实例

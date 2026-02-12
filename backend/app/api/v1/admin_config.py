@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.deps import get_current_admin_user
 from app.models.user import User
-from app.models.membership import Membership, AppTheme
+from app.models.membership import Membership, AppTheme, MembershipOrder
 from app.schemas.membership import MembershipCreate, MembershipResponse
 from pydantic import BaseModel, Field
 

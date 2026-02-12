@@ -108,11 +108,18 @@ async def post_search_cursor(
         filters.append(keyword_filter)
 
     if tags:
-        # 标签筛选
+        # 标签筛选 - JSON_CONTAINS 查询包含任一指定标签的帖子
         tag_list = [t.strip() for t in tags.split(",") if t.strip()]
-        # TODO: 实现标签筛选逻辑
-        # 这里需要根据实际标签存储方式实现
-        pass
+        if tag_list:
+            # 构建 JSON_CONTAINS 条件：tags 字段包含任一标签
+            # MySQL: JSON_CONTAINS(tags, '"tag1"') OR JSON_CONTAINS(tags, '"tag2"')
+            tag_filters = []
+            for tag in tag_list:
+                # JSON_CONTAINS 第二个参数需要是 JSON 格式的字符串
+                tag_filters.append(Post.tags.contains(tag))
+            # 任一标签匹配即可
+            from sqlalchemy import or_
+            filters.append(or_(*tag_filters))
 
     # 组合所有筛选条件
     from sqlalchemy import and_
