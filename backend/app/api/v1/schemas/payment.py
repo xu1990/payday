@@ -1,6 +1,7 @@
 """
 支付相关的 Pydantic schemas
 """
+from typing import Optional
 from pydantic import BaseModel
 
 
@@ -25,7 +26,7 @@ class CreatePaymentResponse(BaseModel):
     """创建支付响应"""
 
     success: bool
-    data: PaymentParams | None = None
+    data: Optional[PaymentParams] = None
     message: str
 
 
