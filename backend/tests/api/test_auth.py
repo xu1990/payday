@@ -83,6 +83,23 @@ class TestLoginEndpoint:
         data = response.json()
         assert "detail" in data
 
+    def test_login_invalid_code(self, client):
+        """测试登录失败 - 使用无效的微信code"""
+        # NOTE: This test is currently blocked by a pre-existing bug in the codebase:
+        # TypeError: <app.core.rate_limit.RateLimiter object at 0x...> is not a callable object
+        # in app/api/v1/post.py:49. This prevents the test client from initializing.
+        # Once that issue is fixed, this test should run successfully.
+
+        with patch('app.services.auth_service.code2session', new_callable=AsyncMock) as mock_code2session:
+            # Mock微信登录失败 - 返回None（表示code无效）
+            mock_code2session.return_value = None
+
+            # 使用TestClient发送HTTP POST请求
+            response = client.post("/api/v1/auth/login", json={"code": "invalid_code"})
+
+            # 验证HTTP响应 - 应该返回400
+            assert response.status_code == 400
+
 
 class TestRefreshTokenEndpoint:
     """测试POST /api/v1/auth/refresh端点"""
