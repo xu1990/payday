@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     wechat_app_id: str = ""
     wechat_app_secret: str = ""
 
+    # 微信支付（技术方案 支付集成）
+    wechat_mch_id: str = ""
+    wechat_pay_api_key: str = ""
+    wechat_pay_notify_url: str = ""
+
     # JWT（技术方案 2.1 认证）
     jwt_secret_key: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"

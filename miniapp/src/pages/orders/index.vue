@@ -69,6 +69,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { getMyOrders, type MembershipOrderItem } from '@/api/membership'
+import { createPayment, requestWeChatPayment } from '@/api/payment'
 
 const orders = ref<MembershipOrderItem[]>([])
 const loading = ref(true)
@@ -115,9 +116,34 @@ const formatDateTime = (dateStr: string) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
-const handlePay = (order: MembershipOrderItem) => {
-  uni.showToast({ title: '跳转支付页...', icon: 'none' })
-  // TODO: 实现支付逻辑
+const handlePay = async (order: MembershipOrderItem) => {
+  try {
+    // 1. 创建支付参数
+    const payRes = await createPayment({ order_id: order.id })
+
+    if (!payRes.success || !payRes.data) {
+      uni.showToast({ title: payRes.message || '支付参数生成失败', icon: 'none' })
+      return
+    }
+
+    // 2. 调起微信支付
+    await requestWeChatPayment(payRes.data)
+    uni.showToast({ title: '支付成功', icon: 'success' })
+
+    // 3. 刷新订单列表
+    setTimeout(async () => {
+      const res = await getMyOrders()
+      orders.value = res.items
+    }, 1000)
+
+  } catch (error: any) {
+    console.error('Payment failed:', error)
+    if (error.errMsg && error.errMsg.includes('cancel')) {
+      uni.showToast({ title: '已取消支付', icon: 'none' })
+    } else {
+      uni.showToast({ title: '支付失败，请重试', icon: 'none' })
+    }
+  }
 }
 
 const handleCancel = (order: MembershipOrderItem) => {

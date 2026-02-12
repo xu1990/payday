@@ -79,6 +79,7 @@ import {
   type MembershipItem,
   type ActiveMembership
 } from '@/api/membership'
+import { createPayment, requestWeChatPayment } from '@/api/payment'
 
 const packages = ref<MembershipItem[]>([])
 const activeMembership = ref<ActiveMembership>({} as ActiveMembership)
@@ -112,16 +113,40 @@ const selectPackage = async (pkg: MembershipItem) => {
     success: async (res) => {
       if (res.confirm) {
         try {
-          const order = await createMembershipOrder({
+          // 1. 创建订单
+          const orderRes = await createMembershipOrder({
             membership_id: pkg.id,
             amount: pkg.price,
             payment_method: 'wechat'
           })
-          uni.showToast({ title: '订单已创建', icon: 'success' })
-          // TODO: 跳转到支付页面
-        } catch (error) {
-          console.error('Failed to create order:', error)
-          uni.showToast({ title: '创建订单失败', icon: 'none' })
+
+          const orderId = (orderRes as any).id
+
+          // 2. 创建支付参数
+          const payRes = await createPayment({ order_id: orderId })
+
+          if (!payRes.success || !payRes.data) {
+            uni.showToast({ title: payRes.message || '支付参数生成失败', icon: 'none' })
+            return
+          }
+
+          // 3. 调起微信支付
+          await requestWeChatPayment(payRes.data)
+          uni.showToast({ title: '支付成功', icon: 'success' })
+
+          // 4. 刷新会员状态
+          setTimeout(async () => {
+            const active = await getActiveMembership()
+            activeMembership.value = active as ActiveMembership
+          }, 1000)
+
+        } catch (error: any) {
+          console.error('Payment failed:', error)
+          if (error.errMsg && error.errMsg.includes('cancel')) {
+            uni.showToast({ title: '已取消支付', icon: 'none' })
+          } else {
+            uni.showToast({ title: '支付失败，请重试', icon: 'none' })
+          }
         }
       }
     }
