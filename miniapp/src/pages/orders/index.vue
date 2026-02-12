@@ -68,7 +68,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getMyOrders, type MembershipOrderItem } from '@/api/membership'
+import { getMyOrders, cancelOrder, type MembershipOrderItem } from '@/api/membership'
 import { createPayment, requestWeChatPayment } from '@/api/payment'
 
 const orders = ref<MembershipOrderItem[]>([])
@@ -146,13 +146,28 @@ const handlePay = async (order: MembershipOrderItem) => {
   }
 }
 
-const handleCancel = (order: MembershipOrderItem) => {
+const handleCancel = async (order: MembershipOrderItem) => {
   uni.showModal({
     title: '取消订单',
     content: '确认取消该订单？',
-    success: (res) => {
+    success: async (res) => {
       if (res.confirm) {
-        uni.showToast({ title: '取消功能开发中', icon: 'none' })
+        try {
+          await cancelOrder(order.id)
+          uni.showToast({ title: '订单已取消', icon: 'success' })
+
+          // 刷新订单列表
+          setTimeout(async () => {
+            const ordersRes = await getMyOrders()
+            orders.value = ordersRes.items
+          }, 500)
+        } catch (error: any) {
+          console.error('Cancel order failed:', error)
+          uni.showToast({
+            title: error?.message || '取消失败',
+            icon: 'none'
+          })
+        }
       }
     }
   })

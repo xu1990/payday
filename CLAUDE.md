@@ -108,9 +108,10 @@ backend/
 ### Key Design Patterns
 
 1. **Service Layer Pattern**: Business logic lives in \`app/services/\`, API routes in \`app/api/v1/\` are thin.
-2. **Dependency Injection**: Use \`app/core/deps.py\` for database sessions and current user.
+2. **Dependency Injection**: Use \`app/core/deps.py\` for database sessions (\`get_db\`) and current user (\`get_current_user\`, \`get_current_admin\`).
 3. **Pydantic Schemas**: All API inputs/outputs use schemas from \`app/schemas/\`.
 4. **SQLAlchemy ORM**: Async sessions via \`app/core/database.py\`.
+5. **Exception Handling**: Use custom exceptions from \`app/core/exceptions.py\` (PayDayException, BusinessException, AuthenticationException, etc.) and \`error_response()\` for unified error responses.
 
 ### Data Security
 
@@ -167,7 +168,7 @@ Key files:
 
 Key files:
 - \`src/pages/\` - Page components
-- \`src/components/\` - Reusable components
+- \`src/components/\` - Reusable components (LazyImage, Loading, EmptyState)
 - \`src/api/\` - API request modules
 - \`src/stores/\` - Pinia state stores
 - \`src/utils/\` - Utility functions
@@ -257,6 +258,9 @@ pytest --cov=app --cov-report=html
 # Run specific test file
 pytest tests/test_specific_file.py
 
+# Run single test function
+pytest tests/test_specific_file.py::test_function_name
+
 # Run only unit tests (exclude integration/slow)
 pytest -m "not integration and not slow"
 
@@ -320,10 +324,10 @@ Refer to \`docs/迭代规划_Sprint与任务.md\` for detailed sprint breakdown:
 - Sprint 1.1-1.4: Basic MVP features ✅
 - Sprint 2.1-2.4: Community features ✅
 - Sprint 3.1-3.2: Follow, insights, check-in, themes ✅
-- Sprint 3.4-3.5: Membership models and payment API ✅
+- Sprint 3.3-3.5: Membership system (models, payment API, orders) ✅
+- Exception handling system (app/core/exceptions.py, error_handler.py) ✅
 
 **Pending / In Progress**:
-- Admin backend: Orders management API (in progress)
 - Miniapp: Membership purchase flow UI (pending)
 - Database migrations for new tables (pending)
 
@@ -342,6 +346,41 @@ Refer to \`docs/迭代规划_Sprint与任务.md\` for detailed sprint breakdown:
 - **Schemas**: Pydantic models for request/response validation
 - **Services**: Business logic separated from API routes
 - **Tasks**: Celery tasks in \`app/tasks/\` for async operations
+
+### Exception Handling Best Practices
+
+When raising exceptions in services or routes:
+
+\`\`\`python
+# For business logic errors
+from app.core.exceptions import BusinessException, NotFoundException, ValidationException
+
+# Raise appropriate exceptions
+raise NotFoundException("用户不存在")
+raise ValidationException("参数格式错误", details={"field": "amount"})
+raise BusinessException("该操作不允许", code="OPERATION_NOT_ALLOWED")
+
+# For errors that need to return structured responses
+from app.core.exceptions import error_response
+return error_response(
+    status_code=400,
+    message="创建失败",
+    code="CREATE_FAILED",
+    details={"reason": "..."}
+)
+\`\`\`
+
+### Adding New API Endpoints
+
+Follow this pattern when adding new endpoints:
+
+1. **Create exceptions** (if needed): Add custom exceptions to \`app/core/exceptions.py\`
+2. **Create/Update models**: Add ORM models in \`app/models/\`
+3. **Generate migration**: Run \`alembic revision --autogenerate -m "description"\`
+4. **Create schemas**: Add Pydantic schemas to \`app/schemas/\`
+5. **Implement service**: Add business logic to \`app/services/\`
+6. **Add routes**: Create API handlers in \`app/api/v1/\`
+7. **Register router**: Import and include router in \`app/main.py\`
 
 ---
 

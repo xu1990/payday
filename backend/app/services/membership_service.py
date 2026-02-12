@@ -114,3 +114,38 @@ async def verify_membership_benefits(db: AsyncSession, user_id: str, endpoint: s
     # 根据端点判断所需会员等级
     # 这里简化处理：所有会员功能都验证
     return True
+
+
+async def cancel_order(db: AsyncSession, order_id: str, user_id: str) -> bool:
+    """取消会员订单
+
+    只能取消状态为 pending 的订单
+    """
+    from sqlalchemy import update
+
+    # 查询订单
+    result = await db.execute(
+        select(MembershipOrder)
+        .where(
+            and_(
+                MembershipOrder.id == order_id,
+                MembershipOrder.user_id == user_id,
+            )
+        )
+    )
+    order = result.scalar_one_or_none()
+
+    if not order:
+        raise ValueError("订单不存在")
+
+    if order.status != "pending":
+        raise ValueError(f"订单状态为 {order.status}，无法取消")
+
+    # 更新订单状态
+    await db.execute(
+        update(MembershipOrder)
+        .where(MembershipOrder.id == order_id)
+        .values(status="cancelled")
+    )
+    await db.commit()
+    return True

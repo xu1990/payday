@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
 from app.core.database import async_session_maker
+from app.core.error_handler import setup_exception_handlers
 from app.api.v1 import api_router
 from app.services.cache_preheat import preheat_all
 from app.utils.logger import get_logger
@@ -123,6 +124,9 @@ def metrics():
 
 
 app.include_router(api_router)
+
+# 设置全局异常处理器
+setup_exception_handlers(app)
 
 
 @app.get("/")

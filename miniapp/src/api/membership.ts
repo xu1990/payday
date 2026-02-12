@@ -86,3 +86,11 @@ export function getActiveMembership() {
     method: 'GET',
   })
 }
+
+/** 取消会员订单 */
+export function cancelOrder(orderId: string) {
+  return request<{ success: boolean; message: string }>({
+    url: `${PREFIX}/order/${orderId}/cancel`,
+    method: 'POST',
+  })
+}
