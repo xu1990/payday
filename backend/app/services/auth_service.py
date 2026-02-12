@@ -1,5 +1,6 @@
 """
 认证服务 - 微信 code2session、获取或创建用户
+支持 Refresh Token 机制
 """
 import random
 import string
@@ -10,7 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
 from app.utils.wechat import code2session
-from app.core.security import create_access_token
+from app.core.security import create_access_token, create_refresh_token
+from app.core.cache import get_redis_client
 
 
 def _gen_anonymous_name() -> str:
@@ -36,10 +38,13 @@ async def get_or_create_user(db: AsyncSession, openid: str, unionid: Optional[st
     return user
 
 
-async def login_with_code(db: AsyncSession, code: str) -> Optional[Tuple[str, User]]:
+async def login_with_code(db: AsyncSession, code: str) -> Optional[Tuple[str, str, User]]:
     """
-    微信 code 登录：code2session -> 获取或创建用户 -> 生成 JWT。
+    微信 code 登录：code2session -> 获取或创建用户 -> 生成 JWT 对。
     失败返回 None（OK: 登录失败返回 None 是正常流程）。
+
+    Returns:
+        (access_token, refresh_token, user) 或 None
     """
     data = await code2session(code)
     openid = data.get("openid")
@@ -47,5 +52,73 @@ async def login_with_code(db: AsyncSession, code: str) -> Optional[Tuple[str, Us
         return None  # OK: 微信登录失败返回 None 是正常流程
     unionid = data.get("unionid")
     user = await get_or_create_user(db, openid=openid, unionid=unionid)
-    token = create_access_token(data={"sub": user.id})
-    return token, user
+
+    # 生成 Access Token 和 Refresh Token
+    access_token = create_access_token(data={"sub": user.id})
+    refresh_token = create_refresh_token(data={"sub": user.id})
+
+    # 将 Refresh Token 存储到 Redis（7天过期）
+    redis = await get_redis_client()
+    if redis:
+        await redis.setex(
+            f"refresh_token:{user.id}",
+            7 * 24 * 60 * 60,  # 7天
+            refresh_token
+        )
+
+    return access_token, refresh_token, user
+
+
+async def refresh_access_token(refresh_token: str, user_id: str) -> Optional[Tuple[str, str]]:
+    """
+    使用 Refresh Token 刷新 Access Token
+
+    Args:
+        refresh_token: 旧的 refresh token
+        user_id: 用户ID
+
+    Returns:
+        (new_access_token, new_refresh_token) 或 None
+    """
+    from app.core.security import decode_token, verify_token_type
+
+    # 验证 Refresh Token
+    payload = decode_token(refresh_token)
+    if not payload or payload.get("sub") != user_id:
+        return None
+
+    if not verify_token_type(refresh_token, "refresh"):
+        return None
+
+    # 验证 Redis 中的 Refresh Token
+    redis = await get_redis_client()
+    if redis:
+        stored_token = await redis.get(f"refresh_token:{user_id}")
+        if not stored_token or stored_token != refresh_token:
+            return None
+
+    # 生成新的 Token 对
+    new_access_token = create_access_token(data={"sub": user_id})
+    new_refresh_token = create_refresh_token(data={"sub": user_id})
+
+    # 更新 Redis 中的 Refresh Token
+    if redis:
+        await redis.setex(
+            f"refresh_token:{user_id}",
+            7 * 24 * 60 * 60,  # 7天
+            new_refresh_token
+        )
+
+    return new_access_token, new_refresh_token
+
+
+async def revoke_refresh_token(user_id: str) -> None:
+    """
+    撤销用户的 Refresh Token（登出时调用）
+
+    Args:
+        user_id: 用户ID
+    """
+    redis = await get_redis_client()
+    if redis:
+        await redis.delete(f"refresh_token:{user_id}")

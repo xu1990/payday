@@ -15,6 +15,7 @@ class SalaryRecord(Base):
     user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     config_id = Column(String(36), ForeignKey("payday_configs.id"), nullable=False, index=True)
     amount_encrypted = Column(Text, nullable=False, comment="加密后的金额")
+    encryption_salt = Column(String(44), nullable=False, comment="加密使用的盐值 (base64编码)")
     payday_date = Column(Date, nullable=False, index=True, comment="发薪日期")
     salary_type = Column(
         Enum("normal", "bonus", "allowance", "other", name="salary_type_enum"),

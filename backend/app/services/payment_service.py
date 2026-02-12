@@ -16,6 +16,7 @@ async def create_membership_payment(
     db: AsyncSession,
     order_id: str,
     openid: str,
+    client_ip: str = "127.0.0.1",
 ) -> dict:
     """
     创建会员订单支付
@@ -24,6 +25,7 @@ async def create_membership_payment(
         db: 数据库会话
         order_id: 订单ID
         openid: 用户微信 openid
+        client_ip: 客户端真实 IP
 
     Returns:
         小程序支付参数
@@ -49,6 +51,7 @@ async def create_membership_payment(
         total_fee=order.amount,
         body=f"{order.membership_name or '会员套餐'}",
         openid=openid,
+        client_ip=client_ip,
     )
 
     return payment_params

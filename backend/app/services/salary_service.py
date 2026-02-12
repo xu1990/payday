@@ -44,11 +44,12 @@ async def get_by_id(db: AsyncSession, record_id: str, user_id: str) -> Optional[
 
 async def create(db: AsyncSession, user_id: str, data: SalaryRecordCreate) -> SalaryRecord:
     try:
-        amount_encrypted = encrypt_amount(data.amount)
+        amount_encrypted, salt_b64 = encrypt_amount(data.amount)
         record = SalaryRecord(
             user_id=user_id,
             config_id=data.config_id,
             amount_encrypted=amount_encrypted,
+            encryption_salt=salt_b64,
             payday_date=data.payday_date,
             salary_type=data.salary_type,
             images=data.images,
@@ -74,7 +75,9 @@ async def update(
             raise NotFoundException("工资记录不存在")
         d = data.model_dump(exclude_unset=True)
         if "amount" in d:
-            d["amount_encrypted"] = encrypt_amount(d.pop("amount"))
+            amount_encrypted, salt_b64 = encrypt_amount(d.pop("amount"))
+            d["amount_encrypted"] = amount_encrypted
+            d["encryption_salt"] = salt_b64
         for k, v in d.items():
             setattr(record, k, v)
         await db.flush()
@@ -156,7 +159,7 @@ async def list_all_for_admin(
 
 def record_to_response(record: SalaryRecord) -> dict:
     """将 ORM 转为响应 dict，金额解密为元"""
-    amount = decrypt_amount(record.amount_encrypted)
+    amount = decrypt_amount(record.amount_encrypted, record.encryption_salt)
     return {
         "id": record.id,
         "user_id": record.user_id,

@@ -1,5 +1,6 @@
 """
 JWT 认证与密码哈希 - 技术方案 2.1 认证与 2.2.3；管理端 passlib
+支持 Refresh Token 机制
 """
 from datetime import datetime, timedelta
 from typing import Optional
@@ -23,11 +24,26 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """创建 JWT Token"""
+    """创建 JWT Access Token（短期，15分钟）"""
     settings = get_settings()
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=settings.jwt_expire_minutes))
-    to_encode.update({"exp": expire})
+    # Access Token 有效期较短（15分钟）
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
+    to_encode.update({"exp": expire, "type": "access"})
+    return jwt.encode(
+        to_encode,
+        settings.jwt_secret_key,
+        algorithm=settings.jwt_algorithm,
+    )
+
+
+def create_refresh_token(data: dict) -> str:
+    """创建 JWT Refresh Token（长期，7天）"""
+    settings = get_settings()
+    to_encode = data.copy()
+    # Refresh Token 有效期较长（7天）
+    expire = datetime.utcnow() + timedelta(days=7)
+    to_encode.update({"exp": expire, "type": "refresh"})
     return jwt.encode(
         to_encode,
         settings.jwt_secret_key,
@@ -47,3 +63,11 @@ def decode_token(token: str) -> Optional[dict]:
         return payload
     except JWTError:
         return None
+
+
+def verify_token_type(token: str, expected_type: str) -> bool:
+    """验证 Token 类型"""
+    payload = decode_token(token)
+    if not payload:
+        return False
+    return payload.get("type") == expected_type

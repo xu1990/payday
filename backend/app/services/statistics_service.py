@@ -29,7 +29,7 @@ async def get_month_summary(db: AsyncSession, user_id: str, year: int, month: in
         )
     )
     records = list(result.scalars().all())
-    total = sum(decrypt_amount(r.amount_encrypted) for r in records)
+    total = sum(decrypt_amount(r.amount_encrypted, r.encryption_salt) for r in records)
     count = len(records)
     return {"year": year, "month": month, "total_amount": round(total, 2), "record_count": count}
 
@@ -129,12 +129,12 @@ async def get_insights_distributions(db: AsyncSession) -> dict:
 
     # 获取所有工资记录进行区间统计
     all_salaries = await db.execute(
-        select(SalaryRecord.amount_encrypted)
+        select(SalaryRecord.amount_encrypted, SalaryRecord.encryption_salt)
         .where(SalaryRecord.payday_date.isnot(None))
     )
     salaries = [
-        decrypt_amount(r.amount_encrypted) / 1000  # 转换为K
-        for r in all_salaries.scalars().all()
+        decrypt_amount(r.amount_encrypted, r.encryption_salt) / 1000  # 转换为K
+        for r in all_salaries.all()
     ]
 
     for salary_k in salaries:

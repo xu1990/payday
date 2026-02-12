@@ -35,6 +35,26 @@ async function loadData() {
 }
 
 async function handleStatusChange(orderId: string, newStatus: OrderStatusUpdate['status']) {
+  // 对关键状态变更添加确认
+  if (newStatus === 'refunded' || newStatus === 'cancelled') {
+    const statusText = newStatus === 'refunded' ? '退款' : '取消'
+    try {
+      await ElMessageBox.confirm(
+        `确定要将订单状态更改为「${statusText}」吗？此操作不可撤销。`,
+        '确认状态变更',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }
+      )
+    } catch {
+      // 用户取消操作
+      await loadData()
+      return
+    }
+  }
+
   try {
     await updateOrderStatus(orderId, { status: newStatus })
     ElMessage.success('状态更新成功')
@@ -42,6 +62,7 @@ async function handleStatusChange(orderId: string, newStatus: OrderStatusUpdate[
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : '操作失败'
     ElMessage.error(errorMessage)
+    await loadData() // 恢复原状
   }
 }
 

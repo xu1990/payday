@@ -21,9 +21,34 @@ from app.utils.wechat_pay import parse_payment_notify
 router = APIRouter(prefix="/payment", tags=["payment"])
 
 
+def _get_client_ip(request: Request) -> str:
+    """
+    从请求中获取客户端真实 IP
+
+    优先级: X-Forwarded-For > X-Real-IP > client
+    """
+    # 检查代理头
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        # X-Forwarded-For 可能包含多个 IP，取第一个
+        return forwarded_for.split(",")[0].strip()
+
+    real_ip = request.headers.get("X-Real-IP")
+    if real_ip:
+        return real_ip.strip()
+
+    # 如果没有代理头，返回默认值
+    # 在实际部署环境中应该从 request.client.host 获取
+    if request.client and request.client.host:
+        return request.client.host
+
+    return "127.0.0.1"
+
+
 @router.post("/create", response_model=CreatePaymentResponse)
 async def create_payment(
     data: CreatePaymentRequest,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -32,6 +57,7 @@ async def create_payment(
 
     Args:
         data: 支付请求参数
+        request: FastAPI 请求对象
         current_user: 当前用户
         db: 数据库会话
 
@@ -46,11 +72,15 @@ async def create_payment(
             message="用户未绑定微信",
         )
 
+    # 获取客户端真实 IP
+    client_ip = _get_client_ip(request)
+
     try:
         payment_params = await create_membership_payment(
             db=db,
             order_id=data.order_id,
             openid=openid,
+            client_ip=client_ip,
         )
 
         return CreatePaymentResponse(

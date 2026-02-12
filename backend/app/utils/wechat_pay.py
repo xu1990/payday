@@ -65,6 +65,7 @@ async def create_mini_program_payment(
     total_fee: int,
     body: str,
     openid: str,
+    client_ip: str = "127.0.0.1",
 ) -> dict[str, Any]:
     """
     创建小程序支付订单
@@ -74,6 +75,7 @@ async def create_mini_program_payment(
         total_fee: 总金额（分）
         body: 商品描述
         openid: 用户 openid
+        client_ip: 客户端真实 IP（从请求中获取）
 
     Returns:
         包含 prepay_id 的字典，用于小程序调起支付
@@ -87,7 +89,7 @@ async def create_mini_program_payment(
         "body": body,
         "out_trade_no": out_trade_no,
         "total_fee": total_fee,
-        "spbill_create_ip": "127.0.0.1",
+        "spbill_create_ip": client_ip,
         "notify_url": settings.wechat_pay_notify_url,
         "trade_type": "JSAPI",
         "openid": openid,

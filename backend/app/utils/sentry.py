@@ -104,8 +104,22 @@ def before_send_filter(event, hint):
     # 过滤查询参数中的敏感信息
     query_string = request.get('query_string', '')
     if query_string:
-        # TODO: 更精确的敏感参数过滤
-        event['request']['query_string'] = '[FILTERED]'
+        # 解析查询字符串并过滤敏感参数
+        from urllib.parse import parse_qs
+        try:
+            parsed_qs = parse_qs(query_string)
+            sensitive_params = ['token', 'password', 'secret', 'key', 'code', 'authorization']
+
+            # 只过滤敏感参数
+            filtered_qs = {k: v for k, v in parsed_qs.items()
+                         if k.lower() not in sensitive_params}
+
+            # 重新编码查询字符串
+            from urllib.parse import urlencode
+            event['request']['query_string'] = urlencode(filtered_qs, doseq=True)
+        except Exception:
+            # 如果解析失败，过滤整个查询字符串
+            event['request']['query_string'] = '[FILTERED]'
 
     # 过滤 body 中的敏感字段
     body = request.get('data', {})
@@ -118,7 +132,7 @@ def before_send_filter(event, hint):
     return event
 
 
-def capture_exception exc: Exception, level: str = 'error', tags: Optional[dict] = None, extra: Optional[dict] = None):
+def capture_exception(exc: Exception, level: str = 'error', tags: Optional[dict] = None, extra: Optional[dict] = None):
     """
     捕获并上报异常到 Sentry
 
@@ -151,7 +165,7 @@ def capture_exception exc: Exception, level: str = 'error', tags: Optional[dict]
     logger.error(f"Exception captured by Sentry: {exc}", exc_info=exc)
 
 
-def capture_message message: str, level: str = 'info', tags: Optional[dict] = None):
+def capture_message(message: str, level: str = 'info', tags: Optional[dict] = None):
     """
     捕获并上报消息到 Sentry
 

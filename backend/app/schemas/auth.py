@@ -8,5 +8,17 @@ class LoginRequest(BaseModel):
 
 class LoginResponse(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
     user: dict  # 当前用户简要信息
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str = Field(..., description="刷新 Token")
+    user_id: str = Field(..., description="用户ID")
+
+
+class RefreshTokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
