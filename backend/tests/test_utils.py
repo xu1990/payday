@@ -1,8 +1,8 @@
 """测试工具和数据工厂"""
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.models.user import User
 from app.models.post import Post
@@ -67,7 +67,7 @@ class TestDataFactory:
         user_id: str,
         config_id: str,
         amount: int = 10000,
-        payday_date: datetime = None,
+        payday_date: Optional[date] = None,
         **kwargs
     ) -> SalaryRecord:
         """创建测试薪资记录"""

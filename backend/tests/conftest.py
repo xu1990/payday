@@ -110,11 +110,15 @@ async def test_user(db_session: AsyncSession) -> User:
 
 
 @pytest.fixture
-async def test_admin(db_session: AsyncSession) -> User:
+async def test_admin(db_session: AsyncSession):
     """创建测试管理员用户"""
-    admin = User(
-        openid="admin_test",
-        anonymous_name="测试管理员",
+    from app.models.admin import AdminUser
+    from app.core.security import hash_password
+
+    admin = AdminUser(
+        username="test_admin",
+        password_hash=hash_password("test_password"),
+        role="admin",
     )
     db_session.add(admin)
     await db_session.commit()
@@ -129,7 +133,7 @@ def user_token(test_user: User) -> str:
 
 
 @pytest.fixture
-def admin_token(test_admin: User) -> str:
+def admin_token(test_admin) -> str:
     """生成管理员JWT token"""
     return create_access_token(
         data={"sub": str(test_admin.id), "scope": "admin"}
@@ -218,7 +222,8 @@ async def test_salary(db_session: AsyncSession, test_user: User) -> SalaryRecord
     from app.models.payday import PaydayConfig
     config = PaydayConfig(
         user_id=test_user.id,
-        payday_date=25,
+        job_name="测试工作",
+        payday=25,
     )
     db_session.add(config)
     await db_session.commit()
