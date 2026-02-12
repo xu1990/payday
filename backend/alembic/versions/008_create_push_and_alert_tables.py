@@ -9,6 +9,9 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import func
 
+revision = '009'
+down_revision = '008'
+
 
 def upgrade():
     # 创建push_notifications表

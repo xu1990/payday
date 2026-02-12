@@ -9,6 +9,9 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import func
 
+revision = '007'
+down_revision = '006'
+
 
 def upgrade():
     # 创建topics表

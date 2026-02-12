@@ -18,7 +18,10 @@ target_metadata = Base.metadata
 
 # 从应用配置读取 database_url，避免在 alembic.ini 写死密码
 settings = get_settings()
-config.set_main_option("sqlalchemy.url", settings.database_url)
+
+# 直接设置到 section 避免 ConfigParser 的插值问题
+section = config.get_section(config.config_ini_section, {})
+section["sqlalchemy.url"] = settings.database_url
 
 
 def run_migrations_offline() -> None:

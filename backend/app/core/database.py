@@ -1,6 +1,7 @@
 """
-数据库连接与会话 - 技术方案 2.2
-支持同步和异步会话
+数据库连接与会话 - 技术方案 2.2 + 性能优化
+支持同步和异步会话，优化连接池配置
+技术方案 4.2.2 - 数据库连接池优化
 """
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -10,11 +11,20 @@ from .config import get_settings
 settings = get_settings()
 
 # 同步引擎（用于 Alembic 迁移）
+# 技术方案 4.2.2 - 连接池配置优化
 sync_engine = create_engine(
     settings.database_url,
-    pool_pre_ping=True,
-    pool_recycle=3600,
+    # 连接池配置
+    pool_size=20,              # 连接池大小
+    max_overflow=40,           # 最大溢出连接数
+    pool_pre_ping=True,         # 连接前检测
+    pool_recycle=3600,          # 连接回收时间(秒)
+    # 性能优化
     echo=settings.debug,
+    connect_args={
+        "charset": "utf8mb4",
+        "connect_timeout": 10,
+    },
 )
 
 # 同步会话（用于 Alembic）
@@ -32,11 +42,20 @@ def _get_async_engine():
     global _async_engine, _AsyncSessionLocal
     if _async_engine is None:
         async_database_url = settings.database_url.replace("mysql+pymysql://", "mysql+aiomysql://")
+        # 技术方案 4.2.2 - 异步连接池配置优化
         _async_engine = create_async_engine(
             async_database_url,
-            pool_pre_ping=True,
-            pool_recycle=3600,
+            # 连接池配置
+            pool_size=20,              # 连接池大小
+            max_overflow=40,           # 最大溢出连接数
+            pool_pre_ping=True,         # 连接前检测
+            pool_recycle=3600,          # 连接回收时间(秒)
+            # 性能优化
             echo=settings.debug,
+            connect_args={
+                "charset": "utf8mb4",
+                "connect_timeout": 10,
+            },
         )
         _AsyncSessionLocal = async_sessionmaker(
             bind=_async_engine,

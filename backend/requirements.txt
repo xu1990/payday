@@ -27,5 +27,11 @@ redis>=5.0
 # 队列（Sprint 2.3 风控异步任务，技术方案 2.4）
 celery[redis]>=5.3
 
+# 监控 - Prometheus 指标暴露
+prometheus-client>=0.19.0
+
+# 腾讯云服务 - 内容安全与 OCR
+tencentcloud-sdk-python>=3.0.0
+
 # 工具
 python-dotenv>=1.0

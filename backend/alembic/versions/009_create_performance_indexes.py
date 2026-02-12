@@ -8,6 +8,9 @@ Create Date: 2025-02-12
 from alembic import op
 import sqlalchemy as sa
 
+revision = '010'
+down_revision = '009'
+
 
 def upgrade():
     # follows表索引 - 用于快速查询用户的关注/粉丝关系

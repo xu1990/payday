@@ -209,3 +209,90 @@ async def delete_membership(
     )
     await db.commit()
     return {"deleted": result.rowcount > 0}
+
+
+# ==================== 会员订单管理 ====================
+
+class OrderListResponse(BaseModel):
+    items: list
+    total: int
+
+
+class OrderStatusUpdate(BaseModel):
+    status: str  # pending | paid | cancelled | refunded
+
+
+@router.get("/orders", response_model=OrderListResponse)
+async def list_orders(
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    current_admin: User = Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """获取会员订单列表。"""
+    from sqlalchemy import select, func
+
+    q = select(MembershipOrder)
+    # 关联会员套餐名称
+    q = q.join(Membership, MembershipOrder.membership_id == Membership.id)
+    count_q = select(func.count()).select_from(q.subquery())
+    total = (await db.execute(count_q)).scalar() or 0
+
+    q = q.order_by(MembershipOrder.created_at.desc())
+    q = q.limit(limit).offset(offset)
+    result = await db.execute(q)
+    orders = list(result.scalars().all())
+
+    # 构建响应，包含套餐名称
+    items = []
+    for order in orders:
+        # 获取套餐名称
+        membership_result = await db.execute(
+            select(Membership).where(Membership.id == order.membership_id)
+        )
+        membership = membership_result.scalar_one_or_none()
+
+        item = {
+            "id": order.id,
+            "user_id": order.user_id,
+            "membership_id": order.membership_id,
+            "membership_name": membership.name if membership else "未知套餐",
+            "amount": float(order.amount),
+            "status": order.status,
+            "payment_method": order.payment_method,
+            "transaction_id": order.transaction_id,
+            "start_date": order.start_date.isoformat() if order.start_date else None,
+            "end_date": order.end_date.isoformat() if order.end_date else None,
+            "auto_renew": bool(order.auto_renew),
+            "created_at": order.created_at.isoformat() if order.created_at else None,
+        }
+        items.append(item)
+
+    return OrderListResponse(items=items, total=total)
+
+
+@router.put("/orders/{order_id}")
+async def update_order_status(
+    order_id: str,
+    data: OrderStatusUpdate,
+    current_admin: User = Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """更新订单状态。"""
+    from sqlalchemy import select, update
+
+    result = await db.execute(
+        select(MembershipOrder).where(MembershipOrder.id == order_id)
+    )
+    order = result.scalar_one_or_none()
+    if not order:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="订单不存在")
+
+    await db.execute(
+        update(MembershipOrder)
+        .where(MembershipOrder.id == order_id)
+        .values(status=data.status)
+    )
+    await db.commit()
+    return {"updated": True}

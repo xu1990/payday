@@ -31,3 +31,47 @@ export function getTrend(months: number = 6) {
     method: 'GET',
   })
 }
+
+// ==================== 数据洞察 ====================
+
+/** 行业分布项 */
+export interface IndustryDistribution {
+  industry: string | null
+  count: number
+  avg_amount: number
+}
+
+/** 城市分布项 */
+export interface CityDistribution {
+  city: string | null
+  count: number
+  avg_amount: number
+}
+
+/** 工资区间分布项 */
+export interface SalaryRangeDistribution {
+  range: string | null
+  count: number
+}
+
+/** 发薪日分布项 */
+export interface PaydayDistribution {
+  day: number
+  count: number
+}
+
+/** 数据洞察响应 */
+export interface InsightsData {
+  industry: IndustryDistribution[]
+  city: CityDistribution[]
+  salary_range: SalaryRangeDistribution[]
+  payday: PaydayDistribution[]
+}
+
+/** 获取数据洞察（行业/城市/工资区间/发薪日分布） */
+export function getInsights() {
+  return request<InsightsData>({
+    url: `${PREFIX}/insights`,
+    method: 'GET',
+  })
+}

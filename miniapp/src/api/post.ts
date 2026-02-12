@@ -64,3 +64,19 @@ export function getPostDetail(postId: string) {
 export function createPost(data: PostCreateParams) {
   return request<PostItem>({ url: PREFIX, method: 'POST', data })
 }
+
+// ==================== 关注流 ====================
+
+export interface FeedListRes {
+  items: PostItem[]
+  total: number
+}
+
+/** 获取关注流（我关注的人发布的帖子） */
+export function getFeed(params?: { limit?: number; offset?: number }): Promise<FeedListRes> {
+  const { limit = 20, offset = 0 } = params || {}
+  return request<FeedListRes>({
+    url: `/api/v1/user/me/feed?limit=${limit}&offset=${offset}`,
+    method: 'GET',
+  })
+}
