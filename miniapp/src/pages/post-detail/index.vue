@@ -157,6 +157,16 @@ async function submitComment() {
         </text>
         <text class="meta-item">💬 {{ post.comment_count }}</text>
         <text class="meta-item">👁 {{ post.view_count }}</text>
+        <view class="share-actions">
+          <button class="share-btn" @tap="shareToWeChat">
+            <text class="share-icon">💬</text>
+            <text>分享给好友</text>
+          </button>
+          <button class="share-btn" @tap="shareToMoments">
+            <text class="share-icon">⭭</text>
+            <text>分享到朋友圈</text>
+          </button>
+        </view>
       </view>
       <view class="comment-section">
         <view class="comment-title">评论</view>
