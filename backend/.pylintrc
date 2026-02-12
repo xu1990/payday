@@ -1,0 +1,31 @@
+# pylint configuration for PayDay Backend
+
+[MASTER]
+disable=
+    C0114,  # missing-module-docstring (we use docstrings in __init__.py)
+    C0115,  # missing-class-docstring
+    C0116,  # missing-function-docstring
+    R0903,  # too-few-public-methods (many models/classes don't need many methods)
+    W0212,  # protected-access (we use _ prefix conventionally)
+max-line-length=100
+
+[FORMAT]
+indent-string='   '
+
+[BASIC]
+good-names=i,j,k,ex,Run,_,id,a,b,db
+
+[DESIGN]
+max-args=7
+max-locals=15
+max-returns=6
+max-branches=12
+max-statements=50
+
+[LOGGING]
+logging-format-style=new
+logging-module=logging
+
+[VARIABLES]
+dummy-variables-rgx=(_+$|(_[^a-zA-Z0-9]+)+$)
+init-import=no

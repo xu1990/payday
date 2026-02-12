@@ -1,9 +1,13 @@
 /**
  * 小程序请求封装：baseURL + uni.request，便于后续加 token
  * 支持统一的错误处理和 loading 提示
+ *
+ * SECURITY: 移除客户端请求签名功能
+ * - 客户端签名不安全，因为密钥会暴露在客户端代码中
+ * - 改用 HTTPS + JWT 认证，由后端验证 token 有效性
+ * - 后端通过其他机制（如速率限制）防止滥用
  */
 import { hideLoading, showLoading, showError } from './toast'
-import { hmacSha256 } from './crypto'
 import { getToken as getStoredToken, clearToken } from '@/api/auth'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || ''
@@ -30,9 +34,6 @@ function resolveUrl(url: string): string {
 }
 
 /**
- * 从本地取 token（带过期检查）
- */
-/**
  * 检查 JWT token是否过期
  */
 function isTokenExpired(token: string): boolean {
@@ -56,35 +57,6 @@ function isTokenExpired(token: string): boolean {
   } catch {
     return true
   }
-}
-
-/**
- * 生成随机 nonce
- */
-function generateNonce(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substring(2)
-}
-
-/**
- * 请求签名（使用 HMAC-SHA256）
- */
-async function signRequest(url: string, method: string, data: any, timestamp: number, nonce: string): Promise<string> {
-  // 按字母顺序排序参数
-  const params: Record<string, any> = { url, method, timestamp, nonce, ...data }
-  const sorted = Object.keys(params).sort()
-
-  // 拼接字符串
-  const str = sorted.map(k => `${k}=${params[k]}`).join('&')
-
-  // 从环境变量获取 API 密钥（必须设置，否则抛出错误）
-  const apiSecret = import.meta.env.VITE_API_SECRET
-  if (!apiSecret) {
-    console.error('VITE_API_SECRET 环境变量未设置')
-    throw new Error('API Secret 未配置')
-  }
-
-  // 使用 HMAC-SHA256 签名
-  return await hmacSha256(str, apiSecret)
 }
 
 /**
@@ -185,18 +157,12 @@ export async function request<T = unknown>(options: RequestOptions): Promise<T> 
 
   const url = resolveUrl(rawOptions.url)
   const token = rawOptions.noAuth ? '' : await getToken()
-  const timestamp = Date.now()
-  const nonce = generateNonce()
-  const signature = await signRequest(url, rawOptions.method || 'GET', rawOptions.data, timestamp, nonce)
 
   const header: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(rawOptions.header as Record<string, string>),
   }
   if (token) header.Authorization = `Bearer ${token}`
-  header['X-Timestamp'] = timestamp.toString()
-  header['X-Nonce'] = nonce
-  header['X-Signature'] = signature
 
   // 显示 loading
   if (shouldShowLoading) {

@@ -110,6 +110,14 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
   }
 
+  /**
+   * 登出时调用（清空用户信息和状态）
+   */
+  function logout() {
+    clearUserInfo()
+    error.value = null
+  }
+
   return {
     // 状态
     currentUser,
@@ -133,5 +141,6 @@ export const useUserStore = defineStore('user', () => {
     fetchUserProfile,
     updateLocalUserInfo,
     clearUserInfo,
+    logout,
   }
 })

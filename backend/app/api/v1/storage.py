@@ -3,8 +3,8 @@
 """
 from fastapi import APIRouter, Depends
 
-from app.core.deps import get_current_admin_user
-from app.models.user import User
+from app.core.deps import get_current_admin
+from app.models.admin import AdminUser
 from app.utils.storage import storage_service
 
 router = APIRouter(prefix="/storage", tags=["storage"])
@@ -22,7 +22,7 @@ async def get_storage_status():
 
 
 @router.get("/config")
-async def get_storage_config(current_admin: User = Depends(get_current_admin_user)):
+async def get_storage_config(current_admin: AdminUser = Depends(get_current_admin)):
     """
     获取存储服务详细配置（管理员接口）
 

@@ -106,14 +106,37 @@ app = FastAPI(
 )
 
 # CORS 中间件
-# SECURITY: 使用环境变量配置白名单，允许跨域认证请求
-_cors_origins = [origin.strip() for origin in settings.cors_origins.split(",")]
+# SECURITY: 使用环境变量配置白名单，限制跨域请求
+_cors_origins = [origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()]
+
+# 记录 CORS 配置（调试模式）
+if settings.debug:
+    logger.info(f"CORS 允许的源: {_cors_origins}")
+else:
+    # 生产环境警告
+    if "*" in _cors_origins:
+        logger.warning("⚠️ 生产环境中 CORS 配置为通配符 '*'，这是不安全的！")
+    if any("localhost" in origin or "127.0.0.1" in origin for origin in _cors_origins):
+        logger.warning("⚠️ 生产环境中 CORS 配置包含 localhost，建议移除")
+
+# 明确允许的 HTTP 方法（不使用通配符）
+_allowed_methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+
+# 明确允许的请求头（不使用通配符）
+_allowed_headers = [
+    "Content-Type",
+    "Authorization",
+    "X-Timestamp",  # 签名相关（可选）
+    "X-Nonce",      # 签名相关（可选）
+    "X-Signature",  # 签名相关（可选）
+]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=_allowed_methods,
+    allow_headers=_allowed_headers,
 )
 
 # Prometheus 监控中间件

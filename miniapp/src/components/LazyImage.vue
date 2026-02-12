@@ -70,14 +70,52 @@ const isLoaded = ref(false)
 const isError = ref(false)
 const displaySrc = ref('')
 
-// 图片缓存Map（内存缓存，更高效）
-const imageCache = new Map<string, string>()
+// LRU 图片缓存实现（限制大小，防止内存泄漏）
+const MAX_CACHE_SIZE = 100 // 最多缓存 100 张图片
+
+class ImageCache {
+  private cache = new Map<string, string>()
+
+  get(key: string): string | undefined {
+    const value = this.cache.get(key)
+    if (value !== undefined) {
+      // LRU: 删除后重新添加到末尾
+      this.cache.delete(key)
+      this.cache.set(key, value)
+    }
+    return value
+  }
+
+  set(key: string, value: string): void {
+    // 如果缓存已满，删除最旧的条目（第一个）
+    if (this.cache.size >= MAX_CACHE_SIZE && !this.cache.has(key)) {
+      const firstKey = this.cache.keys().next().value
+      if (firstKey) {
+        this.cache.delete(firstKey)
+      }
+    }
+    this.cache.set(key, value)
+  }
+
+  has(key: string): boolean {
+    return this.cache.has(key)
+  }
+
+  clear(): void {
+    this.cache.clear()
+  }
+}
+
+// 创建全局缓存实例
+const imageCache = new ImageCache()
 
 // 预加载图片
 onMounted(() => {
   if (props.cache) {
-    if (imageCache.has(props.src)) {
-      displaySrc.value = imageCache.get(props.src)!
+    const cached = imageCache.get(props.src)
+    if (cached) {
+      displaySrc.value = cached
+      isLoaded.value = true
       return
     }
   }
@@ -88,7 +126,7 @@ function handleLoad(e: any) {
   isLoaded.value = true
   isError.value = false
 
-  // 缓存图片（仅在未缓存时）
+  // 缓存图片（使用 LRU 缓存）
   if (props.cache && !imageCache.has(props.src)) {
     imageCache.set(props.src, props.src)
   }
@@ -110,6 +148,11 @@ function handleRetry() {
 
 function handleClick() {
   emit('click')
+}
+
+// 导出缓存清理方法，供外部使用
+export function clearImageCache() {
+  imageCache.clear()
 }
 </script>
 

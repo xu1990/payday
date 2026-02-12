@@ -103,13 +103,17 @@ export const useAuthStore = defineStore('auth', {
         } else {
           localStorage.removeItem(TOKEN_KEY)
         }
-      } catch {}
+      } catch (error) {
+        console.error('Failed to save token to localStorage:', error)
+      }
     },
     logout() {
       this.token = ''
       try {
         localStorage.removeItem(TOKEN_KEY)
-      } catch {}
+      } catch (error) {
+        console.error('Failed to remove token from localStorage:', error)
+      }
     },
   },
 })

@@ -4,9 +4,9 @@
     <el-tabs v-model="activeTab">
       <el-tab-pane label="帖子待审" name="posts">
         <div class="toolbar">
-          <el-button type="primary" @click="fetchPosts">刷新</el-button>
+          <el-button type="primary" aria-label="刷新帖子列表" @click="fetchPosts">刷新</el-button>
         </div>
-        <el-table v-loading="postsLoading" :data="posts" stripe>
+        <el-table v-loading="postsLoading" :data="posts" stripe aria-label="待审帖子列表">
           <el-table-column prop="id" label="ID" width="280" show-overflow-tooltip />
           <el-table-column prop="anonymous_name" label="匿名昵称" width="120" />
           <el-table-column prop="content" label="内容" min-width="200" show-overflow-tooltip />
@@ -19,11 +19,11 @@
           </el-table-column>
           <el-table-column label="操作" width="260" fixed="right">
             <template #default="{ row }">
-              <el-button type="primary" link @click="openPostDetail(row)">详情</el-button>
-              <el-button type="success" link @click="approvePost(row)">通过</el-button>
-              <el-button type="warning" link @click="rejectPost(row)">拒绝</el-button>
-              <el-button v-if="row.status === 'normal'" type="warning" link @click="hidePost(row)">隐藏</el-button>
-              <el-button type="danger" link @click="deletePost(row)">删除</el-button>
+              <el-button type="primary" link aria-label="查看帖子详情" @click="openPostDetail(row)">详情</el-button>
+              <el-button type="success" link aria-label="通过该帖子" @click="approvePost(row)">通过</el-button>
+              <el-button type="warning" link aria-label="拒绝该帖子" @click="rejectPost(row)">拒绝</el-button>
+              <el-button v-if="row.status === 'normal'" type="warning" link aria-label="隐藏该帖子" @click="hidePost(row)">隐藏</el-button>
+              <el-button type="danger" link aria-label="删除该帖子" @click="deletePost(row)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -34,15 +34,16 @@
           :page-sizes="[10, 20, 50]"
           layout="total, sizes, prev, pager, next"
           class="pagination"
+          aria-label="帖子分页"
           @current-change="fetchPosts"
           @size-change="fetchPosts"
         />
       </el-tab-pane>
       <el-tab-pane label="评论待审" name="comments">
         <div class="toolbar">
-          <el-button type="primary" @click="fetchComments">刷新</el-button>
+          <el-button type="primary" aria-label="刷新评论列表" @click="fetchComments">刷新</el-button>
         </div>
-        <el-table v-loading="commentsLoading" :data="comments" stripe>
+        <el-table v-loading="commentsLoading" :data="comments" stripe aria-label="待审评论列表">
           <el-table-column prop="id" label="ID" width="280" show-overflow-tooltip />
           <el-table-column prop="post_id" label="帖子ID" width="280" show-overflow-tooltip />
           <el-table-column prop="anonymous_name" label="匿名昵称" width="120" />
@@ -53,8 +54,8 @@
           </el-table-column>
           <el-table-column label="操作" width="180" fixed="right">
             <template #default="{ row }">
-              <el-button type="success" link @click="approveComment(row)">通过</el-button>
-              <el-button type="warning" link @click="rejectComment(row)">拒绝</el-button>
+              <el-button type="success" link aria-label="通过该评论" @click="approveComment(row)">通过</el-button>
+              <el-button type="warning" link aria-label="拒绝该评论" @click="rejectComment(row)">拒绝</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -65,12 +66,13 @@
           :page-sizes="[10, 20, 50]"
           layout="total, sizes, prev, pager, next"
           class="pagination"
+          aria-label="评论分页"
           @current-change="fetchComments"
           @size-change="fetchComments"
         />
       </el-tab-pane>
     </el-tabs>
-    <el-dialog v-model="postDetailVisible" title="帖子详情" width="600px">
+    <el-dialog v-model="postDetailVisible" title="帖子详情" width="600px" aria-label="帖子详情对话框">
       <template v-if="currentPost">
         <p><strong>ID：</strong>{{ currentPost.id }}</p>
         <p><strong>匿名昵称：</strong>{{ currentPost.anonymous_name }}</p>
@@ -81,11 +83,11 @@
         <p><strong>浏览/点赞/评论：</strong>{{ currentPost.view_count }} / {{ currentPost.like_count }} / {{ currentPost.comment_count }}</p>
       </template>
     </el-dialog>
-    <el-dialog v-model="rejectVisible" title="拒绝原因" width="400px">
-      <el-input v-model="rejectReason" type="textarea" placeholder="选填" :rows="3" />
+    <el-dialog v-model="rejectVisible" title="拒绝原因" width="400px" aria-label="拒绝原因对话框">
+      <el-input v-model="rejectReason" type="textarea" placeholder="选填" :rows="3" aria-label="拒绝原因" />
       <template #footer>
-        <el-button @click="rejectVisible = false">取消</el-button>
-        <el-button type="warning" @click="confirmReject">确定拒绝</el-button>
+        <el-button aria-label="取消拒绝" @click="rejectVisible = false">取消</el-button>
+        <el-button type="primary" aria-label="确认拒绝" @click="confirmReject">确定拒绝</el-button>
       </template>
     </el-dialog>
   </div>

@@ -1,0 +1,17 @@
+[*.py]
+max_line_length = 100
+indent = '    '
+quotes = 'single'
+double_quotes = false
+multi_line_output = 3
+line_ending = 'LF'
+skip_gitignore = true
+skip_string_normalization = true
+atomic = true
+
+[tool.pytestini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers --disable-warnings"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]

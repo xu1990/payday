@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { getPostList, type PostItem } from '@/api/post'
+import { useDebounceFn } from '@/composables/useDebounce'
 
 type Sort = 'hot' | 'latest'
 const activeTab = ref<Sort>('hot')
@@ -29,7 +30,10 @@ async function load() {
   }
 }
 
-watch(activeTab, load, { immediate: true })
+// 使用防抖来避免快速切换 tab 导致多次请求
+const { run: debouncedLoad } = useDebounceFn(load, 300)
+
+watch(activeTab, debouncedLoad, { immediate: true })
 
 function goDetail(id: string) {
   uni.navigateTo({ url: `/pages/post-detail/index?id=${id}` })

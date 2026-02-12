@@ -4,6 +4,10 @@
 """
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+import secrets
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -52,7 +56,8 @@ class Settings(BaseSettings):
 
     # API 请求签名密钥（用于验证小程序请求）
     # SECURITY: 生产环境必须设置，与小程序端保持一致
-    api_secret: str = "dev-api-secret-key-for-signing"  # 开发环境默认值
+    # 现在签名是可选的，主要用于向后兼容
+    api_secret: str = ""  # 移除默认值，设为空字符串
 
     # CORS白名单（技术方案 安全）
     # SECURITY: 生产环境必须设置具体的允许源，多个用逗号分隔
@@ -78,7 +83,80 @@ class Settings(BaseSettings):
         env_file_encoding = "utf-8"
         extra = "ignore"
 
+    def validate_security_settings(self) -> None:
+        """
+        验证安全相关的配置项
+
+        在生产环境中，某些配置必须正确设置
+        """
+        errors = []
+
+        # JWT 密钥验证
+        if len(self.jwt_secret_key) < 32:
+            errors.append(
+                f"JWT_SECRET_KEY 长度不足: {len(self.jwt_secret_key)} 字节，至少需要 32 字节"
+            )
+
+        # 加密密钥验证
+        if len(self.encryption_secret_key) < 32:
+            errors.append(
+                f"ENCRYPTION_SECRET_KEY 长度不足: {len(self.encryption_secret_key)} 字节，至少需要 32 字节"
+            )
+
+        # 生产环境额外检查
+        if not self.debug:
+            # 检查是否使用了默认/弱密钥
+            weak_patterns = [
+                "change-me",
+                "secret",
+                "password",
+                "key123",
+                "test",
+                "dev",
+                "demo",
+            ]
+            jwt_lower = self.jwt_secret_key.lower()
+            if any(pattern in jwt_lower for pattern in weak_patterns):
+                errors.append(
+                    "JWT_SECRET_KEY 包含弱密钥模式，请使用强随机密钥"
+                )
+
+            enc_lower = self.encryption_secret_key.lower()
+            if any(pattern in enc_lower for pattern in weak_patterns):
+                errors.append(
+                    "ENCRYPTION_SECRET_KEY 包含弱密钥模式，请使用强随机密钥"
+                )
+
+            # CORS 配置检查
+            if self.cors_origins == "*" or "localhost" in self.cors_origins:
+                logger.warning(
+                    "⚠️ 生产环境中 CORS 配置包含 localhost 或通配符，建议设置具体的允许源"
+                )
+
+        if errors:
+            error_msg = "安全配置验证失败:\n" + "\n".join(f"  - {e}" for e in errors)
+            if self.debug:
+                logger.warning(f"⚠️ {error_msg}\n在调试模式下将继续运行，但生产环境必须修复这些问题")
+            else:
+                raise ValueError(error_msg)
+
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    # 在获取配置时进行验证
+    settings.validate_security_settings()
+    return settings
+
+
+def generate_secure_key(length: int = 43) -> str:
+    """
+    生成安全的随机密钥
+
+    Args:
+        length: 密钥长度，默认 43 字符（约 32 字节 base64 编码）
+
+    Returns:
+        URL 安全的 base64 编码随机密钥
+    """
+    return secrets.token_urlsafe(length)

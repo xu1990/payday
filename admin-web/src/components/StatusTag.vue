@@ -1,10 +1,11 @@
 <template>
-  <el-tag :type="tagType" size="small">
+  <el-tag :type="tagType" size="small" role="status" :aria-label="`状态：${displayText}`">
     {{ displayText }}
   </el-tag>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 interface Props {
   status: string
   statusMap?: Record<string, { text: string; type: 'success' | 'warning' | 'info' | 'danger' }>

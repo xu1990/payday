@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   listOrders,
   updateOrderStatus,
@@ -24,8 +24,8 @@ async function loadData() {
       limit: pageSize,
       offset: (currentPage.value - 1) * pageSize,
     })
-    list.value = res?.items || []
-    total.value = res?.total || 0
+    list.value = res?.data?.items || []
+    total.value = res?.data?.total || 0
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : '加载失败'
     ElMessage.error(errorMessage)

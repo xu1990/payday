@@ -229,9 +229,20 @@ async def search_posts(
     )
 
     # 按关键词搜索
-    # SECURITY: 转义SQL通配符防止注入
+    # SECURITY: 安全转义 ILIKE 模式防止 SQL 注入
     if keyword:
-        escaped_keyword = keyword.replace("%", "\\%").replace("_", "\\_")
+        # 验证输入是字符串且长度合理
+        if not isinstance(keyword, str):
+            raise ValueError("Search keyword must be a string")
+        if len(keyword) > 100:
+            raise ValueError("Search keyword too long (max 100 characters)")
+
+        # 安全转义：先转义反斜杠，再转义通配符
+        escaped_keyword = (
+            keyword.replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_")
+        )
         search_pattern = f"%{escaped_keyword}%"
         query = query.where(Post.content.ilike(search_pattern, escape="\\"))
 

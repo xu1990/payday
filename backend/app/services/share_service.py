@@ -3,7 +3,7 @@
 提供分享记录的创建、查询、状态更新等功能
 """
 from typing import List, Literal, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select, func, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -96,7 +96,8 @@ async def get_share_stats(
     days: int = 7,
 ) -> dict:
     """获取用户分享统计（最近N天的分享次数、成功率）"""
-    since = datetime.now() - timedelta(days=days)
+    # 修复：使用 UTC 时间以保持与代码库其他部分一致
+    since = datetime.now(timezone.utc) - timedelta(days=days)
 
     # 查询最近N天的分享记录
     result = await db.execute(
@@ -108,8 +109,10 @@ async def get_share_stats(
         )
     )
 
-    total_shares = len(result.all())
-    success_shares = len([s for s in result.all() if s.share_status == "success"])
+    # 修复：先存储结果，避免双重迭代导致的空结果
+    all_shares = result.all()
+    total_shares = len(all_shares)
+    success_shares = len([s for s in all_shares if s.share_status == "success"])
     success_rate = (success_shares / total_shares * 100) if total_shares > 0 else 0
 
     return {

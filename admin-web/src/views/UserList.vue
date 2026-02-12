@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2 class="page-title">用户管理</h2>
+    <h2 class="page-title" id="page-title">用户管理</h2>
     <SearchToolbar
       v-model:keyword="keyword"
       @search="onSearch"
@@ -18,6 +18,7 @@
       :items="items"
       :total="total"
       :loading="loading"
+      table-label="用户列表"
       @page-change="fetch"
     >
       <el-table-column prop="anonymous_name" label="匿名昵称" width="140" />
@@ -34,7 +35,7 @@
       </el-table-column>
       <el-table-column label="操作" width="100" fixed="right">
         <template #default="{ row }">
-          <el-button type="primary" link @click="goDetail(row.id)">详情</el-button>
+          <el-button type="primary" link aria-label="查看用户详情" @click="goDetail(row.id)">详情</el-button>
         </template>
       </el-table-column>
     </BaseDataTable>
@@ -49,7 +50,6 @@ import BaseDataTable from '@/components/BaseDataTable.vue'
 import SearchToolbar from '@/components/SearchToolbar.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import { formatDate } from '@/utils/format'
-import { getErrorMessage } from '@/utils/error'
 
 const router = useRouter()
 const loading = ref(false)

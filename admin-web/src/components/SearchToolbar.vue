@@ -1,14 +1,15 @@
 <template>
-  <div class="search-toolbar">
+  <div class="search-toolbar" role="search" aria-label="搜索工具栏">
     <el-input
       v-model="keywordModel"
       placeholder="关键词"
       clearable
       style="width: 200px"
+      aria-label="搜索关键词"
       @keyup.enter="handleSearch"
     />
     <slot></slot>
-    <el-button type="primary" @click="handleSearch">搜索</el-button>
+    <el-button type="primary" aria-label="执行搜索" @click="handleSearch">搜索</el-button>
   </div>
 </template>
 

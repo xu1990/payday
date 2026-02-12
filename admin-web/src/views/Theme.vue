@@ -40,8 +40,8 @@ async function loadData() {
       limit: pageSize,
       offset: (currentPage.value - 1) * pageSize,
     })
-    list.value = res?.items || []
-    total.value = res?.total || 0
+    list.value = res?.data?.items || []
+    total.value = res?.data?.total || 0
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : '加载失败'
     ElMessage.error(errorMessage)
@@ -94,8 +94,10 @@ async function submit() {
     return
   }
 
-  // 清理 URL
-  form.value.preview_image = sanitizeUrl(form.value.preview_image)
+  // 清理 URL（修复：检查是否为字符串）
+  if (form.value.preview_image) {
+    form.value.preview_image = sanitizeUrl(form.value.preview_image)
+  }
 
   try {
     if (dialogMode.value === 'create') {
@@ -136,7 +138,6 @@ async function toggleActive(item: ThemeItem) {
   try {
     await updateTheme(item.id, {
       name: item.name,
-      code: item.code,
       preview_image: item.preview_image,
       config: item.config,
       is_premium: item.is_premium,

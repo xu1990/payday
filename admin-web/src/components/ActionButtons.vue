@@ -1,10 +1,11 @@
 <template>
-  <div class="action-buttons">
+  <div class="action-buttons" role="group" aria-label="操作按钮组">
     <el-button
       v-if="showEdit"
       link
       type="primary"
       size="small"
+      aria-label="编辑"
       @click="$emit('edit')"
     >
       编辑
@@ -14,6 +15,7 @@
       link
       :type="isActive ? 'warning' : 'success'"
       size="small"
+      :aria-label="isActive ? '禁用' : '启用'"
       @click="$emit('toggle')"
     >
       {{ isActive ? '禁用' : '启用' }}
@@ -23,6 +25,7 @@
       link
       type="danger"
       size="small"
+      aria-label="删除"
       @click="$emit('delete')"
     >
       删除

@@ -1,5 +1,8 @@
 /**
  * 认证状态管理
+ *
+ * 修复：移除重复的用户状态，统一使用 userStore
+ * authStore 只负责认证相关的状态（token、登录状态）
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
@@ -9,14 +12,10 @@ import type * as AuthType from '@/api/auth'
 export const useAuthStore = defineStore('auth', () => {
   // 状态
   const token = ref<string>('')
-  const userInfo = ref<AuthType.LoginResponse['user'] | null>(null)
   const isLoading = ref(false)
 
   // 计算属性
   const isLoggedIn = computed(() => !!token.value)
-  const userId = computed(() => userInfo.value?.id || '')
-  const anonymousName = computed(() => userInfo.value?.anonymous_name || '')
-  const avatar = computed(() => userInfo.value?.avatar || '')
 
   /**
    * 初始化 - 从本地存储恢复 token
@@ -25,8 +24,7 @@ export const useAuthStore = defineStore('auth', () => {
     const savedToken = await authApi.getToken()
     if (savedToken) {
       token.value = savedToken
-      // Token 存在但用户信息可能需要重新获取
-      // 这里暂时只恢复 token，用户信息由调用方决定是否重新获取
+      // Token 存在，用户信息由 userStore 负责获取
     }
   }
 
@@ -42,8 +40,8 @@ export const useAuthStore = defineStore('auth', () => {
       token.value = response.access_token
       await authApi.saveToken(response.access_token)
 
-      // 保存用户信息
-      userInfo.value = response.user
+      // 注意：不再在 authStore 中保存用户信息
+      // 用户信息由调用方使用 userStore.fetchCurrentUser() 获取
 
       return true
     } catch (error) {
@@ -59,33 +57,21 @@ export const useAuthStore = defineStore('auth', () => {
    */
   function logout() {
     token.value = ''
-    userInfo.value = null
     authApi.clearToken()
-  }
-
-  /**
-   * 设置用户信息
-   */
-  function setUserInfo(info: AuthType.LoginResponse['user']) {
-    userInfo.value = info
+    // 注意：不再清除 userInfo，由 userStore 负责
   }
 
   return {
     // 状态
     token,
-    userInfo,
     isLoading,
 
     // 计算属性
     isLoggedIn,
-    userId,
-    anonymousName,
-    avatar,
 
     // 方法
     init,
     login,
     logout,
-    setUserInfo,
   }
 })

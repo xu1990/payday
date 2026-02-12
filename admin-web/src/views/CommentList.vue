@@ -1,14 +1,14 @@
 <template>
   <div>
     <h2 class="page-title">评论管理</h2>
-    <div class="toolbar">
-      <el-input v-model="filterPostId" placeholder="帖子 ID" clearable style="width: 280px" />
-      <el-select v-model="filterRiskStatus" placeholder="风控状态" clearable style="width: 120px">
+    <div class="toolbar" role="search" aria-label="评论筛选工具栏">
+      <el-input v-model="filterPostId" placeholder="帖子 ID" clearable style="width: 280px" aria-label="按帖子ID筛选" />
+      <el-select v-model="filterRiskStatus" placeholder="风控状态" clearable style="width: 120px" aria-label="按风控状态筛选">
         <el-option label="待审" value="pending" />
         <el-option label="通过" value="approved" />
         <el-option label="拒绝" value="rejected" />
       </el-select>
-      <el-button type="primary" @click="fetch">查询</el-button>
+      <el-button type="primary" aria-label="执行查询" @click="fetch">查询</el-button>
     </div>
 
     <BaseDataTable
@@ -17,6 +17,7 @@
       :items="items"
       :total="total"
       :loading="loading"
+      table-label="评论列表"
       @page-change="fetch"
     >
       <el-table-column prop="id" label="ID" width="280" show-overflow-tooltip />
@@ -35,18 +36,18 @@
       <el-table-column label="操作" width="180" fixed="right">
         <template #default="{ row }">
           <template v-if="row.risk_status === 'pending'">
-            <el-button type="success" link @click="approve(row)">通过</el-button>
-            <el-button type="warning" link @click="reject(row)">拒绝</el-button>
+            <el-button type="success" link aria-label="通过该评论" @click="approve(row)">通过</el-button>
+            <el-button type="warning" link aria-label="拒绝该评论" @click="reject(row)">拒绝</el-button>
           </template>
         </template>
       </el-table-column>
     </BaseDataTable>
 
-    <el-dialog v-model="rejectVisible" title="拒绝原因" width="400px">
-      <el-input v-model="rejectReason" type="textarea" placeholder="选填" :rows="3" />
+    <el-dialog v-model="rejectVisible" title="拒绝原因" width="400px" aria-label="拒绝原因对话框">
+      <el-input v-model="rejectReason" type="textarea" placeholder="选填" :rows="3" aria-label="拒绝原因" />
       <template #footer>
-        <el-button @click="rejectVisible = false">取消</el-button>
-        <el-button type="warning" @click="confirmReject">确定拒绝</el-button>
+        <el-button aria-label="取消拒绝" @click="rejectVisible = false">取消</el-button>
+        <el-button type="primary" aria-label="确认拒绝" @click="confirmReject">确定拒绝</el-button>
       </template>
     </el-dialog>
   </div>
@@ -62,7 +63,6 @@ import {
 } from '@/api/admin'
 import BaseDataTable from '@/components/BaseDataTable.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import { formatDate } from '@/utils/format'
 
 const loading = ref(false)
 const items = ref<AdminCommentListItem[]>([])
@@ -75,6 +75,7 @@ const rejectVisible = ref(false)
 const rejectReason = ref('')
 let rejectTarget: AdminCommentListItem | null = null
 
+// 本地格式化函数（修复：移除导入冲突）
 function formatDate(s: string | null) {
   if (!s) return '-'
   try {
