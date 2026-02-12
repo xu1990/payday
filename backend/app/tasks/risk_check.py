@@ -42,6 +42,7 @@ async def _async_risk_check(post_id: str) -> None:
             return
 
         risk_result: RiskResult = await evaluate_content(
+            db=db,
             content=post.content,
             images=post.images if isinstance(post.images, list) else None,
         )
@@ -84,6 +85,7 @@ async def _async_risk_check_comment(comment_id: str) -> None:
 
         # 评论只检查文本内容
         risk_result: RiskResult = await evaluate_content(
+            db=db,
             content=comment.content,
             images=None,  # 评论暂不支持图片
         )

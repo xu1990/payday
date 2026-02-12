@@ -5,11 +5,13 @@
 import re
 from dataclasses import dataclass
 from typing import List, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.utils.tencent_yu import (
     tencent_yu_text_check,
     tencent_yu_image_check,
 )
+from app.services import sensitive_word_service
 
 @dataclass
 class RiskResult:
@@ -17,9 +19,9 @@ class RiskResult:
     action: str  # approve | reject | manual
     reason: Optional[str] = None
 
-# 敏感词（可改为配置/数据库）
-# 包含政治、色情、暴力、违法等违规内容关键词
-SENSITIVE_WORDS = [
+
+# 备用硬编码敏感词（当数据库查询失败时使用）
+FALLBACK_SENSITIVE_WORDS = [
     # 违法相关
     "毒品", "吸毒", "大麻", "海洛因", "冰毒", "摇头丸", "K粉", "鸦片",
     "卖淫", "嫖娼", "性服务", "情色服务",
@@ -125,6 +127,7 @@ async def _image_score(urls: Optional[List[str]]) -> tuple[int, Optional[str]]:
 
 
 async def evaluate_content(
+    db: AsyncSession,
     content: str,
     images: Optional[List[str]] = None,
     use_yu: bool = True,
@@ -134,6 +137,7 @@ async def evaluate_content(
     文本权重更高；取各维度最高分并给出 action。
 
     Args:
+        db: 数据库会话
         content: 文本内容
         images: 图片URL列表
         use_yu: 是否使用腾讯云天御（默认True）
@@ -141,8 +145,8 @@ async def evaluate_content(
     reasons: List[str] = []
     max_score = 0
 
-    # 文本：敏感词
-    s1, r1 = _text_sensitive_score(content or "")
+    # 文本：敏感词（从数据库获取）
+    s1, r1 = await _text_sensitive_score_from_db(db, content or "")
     if s1 > max_score:
         max_score = s1
     if r1 and r1 not in reasons:
@@ -178,3 +182,35 @@ async def evaluate_content(
     if max_score >= 50:
         return RiskResult(score=max_score, action="manual", reason=reason)
     return RiskResult(score=max_score, action="approve", reason=reason)
+
+
+async def _text_sensitive_score_from_db(db: AsyncSession, content: str) -> tuple[int, Optional[str]]:
+    """
+    从数据库获取敏感词并检测
+
+    Returns:
+        (score, reason): 0-100分，失败原因
+    """
+    if not (content or content.strip()):
+        return 0, None
+
+    text = content.strip().lower()
+
+    try:
+        # 从数据库获取所有启用的敏感词
+        words = await sensitive_word_service.get_all_active_words_list(db)
+
+        for word in words:
+            if word.lower() in text:
+                return 90, "含违规内容"
+    except Exception as e:
+        # 数据库查询失败时，使用硬编码备用列表
+        from app.utils.logger import get_logger
+        logger = get_logger(__name__)
+        logger.warning(f"敏感词数据库查询失败，使用备用列表: {e}")
+
+        for word in FALLBACK_SENSITIVE_WORDS:
+            if word.lower() in text:
+                return 90, "含违规内容"
+
+    return 0, None

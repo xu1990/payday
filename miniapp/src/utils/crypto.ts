@@ -1,5 +1,5 @@
 /**
- * 简单的 XOR 加密工具（小程序兼容性）
+ * 加密和签名工具（小程序兼容性）
  */
 
 /**
@@ -59,3 +59,39 @@ export function decrypt(encoded: string): string {
     return ''
   }
 }
+
+/**
+ * HMAC-SHA256 签名（用于 API 请求签名）
+ * @param data 待签名的数据
+ * @param secret 密钥
+ * @returns 十六进制签名字符串
+ */
+export async function hmacSha256(data: string, secret: string): Promise<string> {
+  // 将字符串转换为 ArrayBuffer
+  const encoder = new TextEncoder()
+  const dataBuffer = encoder.encode(data)
+  const secretBuffer = encoder.encode(secret)
+
+  // 导入密钥
+  const key = await crypto.subtle.importKey(
+    'raw',
+    secretBuffer,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  )
+
+  // 生成签名
+  const signature = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    dataBuffer
+  )
+
+  // 转换为十六进制字符串
+  const hashArray = Array.from(new Uint8Array(signature))
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+
+  return hashHex
+}
+

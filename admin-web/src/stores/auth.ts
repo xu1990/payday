@@ -2,8 +2,12 @@ import { defineStore } from 'pinia'
 import CryptoJS from 'crypto-js'
 
 const TOKEN_KEY = 'payday_admin_token'
-// 使用固定加密密钥（生产环境应从环境变量获取）
-const ENCRYPTION_KEY = import.meta.env.VITE_TOKEN_ENCRYPTION_KEY || 'payday-default-key-32-chars-long!'
+// 必须从环境变量获取加密密钥，生产环境不允许使用默认值
+const ENCRYPTION_KEY = import.meta.env.VITE_TOKEN_ENCRYPTION_KEY
+
+if (!ENCRYPTION_KEY) {
+  throw new Error('VITE_TOKEN_ENCRYPTION_KEY environment variable must be set in production')
+}
 
 /**
  * 加密 token

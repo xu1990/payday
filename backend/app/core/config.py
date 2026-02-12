@@ -50,6 +50,10 @@ class Settings(BaseSettings):
     # SECURITY: 必须从环境变量设置，必须是32字节URL安全的base64编码密钥
     encryption_secret_key: str  # 移除默认值，强制从环境变量读取
 
+    # API 请求签名密钥（用于验证小程序请求）
+    # SECURITY: 生产环境必须设置，与小程序端保持一致
+    api_secret: str = "dev-api-secret-key-for-signing"  # 开发环境默认值
+
     # CORS白名单（技术方案 安全）
     # SECURITY: 生产环境必须设置具体的允许源，多个用逗号分隔
     cors_origins: str = "http://localhost:5174,http://127.0.0.1:5174"

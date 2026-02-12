@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, rate_limit_login, rate_limit_general
 from app.core.security import verify_token_type
 from app.models.user import User
 from app.schemas.auth import LoginRequest, LoginResponse, RefreshTokenRequest, RefreshTokenResponse
@@ -15,8 +15,31 @@ from app.services.auth_service import login_with_code, refresh_access_token, rev
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/login", response_model=LoginResponse)
+@router.post("/login", response_model=LoginResponse, dependencies=[Depends(rate_limit_login)])
 async def login(
+    body: LoginRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await login_with_code(db, body.code)
+    if not result:
+        raise HTTPException(status_code=400, detail="微信登录失败，请重试")
+    access_token, refresh_token, user = result
+    user_info = {
+        "id": user.id,
+        "anonymous_name": user.anonymous_name,
+        "avatar": user.avatar,
+    }
+    return LoginResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        user=user_info
+    )
+
+
+@router.post("/refresh", response_model=RefreshTokenResponse, dependencies=[Depends(rate_limit_general)])
+async def refresh(
+    body: RefreshTokenRequest,
+):
     body: LoginRequest,
     db: AsyncSession = Depends(get_db),
 ):

@@ -3,13 +3,22 @@
 """
 from typing import Optional
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Header, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .database import get_db
 from .security import decode_token
+from .signature import verify_signature, verify_timestamp
+from .rate_limit import (
+    RateLimiter,
+    get_client_identifier,
+    RATE_LIMIT_GENERAL,
+    RATE_LIMIT_LOGIN,
+    RATE_LIMIT_POST,
+    RATE_LIMIT_COMMENT,
+)
 from app.models.user import User
 from app.models.admin import AdminUser
 
@@ -76,4 +85,118 @@ async def get_current_admin(
     return admin
 
 
-__all__ = ["get_db", "get_current_user", "get_current_admin"]
+async def verify_request_signature(
+    request: Request,
+    x_timestamp: Optional[str] = Header(None),
+    x_nonce: Optional[str] = Header(None),
+    x_signature: Optional[str] = Header(None),
+) -> bool:
+    """
+    验证请求签名（可选依赖，根据需要启用）
+
+    用于小程序 API 端点，防止请求伪造
+
+    使用方式:
+        @router.post("/api/endpoint")
+        async def endpoint(
+            ...,
+            _sig: bool = Depends(verify_request_signature)
+        ):
+            ...
+    """
+    # 开发环境可以跳过签名验证
+    from .config import get_settings
+    settings = get_settings()
+    if settings.debug:
+        return True
+
+    if not all([x_timestamp, x_nonce, x_signature]):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing signature headers",
+        )
+
+    # 验证时间戳
+    verify_timestamp(x_timestamp, max_age_seconds=300)
+
+    # 获取请求体
+    try:
+        # 对于 JSON 请求，需要获取 body 进行签名验证
+        body = await request.json() if request.method in ["POST", "PUT", "PATCH"] else None
+    except Exception:
+        body = None
+
+    # 验证签名
+    url_path = request.url.path
+    verify_signature(
+        url=url_path,
+        method=request.method,
+        timestamp=x_timestamp,
+        nonce=x_nonce,
+        received_signature=x_signature,
+        body=body,
+    )
+
+    return True
+
+
+async def rate_limit_general(request: Request) -> bool:
+    """
+    一般 API 速率限制：100次/分钟
+
+    使用方式:
+        @router.post("/api/endpoint")
+        async def endpoint(
+            ...,
+            _rate_limit: bool = Depends(rate_limit_general)
+        ):
+            ...
+    """
+    identifier = await get_client_identifier(request)
+    await RATE_LIMIT_GENERAL.check(identifier, request)
+    return True
+
+
+async def rate_limit_login(request: Request) -> bool:
+    """
+    登录 API 速率限制：5次/分钟
+
+    防止暴力破解
+    """
+    identifier = await get_client_identifier(request)
+    await RATE_LIMIT_LOGIN.check(identifier, request)
+    return True
+
+
+async def rate_limit_post(request: Request) -> bool:
+    """
+    发帖 API 速率限制：10次/分钟
+
+    防止垃圾内容发布
+    """
+    identifier = await get_client_identifier(request)
+    await RATE_LIMIT_POST.check(identifier, request)
+    return True
+
+
+async def rate_limit_comment(request: Request) -> bool:
+    """
+    评论 API 速率限制：20次/分钟
+
+    防止垃圾评论
+    """
+    identifier = await get_client_identifier(request)
+    await RATE_LIMIT_COMMENT.check(identifier, request)
+    return True
+
+
+__all__ = [
+    "get_db",
+    "get_current_user",
+    "get_current_admin",
+    "verify_request_signature",
+    "rate_limit_general",
+    "rate_limit_login",
+    "rate_limit_post",
+    "rate_limit_comment",
+]

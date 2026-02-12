@@ -3,6 +3,7 @@
  * 支持统一的错误处理和 loading 提示
  */
 import { hideLoading, showLoading, showError } from './toast'
+import { hmacSha256 } from './crypto'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || ''
 
@@ -27,7 +28,9 @@ function resolveUrl(url: string): string {
   return `${base}${path}`
 }
 
-/** 从本地取 token（与登录逻辑一致即可） */
+/**
+ * 从本地取 token（带过期检查）
+ */
 /**
  * 检查 JWT token是否过期
  */
@@ -38,14 +41,10 @@ function isTokenExpired(token: string): boolean {
     const parts = token.split('.')
     if (parts.length !== 3) return true
 
-    // 解码payload (Base64)
-    // 小程序环境可能没有 atob，使用 uni API
-    const payload = JSON.parse(
-      uni.arrayBufferToBase64(
-        uni.base64ToArrayBuffer(parts[1])
-          .then(buf => new TextDecoder().decode(buf))
-      ) || atob(parts[1]).replace(/-/g, '+').replace(/_/g, '/'))
-    )
+    // 解码payload (Base64) - 使用 uni-app 的 API
+    const arrayBuffer = uni.base64ToArrayBuffer(parts[1])
+    const decoded = new TextDecoder().decode(arrayBuffer)
+    const payload = JSON.parse(decoded)
 
     if (!payload.exp) return true
 
@@ -66,9 +65,9 @@ function generateNonce(): string {
 }
 
 /**
- * 请求签名
+ * 请求签名（使用 HMAC-SHA256）
  */
-function signRequest(url: string, method: string, data: any, timestamp: number, nonce: string): string {
+async function signRequest(url: string, method: string, data: any, timestamp: number, nonce: string): Promise<string> {
   // 按字母顺序排序参数
   const params: Record<string, any> = { url, method, timestamp, nonce, ...data }
   const sorted = Object.keys(params).sort()
@@ -76,32 +75,11 @@ function signRequest(url: string, method: string, data: any, timestamp: number, 
   // 拼接字符串
   const str = sorted.map(k => `${k}=${params[k]}`).join('&')
 
-  // 简单哈希（生产环境应使用 HMAC-SHA256）
-  let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i)
-    hash |= 0
-  }
-  return hash.toString(36)
-}
+  // 从环境变量获取 API 密钥
+  const apiSecret = import.meta.env.VITE_API_SECRET || 'default-api-secret-change-in-production'
 
-/**
- * 从本地取 token（带过期检查）
- */
-function getToken(): string {
-  try {
-    const token = uni.getStorageSync('token') || ''
-
-    // 检查是否过期
-    if (token && isTokenExpired(token)) {
-      uni.removeStorageSync('token')
-      return ''
-    }
-
-    return token
-  } catch {
-    return ''
-  }
+  // 使用 HMAC-SHA256 签名
+  return await hmacSha256(str, apiSecret)
 }
 
 /**
@@ -191,7 +169,7 @@ function manageLoading(show: boolean, text?: string) {
   }
 }
 
-export function request<T = unknown>(options: RequestOptions): Promise<T> {
+export async function request<T = unknown>(options: RequestOptions): Promise<T> {
   const {
     showLoading: shouldShowLoading = false,
     loadingText,
@@ -204,7 +182,7 @@ export function request<T = unknown>(options: RequestOptions): Promise<T> {
   const token = rawOptions.noAuth ? '' : getToken()
   const timestamp = Date.now()
   const nonce = generateNonce()
-  const signature = signRequest(url, rawOptions.method || 'GET', rawOptions.data, timestamp, nonce)
+  const signature = await signRequest(url, rawOptions.method || 'GET', rawOptions.data, timestamp, nonce)
 
   const header: Record<string, string> = {
     'Content-Type': 'application/json',
