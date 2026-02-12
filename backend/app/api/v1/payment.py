@@ -133,6 +133,57 @@ async def create_payment(
         )
 
 
+@router.get("/orders/{order_id}")
+async def get_order_status(
+    order_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    获取订单状态
+
+    Args:
+        order_id: 订单ID
+        current_user: 当前用户
+        db: 数据库会话
+
+    Returns:
+        订单详情
+    """
+    from sqlalchemy import select
+    from app.models.membership import MembershipOrder
+    from app.core.exceptions import NotFoundException
+
+    # 查询订单
+    result = await db.execute(
+        select(MembershipOrder).where(MembershipOrder.id == order_id)
+    )
+    order = result.scalar_one_or_none()
+
+    if not order:
+        raise NotFoundException("订单不存在")
+
+    # 验证订单属于当前用户
+    if order.user_id != current_user.id:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="无权访问该订单")
+
+    # 返回订单信息
+    return {
+        "id": order.id,
+        "user_id": order.user_id,
+        "membership_id": order.membership_id,
+        "amount": float(order.amount),
+        "status": order.status,
+        "payment_method": order.payment_method,
+        "transaction_id": order.transaction_id,
+        "start_date": order.start_date.isoformat() if order.start_date else None,
+        "end_date": order.end_date.isoformat() if order.end_date else None,
+        "auto_renew": bool(order.auto_renew),
+        "created_at": order.created_at.isoformat() if order.created_at else None,
+    }
+
+
 @router.post("/notify/wechat")
 async def wechat_payment_notify(
     request: Request,
