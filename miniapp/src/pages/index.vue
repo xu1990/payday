@@ -59,17 +59,17 @@ const isLoggedIn = computed(() => authStore.isLoggedIn)
 const userName = computed(() => userStore.anonymousName || '打工者')
 const userAvatar = computed(() => userStore.avatar || '/static/default-avatar.png')
 
-onShow(() => {
+onShow(async () => {
   // 每次显示时更新进度
   progress.value = monthProgress()
 
-  // 检查登录状态
+  // 先初始化 auth store 以加载 token
+  await authStore.init()
+
+  // 然后检查登录状态
   if (isLoggedIn.value) {
     // 已登录，加载数据
     loadPaydayData()
-  } else {
-    // 未登录，初始化 auth store
-    authStore.init()
   }
 })
 
@@ -114,7 +114,9 @@ function loadSavedMood() {
     if (saved && moodOptions.some((o) => o.value === saved)) {
       selectedMood.value = saved
     }
-  } catch (_) {}
+  } catch (error) {
+    console.error('Failed to load saved mood:', error)
+  }
 }
 
 // 首次加载
@@ -131,7 +133,9 @@ function setMood(mood: MoodType) {
   selectedMood.value = mood
   try {
     uni.setStorageSync(MOOD_STORAGE_KEY, mood)
-  } catch (_) {}
+  } catch (error) {
+    console.error('Failed to save mood:', error)
+  }
 }
 
 function goFeed() {

@@ -61,9 +61,11 @@ async def get_by_id(
         try:
             view_count = await PostCacheService.increment_view_count(post_id)
             post.view_count = view_count
-        except Exception:
-            # Redis 故障时不影响主流程
-            pass
+        except Exception as e:
+            # Redis 故障时记录日志但不影响主流程
+            from app.utils.logger import get_logger
+            logger = get_logger(__name__)
+            logger.error(f"Failed to increment view count for post {post_id}: {e}")
 
     return post
 
@@ -145,7 +147,12 @@ async def update_hot_posts_ranking(db: AsyncSession) -> None:
     for post in posts:
         # 热度分数计算：点赞数 * 2 + 评论数
         score = post.like_count * 2 + post.comment_count
-        await PostCacheService.add_to_hot_posts(post.id, score, date)
+        try:
+            await PostCacheService.add_to_hot_posts(post.id, score, date)
+        except Exception as e:
+            from app.utils.logger import get_logger
+            logger = get_logger(__name__)
+            logger.error(f"Failed to add post {post.id} to hot posts: {e}")
 
 
 async def list_posts_for_admin(
@@ -237,6 +244,9 @@ async def search_posts(
         if len(keyword) > 100:
             raise ValueError("Search keyword too long (max 100 characters)")
 
+        # 移除控制字符，防止注入攻击
+        keyword = ''.join(char for char in keyword if ord(char) >= 32 or char in '\n\t\r')
+
         # 安全转义：先转义反斜杠，再转义通配符
         escaped_keyword = (
             keyword.replace("\\", "\\\\")
@@ -248,9 +258,23 @@ async def search_posts(
 
     # 按标签搜索（JSON查询）
     if tags:
-        # Post.tags 是 JSON 数组，使用 JSON_CONTAINS
+        # SECURITY: 验证并清理标签，防止注入
+        import re
+        valid_tags = []
         for tag in tags:
-            query = query.where(Post.tags.contains(f'"{tag}"'))
+            if not isinstance(tag, str):
+                continue
+            if len(tag) > 20:
+                continue
+            # 标签验证：仅允许字母数字、中文、空格、连字符、下划线
+            if not re.match(r'^[\w\u4e00-\u9fff\s\-_]+$', tag):
+                continue
+            valid_tags.append(tag)
+
+        # 使用验证后的标签，并正确转义 JSON
+        for tag in valid_tags:
+            escaped_tag = tag.replace('\\', '\\\\').replace('"', '\\"')
+            query = query.where(Post.tags.contains(f'"{escaped_tag}"'))
 
     # 按用户搜索
     if user_id:

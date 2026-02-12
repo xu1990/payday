@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { getPostDetail, type PostItem } from '@/api/post'
 import {
   getCommentList,
@@ -31,14 +31,34 @@ onMounted(() => {
   } else {
     loading.value = false
   }
+
+  // 监听键盘高度变化，调整输入框位置
+  uni.onKeyboardHeightChange((res) => {
+    const bottomBar = document.querySelector('.bottom-bar')
+    if (bottomBar) {
+      if (res.height > 0) {
+        // 键盘弹起，确保输入框可见
+        bottomBar.classList.add('keyboard-up')
+      } else {
+        bottomBar.classList.remove('keyboard-up')
+      }
+    }
+  })
+})
+
+onUnmounted(() => {
+  // 移除键盘监听
+  uni.offKeyboardHeightChange()
 })
 
 async function load() {
   loading.value = true
   try {
     post.value = await getPostDetail(id.value)
-  } catch {
+  } catch (error) {
+    console.error('Failed to load post:', error)
     post.value = null
+    uni.showToast({ title: '加载帖子失败', icon: 'none' })
   } finally {
     loading.value = false
   }
@@ -49,8 +69,10 @@ async function loadComments() {
   commentLoading.value = true
   try {
     comments.value = await getCommentList(id.value, { limit: 50, offset: 0 })
-  } catch {
+  } catch (error) {
+    console.error('Failed to load comments:', error)
     comments.value = []
+    uni.showToast({ title: '加载评论失败', icon: 'none' })
   } finally {
     commentLoading.value = false
   }
@@ -79,7 +101,10 @@ async function onPostLike() {
       post.value.like_count += 1
       postLiked.value = true
     }
-  } catch (_) {}
+  } catch (error) {
+    console.error('Failed to toggle post like:', error)
+    uni.showToast({ title: '操作失败', icon: 'none' })
+  }
 }
 
 async function onCommentLike(c: CommentItem) {
@@ -94,7 +119,10 @@ async function onCommentLike(c: CommentItem) {
       commentLikedSet.value.add(key)
       c.like_count += 1
     }
-  } catch (_) {}
+  } catch (error) {
+    console.error('Failed to toggle comment like:', error)
+    uni.showToast({ title: '操作失败', icon: 'none' })
+  }
 }
 
 function isCommentLiked(c: CommentItem) {
@@ -125,10 +153,53 @@ async function submitComment() {
     replyingTo.value = null
     post.value.comment_count += 1
     await loadComments()
-  } catch (_) {}
-  finally {
+  } catch (error) {
+    console.error('Failed to submit comment:', error)
+    uni.showToast({ title: '评论失败', icon: 'none' })
+  } finally {
     submitLoading.value = false
   }
+}
+
+/**
+ * 分享给微信好友
+ */
+async function shareToWeChat() {
+  if (!post.value) return
+
+  try {
+    // 使用微信小程序分享功能
+    uni.showShareMenu({
+      withShareTicket: true,
+      success: () => {
+        console.log('Share menu shown')
+      },
+      fail: (err: any) => {
+        console.error('Failed to show share menu:', err)
+        uni.showToast({ title: '分享失败', icon: 'none' })
+      }
+    })
+  } catch (error) {
+    console.error('Share to WeChat failed:', error)
+    uni.showToast({ title: '分享失败', icon: 'none' })
+  }
+}
+
+/**
+ * 分享到朋友圈
+ * 微信小程序无法直接分享到朋友圈，需要生成海报
+ */
+async function shareToMoments() {
+  if (!post.value) return
+
+  // 跳转到海报生成页面
+  uni.navigateTo({
+    url: `/pages/poster/index?postId=${post.value.id}`,
+    fail: (err: any) => {
+      console.error('Failed to navigate to poster page:', err)
+      uni.showToast({ title: '跳转失败', icon: 'none' })
+    }
+  })
 }
 </script>
 
@@ -364,6 +435,7 @@ async function submitComment() {
   padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
   background: #fff;
   border-top: 1rpx solid #eee;
+  transition: transform 0.3s ease;
 }
 .reply-hint {
   position: absolute;

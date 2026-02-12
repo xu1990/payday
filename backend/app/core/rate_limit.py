@@ -8,6 +8,7 @@ from typing import Optional
 from fastapi import HTTPException, Request, status
 from app.core.cache import get_redis_client
 from app.core.exceptions import RateLimitException
+from app.utils.request import get_client_ip
 
 
 class RateLimiter:
@@ -69,6 +70,9 @@ class RateLimiter:
             from app.utils.logger import get_logger
             logger = get_logger(__name__)
             logger.warning(f"Rate limiter Redis error: {e}")
+            # 可选：集成 Sentry
+            # from app.utils.sentry import capture_exception
+            # capture_exception(e, tags={"component": "rate_limiter"})
 
 
 async def get_client_identifier(request: Request) -> str:
@@ -83,31 +87,10 @@ async def get_client_identifier(request: Request) -> str:
     Returns:
         客户端标识字符串
     """
-    # 尝试从请求中获取用户ID（如果已认证）
-    # 注意：这里简化处理，实际应从 token 解析
-    # 为了避免重复解析 token，使用 IP 地址
-
-    # 获取客户端 IP
-    client_ip = _get_client_ip(request)
+    # 获取客户端 IP（使用通用工具函数）
+    client_ip = get_client_ip(request)
 
     return f"ip:{client_ip}"
-
-
-def _get_client_ip(request: Request) -> str:
-    """从请求中获取客户端 IP"""
-    # 检查代理头
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
-
-    real_ip = request.headers.get("X-Real-IP")
-    if real_ip:
-        return real_ip.strip()
-
-    if request.client and request.client.host:
-        return request.client.host
-
-    return "127.0.0.1"
 
 
 # 预定义的速率限制规则

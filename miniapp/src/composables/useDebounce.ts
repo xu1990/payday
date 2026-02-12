@@ -5,6 +5,8 @@
  * 常用于搜索、tab 切换等场景
  */
 
+import { ref } from 'vue'
+
 /**
  * 创建防抖函数
  * @param fn 要防抖的函数

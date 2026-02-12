@@ -1,41 +1,19 @@
 import { defineStore } from 'pinia'
-import CryptoJS from 'crypto-js'
 
 const TOKEN_KEY = 'payday_admin_token'
-// 必须从环境变量获取加密密钥，生产环境不允许使用默认值
-const ENCRYPTION_KEY = import.meta.env.VITE_TOKEN_ENCRYPTION_KEY
-
-if (!ENCRYPTION_KEY) {
-  throw new Error('VITE_TOKEN_ENCRYPTION_KEY environment variable must be set in production')
-}
 
 /**
- * 加密 token
+ * SECURITY NOTE: Client-side token encryption is removed
+ *
+ * Why: Vite environment variables with VITE_ prefix are exposed in client bundle
+ * Client-side encryption provides NO real security - anyone can inspect the built JavaScript
+ *
+ * Real security comes from:
+ * 1. JWT cryptographic signatures (already implemented on backend)
+ * 2. Short token expiration (15 min) with refresh token rotation
+ * 3. Backend validation and revocation
+ * 4. In production: Use HttpOnly cookies instead of localStorage
  */
-function encryptToken(token: string): string {
-  return CryptoJS.AES.encrypt(token, ENCRYPTION_KEY).toString()
-}
-
-/**
- * 解密 token
- */
-function decryptToken(encrypted: string): string {
-  try {
-    const bytes = CryptoJS.AES.decrypt(encrypted, ENCRYPTION_KEY)
-    const decrypted = bytes.toString(CryptoJS.enc.Utf8)
-
-    if (!decrypted) {
-      console.error('[Auth] Token decryption resulted in empty string')
-      return ''
-    }
-
-    return decrypted
-  } catch (error) {
-    console.error('[Auth] Token decryption failed:', error)
-    // 可能是密钥不匹配或数据损坏，需要重新登录
-    return ''
-  }
-}
 
 /**
  * 检查JWT token是否过期
@@ -67,11 +45,8 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: (() => {
       try {
-        const encrypted = localStorage.getItem(TOKEN_KEY) || ''
-        if (!encrypted) return ''
-
-        // 解密 token
-        const token = decryptToken(encrypted)
+        const token = localStorage.getItem(TOKEN_KEY) || ''
+        if (!token) return ''
 
         // 检查token是否过期
         if (token && isTokenExpired(token)) {
@@ -107,8 +82,7 @@ export const useAuthStore = defineStore('auth', {
       this.token = t
       try {
         if (t) {
-          const encrypted = encryptToken(t)
-          localStorage.setItem(TOKEN_KEY, encrypted)
+          localStorage.setItem(TOKEN_KEY, t)
         } else {
           localStorage.removeItem(TOKEN_KEY)
         }

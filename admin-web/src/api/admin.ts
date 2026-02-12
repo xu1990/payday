@@ -27,10 +27,6 @@ adminApi.interceptors.request.use((config) => {
   const token = useAuthStore().token
   if (token) config.headers.Authorization = `Bearer ${token}`
 
-  // 可选：添加 CSRF token（如果后端支持）
-  // const csrfToken = getCsrfToken()
-  // if (csrfToken) config.headers['X-CSRF-Token'] = csrfToken
-
   return config
 })
 

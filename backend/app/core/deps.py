@@ -112,22 +112,20 @@ async def verify_request_signature(
         # 签名是可选的，依靠 JWT 认证即可
         return True
 
-    # 开发环境可以跳过签名验证（但需要记录警告）
+    # 开发环境记录但不跳过验证
     from .config import get_settings
     import logging
     settings = get_settings()
 
     if settings.debug:
-        # 在生产环境中永远不应该跳过安全验证
-        # 如果需要在生产环境调试，应该使用单独的调试端点
+        # 开发模式仍然验证签名，只记录调试信息
         logger = logging.getLogger(__name__)
-        logger.warning(
-            "⚠️ Signature verification SKIPPED in DEBUG mode. "
-            "This should NEVER happen in production."
+        logger.debug(
+            "🔍 Signature verification enabled (DEBUG mode)"
         )
-        return True
+        # 不返回 True，继续执行签名验证
 
-    # 验证时间戳
+    # 始终验证时间戳 - 不允许绕过
     verify_timestamp(x_timestamp, max_age_seconds=300)
 
     # 获取请求体

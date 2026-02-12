@@ -47,7 +47,12 @@ async def like_post(db: AsyncSession, user_id: str, post_id: str) -> tuple["Like
         await db.refresh(like)
 
         # 更新缓存
-        LikeCacheService.set_like_status(user_id, "post", post_id)
+        try:
+            LikeCacheService.set_like_status(user_id, "post", post_id)
+        except Exception as e:
+            from app.utils.logger import get_logger
+            logger = get_logger(__name__)
+            logger.error(f"Failed to set like status for post {post_id}: {e}")
         return like, True
     except IntegrityError:
         # 并发情况下，唯一约束冲突说明已存在
@@ -74,7 +79,12 @@ async def unlike_post(db: AsyncSession, user_id: str, post_id: str) -> bool:
         await db.commit()
 
         # 移除缓存
-        LikeCacheService.remove_like_status(user_id, "post", post_id)
+        try:
+            LikeCacheService.remove_like_status(user_id, "post", post_id)
+        except Exception as e:
+            from app.utils.logger import get_logger
+            logger = get_logger(__name__)
+            logger.error(f"Failed to remove like status for post {post_id}: {e}")
         return True
     except Exception:
         await db.rollback()
@@ -101,7 +111,12 @@ async def like_comment(db: AsyncSession, user_id: str, comment_id: str) -> tuple
         await db.refresh(like)
 
         # 更新缓存
-        LikeCacheService.set_like_status(user_id, "comment", comment_id)
+        try:
+            LikeCacheService.set_like_status(user_id, "comment", comment_id)
+        except Exception as e:
+            from app.utils.logger import get_logger
+            logger = get_logger(__name__)
+            logger.error(f"Failed to set like status for comment {comment_id}: {e}")
         return like, True
     except IntegrityError:
         # 并发情况下，唯一约束冲突说明已存在
@@ -128,7 +143,12 @@ async def unlike_comment(db: AsyncSession, user_id: str, comment_id: str) -> boo
         await db.commit()
 
         # 移除缓存
-        LikeCacheService.remove_like_status(user_id, "comment", comment_id)
+        try:
+            LikeCacheService.remove_like_status(user_id, "comment", comment_id)
+        except Exception as e:
+            from app.utils.logger import get_logger
+            logger = get_logger(__name__)
+            logger.error(f"Failed to remove like status for comment {comment_id}: {e}")
         return True
     except Exception:
         await db.rollback()
@@ -140,8 +160,13 @@ async def is_liked(
 ) -> bool:
     """检查是否已点赞，先查缓存，缓存未命中则查数据库"""
     # 先检查缓存
-    if LikeCacheService.is_liked(user_id, target_type, target_id):
-        return True
+    try:
+        if LikeCacheService.is_liked(user_id, target_type, target_id):
+            return True
+    except Exception as e:
+        from app.utils.logger import get_logger
+        logger = get_logger(__name__)
+        logger.warning(f"Failed to check like status in cache: {e}")
     # 缓存未命中，查数据库
     like = await _get_like(db, user_id, target_type, target_id)
     return like is not None
