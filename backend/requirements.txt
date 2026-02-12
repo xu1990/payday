@@ -1,0 +1,30 @@
+# 薪日 PayDay 主服务依赖 - 与技术方案 v1.0 一致
+# Python ^3.11
+
+# Web
+fastapi>=0.104.0,<0.115
+uvicorn[standard]>=0.24
+python-multipart>=0.0.6
+
+# 数据与迁移
+sqlalchemy>=2.0
+alembic>=1.12
+pymysql>=1.1.0
+cryptography>=41.0
+
+# 校验与配置
+pydantic>=2.5
+pydantic-settings>=2.1
+
+# 认证与安全
+python-jose[cryptography]>=3.3
+passlib[bcrypt]>=1.7
+
+# Redis
+redis>=5.0
+
+# 队列（Sprint 2.3 风控异步任务，技术方案 2.4）
+celery[redis]>=5.3
+
+# 工具
+python-dotenv>=1.0

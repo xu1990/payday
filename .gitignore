@@ -1,0 +1,129 @@
+# Python / Backend
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist-python/
+build/
+.eggs/
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+*.log
+logs/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+*.venv
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Alembic
+backend/alembic/versions/*.pyc
+
+# Node.js / Frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+dist-ssr/
+*.local
+.nuxt/
+.cache/
+.parcel-cache/
+.unoutput/
+.vite/
+
+# Build outputs
+admin-web/dist/
+admin-web/build/
+miniapp/dist/
+miniapp/unpackage/
+miniapp/.hbuilderx/
+
+# Environment variables (keep examples)
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+
+# IDE & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+.history/
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swo
+*.swp
+*~
+
+# OS specific
+.DS_Store
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+._*
+
+# Testing
+.coverage
+.pytest_cache/
+.cache/
+
+# Docker
+*.log
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Uploads and static media (if storing locally)
+uploads/
+static/media/
+static/files/
+
+# Redis dumps
+dump.rdb
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.csr

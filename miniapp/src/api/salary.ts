@@ -1,0 +1,89 @@
+/**
+ * 工资记录 - 与 backend /api/v1/salary 一致；金额 API 为元
+ */
+import request from '@/utils/request'
+
+const PREFIX = '/api/v1/salary'
+
+/** 工资类型 */
+export type SalaryType = 'normal' | 'bonus' | 'allowance' | 'other'
+/** 心情 */
+export type MoodType = 'happy' | 'relief' | 'sad' | 'angry' | 'expect'
+
+export interface SalaryRecord {
+  id: string
+  user_id: string
+  config_id: string
+  amount: number
+  payday_date: string
+  salary_type: SalaryType
+  images: string[] | null
+  note: string | null
+  mood: MoodType
+  risk_status: string
+  created_at: string
+  updated_at: string
+}
+
+export interface SalaryRecordCreate {
+  config_id: string
+  amount: number
+  payday_date: string
+  salary_type?: SalaryType
+  images?: string[] | null
+  note?: string | null
+  mood: MoodType
+}
+
+export interface SalaryRecordUpdate {
+  amount?: number
+  payday_date?: string
+  salary_type?: SalaryType
+  images?: string[] | null
+  note?: string | null
+  mood?: MoodType
+}
+
+export interface SalaryListParams {
+  config_id?: string
+  from_date?: string
+  to_date?: string
+  limit?: number
+  offset?: number
+}
+
+/** 列表 */
+export function listSalary(params?: SalaryListParams) {
+  let url = PREFIX
+  if (params && Object.keys(params).length) {
+    const q = new URLSearchParams()
+    if (params.config_id) q.set('config_id', params.config_id)
+    if (params.from_date) q.set('from_date', params.from_date)
+    if (params.to_date) q.set('to_date', params.to_date)
+    if (params.limit != null) q.set('limit', String(params.limit))
+    if (params.offset != null) q.set('offset', String(params.offset))
+    const qs = q.toString()
+    if (qs) url += (url.includes('?') ? '&' : '?') + qs
+  }
+  return request<SalaryRecord[]>({ url, method: 'GET' })
+}
+
+/** 新增 */
+export function createSalary(data: SalaryRecordCreate) {
+  return request<SalaryRecord>({ url: PREFIX, method: 'POST', data })
+}
+
+/** 单条 */
+export function getSalary(recordId: string) {
+  return request<SalaryRecord>({ url: `${PREFIX}/${recordId}`, method: 'GET' })
+}
+
+/** 更新 */
+export function updateSalary(recordId: string, data: SalaryRecordUpdate) {
+  return request<SalaryRecord>({ url: `${PREFIX}/${recordId}`, method: 'PUT', data })
+}
+
+/** 删除 */
+export function deleteSalary(recordId: string) {
+  return request<void>({ url: `${PREFIX}/${recordId}`, method: 'DELETE' })
+}

@@ -1,0 +1,24 @@
+"""
+数据库连接与会话 - 技术方案 2.2
+"""
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
+from .config import get_settings
+
+settings = get_settings()
+engine = create_engine(
+    settings.database_url,
+    pool_pre_ping=True,
+    pool_recycle=3600,
+    echo=settings.debug,
+)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
