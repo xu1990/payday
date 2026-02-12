@@ -29,7 +29,8 @@ class TestSanitizeHtml:
 
     def test_removes_embed_tag(self):
         """测试移除 embed 标签"""
-        input_html = '<embed src="evil.swf">' result = sanitize_html(input_html)
+        input_html = '<embed src="evil.swf">'
+        result = sanitize_html(input_html)
         assert "&lt;embed src=\"evil.swf\"&gt;" == result
 
     def test_removes_event_handlers(self):

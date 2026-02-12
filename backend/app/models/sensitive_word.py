@@ -1,7 +1,7 @@
 """
 敏感词表 - 用于风控审核
 """
-from sqlalchemy import Column, String, Boolean
+from sqlalchemy import Column, String, Boolean, DateTime
 from datetime import datetime
 
 from .base import Base

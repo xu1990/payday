@@ -126,6 +126,18 @@ class Settings(BaseSettings):
     # 存储服务选择: cos | oss
     storage_provider: str = "cos"
 
+    # 腾讯云天御内容安全
+    tencent_secret_id: str = ""
+    tencent_secret_key: str = ""
+    tencent_region: str = "ap-guangzhou"
+    tencent_yu_biz_type: str = "payday_risk_check"
+
+    # 阿里云内容安全
+    aliyun_secret_id: str = ""
+    aliyun_secret_key: str = ""
+    aliyun_region: str = "cn-hangzhou"
+    aliyun_yu_biz_type: str = "payday_risk_check"
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
@@ -163,12 +175,24 @@ class Settings(BaseSettings):
                 raise ValueError(error_msg)
 
 
+# Module-level settings instance (for direct imports)
+# Initialized on first import via get_settings()
+_settings = None
+
+
 @lru_cache
 def get_settings() -> Settings:
-    settings = Settings()
-    # 在获取配置时进行验证
-    settings.validate_security_settings()
-    return settings
+    global _settings
+    if _settings is None:
+        _settings = Settings()
+        # 在获取配置时进行验证
+        _settings.validate_security_settings()
+    return _settings
+
+
+# For direct import: settings = get_settings()
+# Use get_settings() for type hints and lazy loading
+settings = get_settings()
 
 
 def generate_secure_key(length: int = 43) -> str:

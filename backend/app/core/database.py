@@ -32,16 +32,22 @@ sync_engine = create_engine(
 # 同步会话（用于 Alembic）
 SyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
 
+# 兼容性别名
+SessionLocal = SyncSessionLocal
+
 Base = declarative_base()
 
 # 异步引擎和会话（延迟初始化，避免导入时错误）
 _async_engine = None
 _AsyncSessionLocal = None
 
+# 导出给外部使用（初始化后可用）
+async_session_maker = None
+
 
 def _get_async_engine():
     """获取或创建异步引擎（延迟初始化）"""
-    global _async_engine, _AsyncSessionLocal
+    global _async_engine, _AsyncSessionLocal, async_session_maker
     if _async_engine is None:
         async_database_url = settings.database_url.replace("mysql+pymysql://", "mysql+aiomysql://")
         # 技术方案 4.2.2 - 异步连接池配置优化
@@ -64,6 +70,7 @@ def _get_async_engine():
             class_=AsyncSession,
             expire_on_commit=False,
         )
+        async_session_maker = _AsyncSessionLocal
     return _async_engine
 
 

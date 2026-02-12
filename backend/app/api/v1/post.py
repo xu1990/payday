@@ -1,7 +1,7 @@
 """
 帖子 - 发帖、列表（热门/最新）、详情
 """
-from typing import Literal
+from typing import Literal, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,12 +18,12 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 
 @router.get("/search", response_model=dict)
 async def post_search(
-    keyword: str | None = Query(None, description="搜索关键词"),
-    tags: str | None = Query(None, description="标签搜索，逗号分隔"),
-    user_id: str | None = Query(None, description="用户ID筛选"),
-    industry: str | None = Query(None, description="行业筛选"),
-    city: str | None = Query(None, description="城市筛选"),
-    salary_range: str | None = Query(None, description="工资区间筛选"),
+    keyword: Optional[str] = Query(None, description="搜索关键词"),
+    tags: Optional[str] = Query(None, description="标签搜索，逗号分隔"),
+    user_id: Optional[str] = Query(None, description="用户ID筛选"),
+    industry: Optional[str] = Query(None, description="行业筛选"),
+    city: Optional[str] = Query(None, description="城市筛选"),
+    salary_range: Optional[str] = Query(None, description="工资区间筛选"),
     sort: Literal["hot", "latest"] = Query("latest", description="hot=热门 latest=最新"),
     limit: int = Query(20, ge=1, le=50),
     offset: int = Query(0, ge=0),

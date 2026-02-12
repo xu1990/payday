@@ -16,6 +16,32 @@ from app.core.exceptions import NotFoundException, ValidationException
 from app.core.database import transactional
 
 
+def record_to_response(record: SalaryRecord) -> dict:
+    """
+    将数据库记录转换为响应字典（解密金额）
+
+    Args:
+        record: SalaryRecord 数据库模型实例
+
+    Returns:
+        dict: 符合 SalaryRecordResponse schema 的字典
+    """
+    return {
+        "id": record.id,
+        "user_id": record.user_id,
+        "config_id": record.config_id,
+        "amount": decrypt_amount(record.amount_encrypted, record.encryption_salt),
+        "payday_date": record.payday_date,
+        "salary_type": record.salary_type,
+        "images": record.images,
+        "note": record.note,
+        "mood": record.mood,
+        "risk_status": record.risk_status,
+        "created_at": record.created_at,
+        "updated_at": record.updated_at,
+    }
+
+
 async def list_by_user(
     db: AsyncSession,
     user_id: str,
