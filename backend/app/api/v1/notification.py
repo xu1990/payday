@@ -21,6 +21,7 @@ router = APIRouter(prefix="/notifications", tags=["notifications"])
 @router.get("", response_model=NotificationListResponse)
 async def list_notifications(
     unread_only: bool = Query(False, description="仅未读"),
+    type_filter: str | None = Query(None, description="筛选类型: comment/reply/like/system"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
@@ -28,7 +29,7 @@ async def list_notifications(
 ):
     """当前用户的通知列表（分页），含 total 与 unread_count。"""
     items, total = await notification_service.list_notifications(
-        db, current_user.id, unread_only=unread_only, limit=limit, offset=offset
+        db, current_user.id, unread_only=unread_only, type_filter=type_filter, limit=limit, offset=offset
     )
     unread_count = await notification_service.get_unread_count(db, current_user.id)
     return NotificationListResponse(
@@ -79,3 +80,21 @@ async def mark_one_read(
     if not ok:
         return {"updated": 0}
     return {"updated": 1}
+
+
+@router.delete("")
+async def delete_notifications(
+    notification_ids: str | None = Query(None, description="删除的通知ID列表，逗号分隔"),
+    delete_all: bool = Query(False, description="删除全部通知"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """删除通知：可指定ID列表或全部删除。"""
+    ids_list = None
+    if notification_ids:
+        ids_list = [id.strip() for id in notification_ids.split(",") if id.strip()]
+
+    deleted = await notification_service.delete_notifications(
+        db, current_user.id, notification_ids=ids_list, delete_all=delete_all
+    )
+    return {"deleted": deleted}

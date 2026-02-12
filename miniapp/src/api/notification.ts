@@ -25,12 +25,14 @@ export interface NotificationListResult {
 /** 通知列表（分页），含 total、unread_count */
 export function getNotificationList(params?: {
   unread_only?: boolean
+  type_filter?: string
   limit?: number
   offset?: number
 }) {
-  const { unread_only, limit = 20, offset = 0 } = params ?? {}
+  const { unread_only, type_filter, limit = 20, offset = 0 } = params ?? {}
   const q = new URLSearchParams()
   if (unread_only !== undefined) q.set('unread_only', String(unread_only))
+  if (type_filter !== undefined) q.set('type_filter', type_filter)
   q.set('limit', String(limit))
   q.set('offset', String(offset))
   return request<NotificationListResult>({
@@ -61,5 +63,24 @@ export function markOneRead(notificationId: string) {
   return request<{ updated: number }>({
     url: `${PREFIX}/${notificationId}/read`,
     method: 'PUT',
+  })
+}
+
+/** 删除通知：可指定ID列表或全部删除 */
+export function deleteNotifications(params?: {
+  notification_ids?: string[]
+  delete_all?: boolean
+}) {
+  const { notification_ids, delete_all = false } = params ?? {}
+  const q = new URLSearchParams()
+  if (notification_ids?.length) {
+    q.set('notification_ids', notification_ids.join(','))
+  }
+  if (delete_all) {
+    q.set('delete_all', 'true')
+  }
+  return request<{ deleted: number }>({
+    url: `${PREFIX}?${q.toString()}`,
+    method: 'DELETE',
   })
 }

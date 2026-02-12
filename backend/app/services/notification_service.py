@@ -35,6 +35,7 @@ async def list_notifications(
     db: AsyncSession,
     user_id: str,
     unread_only: bool = False,
+    type_filter: str | None = None,
     limit: int = 20,
     offset: int = 0,
 ) -> tuple[list[Notification], int]:
@@ -42,6 +43,8 @@ async def list_notifications(
     q = select(Notification).where(Notification.user_id == user_id)
     if unread_only:
         q = q.where(Notification.is_read == False)
+    if type_filter:
+        q = q.where(Notification.type == type_filter)
     count_q = select(func.count()).select_from(q.subquery())
     total = (await db.execute(count_q)).scalar() or 0
     q = q.order_by(Notification.created_at.desc()).limit(limit).offset(offset)
@@ -110,3 +113,29 @@ async def mark_one_read(
     )
     await db.commit()
     return r.rowcount > 0
+
+
+async def delete_notifications(
+    db: AsyncSession,
+    user_id: str,
+    notification_ids: list[str] | None = None,
+    delete_all: bool = False,
+) -> int:
+    """删除指定通知。返回删除条数。"""
+    from sqlalchemy import delete
+
+    if delete_all:
+        r = await db.execute(
+            delete(Notification).where(Notification.user_id == user_id)
+        )
+    elif notification_ids:
+        r = await db.execute(
+            delete(Notification).where(
+                Notification.id.in_(notification_ids),
+                Notification.user_id == user_id,
+            )
+        )
+    else:
+        return 0
+    await db.commit()
+    return r.rowcount
