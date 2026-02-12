@@ -22,7 +22,7 @@ router = APIRouter(prefix="/notifications", tags=["notifications"])
 async def list_notifications(
     unread_only: bool = Query(False, description="仅未读"),
     type_filter: str | None = Query(None, description="筛选类型: comment/reply/like/system"),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=50),
     offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -49,7 +49,7 @@ async def get_unread_count(
     return {"unread_count": count}
 
 
-@router.put("/read")
+@router.put("/read", response_model=dict)
 async def mark_read(
     body: MarkReadBody,
     current_user: User = Depends(get_current_user),
@@ -64,10 +64,11 @@ async def mark_read(
         )
     else:
         updated = 0
+    # 统一返回类型为dict
     return {"updated": updated}
 
 
-@router.put("/{notification_id}/read")
+@router.put("/{notification_id}/read", response_model=dict)
 async def mark_one_read(
     notification_id: str,
     current_user: User = Depends(get_current_user),
@@ -79,6 +80,7 @@ async def mark_one_read(
     )
     if not ok:
         return {"updated": 0}
+    # 统一返回类型为dict，保持一致性
     return {"updated": 1}
 
 

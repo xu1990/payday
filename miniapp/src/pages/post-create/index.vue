@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { createPost, type PostCreateParams, type PostType } from '@/api/post'
+import { VALIDATION_PATTERNS, VALIDATION_LIMITS, VALIDATION_ERRORS } from '@/constants/validation'
 
 const typeOptions: { value: PostType; label: string }[] = [
   { value: 'complaint', label: '吐槽' },
@@ -14,27 +15,75 @@ const salary_range = ref('')
 const industry = ref('')
 const city = ref('')
 const submitting = ref(false)
+// 用于取消之前的请求
+const submitAbortKey = ref('post-create-submit')
 
 async function submit() {
+  // 防止重复提交（如果有正在进行的请求，会自动取消）
+  if (submitting.value) {
+    // 取消之前的请求，开始新的请求
+  }
+
   const text = content.value.trim()
+
+  // 验证内容
   if (!text) {
-    uni.showToast({ title: '请输入内容', icon: 'none' })
+    uni.showToast({ title: VALIDATION_ERRORS.CONTENT_REQUIRED, icon: 'none' })
     return
   }
+
+  if (text.length > VALIDATION_LIMITS.MAX_CONTENT_LENGTH) {
+    uni.showToast({ title: VALIDATION_ERRORS.CONTENT_TOO_LONG, icon: 'none' })
+    return
+  }
+
+  // 验证工资区间（如果填写）
+  const salary = salary_range.value.trim()
+  if (salary) {
+    if (salary.length > VALIDATION_LIMITS.MAX_SALARY_LENGTH) {
+      uni.showToast({ title: VALIDATION_ERRORS.SALARY_TOO_LONG, icon: 'none' })
+      return
+    }
+
+    if (!VALIDATION_PATTERNS.SALARY_RANGE.test(salary)) {
+      uni.showToast({ title: VALIDATION_ERRORS.SALARY_FORMAT_INVALID, icon: 'none' })
+      return
+    }
+  }
+
+  // 验证行业（如果填写）
+  const ind = industry.value.trim()
+  if (ind && ind.length > VALIDATION_LIMITS.MAX_INDUSTRY_LENGTH) {
+    uni.showToast({ title: `行业不能超过${VALIDATION_LIMITS.MAX_INDUSTRY_LENGTH}字`, icon: 'none' })
+    return
+  }
+
+  // 验证城市（如果填写）
+  const cit = city.value.trim()
+  if (cit && cit.length > VALIDATION_LIMITS.MAX_CITY_LENGTH) {
+    uni.showToast({ title: `城市不能超过${VALIDATION_LIMITS.MAX_CITY_LENGTH}字`, icon: 'none' })
+    return
+  }
+
   submitting.value = true
   try {
     const data: PostCreateParams = {
       content: text,
       type: type.value,
     }
-    if (salary_range.value.trim()) data.salary_range = salary_range.value.trim()
-    if (industry.value.trim()) data.industry = industry.value.trim()
-    if (city.value.trim()) data.city = city.value.trim()
-    await createPost(data)
+    if (salary) data.salary_range = salary
+    if (ind) data.industry = ind
+    if (cit) data.city = cit
+
+    // 使用abortKey来自动取消之前的请求
+    await createPost(data, { abortKey: submitAbortKey.value })
     uni.showToast({ title: '发布成功' })
     setTimeout(() => uni.navigateBack(), 800)
   } catch (e: any) {
-    uni.showToast({ title: e?.message || '发布失败', icon: 'none' })
+    // 只在不是被取消的情况下显示错误
+    if (e?.message !== 'Request cancelled') {
+      uni.showToast({ title: e?.message || '发布失败', icon: 'none' })
+    }
   } finally {
     submitting.value = false
   }

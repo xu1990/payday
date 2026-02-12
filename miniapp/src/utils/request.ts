@@ -8,9 +8,13 @@
  * - 后端通过其他机制（如速率限制）防止滥用
  */
 import { hideLoading, showLoading, showError } from './toast'
-import { getToken as getStoredToken, clearToken } from '@/api/auth'
+import { getToken as getStoredToken, getRefreshToken, getUserId, saveToken, clearToken, refreshAccessToken } from '@/api/auth'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || ''
+
+// 防止多个请求同时尝试刷新 token
+let isRefreshing = false
+let refreshPromise: Promise<boolean> | null = null
 
 export type RequestOptions = Omit<UniApp.RequestOption, 'url'> & {
   url: string
@@ -24,6 +28,8 @@ export type RequestOptions = Omit<UniApp.RequestOption, 'url'> & {
   showError?: boolean
   /** 自定义错误处理 */
   errorHandler?: (error: Error) => void | boolean
+  /** 如果设置了此选项，具有相同abortKey的请求会被取消 */
+  abortKey?: string
 }
 
 function resolveUrl(url: string): string {
@@ -60,18 +66,62 @@ function isTokenExpired(token: string): boolean {
 }
 
 /**
- * 从本地取 token（带过期检查）
+ * 尝试刷新 access token
+ */
+async function tryRefreshToken(): Promise<boolean> {
+  // 如果正在刷新，等待刷新完成
+  if (isRefreshing && refreshPromise) {
+    return refreshPromise
+  }
+
+  isRefreshing = true
+  refreshPromise = (async () => {
+    try {
+      const refreshToken = await getRefreshToken()
+      const userId = getUserId()
+
+      if (!refreshToken || !userId) {
+        return false
+      }
+
+      const result = await refreshAccessToken(refreshToken, userId)
+
+      // 保存新的 tokens
+      await saveToken(result.access_token, result.refresh_token, userId)
+      return true
+    } catch (error) {
+      console.error('[request] Token refresh failed:', error)
+      // 刷新失败，清除所有 token
+      clearToken()
+      return false
+    } finally {
+      isRefreshing = false
+      refreshPromise = null
+    }
+  })()
+
+  return refreshPromise
+}
+
+/**
+ * 从本地取 token（带过期检查和自动刷新）
  */
 async function getToken(): Promise<string> {
   try {
     // 使用 auth.ts 中的 getToken（会自动解密）
-    const token = await getStoredToken()
+    let token = await getStoredToken()
 
     // 检查是否过期
     if (token && isTokenExpired(token)) {
-      // 清除过期的 token
-      clearToken()
-      return ''
+      // 尝试刷新 token
+      const refreshed = await tryRefreshToken()
+      if (refreshed) {
+        // 刷新成功，获取新 token
+        token = await getStoredToken()
+      } else {
+        // 刷新失败，清除 token
+        token = ''
+      }
     }
 
     return token
@@ -120,6 +170,17 @@ function defaultErrorHandler(error: Error): boolean {
 }
 
 let loadingCount = 0
+// 用于跟踪当前最新的请求ID
+let currentRequestId = 0
+// 存储活动的请求ID，用于取消
+const activeRequests = new Map<string, number>()
+
+/**
+ * 生成下一个请求ID
+ */
+function getNextRequestId(): number {
+  return ++currentRequestId
+}
 
 /** 显示或隐藏 loading */
 function manageLoading(show: boolean, text?: string) {
@@ -143,8 +204,17 @@ export async function request<T = unknown>(options: RequestOptions): Promise<T> 
     loadingText,
     showError: shouldShowError = true,
     errorHandler: customErrorHandler,
+    abortKey,
     ...rawOptions
   } = options
+
+  // 生成此请求的唯一ID
+  const requestId = getNextRequestId()
+
+  // 如果有abortKey，记录此请求ID
+  if (abortKey) {
+    activeRequests.set(abortKey, requestId)
+  }
 
   const url = resolveUrl(rawOptions.url)
   const token = rawOptions.noAuth ? '' : await getToken()
@@ -172,6 +242,12 @@ export async function request<T = unknown>(options: RequestOptions): Promise<T> 
           manageLoading(false)
         }
 
+        // 检查此请求是否已被新的请求取代
+        if (abortKey && activeRequests.get(abortKey) !== requestId) {
+          // 此请求已被取消，忽略响应
+          return
+        }
+
         if (res.statusCode >= 200 && res.statusCode < 300) {
           resolve(res.data as T)
         } else {
@@ -194,6 +270,12 @@ export async function request<T = unknown>(options: RequestOptions): Promise<T> 
         // 隐藏 loading
         if (shouldShowLoading) {
           manageLoading(false)
+        }
+
+        // 检查此请求是否已被新的请求取代
+        if (abortKey && activeRequests.get(abortKey) !== requestId) {
+          // 此请求已被取消，忽略错误
+          return
         }
 
         const error = new Error(err.errMsg || '网络请求失败')

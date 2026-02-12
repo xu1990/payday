@@ -83,7 +83,50 @@ async def get_current_admin(
             detail="管理员不存在",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    # 检查admin账户是否启用
+    if admin.is_active != "1":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="管理员账户已被禁用",
+        )
     return admin
+
+
+def require_permission(required_role: str = "admin"):
+    """
+    权限检查依赖工厂函数
+
+    Args:
+        required_role: 需要的最低角色等级: superadmin > admin > readonly
+
+    使用方式:
+        @router.put("/posts/{post_id}/status")
+        async def admin_post_update_status(
+            ...,
+            _perm: bool = Depends(require_permission("admin")),
+            ...
+        ):
+    """
+    async def check_permission(admin: AdminUser = Depends(get_current_admin)) -> bool:
+        # 角色等级
+        role_hierarchy = {
+            "superadmin": 3,
+            "admin": 2,
+            "readonly": 1
+        }
+
+        admin_role = getattr(admin, "role", "admin")
+        admin_level = role_hierarchy.get(admin_role, 2)  # 默认admin
+        required_level = role_hierarchy.get(required_role, 2)
+
+        if admin_level < required_level:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"权限不足，需要 {required_role} 或更高级别角色",
+            )
+        return True
+
+    return check_permission
 
 
 async def verify_csrf_token(
@@ -104,11 +147,35 @@ async def verify_csrf_token(
         - 使用 Redis 存储 token，避免内存多实例问题
         - 使用常量时间比较防止时序攻击
     """
-    # 跳过 GET 请求（只读操作）
-    if request.method == "GET":
+    # 安全的GET请求方法（标准REST只读操作）
+    SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+
+    # 对于安全方法，检查是否有query parameters
+    # 如果有query parameters，仍然需要CSRF验证（防止通过GET参数执行状态变更）
+    if request.method in SAFE_METHODS:
+        # 定义允许跳过CSRF的只读参数（如分页、排序、过滤等）
+        READONLY_PARAMS = {
+            "page", "page_size", "limit", "offset",
+            "sort", "order", "search", "query",
+            "user_id", "industry", "city", "salary_range",
+            "status", "start_date", "end_date",
+            "tag", "tags", "category", "type"
+        }
+
+        # 如果有query参数，检查是否都是已知的只读参数
+        if request.query_params:
+            param_names = set(request.query_params.keys())
+            # 如果存在非只读参数，需要CSRF验证
+            if not param_names.issubset(READONLY_PARAMS):
+                # 有可疑的参数，需要CSRF验证
+                is_valid = await csrf_manager.validate_token(request, str(admin.id))
+                if not is_valid:
+                    raise CSRFException("CSRF token 无效或已过期，请重新登录")
+
+        # 标准的只读GET请求，跳过CSRF验证
         return True
 
-    # 验证 CSRF token
+    # POST/PUT/DELETE/PATCH 等状态变更操作必须验证 CSRF token
     is_valid = await csrf_manager.validate_token(request, str(admin.id))
     if not is_valid:
         raise CSRFException("CSRF token 无效或已过期，请重新登录")

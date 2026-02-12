@@ -1,7 +1,7 @@
 /**
  * 帖子 - 与 backend /api/v1/posts 一致
  */
-import request from '@/utils/request'
+import request, { type RequestOptions } from '@/utils/request'
 
 const PREFIX = '/api/v1/posts'
 
@@ -61,8 +61,8 @@ export function getPostDetail(postId: string) {
 }
 
 /** 发帖（发布后 risk_status=pending，异步风控） */
-export function createPost(data: PostCreateParams) {
-  return request<PostItem>({ url: PREFIX, method: 'POST', data })
+export function createPost(data: PostCreateParams, options?: Partial<RequestOptions>) {
+  return request<PostItem>({ url: PREFIX, method: 'POST', data, ...options })
 }
 
 // ==================== 关注流 ====================

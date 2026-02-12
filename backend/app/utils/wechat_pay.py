@@ -6,10 +6,11 @@ import hashlib
 import random
 import string
 import time
-import xml.etree.ElementTree as ET
 from typing import Any
 
 import httpx
+from defusedxml.ElementTree import fromstring as safe_fromstring
+from defusedxml.ElementTree import ParseError
 
 from app.core.config import get_settings
 
@@ -31,14 +32,17 @@ def dict_to_xml(data: dict[str, Any]) -> str:
 
 
 def xml_to_dict(xml_str: str) -> dict[str, Any]:
-    """将 XML 转换为字典 - 防止 XXE 攻击"""
-    # 禁用 DTD 和实体解析，防止 XXE 攻击
-    parser = ET.XMLParser(resolve_entities=False, forbid_dtd=True)
-    root = ET.fromstring(xml_str, parser=parser)
-    data = {}
-    for child in root:
-        data[child.tag] = child.text
-    return data
+    """将 XML 转换为字典 - 使用 defusedxml 防止 XXE 攻击"""
+    try:
+        # 使用 defusedxml 的安全解析器，完全禁用 DTD 和实体
+        root = safe_fromstring(xml_str, forbid_dtd=True, forbid_entities=True)
+        data = {}
+        for child in root:
+            data[child.tag] = child.text
+        return data
+    except ParseError as e:
+        from app.core.exceptions import ValidationException
+        raise ValidationException("Invalid XML format", details={"error": str(e)})
 
 
 def sign_md5(data: dict[str, Any], api_key: str) -> str:
@@ -102,7 +106,8 @@ async def create_mini_program_payment(
     xml_data = dict_to_xml(data)
 
     # 发送请求
-    async with httpx.AsyncClient(timeout=30) as client:
+    import httpx
+    async with httpx.AsyncClient(timeout=httpx.Timeout(30.0)) as client:
         response = await client.post(url, content=xml_data.encode("utf-8"), headers={"Content-Type": "application/xml"})
 
     # 解析响应
@@ -188,14 +193,19 @@ def parse_payment_notify(xml_data: str) -> dict[str, Any]:
             current_time = datetime.utcnow()
 
             # 如果通知时间超过当前时间15分钟以上，拒绝
-            if notify_time > current_time + max_acceptable_delay:
-                raise Exception(f"Invalid notification time: future timestamp detected ({time_end})")
+            # 使用常量时间比较，避免timing side-channel攻击
+            time_diff = (notify_time - current_time).total_seconds()
+            if time_diff > max_acceptable_delay.total_seconds():
+                # 不暴露具体的时间值，防止信息泄露
+                raise Exception("Invalid notification time: timestamp validation failed")
 
             # 如果通知时间早于当前时间超过1天，也拒绝
-            if current_time - notify_time > timedelta(days=1):
-                raise Exception(f"Invalid notification time: stale timestamp detected ({time_end})")
+            if abs(time_diff) > timedelta(days=1).total_seconds():
+                # 不暴露具体的时间值，防止信息泄露
+                raise Exception("Invalid notification time: timestamp validation failed")
 
         except (ValueError, TypeError) as e:
-            raise Exception(f"Invalid time_end format: {time_end}, error: {e}")
+            # 不暴露具体的格式错误信息，防止信息泄露
+            raise Exception("Invalid time_end format")
 
     return data

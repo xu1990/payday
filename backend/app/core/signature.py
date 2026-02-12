@@ -71,13 +71,13 @@ def verify_signature(
     return True
 
 
-def verify_timestamp(timestamp_str: str, max_age_seconds: int = 300) -> bool:
+def verify_timestamp(timestamp_str: str, max_age_seconds: int = 60) -> bool:
     """
     验证时间戳是否在有效期内
 
     Args:
         timestamp_str: 时间戳字符串（秒）
-        max_age_seconds: 最大有效期（秒），默认5分钟
+        max_age_seconds: 最大有效期（秒），默认60秒（减少重放攻击窗口）
 
     Returns:
         True if timestamp is valid

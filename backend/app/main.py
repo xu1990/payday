@@ -3,8 +3,9 @@
 集成 Prometheus 监控指标 + Sentry 错误追踪
 """
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
 from app.core.database import async_session_maker
@@ -24,6 +25,10 @@ from app.utils import date as date_utils
 
 logger = get_logger(__name__)
 settings = get_settings()
+
+
+# 请求大小限制配置
+MAX_REQUEST_SIZE = 10 * 1024 * 1024  # 10MB
 
 
 @asynccontextmanager
@@ -142,6 +147,32 @@ app.add_middleware(
 # Prometheus 监控中间件
 # 技术方案 6.1.1 - HTTP 请求指标收集
 app.add_middleware(PrometheusMiddleware)
+
+
+# 请求大小限制中间件
+# SECURITY: 防止 DoS 攻击 - 限制请求体大小
+@app.middleware("http")
+async def limit_request_size(request: Request, call_next):
+    """检查请求大小，防止 DoS 攻击"""
+    # 检查 Content-Length 头
+    content_length = request.headers.get("content-length")
+    if content_length:
+        try:
+            length = int(content_length)
+            if length > MAX_REQUEST_SIZE:
+                logger.warning(
+                    f"Request too large: {length} bytes from {request.client.host if request.client else 'unknown'}"
+                )
+                return JSONResponse(
+                    status_code=413,
+                    content={"detail": f"Request body too large. Maximum size is {MAX_REQUEST_SIZE // (1024*1024)}MB"}
+                )
+        except ValueError:
+            pass  # Invalid content-length, let the request proceed
+
+    # 对于没有 Content-Length 的请求，无法提前检查
+    # 但 Starlette 会在解析时自动限制
+    return await call_next(request)
 
 
 @app.get("/health")

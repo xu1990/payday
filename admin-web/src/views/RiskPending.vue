@@ -84,7 +84,15 @@
       </template>
     </el-dialog>
     <el-dialog v-model="rejectVisible" title="拒绝原因" width="400px" aria-label="拒绝原因对话框">
-      <el-input v-model="rejectReason" type="textarea" placeholder="选填" :rows="3" aria-label="拒绝原因" />
+      <el-input
+        v-model="rejectReason"
+        type="textarea"
+        placeholder="请输入拒绝原因（选填，最多500字）"
+        :rows="3"
+        maxlength="500"
+        show-word-limit
+        aria-label="拒绝原因"
+      />
       <template #footer>
         <el-button aria-label="取消拒绝" @click="rejectVisible = false">取消</el-button>
         <el-button type="primary" aria-label="确认拒绝" @click="confirmReject">确定拒绝</el-button>
@@ -188,15 +196,23 @@ function rejectPost(row: AdminPostListItem) {
 }
 
 async function confirmReject() {
+  // 验证拒绝原因
+  const reason = rejectReason.value.trim()
+  if (reason && reason.length > 500) {
+    ElMessage.error('拒绝原因不能超过500字')
+    return
+  }
+
   if (rejectTargetPost.value) {
     try {
       await updatePostStatus(rejectTargetPost.value.id, {
         risk_status: 'rejected',
-        risk_reason: rejectReason.value || undefined,
+        risk_reason: reason || undefined,
       })
       ElMessage.success('已拒绝')
       rejectVisible.value = false
       rejectTargetPost.value = null
+      rejectReason.value = ''
       await fetchPosts()
     } catch (e: unknown) {
       const err = e as { response?: { status: number } }
@@ -208,11 +224,12 @@ async function confirmReject() {
     try {
       await updateCommentRisk(rejectTargetComment.value.id, {
         risk_status: 'rejected',
-        risk_reason: rejectReason.value || undefined,
+        risk_reason: reason || undefined,
       })
       ElMessage.success('已拒绝')
       rejectVisible.value = false
       rejectTargetComment.value = null
+      rejectReason.value = ''
       await fetchComments()
     } catch (e: unknown) {
       const err = e as { response?: { status: number } }

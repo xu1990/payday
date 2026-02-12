@@ -6,11 +6,15 @@
     </view>
 
     <!-- 激活的会员 -->
-    <view class="active-card" v-if="activeMembership.id">
+    <view class="active-card" v-if="activeMembership && activeMembership.id">
       <view class="active-info">
-        <text class="active-title">当前会员：{{ activeMembership.name }}</text>
-        <text class="active-date">有效期至：{{ formatDate(activeMembership.end_date) }}</text>
-        <text class="active-days">剩余 {{ activeMembership.days_remaining }} 天</text>
+        <text class="active-title">当前会员：{{ activeMembership.name || '未知套餐' }}</text>
+        <text class="active-date" v-if="activeMembership.end_date">
+          有效期至：{{ formatDate(activeMembership.end_date) }}
+        </text>
+        <text class="active-days" v-if="activeMembership.days_remaining !== undefined">
+          剩余 {{ activeMembership.days_remaining }} 天
+        </text>
       </view>
     </view>
 
@@ -82,8 +86,36 @@ import {
 import { createPayment, requestWeChatPayment, verifyPayment } from '@/api/payment'
 
 const packages = ref<MembershipItem[]>([])
-const activeMembership = ref<ActiveMembership>({} as ActiveMembership)
+const activeMembership = ref<ActiveMembership | null>(null)
 const loading = ref(true)
+const submitting = ref(false)  // 防止重复提交
+
+// 生成幂等性key - 使用更可靠的随机数生成
+const generateIdempotencyKey = () => {
+  const timestamp = Date.now().toString(36)
+  const random = Math.random().toString(36).substring(2, 15)
+  // 添加额外随机位增加唯一性
+  const extra = Math.random().toString(36).substring(2, 6)
+  return `${timestamp}-${random}-${extra}`
+}
+
+// 支付验证重试逻辑 - 指数退避
+async function verifyPaymentWithRetry(orderId: string, maxRetries = 3): Promise<{ success: boolean; message?: string }> {
+  for (let i = 0; i < maxRetries; i++) {
+    const verifyRes = await verifyPayment(orderId)
+    if (verifyRes.success) {
+      return verifyRes
+    }
+
+    // 如果不是最后一次重试，等待后重试
+    if (i < maxRetries - 1) {
+      // 指数退避: 1s, 2s, 4s
+      const delay = Math.pow(2, i) * 1000
+      await new Promise(resolve => setTimeout(resolve, delay))
+    }
+  }
+  return { success: false, message: '支付确认超时，请稍后刷新查看' }
+}
 
 onMounted(async () => {
   try {
@@ -92,7 +124,10 @@ onMounted(async () => {
       getActiveMembership()
     ])
     packages.value = pkgsRes.items.filter(pkg => pkg.is_active)
-    activeMembership.value = active as ActiveMembership
+    // 检查active是否有有效的id，再赋值
+    if (active && typeof active === 'object' && 'id' in active && active.id) {
+      activeMembership.value = active as ActiveMembership
+    }
   } catch (error) {
     uni.showToast({ title: '加载失败', icon: 'none' })
   } finally {
@@ -106,20 +141,34 @@ const formatDate = (dateStr: string) => {
 }
 
 const selectPackage = async (pkg: MembershipItem) => {
+  // 防止重复提交
+  if (submitting.value) {
+    uni.showToast({ title: '请稍候，正在处理...', icon: 'none' })
+    return
+  }
+
   uni.showModal({
     title: '确认购买',
     content: `确认购买 ${pkg.name}？\n价格：¥${(pkg.price / 100).toFixed(2)}`,
     success: async (res) => {
       if (res.confirm) {
+        submitting.value = true
+        const idempotencyKey = generateIdempotencyKey()
+
         try {
-          // 1. 创建订单
+          // 1. 创建订单（带幂等性key）
           const orderRes = await createMembershipOrder({
             membership_id: pkg.id,
             amount: pkg.price,
-            payment_method: 'wechat'
+            payment_method: 'wechat',
+            idempotency_key: idempotencyKey
           })
 
-          const orderId = (orderRes as any).id
+          // 安全地提取订单ID
+          if (!orderRes || typeof orderRes !== 'object' || !('id' in orderRes) || !orderRes.id) {
+            throw new Error('订单创建失败')
+          }
+          const orderId = orderRes.id
 
           // 2. 创建支付参数
           const payRes = await createPayment({ order_id: orderId })
@@ -129,14 +178,20 @@ const selectPackage = async (pkg: MembershipItem) => {
             return
           }
 
+          // 验证支付参数
+          if (!payRes.data.timeStamp || !payRes.data.nonceStr || !payRes.data.package || !payRes.data.paySign) {
+            uni.showToast({ title: '支付参数异常', icon: 'none' })
+            return
+          }
+
           // 3. 调起微信支付
           try {
             await requestWeChatPayment(payRes.data)
 
-            // 4. 验证支付结果（确认服务器已确认支付）
+            // 4. 验证支付结果（带重试逻辑）
             uni.showLoading({ title: '确认支付结果...', mask: true })
 
-            const verifyRes = await verifyPayment(orderId)
+            const verifyRes = await verifyPaymentWithRetry(orderId)
 
             uni.hideLoading()
 
@@ -148,8 +203,14 @@ const selectPackage = async (pkg: MembershipItem) => {
             // 5. 支付成功，刷新会员状态
             uni.showToast({ title: '支付成功', icon: 'success' })
             setTimeout(async () => {
-              const active = await getActiveMembership()
-              activeMembership.value = active as ActiveMembership
+              try {
+                const active = await getActiveMembership()
+                if (active && typeof active === 'object' && 'id' in active && active.id) {
+                  activeMembership.value = active as ActiveMembership
+                }
+              } catch (e) {
+                console.error('Failed to refresh membership:', e)
+              }
             }, 1000)
 
           } catch (paymentError: any) {
@@ -160,7 +221,10 @@ const selectPackage = async (pkg: MembershipItem) => {
             }
           }
         } catch (error: any) {
-          uni.showToast({ title: '创建订单失败，请重试', icon: 'none' })
+          const errorMsg = error?.message || '创建订单失败，请重试'
+          uni.showToast({ title: errorMsg, icon: 'none' })
+        } finally {
+          submitting.value = false
         }
       }
     }

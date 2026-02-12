@@ -7,7 +7,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, RATE_LIMIT_POST
 from app.models.user import User
 from app.schemas.post import PostCreate, PostResponse
 from app.services.post_service import create as create_post, get_by_id, list_posts, search_posts
@@ -25,7 +25,7 @@ async def post_search(
     city: str | None = Query(None, description="城市筛选"),
     salary_range: str | None = Query(None, description="工资区间筛选"),
     sort: Literal["hot", "latest"] = Query("latest", description="hot=热门 latest=最新"),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=50),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
 ):
@@ -50,9 +50,11 @@ async def post_create(
     body: PostCreate,
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
+    _rate_limit: bool = Depends(RATE_LIMIT_POST),
     db: AsyncSession = Depends(get_db),
 ):
     # 发帖使用当前用户匿名昵称（与 PRD/技术方案一致）
+    # SECURITY: 速率限制已通过 _rate_limit 依赖应用
     post = await create_post(db, current_user.id, body, anonymous_name=current_user.anonymous_name)
     background_tasks.add_task(run_risk_check_for_post, post.id)
     return PostResponse.model_validate(post)
@@ -61,7 +63,7 @@ async def post_create(
 @router.get("", response_model=list[PostResponse])
 async def post_list(
     sort: Literal["hot", "latest"] = Query("latest", description="hot=热门 latest=最新"),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=50),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
 ):

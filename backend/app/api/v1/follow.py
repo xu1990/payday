@@ -68,7 +68,7 @@ async def unfollow(
 
 @router.get("/me/followers", response_model=FollowListResponse)
 async def my_followers(
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=50),
     offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -82,7 +82,7 @@ async def my_followers(
 
 @router.get("/me/feed", response_model=dict)
 async def my_feed(
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=50),
     offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -98,7 +98,7 @@ async def my_feed(
 
 @router.get("/me/following", response_model=FollowListResponse)
 async def my_following(
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=50),
     offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -113,7 +113,7 @@ async def my_following(
 @router.get("/{user_id}/followers", response_model=FollowListResponse)
 async def user_followers(
     user_id: str,
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=50),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
 ):
@@ -129,7 +129,7 @@ async def user_followers(
 @router.get("/{user_id}/following", response_model=FollowListResponse)
 async def user_following(
     user_id: str,
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=50),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
 ):

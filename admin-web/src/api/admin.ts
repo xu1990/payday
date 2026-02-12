@@ -42,11 +42,41 @@ adminApi.interceptors.request.use((config) => {
 
 adminApi.interceptors.response.use(
   (r) => r,
-  (err) => {
+  async (err) => {
+    const authStore = useAuthStore()
+
+    // 401错误：尝试刷新token
     if (err.response?.status === 401) {
-      useAuthStore().logout()
-      window.location.href = '/#/login'
+      // 检查是否有refresh token可用
+      if (authStore.refreshToken) {
+        try {
+          // 尝试刷新token
+          const { data } = await adminApi.post<{ access_token: string; csrf_token: string; refresh_token?: string }>(
+            '/admin/auth/refresh',
+            { refresh_token: authStore.refreshToken }
+          )
+
+          // 更新store中的token和csrf token
+          authStore.setToken(data.access_token, data.csrf_token, data.refresh_token)
+
+          // 重试原始请求
+          if (err.config) {
+            err.config.headers.Authorization = `Bearer ${data.access_token}`
+            return adminApi(err.config)
+          }
+        } catch (refreshError) {
+          // 刷新失败，退出登录
+          console.error('[adminApi] Token refresh failed:', refreshError)
+          authStore.logout()
+          window.location.href = '/#/login'
+        }
+      } else {
+        // 没有refresh token，直接退出
+        authStore.logout()
+        window.location.href = '/#/login'
+      }
     }
+
     return Promise.reject(err)
   }
 )

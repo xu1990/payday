@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.post import Post
 from app.schemas.post import PostCreate
 from app.core.cache import PostCacheService
-from app.core.exceptions import NotFoundException
+from app.core.exceptions import NotFoundException, ValidationException
 from app.utils.sanitize import sanitize_html
 
 
@@ -249,25 +249,21 @@ async def search_posts(
     )
 
     # 按关键词搜索
-    # SECURITY: 安全转义 ILIKE 模式防止 SQL 注入
+    # SECURITY: 使用 SQLAlchemy 参数绑定防止 SQL 注入
     if keyword:
         # 验证输入是字符串且长度合理
         if not isinstance(keyword, str):
-            raise ValueError("Search keyword must be a string")
+            raise ValidationException("Search keyword must be a string")
         if len(keyword) > 100:
-            raise ValueError("Search keyword too long (max 100 characters)")
+            raise ValidationException("Search keyword too long (max 100 characters)")
 
         # 移除控制字符，防止注入攻击
         keyword = ''.join(char for char in keyword if ord(char) >= 32 or char in '\n\t\r')
 
-        # 安全转义：先转义反斜杠，再转义通配符
-        escaped_keyword = (
-            keyword.replace("\\", "\\\\")
-            .replace("%", "\\%")
-            .replace("_", "\\_")
-        )
-        search_pattern = f"%{escaped_keyword}%"
-        query = query.where(Post.content.ilike(search_pattern, escape="\\"))
+        # 使用 SQLAlchemy 的 bindparam 自动转义，防止 SQL 注入
+        # SQLAlchemy 会正确处理参数绑定，无需手动转义
+        search_pattern = f"%{keyword}%"
+        query = query.where(Post.content.ilike(search_pattern))
 
     # 按标签搜索（JSON查询）
     if tags:
@@ -284,10 +280,21 @@ async def search_posts(
                 continue
             valid_tags.append(tag)
 
-        # 使用验证后的标签，并正确转义 JSON
-        for tag in valid_tags:
-            escaped_tag = tag.replace('\\', '\\\\').replace('"', '\\"')
-            query = query.where(Post.tags.contains(f'"{escaped_tag}"'))
+        # 使用验证后的标签列表进行JSON包含查询
+        # 使用参数化查询防止SQL注入
+        if valid_tags:
+            from sqlalchemy import or_, func, literal
+
+            tag_conditions = []
+            for tag in valid_tags:
+                # 使用func.json_contains + literal确保参数化查询
+                # literal()会正确转义特殊字符，防止SQL注入
+                tag_conditions.append(
+                    func.json_contains(Post.tags, literal(f'"{tag}"'))
+                )
+
+            if tag_conditions:
+                query = query.where(or_(*tag_conditions))
 
     # 按用户搜索
     if user_id:

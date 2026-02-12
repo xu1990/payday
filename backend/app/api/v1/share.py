@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
-from app.schemas.share import ShareCreate, ShareResponse, ShareStatsResponse
+from app.schemas.share import ShareCreate, ShareResponse, ShareStatsResponse, ShareUpdateStatus
 from app.services.share_service import (
     create_share,
     update_share_status,
@@ -42,7 +42,7 @@ async def create_share_endpoint(
 async def list_shares(
     current_user: User = Depends(get_current_user),
     target_type: Optional[str] = Query(None, description="筛选分享目标类型"),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=50),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
 ):

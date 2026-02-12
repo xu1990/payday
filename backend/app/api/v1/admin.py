@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import get_current_admin, verify_csrf_token
+from app.core.deps import get_current_admin, verify_csrf_token, require_permission
 from app.core.database import get_db
 from app.models.admin import AdminUser
 from app.schemas.admin import (
@@ -135,7 +135,8 @@ async def admin_salary_list(
 @router.delete("/salary-records/{record_id}", status_code=204)
 async def admin_salary_delete(
     record_id: str,
-    _: AdminUser = Depends(get_current_admin),
+    _admin: AdminUser = Depends(get_current_admin),
+    _perm: bool = Depends(require_permission("admin")),  # 需要admin或更高级别权限
     __: bool = Depends(verify_csrf_token),
     db: AsyncSession = Depends(get_db),
 ):
@@ -150,6 +151,7 @@ async def admin_salary_update_risk(
     record_id: str,
     body: AdminSalaryRecordUpdateRiskRequest,
     _admin: AdminUser = Depends(get_current_admin),
+    _perm: bool = Depends(require_permission("admin")),  # 需要admin或更高级别权限
     __: bool = Depends(verify_csrf_token),
     db: AsyncSession = Depends(get_db),
 ):
@@ -243,6 +245,7 @@ async def admin_post_update_status(
     post_id: str,
     body: AdminPostUpdateStatusRequest,
     _admin: AdminUser = Depends(get_current_admin),
+    _perm: bool = Depends(require_permission("admin")),  # 需要admin或更高级别权限
     __: bool = Depends(verify_csrf_token),
     db: AsyncSession = Depends(get_db),
 ):
@@ -262,7 +265,8 @@ async def admin_post_update_status(
 @router.delete("/posts/{post_id}", status_code=204)
 async def admin_post_delete(
     post_id: str,
-    _: AdminUser = Depends(get_current_admin),
+    _admin: AdminUser = Depends(get_current_admin),
+    _perm: bool = Depends(require_permission("admin")),  # 需要admin或更高级别权限
     __: bool = Depends(verify_csrf_token),
     db: AsyncSession = Depends(get_db),
 ):
@@ -310,6 +314,7 @@ async def admin_comment_update_risk(
     comment_id: str,
     body: AdminCommentUpdateRiskRequest,
     _admin: AdminUser = Depends(get_current_admin),
+    _perm: bool = Depends(require_permission("admin")),  # 需要admin或更高级别权限
     __: bool = Depends(verify_csrf_token),
     db: AsyncSession = Depends(get_db),
 ):

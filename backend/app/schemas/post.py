@@ -9,13 +9,13 @@ from pydantic import BaseModel, Field
 
 class PostCreate(BaseModel):
     """发帖：anonymous_name 由服务端用当前用户匿名昵称填充"""
-    content: str = Field(..., min_length=1, max_length=5000)
-    images: Optional[List[str]] = Field(None, max_length=9)
-    tags: Optional[List[str]] = None
+    content: str = Field(..., min_length=1, max_length=5000, description="帖子内容，1-5000字符")
+    images: Optional[List[str]] = Field(None, max_length=9, description="图片列表，最多9张")
+    tags: Optional[List[str]] = Field(None, max_length=10, description="标签列表，最多10个")
     type: Literal["complaint", "sharing", "question"] = "complaint"
-    salary_range: Optional[str] = Field(None, max_length=20)
-    industry: Optional[str] = Field(None, max_length=50)
-    city: Optional[str] = Field(None, max_length=50)
+    salary_range: Optional[str] = Field(None, max_length=20, description="工资区间")
+    industry: Optional[str] = Field(None, max_length=50, description="行业")
+    city: Optional[str] = Field(None, max_length=50, description="城市")
 
 
 class PostResponse(BaseModel):

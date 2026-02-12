@@ -24,7 +24,7 @@ router = APIRouter(prefix="/posts", tags=["comments"])
 @router.get("/{post_id}/comments", response_model=list[CommentResponse])
 async def comment_list(
     post_id: str,
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=50),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
 ):
@@ -46,6 +46,19 @@ async def comment_create(
     post = r.scalar_one_or_none()
     if not post or post.status != "normal" or post.risk_status != "approved":
         raise HTTPException(status_code=404, detail="帖子不存在或未通过")
+
+    # SECURITY: 检查用户是否被帖子作者拉黑
+    # TODO: 实现用户拉黑/屏蔽功能后，需要添加以下检查
+    # from app.models.follow import BlockedUser
+    # blocked = await db.execute(
+    #     select(BlockedUser).where(
+    #         BlockerUser.blocker_id == post.user_id,
+    #         BlockedUser.blocked_id == current_user.id
+    #     )
+    # ).scalar_one_or_none()
+    # if blocked:
+    #     raise HTTPException(status_code=403, detail="无权限评论该帖子")
+
     if body.parent_id:
         parent = await get_comment(db, body.parent_id)
         if not parent or parent.post_id != post_id:

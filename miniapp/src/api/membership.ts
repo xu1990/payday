@@ -26,6 +26,7 @@ export interface MembershipOrderCreateReq {
   amount: number
   payment_method?: string
   transaction_id?: string
+  idempotency_key?: string
 }
 
 /** 会员订单项 */

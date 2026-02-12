@@ -4,13 +4,28 @@
 
 /**
  * 验证 URL 是否有效
- * 只允许 http 和 https 协议
+ * 只允许 http 和 https 协议，阻止危险协议
  */
 export function isValidUrl(url: string): boolean {
   if (!url) return true
   try {
     const parsed = new URL(url)
-    return ['http:', 'https:'].includes(parsed.protocol)
+
+    // 只允许 http 和 https
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return false
+    }
+
+    // 额外检查：防止危险协议出现在URL字符串中
+    const dangerousProtocols = ['javascript:', 'data:', 'vbscript:', 'file:', 'ftp:']
+    const urlLower = url.toLowerCase()
+    for (const protocol of dangerousProtocols) {
+      if (urlLower.includes(protocol)) {
+        return false
+      }
+    }
+
+    return true
   } catch {
     return false
   }

@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { ElMessage } from 'element-plus'
 
 const TOKEN_KEY = 'payday_admin_token'
 const CSRF_KEY = 'payday_admin_csrf'
@@ -15,6 +16,66 @@ const CSRF_KEY = 'payday_admin_csrf'
  * 3. Backend validation and revocation
  * 4. CSRF tokens for state-changing operations (newly implemented)
  */
+
+/**
+ * 检测 localStorage 是否可用
+ */
+function isStorageAvailable(): boolean {
+  try {
+    const test = '__storage_test__'
+    localStorage.setItem(test, test)
+    localStorage.removeItem(test)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * 安全的 localStorage 操作，失败时显示错误提示
+ */
+function safeSetItem(key: string, value: string): boolean {
+  try {
+    localStorage.setItem(key, value)
+    return true
+  } catch (error) {
+    // 检测具体错误原因
+    const errorMessage = error instanceof Error ? error.message : String(error)
+
+    if (errorMessage.includes('quota')) {
+      ElMessage.error('浏览器存储空间不足，请清理缓存后重试')
+    } else if (errorMessage.includes('access')) {
+      ElMessage.error('浏览器存储功能被禁用，请在设置中允许后重试')
+    } else {
+      ElMessage.error('无法保存登录信息，请检查浏览器设置')
+    }
+    return false
+  }
+}
+
+/**
+ * 安全的 localStorage 删除操作，失败时显示警告
+ */
+function safeRemoveItem(key: string): boolean {
+  try {
+    localStorage.removeItem(key)
+    return true
+  } catch (error) {
+    console.warn('Failed to remove from localStorage:', error)
+    return false
+  }
+}
+
+/**
+ * 安全的 localStorage 读取操作，失败时返回空字符串
+ */
+function safeGetItem(key: string): string {
+  try {
+    return localStorage.getItem(key) || ''
+  } catch {
+    return ''
+  }
+}
 
 /**
  * 检查JWT token是否过期
@@ -45,29 +106,23 @@ function isTokenExpired(token: string): boolean {
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: (() => {
-      try {
-        const token = localStorage.getItem(TOKEN_KEY) || ''
-        if (!token) return ''
+      // 使用安全读取函数
+      const token = safeGetItem(TOKEN_KEY)
+      if (!token) return ''
 
-        // 检查token是否过期
-        if (token && isTokenExpired(token)) {
-          // 过期则清除
-          localStorage.removeItem(TOKEN_KEY)
-          return ''
-        }
-
-        return token
-      } catch {
+      // 检查token是否过期
+      if (token && isTokenExpired(token)) {
+        // 过期则清除
+        safeRemoveItem(TOKEN_KEY)
         return ''
       }
+
+      return token
     })(),
-    csrfToken: (() => {
-      try {
-        return localStorage.getItem(CSRF_KEY) || ''
-      } catch {
-        return ''
-      }
-    })(),
+    refreshToken: safeGetItem('payday_admin_refresh_token'),
+    csrfToken: safeGetItem(CSRF_KEY),
+    // 标记存储是否可用
+    storageAvailable: isStorageAvailable(),
   }),
   getters: {
     isLoggedIn: (state) => !!state.token && !isTokenExpired(state.token),
@@ -86,35 +141,51 @@ export const useAuthStore = defineStore('auth', {
     },
   },
   actions: {
-    setToken(t: string, csrfToken?: string) {
+    setToken(t: string, csrfToken?: string, refreshToken?: string) {
       this.token = t
-      if (csrfToken) {
+
+      // 处理csrf token
+      if (csrfToken !== undefined) {
         this.csrfToken = csrfToken
       }
-      try {
-        if (t) {
-          localStorage.setItem(TOKEN_KEY, t)
+
+      // 处理refresh token：如果传入了新值则更新，否则保留旧值
+      if (refreshToken !== undefined) {
+        this.refreshToken = refreshToken
+        if (refreshToken) {
+          safeSetItem('payday_admin_refresh_token', refreshToken)
         } else {
-          localStorage.removeItem(TOKEN_KEY)
+          safeRemoveItem('payday_admin_refresh_token')
         }
+      }
+
+      // 如果存储不可用，给出警告
+      if (!this.storageAvailable) {
+        ElMessage.warning('浏览器存储不可用，每次刷新都需要重新登录')
+        return
+      }
+
+      // 使用安全存储函数
+      if (t) {
+        safeSetItem(TOKEN_KEY, t)
+      } else {
+        safeRemoveItem(TOKEN_KEY)
+      }
+      if (csrfToken !== undefined) {
         if (csrfToken) {
-          localStorage.setItem(CSRF_KEY, csrfToken)
+          safeSetItem(CSRF_KEY, csrfToken)
         } else {
-          localStorage.removeItem(CSRF_KEY)
+          safeRemoveItem(CSRF_KEY)
         }
-      } catch (error) {
-        // Silently fail - console removed for production
       }
     },
     logout() {
       this.token = ''
+      this.refreshToken = ''
       this.csrfToken = ''
-      try {
-        localStorage.removeItem(TOKEN_KEY)
-        localStorage.removeItem(CSRF_KEY)
-      } catch (error) {
-        // Silently fail
-      }
+      safeRemoveItem(TOKEN_KEY)
+      safeRemoveItem('payday_admin_refresh_token')
+      safeRemoveItem(CSRF_KEY)
     },
   },
 })

@@ -6,8 +6,56 @@ from pydantic_settings import BaseSettings
 from functools import lru_cache
 import secrets
 import logging
+import string
 
 logger = logging.getLogger(__name__)
+
+
+def check_key_strength(key: str, min_length: int = 32) -> tuple[bool, str]:
+    """
+    检查密钥强度（熵值和随机性）
+
+    Returns:
+        (is_strong, error_message): 密钥是否足够强，以及错误信息
+    """
+    # 长度检查
+    if len(key) < min_length:
+        return False, f"长度不足: {len(key)} 字节，至少需要 {min_length} 字节"
+
+    # 唯一字符比例检查（熵值检查）
+    unique_chars = set(key)
+    unique_ratio = len(unique_chars) / len(key)
+    if unique_ratio < 0.5:
+        return False, f"密钥熵值过低: 唯一字符仅占 {unique_ratio:.1%}，建议使用随机密钥"
+
+    # 字符类别多样性检查
+    has_upper = any(c in string.ascii_uppercase for c in key)
+    has_lower = any(c in string.ascii_lowercase for c in key)
+    has_digit = any(c in string.digits for c in key)
+    has_special = any(c in string.punctuation for c in key)
+
+    category_count = sum([has_upper, has_lower, has_digit, has_special])
+    if category_count < 2:
+        return False, f"密钥字符类别单一，建议包含大小写字母、数字和特殊字符中的至少2类"
+
+    # 弱模式检查
+    weak_patterns = [
+        "change-me", "secret", "password", "key123", "test",
+        "dev", "demo", "admin", "qwerty", "123456"
+    ]
+    key_lower = key.lower()
+    for pattern in weak_patterns:
+        if pattern in key_lower:
+            return False, f"密钥包含弱模式 '{pattern}'"
+
+    # 重复字符检查
+    if len(key) > 8:
+        # 检查是否有超过4个连续的相同字符
+        for i in range(len(key) - 4):
+            if key[i] == key[i+1] == key[i+2] == key[i+3] == key[i+4]:
+                return False, "密钥包含过长重复字符序列"
+
+    return (True, "")
 
 
 class Settings(BaseSettings):
@@ -91,47 +139,21 @@ class Settings(BaseSettings):
         """
         errors = []
 
-        # JWT 密钥验证
-        if len(self.jwt_secret_key) < 32:
-            errors.append(
-                f"JWT_SECRET_KEY 长度不足: {len(self.jwt_secret_key)} 字节，至少需要 32 字节"
+        # JWT 密钥强度验证（包括熵值检查）
+        jwt_strong, jwt_error = check_key_strength(self.jwt_secret_key, min_length=32)
+        if not jwt_strong:
+            errors.append(f"JWT_SECRET_KEY {jwt_error}")
+
+        # 加密密钥强度验证（包括熵值检查）
+        enc_strong, enc_error = check_key_strength(self.encryption_secret_key, min_length=32)
+        if not enc_strong:
+            errors.append(f"ENCRYPTION_SECRET_KEY {enc_error}")
+
+        # CORS 配置检查（仅警告）
+        if self.cors_origins == "*" or "localhost" in self.cors_origins:
+            logger.warning(
+                "⚠️ 生产环境中 CORS 配置包含 localhost 或通配符，建议设置具体的允许源"
             )
-
-        # 加密密钥验证
-        if len(self.encryption_secret_key) < 32:
-            errors.append(
-                f"ENCRYPTION_SECRET_KEY 长度不足: {len(self.encryption_secret_key)} 字节，至少需要 32 字节"
-            )
-
-        # 生产环境额外检查
-        if not self.debug:
-            # 检查是否使用了默认/弱密钥
-            weak_patterns = [
-                "change-me",
-                "secret",
-                "password",
-                "key123",
-                "test",
-                "dev",
-                "demo",
-            ]
-            jwt_lower = self.jwt_secret_key.lower()
-            if any(pattern in jwt_lower for pattern in weak_patterns):
-                errors.append(
-                    "JWT_SECRET_KEY 包含弱密钥模式，请使用强随机密钥"
-                )
-
-            enc_lower = self.encryption_secret_key.lower()
-            if any(pattern in enc_lower for pattern in weak_patterns):
-                errors.append(
-                    "ENCRYPTION_SECRET_KEY 包含弱密钥模式，请使用强随机密钥"
-                )
-
-            # CORS 配置检查
-            if self.cors_origins == "*" or "localhost" in self.cors_origins:
-                logger.warning(
-                    "⚠️ 生产环境中 CORS 配置包含 localhost 或通配符，建议设置具体的允许源"
-                )
 
         if errors:
             error_msg = "安全配置验证失败:\n" + "\n".join(f"  - {e}" for e in errors)

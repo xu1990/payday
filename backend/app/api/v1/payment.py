@@ -26,21 +26,39 @@ def _get_client_ip(request: Request) -> str:
     从请求中获取客户端真实 IP
 
     优先级: client > X-Real-IP > X-Forwarded-For (最右侧)
-    SECURITY: X-Forwarded-For 可以被客户端伪造，只信任最右侧的 IP（第一个代理）
+
+    SECURITY:
+    - 使用 ipaddress 模块严格验证 IP 格式
+    - 拒绝私有 IP 地址（除非是直连）
+    - X-Forwarded-For 可被客户端伪造，只信任最右侧的 IP（第一个代理）
     """
-    # 首先尝试直接连接的 IP（最可靠）
+    import ipaddress
+
+    def is_valid_public_ip(ip_str: str) -> bool:
+        """验证 IP 地址格式且为公网地址"""
+        try:
+            ip = ipaddress.ip_address(ip_str)
+            # 拒绝私有、本地、链路本地地址
+            return not (ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved)
+        except ValueError:
+            return False
+
+    # 首先尝试直接连接的 IP（最可靠，即使是私有 IP 也接受）
     if request.client and request.client.host:
         direct_ip = request.client.host
-        # 验证IP格式（简单验证）
-        if direct_ip and not direct_ip.startswith(('127.', '192.168.', '10.')):
+        try:
+            # 验证 IP 格式（包括私有 IP，因为是直连）
+            ipaddress.ip_address(direct_ip)
             return direct_ip
+        except ValueError:
+            pass
 
     # X-Real-IP: 通常由反向代理设置，相对可信
+    # 但仍然需要验证 IP 格式和公网地址
     real_ip = request.headers.get("X-Real-IP")
     if real_ip:
         ip = real_ip.strip()
-        # 验证IP格式
-        if ip and not ip.startswith(('127.', '192.168.', '10.')):
+        if is_valid_public_ip(ip):
             return ip
 
     # X-Forwarded-For: 可能包含多个 IP，格式: client, proxy1, proxy2
@@ -48,15 +66,13 @@ def _get_client_ip(request: Request) -> str:
     forwarded_for = request.headers.get("X-Forwarded-For")
     if forwarded_for:
         ips = [ip.strip() for ip in forwarded_for.split(",")]
-        # 取最后一个 IP（最右侧）
-        if ips:
-            trusted_ip = ips[-1]
-            # 验证IP格式
-            if not trusted_ip.startswith(('127.', '192.168.', '10.')):
-                return trusted_ip
+        # 从右向左查找第一个有效的公网 IP
+        for ip in reversed(ips):
+            if is_valid_public_ip(ip):
+                return ip
 
     # 如果所有方法都失败，返回默认值
-    return "127.0.0.1"
+    return "0.0.0.0"  # 表示无法确定真实IP
 
 
 @router.post("/create", response_model=CreatePaymentResponse)
@@ -132,6 +148,12 @@ async def wechat_payment_notify(
     Returns:
         XML 格式的响应
     """
+    # 验证 Content-Type，确保只接受 XML 数据
+    content_type = request.headers.get("content-type", "")
+    if "application/xml" not in content_type and "text/xml" not in content_type:
+        # 返回错误响应，但不暴露详细信息
+        return generate_payment_response("FAIL", "Unsupported Media Type")
+
     # 读取原始 XML 数据
     xml_data = await request.body()
 

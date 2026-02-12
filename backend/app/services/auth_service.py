@@ -24,36 +24,43 @@ def _gen_anonymous_name() -> str:
 
 
 async def get_or_create_user(db: AsyncSession, openid: str, unionid: Optional[str] = None) -> User:
-    """根据 openid 查询或创建用户（带事务管理）"""
+    """根据 openid 查询或创建用户（带并发控制）"""
+    # 先尝试查询用户
     result = await db.execute(select(User).where(User.openid == openid))
     user = result.scalar_one_or_none()
     if user:
         return user
 
-    # 创建新用户
-    user = User(
+    # 用户不存在，创建新用户
+    new_user = User(
         openid=openid,
         unionid=unionid,
         anonymous_name=_gen_anonymous_name(),
     )
 
     try:
-        db.add(user)
+        db.add(new_user)
         await db.commit()
-        await db.refresh(user)
-    except sqlalchemy_exc.IntegrityError:
-        # 并发创建：回滚并重新查询
+        await db.refresh(new_user)
+        return new_user
+    except sqlalchemy_exc.IntegrityError as e:
+        # 处理并发创建导致的唯一约束冲突
         await db.rollback()
+        from app.utils.logger import get_logger
+        logger = get_logger(__name__)
+        logger.warning(f"Concurrent user creation detected for openid {openid}, retrying...")
+
+        # 重试查询（可能其他请求已创建）
         result = await db.execute(select(User).where(User.openid == openid))
         user = result.scalar_one_or_none()
         if user:
             return user
-        raise BusinessException("用户创建失败")
+
+        # 仍然不存在，可能是其他类型的错误
+        raise BusinessException("用户创建失败：并发冲突")
     except Exception as e:
         await db.rollback()
         raise BusinessException(f"用户创建失败: {str(e)}")
-
-    return user
 
 
 async def login_with_code(db: AsyncSession, code: str) -> Optional[Tuple[str, str, User]]:
@@ -104,6 +111,7 @@ async def refresh_access_token(refresh_token: str, user_id: str) -> Optional[Tup
     Returns:
         (new_access_token, new_refresh_token) 或 None
     """
+    import hmac
     from app.core.security import decode_token, verify_token_type
 
     # 验证 Refresh Token
@@ -118,6 +126,14 @@ async def refresh_access_token(refresh_token: str, user_id: str) -> Optional[Tup
     redis = await get_redis_client()
     if redis:
         try:
+            # 首先检查 token 是否已被撤销（重放攻击检测）
+            is_revoked = await redis.sismember(f"revoked_tokens:{user_id}", refresh_token)
+            if is_revoked:
+                from app.utils.logger import get_logger
+                logger = get_logger(__name__)
+                logger.warning(f"Detected replay attack: revoked refresh token used for user {user_id}")
+                return None
+
             stored_token = await redis.get(f"refresh_token:{user_id}")
             # 使用常量时间比较防止时序攻击
             if not stored_token or not hmac.compare_digest(stored_token, refresh_token):

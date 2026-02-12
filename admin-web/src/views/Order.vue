@@ -10,12 +10,19 @@ import {
 import BaseDataTable from '@/components/BaseDataTable.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import { formatDate, formatAmount } from '@/utils/format'
+import { ORDER_STATUS_MAP } from '@/constants/status'
+import { useErrorHandler } from '@/composables/useErrorHandler'
+
+const { handleError } = useErrorHandler()
 
 const list = ref<OrderItem[]>([])
 const loading = ref(false)
 const total = ref(0)
 const currentPage = ref(1)
 const pageSize = 20
+
+// 状态更新时的loading状态，防止并发操作
+const updatingOrderId = ref<string | null>(null)
 
 async function loadData() {
   loading.value = true
@@ -27,14 +34,18 @@ async function loadData() {
     list.value = res?.data?.items || []
     total.value = res?.data?.total || 0
   } catch (e: unknown) {
-    const errorMessage = e instanceof Error ? e.message : '加载失败'
-    ElMessage.error(errorMessage)
+    handleError(e, '加载失败')
   } finally {
     loading.value = false
   }
 }
 
 async function handleStatusChange(orderId: string, newStatus: OrderStatusUpdate['status']) {
+  // 防止对同一个订单的并发操作
+  if (updatingOrderId.value === orderId) {
+    return
+  }
+
   // 对关键状态变更添加确认
   if (newStatus === 'refunded' || newStatus === 'cancelled') {
     const statusText = newStatus === 'refunded' ? '退款' : '取消'
@@ -50,19 +61,22 @@ async function handleStatusChange(orderId: string, newStatus: OrderStatusUpdate[
       )
     } catch {
       // 用户取消操作
-      await loadData()
       return
     }
   }
+
+  // 设置loading状态
+  updatingOrderId.value = orderId
 
   try {
     await updateOrderStatus(orderId, { status: newStatus })
     ElMessage.success('状态更新成功')
     await loadData()
   } catch (e: unknown) {
-    const errorMessage = e instanceof Error ? e.message : '操作失败'
-    ElMessage.error(errorMessage)
-    await loadData() // 恢复原状
+    handleError(e, '操作失败')
+    await loadData() // 恢复原状态
+  } finally {
+    updatingOrderId.value = null
   }
 }
 
@@ -132,8 +146,9 @@ onMounted(() => {
       <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
           <el-select
-            v-model="row.status"
+            :model-value="row.status"
             @change="(val: OrderStatusUpdate['status']) => handleStatusChange(row.id, val)"
+            :disabled="updatingOrderId === row.id"
             size="small"
             style="width: 120px"
           >

@@ -1,8 +1,7 @@
 """
 帖子表 - 与迭代规划 2.2 数据模型一致，技术方案 2.2.1 分表策略（当前先单表，后续可按 created_at 按月分表）
 """
-from datetime import datetime
-from sqlalchemy import Column, String, Text, Integer, DateTime, Enum, ForeignKey, JSON
+from sqlalchemy import Column, String, Text, Integer, DateTime, Enum, ForeignKey, JSON, func
 
 from .base import Base
 from .user import gen_uuid
@@ -43,5 +42,5 @@ class Post(Base):
     risk_score = Column(Integer, nullable=True)
     risk_reason = Column(String(255), nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

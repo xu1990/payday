@@ -3,6 +3,7 @@
 """
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
 from app.models.membership import MembershipOrder
 from app.utils.wechat_pay import (
@@ -98,13 +99,22 @@ async def handle_payment_notify(
                 # 可能被其他进程处理中，返回False让微信重试
                 return False
 
-            # 验证金额（防止篡改）
+            # 验证金额（防止篡改） - 使用 Decimal 避免浮点精度问题
             try:
                 fee_amount = int(total_fee)
             except (ValueError, TypeError):
                 return False
 
-            if fee_amount != int(order.amount * 100):  # 转换为分
+            # 使用 Decimal 进行精确的金额计算和比较
+            # order.amount 存储的是浮点数，需要转换为 Decimal 进行精确计算
+            try:
+                expected_amount = Decimal(str(order.amount)) * Decimal(100)
+                # 使用银行家舍入（四舍六入五取偶）避免精度损失
+                expected_amount = expected_amount.quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+
+                if fee_amount != int(expected_amount):  # 转换为分比较
+                    return False
+            except (InvalidOperation, ValueError):
                 return False
 
             # 幂等性：检查交易ID是否已使用
@@ -134,7 +144,17 @@ async def handle_payment_notify(
     except IntegrityError:
         # 并发插入导致的唯一约束冲突
         return False
-    except Exception:
+    except (ValueError, TypeError, InvalidOperation) as e:
+        # 捕获具体的异常类型，提供更好的调试信息
+        from app.utils.logger import get_logger
+        logger = get_logger(__name__)
+        logger.error(f"Payment notification processing error: {e}, type={type(e).__name__}")
+        return False
+    except Exception as e:
+        # 捕获所有其他异常
+        from app.utils.logger import get_logger
+        logger = get_logger(__name__)
+        logger.error(f"Unexpected error in payment notification: {e}")
         return False
 
 

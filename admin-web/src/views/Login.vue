@@ -29,6 +29,16 @@ import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import { login } from '@/api/admin'
 
+// API错误响应类型
+interface ApiErrorResponse {
+  response?: {
+    data?: {
+      detail?: string
+    }
+    status?: number
+  }
+}
+
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
@@ -57,8 +67,9 @@ async function onSubmit() {
     const redirect = (route.query.redirect as string) || '/'
     router.replace(redirect)
   } catch (e: unknown) {
+    const errorResponse = e as ApiErrorResponse
     const errorMessage = e instanceof Error ? e.message : '登录失败'
-    const errorDetail = (e as any).response?.data?.detail || errorMessage
+    const errorDetail = errorResponse.response?.data?.detail || errorMessage
     error.value = errorDetail
   } finally {
     loading.value = false

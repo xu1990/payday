@@ -2,8 +2,12 @@
  * 认证相关 API - 与 backend /api/v1/auth 一致
  */
 import request from '@/utils/request'
+import { encrypt, decrypt } from '@/utils/crypto'
 
 const PREFIX = '/api/v1/auth'
+const TOKEN_KEY = 'payday_token'
+const REFRESH_TOKEN_KEY = 'payday_refresh_token'
+const USER_ID_KEY = 'payday_user_id'
 
 export interface LoginRequest {
   code: string
@@ -11,12 +15,23 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   access_token: string
+  refresh_token: string
   token_type: string
   user: {
     id: string
     anonymous_name: string
     avatar: string | null
   }
+}
+
+export interface RefreshTokenRequest {
+  refresh_token: string
+  user_id: string
+}
+
+export interface RefreshTokenResponse {
+  access_token: string
+  refresh_token: string
 }
 
 /**
@@ -33,30 +48,101 @@ export function login(code: string): Promise<LoginResponse> {
 }
 
 /**
- * 保存 Token 到本地存储
- *
- * SECURITY NOTE: Token 明文存储，依赖 JWT 签名保护安全
- * 客户端加密无实际安全意义（密钥暴露在打包后的代码中）
- * 真正的安全来自：
- * 1. JWT 短期有效期（15分钟）+ Refresh Token 轮换
- * 2. 后端验证和签名检查
- * 3. HTTPS 传输加密
+ * 刷新 Access Token
+ * @param refreshToken 刷新令牌
+ * @param userId 用户ID
  */
-export async function saveToken(token: string): Promise<void> {
+export function refreshAccessToken(refreshToken: string, userId: string): Promise<RefreshTokenResponse> {
+  return request<RefreshTokenResponse>({
+    url: `${PREFIX}/refresh`,
+    method: 'POST',
+    data: { refresh_token: refreshToken, user_id: userId },
+    noAuth: true,
+  })
+}
+
+/**
+ * 保存 Token 到本地存储（使用 AES-GCM 加密）
+ *
+ * SECURITY: 使用设备绑定的密钥加密存储 Token
+ * 虽然密钥存储在本地，但加密可以防止：
+ * 1. 其他小程序通过 uni.getStorageSync() 直接读取
+ * 2. 设备备份/取证时直接获取明文 token
+ * 3. 调试时意外泄露 token
+ */
+export async function saveToken(token: string, refreshToken?: string, userId?: string): Promise<void> {
   try {
-    uni.setStorageSync('token', token)
+    const encrypted = await encrypt(token)
+    uni.setStorageSync(TOKEN_KEY, encrypted)
+
+    // 同时保存 refresh token 和 user_id
+    if (refreshToken) {
+      const encryptedRefresh = await encrypt(refreshToken)
+      uni.setStorageSync(REFRESH_TOKEN_KEY, encryptedRefresh)
+    }
+    if (userId) {
+      uni.setStorageSync(USER_ID_KEY, userId)
+    }
   } catch (e) {
     // Token save failed
+    console.error('Token save failed:', e)
   }
 }
 
 /**
- * 获取本地存储的 Token
+ * 获取本地存储的 Token（解密）
  */
 export async function getToken(): Promise<string> {
   try {
-    return uni.getStorageSync('token') || ''
-  } catch {
+    const encrypted = uni.getStorageSync(TOKEN_KEY)
+    if (!encrypted) return ''
+
+    const decrypted = await decrypt(encrypted)
+    if (!decrypted) {
+      console.warn('[auth] Token decryption returned empty')
+      return ''
+    }
+    return decrypted
+  } catch (error) {
+    console.error('[auth] Token retrieval failed:', error)
+    // 清理可能损坏的token
+    try {
+      uni.removeStorageSync(TOKEN_KEY)
+    } catch (e) {
+      // 忽略清理错误
+    }
+    return ''
+  }
+}
+
+/**
+ * 获取本地存储的 Refresh Token（解密）
+ */
+export async function getRefreshToken(): Promise<string> {
+  try {
+    const encrypted = uni.getStorageSync(REFRESH_TOKEN_KEY)
+    if (!encrypted) return ''
+
+    const decrypted = await decrypt(encrypted)
+    if (!decrypted) {
+      console.warn('[auth] Refresh token decryption returned empty')
+      return ''
+    }
+    return decrypted
+  } catch (error) {
+    console.error('[auth] Refresh token retrieval failed:', error)
+    return ''
+  }
+}
+
+/**
+ * 获取本地存储的 User ID
+ */
+export function getUserId(): string {
+  try {
+    return uni.getStorageSync(USER_ID_KEY) || ''
+  } catch (error) {
+    console.error('[auth] User ID retrieval failed:', error)
     return ''
   }
 }
@@ -66,7 +152,9 @@ export async function getToken(): Promise<string> {
  */
 export function clearToken(): void {
   try {
-    uni.removeStorageSync('token')
+    uni.removeStorageSync(TOKEN_KEY)
+    uni.removeStorageSync(REFRESH_TOKEN_KEY)
+    uni.removeStorageSync(USER_ID_KEY)
   } catch (e) {
     // Token clear failed
   }
@@ -84,6 +172,9 @@ export default {
   login,
   saveToken,
   getToken,
+  getRefreshToken,
+  getUserId,
   clearToken,
   isLoggedIn,
+  refreshAccessToken,
 }
