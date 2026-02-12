@@ -5,7 +5,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
-from app.models.membership import MembershipOrder
+from app.models.membership import MembershipOrder, Membership
 from app.utils.wechat_pay import (
     create_mini_program_payment,
     parse_payment_notify,
@@ -46,11 +46,18 @@ async def create_membership_payment(
     if order.status != "pending":
         raise BusinessException("订单状态不正确，仅待支付订单可创建支付")
 
+    # 查询会员套餐信息以获取名称
+    membership_result = await db.execute(
+        select(Membership).where(Membership.id == order.membership_id)
+    )
+    membership = membership_result.scalar_one_or_none()
+    membership_name = membership.name if membership else "会员套餐"
+
     # 调用微信支付统一下单接口
     payment_params = await create_mini_program_payment(
         out_trade_no=order_id,
-        total_fee=order.amount,
-        body=f"{order.membership_name or '会员套餐'}",
+        total_fee=int(order.amount),
+        body=membership_name,
         openid=openid,
         client_ip=client_ip,
     )
@@ -86,59 +93,66 @@ async def handle_payment_notify(
         return False
 
     try:
-        async with db.begin():
-            # 查询订单并加锁（SKIP LOCKED 避免长时间等待）
-            result = await db.execute(
-                select(MembershipOrder)
-                .where(MembershipOrder.id == out_trade_no)
-                .with_for_update(skip_locked=True)  # 如果被锁定则返回None
-            )
-            order = result.scalar_one_or_none()
+        # 查询订单并加锁（SKIP LOCKED 避免长时间等待）
+        result = await db.execute(
+            select(MembershipOrder)
+            .where(MembershipOrder.id == out_trade_no)
+            .with_for_update(skip_locked=True)  # 如果被锁定则返回None
+        )
+        order = result.scalar_one_or_none()
 
-            if not order:
-                # 可能被其他进程处理中，返回False让微信重试
+        if not order:
+            # 可能被其他进程处理中，返回False让微信重试
+            return False
+
+        # 验证金额（防止篡改） - 使用 Decimal 避免浮点精度问题
+        try:
+            fee_amount = int(total_fee)
+        except (ValueError, TypeError):
+            return False
+
+        # 使用 Decimal 进行精确的金额计算和比较
+        # order.amount 存储的是浮点数，需要转换为 Decimal 进行精确计算
+        try:
+            expected_amount = Decimal(str(order.amount)) * Decimal(100)
+            # 使用银行家舍入（四舍六入五取偶）避免精度损失
+            expected_amount = expected_amount.quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+
+            if fee_amount != int(expected_amount):  # 转换为分比较
                 return False
+        except (InvalidOperation, ValueError):
+            return False
 
-            # 验证金额（防止篡改） - 使用 Decimal 避免浮点精度问题
-            try:
-                fee_amount = int(total_fee)
-            except (ValueError, TypeError):
-                return False
+        # 幂等性：检查交易ID是否已使用
+        if order.transaction_id and order.transaction_id != transaction_id:
+            return False  # 不同的交易ID，异常情况
 
-            # 使用 Decimal 进行精确的金额计算和比较
-            # order.amount 存储的是浮点数，需要转换为 Decimal 进行精确计算
-            try:
-                expected_amount = Decimal(str(order.amount)) * Decimal(100)
-                # 使用银行家舍入（四舍六入五取偶）避免精度损失
-                expected_amount = expected_amount.quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+        # 如果已支付且交易ID相同，直接返回成功（重复通知）
+        if order.status == "paid" and order.transaction_id == transaction_id:
+            return True
 
-                if fee_amount != int(expected_amount):  # 转换为分比较
-                    return False
-            except (InvalidOperation, ValueError):
-                return False
+        # 查询会员套餐信息
+        membership_result = await db.execute(
+            select(Membership).where(Membership.id == order.membership_id)
+        )
+        membership = membership_result.scalar_one_or_none()
 
-            # 幂等性：检查交易ID是否已使用
-            if order.transaction_id and order.transaction_id != transaction_id:
-                return False  # 不同的交易ID，异常情况
+        # 更新订单状态
+        order.status = "paid"
+        order.payment_method = "wechat"
+        order.transaction_id = transaction_id
+        # 使用微信支付时间作为开始时间
+        from datetime import datetime, timedelta
+        try:
+            # 解析微信时间格式：yyyyMMddHHmmss
+            pay_time = datetime.strptime(time_end, "%Y%m%d%H%M%S")
+            order.start_date = pay_time
+            duration_days = membership.duration_days if membership else 30
+            order.end_date = order.start_date + timedelta(days=duration_days)
+        except (ValueError, TypeError):
+            pass  # 时间解析失败，使用数据库默认值
 
-            # 如果已支付且交易ID相同，直接返回成功（重复通知）
-            if order.status == "paid" and order.transaction_id == transaction_id:
-                return True
-
-            # 更新订单状态
-            order.status = "paid"
-            order.payment_method = "wechat"
-            order.transaction_id = transaction_id
-            # 使用微信支付时间作为开始时间
-            from datetime import datetime, timedelta
-            try:
-                # 解析微信时间格式：yyyyMMddHHmmss
-                pay_time = datetime.strptime(time_end, "%Y%m%d%H%M%S")
-                order.start_date = pay_time
-                order.end_date = order.start_date + timedelta(days=order.membership.duration_days)
-            except (ValueError, TypeError):
-                pass  # 时间解析失败，使用数据库默认值
-
+        await db.commit()
         return True
 
     except IntegrityError:
