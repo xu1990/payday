@@ -1,12 +1,12 @@
 """
-用户接口 - GET /me, PUT /me
+用户接口 - GET /me, PUT /me, GET /profile-data
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.schemas.user import UserResponse, UserUpdate
-from app.services.user_service import update_user
+from app.services.user_service import update_user, get_user_profile_data
 from app.core.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -43,3 +43,14 @@ async def update_me(
 ):
     user = await update_user(db, current_user.id, body)
     return UserResponse(**_user_to_response(user))
+
+
+@router.get("/profile-data/{target_user_id}")
+async def get_profile_data(
+    target_user_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """获取用户主页数据（帖子、打卡记录、粉丝数、关注数）"""
+    data = await get_user_profile_data(db, current_user.id, target_user_id)
+    return data
