@@ -5,6 +5,14 @@
 
 /**
  * 从未知错误对象中提取错误消息
+ * @param error - 错误对象（Error、字符串或对象）
+ * @param defaultMessage - 默认错误消息
+ * @returns 提取的错误消息字符串
+ *
+ * @example
+ * getErrorMessage(new Error('Not found'), '操作失败') // 'Not found'
+ * getErrorMessage('Network error', '加载失败') // 'Network error'
+ * getErrorMessage({ message: 'Invalid input' }, '验证失败') // 'Invalid input'
  */
 export function getErrorMessage(error: unknown, defaultMessage = '操作失败'): string {
   // 如果是 Error 实例，使用其 message
@@ -26,8 +34,8 @@ export function getErrorMessage(error: unknown, defaultMessage = '操作失败')
 }
 
 /**
- * 带响应状态的错误提取
- * 用于处理 API 返回的错误状态码
+ * 错误响应接口
+ * 描述API响应中的错误结构
  */
 export interface ErrorResponse {
   response?: {
@@ -37,7 +45,15 @@ export interface ErrorResponse {
 }
 
 /**
- * 根据响应状态码提取错误消息
+ * 根据HTTP响应状态码提取错误消息
+ * @param error - 错误对象
+ * @param statusMessages - 状态码到消息的映射
+ * @param defaultMessage - 默认错误消息
+ * @returns 提取的错误消息字符串
+ *
+ * @example
+ * getApiErrorMessage({ response: { status: 404 } }, { 404: '资源不存在' }) // '资源不存在'
+ * getApiErrorMessage({ response: { status: 500 } }) // '服务器内部错误'
  */
 export function getApiErrorMessage(
   error: unknown,
@@ -57,7 +73,14 @@ export function getApiErrorMessage(
 }
 
 /**
- * 常见的 API 状态码消息映射
+ * 常见的HTTP状态码消息映射
+ * 包含标准HTTP状态码对应的中文错误消息
+ *
+ * @example
+ * ```ts
+ * const status = 404
+ * const message = commonStatusMessages[status] // '资源不存在'
+ * ```
  */
 export const commonStatusMessages: Record<number, string> = {
   400: '请求参数错误',

@@ -52,6 +52,6 @@ defineEmits(['edit', 'toggle', 'delete'])
 <style scoped>
 .action-buttons {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 </style>

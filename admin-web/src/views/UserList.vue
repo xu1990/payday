@@ -5,7 +5,7 @@
       v-model:keyword="keyword"
       @search="onSearch"
     >
-      <el-select v-model="statusFilter" placeholder="状态" clearable style="width: 120px">
+      <el-select v-model="statusFilter" placeholder="状态" clearable style="width: var(--input-width-md)">
         <el-option label="全部" value="" />
         <el-option label="正常" value="normal" />
         <el-option label="禁用" value="disabled" />

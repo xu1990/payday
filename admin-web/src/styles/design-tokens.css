@@ -53,6 +53,12 @@
   --spacing-3xl: 32px;
 
   /* ========== 字体系统 ========== */
+  /* 输入控件宽度 - 与设计系统保持一致 */
+  --input-width-sm: 120px;
+  --input-width-md: 200px;
+  --input-width-lg: 280px;
+
+  /* ========== 间距系统 ========== */
   --font-size-xs: 12px;
   --font-size-sm: 13px;
   --font-size-base: 14px;

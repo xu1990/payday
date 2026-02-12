@@ -25,8 +25,8 @@ function handleSearch() {
 <style scoped>
 .search-toolbar {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-md);
 }
 </style>

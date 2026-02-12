@@ -4,44 +4,59 @@
  */
 
 /**
- * 格式化日期时间
- * @param dateStr 日期字符串
- * @returns 格式化的日期时间，失败时返回原字符串
+ * 格式化日期 - 只返回日期部分
+ * @param dateStr - 日期字符串或null
+ * @returns 格式化的日期 (YYYY-MM-DD格式)，无效时返回原字符串
+ *
+ * @example
+ * formatDate('2024-01-15') // '2024/1/15'
+ * formatDate(null) // '-'
  */
-export function formatDate(dateStr: string): string {
+export function formatDate(dateStr: string | null): string {
+  if (!dateStr) return '-'
   try {
     const date = new Date(dateStr)
     return date.toLocaleDateString('zh-CN')
   } catch {
-    return dateStr
+    return dateStr || '-'
   }
 }
 
 /**
- * 格式化日期时间
- * @param dateStr 日期字符串
- * @returns 格式化的日期时间，失败时返回原字符串
+ * 格式化日期时间 - 返回完整日期时间
+ * @param dateStr - 日期字符串或null
+ * @returns 格式化的日期时间 (YYYY-MM-DD HH:mm:ss)，无效时返回原字符串
+ *
+ * @example
+ * formatDateTime('2024-01-15T10:30:00') // '2024/1/15 10:30:00'
+ * formatDateTime(null) // '-'
  */
-export function formatDateTime(dateStr: string): string {
+export function formatDateTime(dateStr: string | null): string {
+  if (!dateStr) return '-'
   try {
     const date = new Date(dateStr)
     return date.toLocaleString('zh-CN')
   } catch {
-    return dateStr
+    return dateStr || '-'
   }
 }
 
 /**
- * 格式化时间
- * @param dateStr 时间字符串
- * @returns 格式化的时间，失败时返回原字符串
+ * 格式化时间 - 只返回时间部分
+ * @param dateStr - 日期字符串或null
+ * @returns 格式化的时间 (HH:mm:ss)，无效时返回原字符串
+ *
+ * @example
+ * formatTime('2024-01-15T10:30:00') // '10:30:00'
+ * formatTime(null) // '-'
  */
-export function formatTime(dateStr: string): string {
+export function formatTime(dateStr: string | null): string {
+  if (!dateStr) return '-'
   try {
     const date = new Date(dateStr)
     return date.toLocaleTimeString('zh-CN')
   } catch {
-    return dateStr
+    return dateStr || '-'
   }
 }
 
@@ -50,12 +65,16 @@ export function formatTime(dateStr: string): string {
  * @param dateStr 时间字符串
  * @returns 相对时间描述
  */
-export function formatRelativeTime(dateStr: string): string {
+export function formatRelativeTime(dateStr: string | null): string {
+  if (!dateStr) return '-'
+
   try {
     const date = new Date(dateStr)
     const now = new Date()
     const diff = now.getTime() - date.getTime()
-    const minutes = Math.floor(diff / 60000)
+
+    const seconds = Math.floor(diff / 1000)
+    const minutes = Math.floor(seconds / 60)
     const hours = Math.floor(minutes / 60)
     const days = Math.floor(hours / 24)
 
@@ -69,7 +88,7 @@ export function formatRelativeTime(dateStr: string): string {
       return '刚刚'
     }
   } catch {
-    return dateStr
+    return dateStr || '-'
   }
 }
 
