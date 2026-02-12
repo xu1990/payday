@@ -13,6 +13,7 @@ from .statistics import router as statistics_router
 from .admin import router as admin_router
 from .admin_topic import router as admin_topic_router
 from .recommendation import router as recommendation_router
+from .admin_config import router as admin_config_router
 
 api_router = APIRouter(prefix="/api/v1", tags=["v1"])
 
@@ -29,6 +30,7 @@ api_router.include_router(statistics_router)
 api_router.include_router(admin_router)
 api_router.include_router(admin_topic_router)
 api_router.include_router(recommendation_router)
+api_router.include_router(admin_config_router)
 
 
 @api_router.get("/ping")
