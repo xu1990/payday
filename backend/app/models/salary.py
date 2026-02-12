@@ -1,8 +1,8 @@
 """
-工资记录表 - 与技术方案 2.2.3 金额加密存储
+工资记录表 - 与技术方案 2.2.3 金额加密存储；Sprint 3.3 增强字段
 """
 from datetime import date, datetime
-from sqlalchemy import Column, String, Text, Date, Enum, DateTime, ForeignKey, JSON
+from sqlalchemy import Column, String, Text, Date, Enum, DateTime, ForeignKey, JSON, Integer, Numeric
 
 from .base import Base
 from .user import gen_uuid
@@ -21,6 +21,11 @@ class SalaryRecord(Base):
         default="normal",
         nullable=False,
     )
+    # Sprint 3.3 增强字段
+    pre_tax_amount = Column(Numeric(10, 2), nullable=True, comment="税前金额（分）")
+    tax_amount = Column(Numeric(10, 2), nullable=True, comment="扣税金额（分）")
+    source = Column(String(50), nullable=True, comment="来源：公司/工厂/其他")
+    delayed_days = Column(Integer, nullable=True, comment="延迟天数")
     images = Column(JSON, nullable=True, comment="工资条图片 URLs")
     note = Column(Text, nullable=True)
     mood = Column(
