@@ -1,6 +1,7 @@
 """
 会员与主题配置接口 - 管理后台
 """
+from typing import Optional
 from fastapi import APIRouter, Depends, Query
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +10,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_admin_user
 from app.models.user import User
 from app.models.membership import Membership, AppTheme, MembershipOrder
-from app.schemas.membership import MembershipCreate, MembershipResponse
+from app.schemas.membership import MembershipCreate, MembershipResponse, MembershipListResponse
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/admin/config", tags=["admin-config"])
@@ -20,27 +21,27 @@ router = APIRouter(prefix="/admin/config", tags=["admin-config"])
 class ThemeCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=50)
     code: str = Field(..., min_length=1, max_length=50)
-    preview_image: str | None = Field(None, max_length=500)
-    config: str | None = Field(None)
+    preview_image: Optional[str] = Field(None, max_length=500)
+    config: Optional[str] = Field(None)
     is_premium: bool = False
     sort_order: int = Field(0, ge=0)
 
 
 class ThemeUpdate(BaseModel):
-    name: str | None = Field(None, min_length=1, max_length=50)
-    preview_image: str | None = Field(None, max_length=500)
-    config: str | None = None
-    is_premium: bool | None = None
-    is_active: bool | None = None
-    sort_order: int | None = Field(None, ge=0)
+    name: Optional[str] = Field(None, min_length=1, max_length=50)
+    preview_image: Optional[str] = Field(None, max_length=500)
+    config: Optional[str] = None
+    is_premium: Optional[bool] = None
+    is_active: Optional[bool] = None
+    sort_order: Optional[int] = Field(None, ge=0)
 
 
 class ThemeResponse(BaseModel):
     id: str
     name: str
     code: str
-    preview_image: str | None
-    config: str | None
+    preview_image: Optional[str]
+    config: Optional[str]
     is_premium: bool
     is_active: bool
     sort_order: int

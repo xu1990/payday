@@ -1,6 +1,7 @@
 """
 通知 - 列表、未读数、标记已读
 """
+from typing import Optional
 from fastapi import APIRouter, Depends, Query
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,7 +22,7 @@ router = APIRouter(prefix="/notifications", tags=["notifications"])
 @router.get("", response_model=NotificationListResponse)
 async def list_notifications(
     unread_only: bool = Query(False, description="仅未读"),
-    type_filter: str | None = Query(None, description="筛选类型: comment/reply/like/system"),
+    type_filter: Optional[str] = Query(None, description="筛选类型: comment/reply/like/system"),
     limit: int = Query(20, ge=1, le=50),
     offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
@@ -86,7 +87,7 @@ async def mark_one_read(
 
 @router.delete("")
 async def delete_notifications(
-    notification_ids: str | None = Query(None, description="删除的通知ID列表，逗号分隔"),
+    notification_ids: Optional[str] = Query(None, description="删除的通知ID列表，逗号分隔"),
     delete_all: bool = Query(False, description="删除全部通知"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

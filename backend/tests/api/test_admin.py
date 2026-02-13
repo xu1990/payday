@@ -278,7 +278,7 @@ class TestAdminSalaryListEndpoint:
 class TestAdminSalaryDeleteEndpoint:
     """测试DELETE /api/v1/admin/salary-records/{record_id}端点"""
 
-    def test_delete_salary_record_success(
+    async def test_delete_salary_record_success(
         self, client, admin_headers, db_session, test_user
     ):
         """测试管理员删除工资记录成功"""
@@ -292,10 +292,10 @@ class TestAdminSalaryDeleteEndpoint:
             payday=25,
         )
         db_session.add(config)
-        db_session.commit()
-        db_session.refresh(config)
+        await db_session.commit()
+        await db_session.refresh(config)
 
-        salary = TestDataFactory.create_salary(db_session, test_user.id, config.id)
+        salary = await TestDataFactory.create_salary(db_session, test_user.id, config.id)
 
         # 删除记录（需要CSRF token）
         headers_with_csrf = admin_headers.copy()

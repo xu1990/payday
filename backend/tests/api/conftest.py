@@ -93,7 +93,7 @@ def client(db_session):
     from app.main import app
     from app.core.database import get_db
     from app.core import cache as cache_module
-    from unittest.mock import AsyncMock, MagicMock
+    from unittest.mock import AsyncMock, MagicMock, patch
 
     # 保存原始 Redis 客户端
     original_redis = cache_module.redis_client
@@ -108,6 +108,11 @@ def client(db_session):
 
     # 覆盖依赖
     app.dependency_overrides[get_db] = override_get_db
+
+    # Mock CSRF manager - must be done before TestClient is created
+    mock_csrf_manager = MagicMock()
+    mock_csrf_manager.validate_token = AsyncMock(return_value=True)
+    mock_csrf_manager.generate_token = AsyncMock(return_value="test_csrf_token")
 
     try:
         # Mock Redis for tests
@@ -124,9 +129,11 @@ def client(db_session):
         mock_redis_client.zrem = AsyncMock(return_value=1)
         cache_module.redis_client = mock_redis_client
 
-        # 使用 TestClient，它在同步上下文中运行
-        with TestClient(app) as test_client:
-            yield test_client
+        # Mock CSRF validation - patch at the module level where it's imported
+        with patch('app.core.deps.csrf_manager', mock_csrf_manager):
+            # 使用 TestClient，它在同步上下文中运行
+            with TestClient(app) as test_client:
+                yield test_client
     finally:
         # 清理依赖覆盖
         app.dependency_overrides.clear()

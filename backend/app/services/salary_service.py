@@ -188,6 +188,7 @@ async def update_risk_for_admin(
 
 async def list_all_for_admin(
     db: AsyncSession,
+    user_id: Optional[str] = None,
     limit: int = 20,
     offset: int = 0,
 ) -> tuple[List[dict], int]:
@@ -196,23 +197,31 @@ async def list_all_for_admin(
 
     Args:
         db: 数据库会话
+        user_id: 可选的用户ID过滤
         limit: 每页数量
         offset: 偏移量
 
     Returns:
         (工资记录列表, 总数)
     """
+    query = select(SalaryRecord).order_by(SalaryRecord.created_at.desc())
+
+    # Apply user_id filter if provided
+    if user_id:
+        query = query.where(SalaryRecord.user_id == user_id)
+
+    # Get paginated results
     result = await db.execute(
-        select(SalaryRecord)
-        .order_by(SalaryRecord.created_at.desc())
-        .limit(limit)
-        .offset(offset)
+        query.limit(limit).offset(offset)
     )
     records = result.scalars().all()
 
-    count_result = await db.execute(
-        select(SalaryRecord.id)
-    )
+    # Get total count (respecting the user_id filter)
+    count_query = select(SalaryRecord.id)
+    if user_id:
+        count_query = count_query.where(SalaryRecord.user_id == user_id)
+
+    count_result = await db.execute(count_query)
     total = len(count_result.all())
 
     return [record_to_response(record) for record in records], total

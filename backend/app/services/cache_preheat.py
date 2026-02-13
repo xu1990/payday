@@ -10,11 +10,16 @@ from app.models.user import User
 from app.models.post import Post
 from app.models.membership import Membership, AppTheme
 from app.core.cache import (
-    cache_service,
-    UserCacheService,
     PostCacheService,
     LikeCacheService,
 )
+# TODO: Fix missing imports - cache_service and UserCacheService don't exist
+# from app.core.cache import (
+#     cache_service,
+#     UserCacheService,
+#     PostCacheService,
+#     LikeCacheService,
+# )
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)

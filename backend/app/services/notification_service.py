@@ -15,8 +15,8 @@ async def create_notification(
     user_id: str,
     type: str,
     title: str,
-    content: str | None = None,
-    related_id: str | None = None,
+    content: Optional[str] = None,
+    related_id: Optional[str] = None,
 ) -> Notification:
     """创建一条通知（接收者 user_id）。"""
     n = Notification(
@@ -36,7 +36,7 @@ async def list_notifications(
     db: AsyncSession,
     user_id: str,
     unread_only: bool = False,
-    type_filter: str | None = None,
+    type_filter: Optional[str] = None,
     limit: int = 20,
     offset: int = 0,
 ) -> tuple[list[Notification], int]:

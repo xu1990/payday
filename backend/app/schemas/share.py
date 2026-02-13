@@ -27,8 +27,8 @@ class ShareResponse(BaseModel):
     share_channel: str
     share_status: str
     created_at: str
-    updated_at: str | None = None
-    error_message: str | None = None
+    updated_at: Optional[str] = None
+    error_message: Optional[str] = None
 
     class Config:
         from_attributes = True

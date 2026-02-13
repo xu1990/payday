@@ -301,6 +301,7 @@ __all__ = [
     "get_db",
     "get_current_user",
     "get_current_admin",
+    "get_current_admin_user",  # Alias for get_current_admin
     "verify_csrf_token",
     "verify_request_signature",
     "rate_limit_general",
@@ -308,3 +309,6 @@ __all__ = [
     "rate_limit_post",
     "rate_limit_comment",
 ]
+
+# Alias for backwards compatibility
+get_current_admin_user = get_current_admin

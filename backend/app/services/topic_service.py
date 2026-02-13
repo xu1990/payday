@@ -14,8 +14,8 @@ from app.core.exceptions import NotFoundException
 async def create_topic(
     db: AsyncSession,
     name: str,
-    description: str | None = None,
-    cover_image: str | None = None,
+    description: Optional[str] = None,
+    cover_image: Optional[str] = None,
     sort_order: int = 0,
 ) -> Topic:
     """创建话题。"""
@@ -60,11 +60,11 @@ async def list_topics(
 async def update_topic(
     db: AsyncSession,
     topic_id: str,
-    name: str | None = None,
-    description: str | None = None,
-    cover_image: str | None = None,
-    is_active: bool | None = None,
-    sort_order: int | None = None,
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+    cover_image: Optional[str] = None,
+    is_active: Optional[bool] = None,
+    sort_order: Optional[int] = None,
 ) -> Topic | None:
     """更新话题。"""
     topic = await get_topic_by_id(db, topic_id)

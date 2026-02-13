@@ -1,6 +1,6 @@
 """管理端 - 登录、用户列表/详情、工资列表、统计"""
 from datetime import date, datetime
-from typing import List, Optional
+from typing import List, Optional, Literal
 
 from pydantic import BaseModel, Field
 
@@ -128,7 +128,7 @@ class AdminCommentListResponse(BaseModel):
 
 
 class AdminCommentUpdateRiskRequest(BaseModel):
-    risk_status: str  # approved | rejected
+    risk_status: Literal["approved", "rejected"]  # approved | rejected
     risk_reason: Optional[str] = None
 
 

@@ -9,7 +9,7 @@ class MembershipItem(BaseModel):
     """会员套餐项"""
     id: str
     name: str
-    description: str | None
+    description: Optional[str]
     price: float
     duration_days: int
     is_active: bool
@@ -35,6 +35,11 @@ class MembershipOrderItem(BaseModel):
     amount: float
     status: str
     start_date: str
-    end_date: str | None
+    end_date: Optional[str]
     auto_renew: bool
     created_at: str
+
+
+# Aliases for admin API
+MembershipCreate = MembershipOrderCreate
+MembershipResponse = MembershipItem
