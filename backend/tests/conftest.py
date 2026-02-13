@@ -167,16 +167,16 @@ def mock_wechat_auth():
 @pytest.fixture
 def mock_wechat_pay():
     """Mock微信支付API"""
-    with patch('app.services.payment_service.wechat_pay') as mock:
-        mock.create_order = AsyncMock(return_value={
-            "prepay_id": "prepay_id_test_123",
-            "code_url": "weixin://wxpay/bizpayurl?pr=test"
-        })
-        mock.query_order = AsyncMock(return_value={
-            "trade_state": "SUCCESS",
-            "transaction_id": "txn_test_123"
-        })
-        mock.close_order = AsyncMock(return_value={})
+    mock = AsyncMock()
+    mock.return_value = {
+        "timeStamp": "1234567890",
+        "nonceStr": "test_nonce",
+        "package": "prepay_id=test",
+        "signType": "MD5",
+        "paySign": "test_sign",
+        "out_trade_no": "test_order_id",
+    }
+    with patch('app.utils.wechat_pay.create_mini_program_payment', mock):
         yield mock
 
 
@@ -249,4 +249,14 @@ async def test_order(
         db_session,
         test_user.id,
         test_membership.id
+    )
+
+
+@pytest.fixture
+async def test_comment(db_session: AsyncSession, test_user: User, test_post: Post):
+    """创建测试评论"""
+    return await TestDataFactory.create_comment(
+        db_session,
+        test_user.id,
+        test_post.id,
     )
