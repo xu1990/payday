@@ -52,20 +52,43 @@ class CursorPaginator:
         self.order_by = order_by
         self.filter_expr = filter_expr
 
-    def _decode_cursor(self, cursor: str) -> Tuple:
+    def _decode_cursor(self, cursor: str, convert_to_datetime: bool = True) -> Tuple:
         """
         解码游标
 
         游标格式: base64(json([value1, value2, ...]))
         其中 values 是排序字段的值
+
+        Args:
+            cursor: 游标字符串
+            convert_to_datetime: 是否将 ISO 格式字符串转换为 datetime 对象
+                               (用于 SQLAlchemy 比较操作)
         """
         import base64
         import json
+        from datetime import datetime
 
         try:
             decoded = base64.b64decode(cursor.encode()).decode()
             values = json.loads(decoded)
-            return tuple(values)
+
+            if not convert_to_datetime:
+                return tuple(values)
+
+            # Convert ISO format strings back to datetime for SQLAlchemy comparisons
+            result = []
+            for v in values:
+                if isinstance(v, str) and len(v) >= 18:  # ISO datetime is at least 18 chars
+                    try:
+                        # Try to parse as ISO datetime
+                        result.append(datetime.fromisoformat(v))
+                    except (ValueError, AttributeError):
+                        # Not a datetime, keep as is
+                        result.append(v)
+                else:
+                    result.append(v)
+
+            return tuple(result)
         except Exception:
             raise ValueError("Invalid cursor")
 
@@ -74,7 +97,16 @@ class CursorPaginator:
         import base64
         import json
 
-        encoded = json.dumps(values)
+        # Convert datetime objects to ISO format strings
+        serializable_values = []
+        for v in values:
+            if hasattr(v, 'isoformat'):
+                # datetime object
+                serializable_values.append(v.isoformat())
+            else:
+                serializable_values.append(v)
+
+        encoded = json.dumps(serializable_values)
         return base64.b64encode(encoded.encode()).decode()
 
     def _build_conditions(self, cursor: Optional[str] = None):
@@ -101,7 +133,10 @@ class CursorPaginator:
 
         for i, (order_col, cursor_val) in enumerate(zip(self.order_by, values)):
             # 判断是升序还是降序
-            is_desc = hasattr(order_col, 'modifier') and order_col.modifier.include('desc')
+            from sqlalchemy.sql.expression import UnaryExpression
+            is_desc = (isinstance(order_col, UnaryExpression) and
+                       hasattr(order_col, 'modifier') and
+                       order_col.modifier.__name__ == 'desc_op')
 
             # 构建条件
             if is_desc:
@@ -153,7 +188,9 @@ class CursorPaginator:
         """
         # 构建查询
         conditions = self._build_conditions(cursor)
-        query = select(self.model).where(conditions)
+        query = select(self.model)
+        if conditions is not None:
+            query = query.where(conditions)
 
         # 应用排序
         query = query.order_by(*self.order_by)
@@ -172,14 +209,20 @@ class CursorPaginator:
         ]
 
         # 判断是否有更多
-        has_more = len(items_dict) > limit
+        has_more = len(items) > limit
         if has_more:
-            items_dict = items_dict[:limit]
+            items = items[:limit]
+
+        # 转换为字典列表
+        items_dict = [
+            {c.name: getattr(item, c.name) for c in item.__table__.columns}
+            for item in items
+        ]
 
         # 生成下一页游标
         next_cursor = None
         if has_more and items_dict:
-            # 获取最后一条记录的排序字段值
+            # 获取最后一条显示记录的排序字段值
             last_item = items[-1]
             cursor_values = tuple(
                 getattr(last_item, col.element.key)
@@ -190,9 +233,10 @@ class CursorPaginator:
         # 可选: 获取总数
         total = None
         if with_count:
-            count_query = select(func.count()).select_from(
-                select(self.model).where(conditions).subquery()
-            )
+            base_query = select(self.model)
+            if conditions is not None:
+                base_query = base_query.where(conditions)
+            count_query = select(func.count()).select_from(base_query.subquery())
             count_result = await db.execute(count_query)
             total = count_result.scalar()
 

@@ -41,7 +41,7 @@ async def get_user_checkin_streak(db: AsyncSession, user_id: str) -> int:
         check_date = prev_date
 
         # 最多查询365天
-        if streak > 365:
+        if streak >= 365:
             break
 
     return streak

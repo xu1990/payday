@@ -25,8 +25,8 @@ async def follow_user(db: AsyncSession, follower_id: str, following_id: str) -> 
         )
     )
     if existing.scalar_one_or_none():
-        # 已关注，返回True表示成功（幂等）
-        return True
+        # 已关注，返回False表示未创建新关注
+        return False
 
     try:
         # 直接尝试插入，依赖唯一约束防止重复

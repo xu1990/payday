@@ -86,7 +86,7 @@ class TestStructuredLogger:
     def test_format_log_with_context(self, mock_context, mock_settings):
         """测试带线程上下文的日志格式化"""
         mock_settings.environment = "test"
-        mock_context.get.return_value = {"request_id": "abc-123"}
+        mock_context.context = {"request_id": "abc-123"}
 
         logger = StructuredLogger("test_logger")
         result = logger._format_log(logging.INFO, "Test message")
@@ -140,13 +140,14 @@ class TestLogContext:
     def test_set_log_context(self):
         """测试设置日志上下文"""
         # 清除可能存在的上下文
-        if hasattr(_log_context, 'clear'):
-            _log_context.clear()
+        if hasattr(_log_context, 'context'):
+            _log_context.context.clear()
 
         set_log_context(request_id="test-123", user_id="user-001")
 
         # 验证上下文已设置
-        context = _log_context.get()
+        assert hasattr(_log_context, 'context')
+        context = _log_context.context
         assert context["request_id"] == "test-123"
         assert context["user_id"] == "user-001"
 
@@ -156,7 +157,8 @@ class TestLogContext:
         clear_log_context()
 
         # 验证上下文已清除
-        context = _log_context.get()
+        assert hasattr(_log_context, 'context')
+        context = _log_context.context
         assert context == {}
 
 
@@ -185,7 +187,9 @@ class TestSetupJsonHandler:
         handler = setup_json_handler(None)
 
         assert isinstance(handler, logging.StreamHandler)
-        assert handler.stream.name == "<stdout>"
+        # Verify it's using stdout (not a file)
+        import sys
+        assert handler.stream is sys.stdout
 
     def test_setup_file_handler(self):
         """测试设置文件handler"""

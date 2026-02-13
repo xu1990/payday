@@ -151,7 +151,6 @@ class TestGetUserSettings:
         assert settings["allow_comment"] == 1
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: get_user_settings uses 'or' operator instead of 'is not None' check, causing 0 values to be replaced with defaults", strict=True)
     async def test_get_user_settings_existing(self, db_session: AsyncSession):
         """测试获取已存在的用户设置"""
         user = await TestDataFactory.create_user(db_session)
@@ -569,7 +568,6 @@ class TestThemeSettingsWorkflow:
         assert settings["theme_id"] == dark_theme.id
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: get_user_settings uses 'or' operator instead of 'is not None' check, causing 0 values to be replaced with defaults", strict=True)
     async def test_user_privacy_settings_workflow(self, db_session: AsyncSession):
         """测试用户隐私设置流程"""
         user = await TestDataFactory.create_user(db_session)
@@ -608,7 +606,6 @@ class TestThemeSettingsWorkflow:
         assert settings["allow_comment"] == 0
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: get_user_settings uses 'or' operator instead of 'is not None' check, causing 0 values to be replaced with defaults", strict=True)
     async def test_multiple_users_different_settings(self, db_session: AsyncSession):
         """测试多个用户使用不同设置"""
         user1 = await TestDataFactory.create_user(db_session, "user1")
@@ -668,7 +665,6 @@ class TestThemeSettingsWorkflow:
         assert settings2["allow_stranger_notice"] == 1
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: get_user_settings uses 'or' operator instead of 'is not None' check, causing 0 values to be replaced with defaults", strict=True)
     async def test_settings_persistence(self, db_session: AsyncSession):
         """测试设置持久化"""
         user = await TestDataFactory.create_user(db_session)

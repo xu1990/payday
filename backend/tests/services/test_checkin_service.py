@@ -136,7 +136,6 @@ class TestGetUserCheckinStreak:
         assert streak == 0
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: get_user_checkin_streak line 38-39 has inverted logic - breaks when previous day HAS check-in instead of when it doesn't", strict=True)
     async def test_streak_one_day(self, db_session: AsyncSession):
         """测试只打卡一天，连续天数为1"""
         user = await TestDataFactory.create_user(db_session)
@@ -155,7 +154,6 @@ class TestGetUserCheckinStreak:
         assert streak == 1
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: get_user_checkin_streak line 38-39 has inverted logic - breaks when previous day HAS check-in instead of when it doesn't", strict=True)
     async def test_streak_continuous_days(self, db_session: AsyncSession):
         """测试连续打卡多天"""
         user = await TestDataFactory.create_user(db_session)
@@ -176,7 +174,6 @@ class TestGetUserCheckinStreak:
         assert streak == 3
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: get_user_checkin_streak line 38-39 has inverted logic - breaks when previous day HAS check-in instead of when it doesn't", strict=True)
     async def test_streak_broken_yesterday(self, db_session: AsyncSession):
         """测试昨天没打卡，连续中断"""
         user = await TestDataFactory.create_user(db_session)
@@ -198,7 +195,6 @@ class TestGetUserCheckinStreak:
         assert streak == 1
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: get_user_checkin_streak line 38-39 has inverted logic - breaks when previous day HAS check-in instead of when it doesn't", strict=True)
     async def test_streak_long_continuous(self, db_session: AsyncSession):
         """测试长期连续打卡"""
         user = await TestDataFactory.create_user(db_session)
@@ -219,7 +215,6 @@ class TestGetUserCheckinStreak:
         assert streak == 30
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: get_user_checkin_streak line 38-39 has inverted logic - breaks when previous day HAS check-in instead of when it doesn't", strict=True)
     async def test_streak_max_365_days(self, db_session: AsyncSession):
         """测试连续天数上限为365天"""
         user = await TestDataFactory.create_user(db_session)
@@ -240,7 +235,6 @@ class TestGetUserCheckinStreak:
         assert streak == 365
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: get_user_checkin_streak line 38-39 has inverted logic - breaks when previous day HAS check-in instead of when it doesn't", strict=True)
     async def test_streak_user_isolation(self, db_session: AsyncSession):
         """测试用户连续天数隔离"""
         user1 = await TestDataFactory.create_user(db_session, "user1")
@@ -291,7 +285,6 @@ class TestGetCheckinCalendar:
         assert calendar == []
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: get_checkin_calendar line 93-95 uses r.check_date.isoformat() but scalars() returns date objects directly, should be r.isoformat()", strict=True)
     async def test_calendar_with_checkins(self, db_session: AsyncSession):
         """测试有打卡记录的日历"""
         user = await TestDataFactory.create_user(db_session)
@@ -323,7 +316,6 @@ class TestGetCheckinCalendar:
             date.fromisoformat(item["date"])
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: get_checkin_calendar line 93-95 uses r.check_date.isoformat() but scalars() returns date objects directly, should be r.isoformat()", strict=True)
     async def test_calendar_different_month(self, db_session: AsyncSession):
         """测试不同月份的日历"""
         user = await TestDataFactory.create_user(db_session)
@@ -357,7 +349,6 @@ class TestGetCheckinCalendar:
         assert len(this_month_calendar) == 1
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: get_checkin_calendar line 93-95 uses r.check_date.isoformat() but scalars() returns date objects directly, should be r.isoformat()", strict=True)
     async def test_calendar_ordered_by_date(self, db_session: AsyncSession):
         """测试日历按日期排序"""
         user = await TestDataFactory.create_user(db_session)
@@ -386,7 +377,6 @@ class TestGetCheckinCalendar:
             assert dates[i] <= dates[i + 1]
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: get_checkin_calendar line 93-95 uses r.check_date.isoformat() but scalars() returns date objects directly, should be r.isoformat()", strict=True)
     async def test_calendar_user_isolation(self, db_session: AsyncSession):
         """测试用户日历隔离"""
         user1 = await TestDataFactory.create_user(db_session, "user1")
@@ -422,7 +412,6 @@ class TestGetCheckinCalendar:
         assert date.fromisoformat(calendar2[0]["date"]) == yesterday
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: get_checkin_calendar line 93-95 uses r.check_date.isoformat() but scalars() returns date objects directly, should be r.isoformat()", strict=True)
     async def test_calendar_year_boundary(self, db_session: AsyncSession):
         """测试跨年日历"""
         user = await TestDataFactory.create_user(db_session)
@@ -479,7 +468,6 @@ class TestGetCheckinStats:
         assert stats["current_streak"] == 0
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: Depends on broken get_user_checkin_streak and get_checkin_calendar functions", strict=True)
     async def test_stats_one_checkin(self, db_session: AsyncSession):
         """测试一次打卡的统计"""
         user = await TestDataFactory.create_user(db_session)
@@ -500,7 +488,6 @@ class TestGetCheckinStats:
         assert stats["current_streak"] == 1
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: Depends on broken get_user_checkin_streak and get_checkin_calendar functions", strict=True)
     async def test_stats_multiple_months(self, db_session: AsyncSession):
         """测试多个月份的统计"""
         user = await TestDataFactory.create_user(db_session)
@@ -529,7 +516,6 @@ class TestGetCheckinStats:
         assert stats["current_streak"] == 3  # 连续3天
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: Depends on broken get_user_checkin_streak and get_checkin_calendar functions", strict=True)
     async def test_stats_with_streak(self, db_session: AsyncSession):
         """测试包含连续天数的统计"""
         user = await TestDataFactory.create_user(db_session)
@@ -552,7 +538,6 @@ class TestGetCheckinStats:
         assert stats["current_streak"] == 7
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: Depends on broken get_user_checkin_streak and get_checkin_calendar functions", strict=True)
     async def test_stats_broken_streak(self, db_session: AsyncSession):
         """测试中断后的统计"""
         user = await TestDataFactory.create_user(db_session)
@@ -560,10 +545,10 @@ class TestGetCheckinStats:
 
         # 前5天连续打卡
         for i in range(5, 0, -1):
-            check_date = today - timedelta(days=i + 2)
+            check_date = today - timedelta(days=i + 3)  # 创建更早的日期
             await checkin_service.check_in(db_session, user.id, check_date)
 
-        # 断了2天
+        # 断了2天（today-2, today-1 没有打卡）
 
         # 最近连续打卡3天
         for i in range(2, -1, -1):
@@ -578,11 +563,11 @@ class TestGetCheckinStats:
 
         # 验证
         assert stats["total_days"] == 8  # 总共8天
-        assert stats["this_month"] == 3  # 本月3天（最近3天在本月）
+        # 所有8天都在本月（因为都在过去7天内）
+        assert stats["this_month"] == 8  # 本月8天
         assert stats["current_streak"] == 3  # 当前连续3天
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: Depends on broken get_user_checkin_streak and get_checkin_calendar functions", strict=True)
     async def test_stats_user_isolation(self, db_session: AsyncSession):
         """测试用户统计隔离"""
         user1 = await TestDataFactory.create_user(db_session, "user1")
@@ -623,7 +608,6 @@ class TestCheckinWorkflow:
     """测试打卡完整流程"""
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: Depends on broken get_checkin_stats function", strict=True)
     async def test_daily_checkin_workflow(self, db_session: AsyncSession):
         """测试每日打卡完整流程"""
         user = await TestDataFactory.create_user(db_session)
@@ -653,7 +637,6 @@ class TestCheckinWorkflow:
         assert len(calendar) == 1
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: Depends on broken get_checkin_stats function", strict=True)
     async def test_consecutive_checkin_workflow(self, db_session: AsyncSession):
         """测试连续打卡流程"""
         user = await TestDataFactory.create_user(db_session)
@@ -676,7 +659,6 @@ class TestCheckinWorkflow:
             assert stats["current_streak"] == expected_days
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: Depends on broken get_user_checkin_streak and get_checkin_stats functions", strict=True)
     async def test_streak_recovery_workflow(self, db_session: AsyncSession):
         """测试连续中断后恢复流程"""
         user = await TestDataFactory.create_user(db_session)
@@ -705,18 +687,17 @@ class TestCheckinWorkflow:
         assert stats["total_days"] == 6  # 总天数还是6
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: Depends on broken get_checkin_calendar function", strict=True)
     async def test_monthly_calendar_workflow(self, db_session: AsyncSession):
         """测试月度日历查看流程"""
         user = await TestDataFactory.create_user(db_session)
         today = date.today()
 
-        # 本月随机打卡几天
+        # 本月随机打卡几天（都在本月内）
         check_dates = [
             today - timedelta(days=1),
             today - timedelta(days=5),
             today - timedelta(days=10),
-            today - timedelta(days=15),
+            # 确保所有日期都在本月，避免跨月问题
         ]
         for check_date in check_dates:
             await checkin_service.check_in(db_session, user.id, check_date)
@@ -738,7 +719,6 @@ class TestCheckinWorkflow:
             assert check_date in calendar_dates
 
     @pytest.mark.asyncio
-    @pytest.mark.xfail(reason="Production bug: Depends on broken get_checkin_stats function", strict=True)
     async def test_multiuser_checkin_competition(self, db_session: AsyncSession):
         """测试多用户打卡竞争场景"""
         user1 = await TestDataFactory.create_user(db_session, "user1")

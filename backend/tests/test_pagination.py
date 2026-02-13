@@ -34,7 +34,8 @@ class TestCursorEncodeDecode:
         values = (timestamp, "post_id_123")
 
         cursor = paginator._encode_cursor(values)
-        decoded = paginator._decode_cursor(cursor)
+        # Test that values round-trip when convert_to_datetime=False
+        decoded = paginator._decode_cursor(cursor, convert_to_datetime=False)
 
         assert decoded == values
 
@@ -265,12 +266,15 @@ class TestCursorPaginatorWithCursor:
     @pytest.mark.asyncio
     async def test_paginate_with_cursor_single_order(self, db_session: AsyncSession):
         """测试使用游标的分页 - 单一排序字段"""
+        # 创建用户
+        user = await TestDataFactory.create_user(db_session)
+
         # 创建5个帖子
         base_time = datetime.utcnow()
         for i in range(5):
             post = await TestDataFactory.create_post(
                 db_session,
-                user_id=f"user_{i}",
+                user_id=user.id,
                 content=f"内容{i}",
                 status="normal",
                 risk_status="approved"
@@ -306,16 +310,21 @@ class TestCursorPaginatorWithCursor:
     @pytest.mark.asyncio
     async def test_paginate_with_cursor_multiple_orders(self, db_session: AsyncSession):
         """测试使用游标的分页 - 多个排序字段"""
+        # 创建用户
+        user = await TestDataFactory.create_user(db_session)
+
         # 创建5个帖子
         base_time = datetime.utcnow()
         for i in range(5):
-            await TestDataFactory.create_post(
+            post = await TestDataFactory.create_post(
                 db_session,
-                user_id=f"user_{i}",
+                user_id=user.id,
                 content=f"内容{i}",
                 status="normal",
                 risk_status="approved"
             )
+            post.created_at = base_time + timedelta(hours=i)
+            await db_session.commit()
 
         # 使用多个排序字段
         paginator = CursorPaginator(
@@ -338,11 +347,14 @@ class TestCursorPaginatorWithCursor:
     @pytest.mark.asyncio
     async def test_paginate_with_count(self, db_session: AsyncSession):
         """测试带总数的游标分页"""
+        # 创建用户
+        user = await TestDataFactory.create_user(db_session)
+
         # 创建3个帖子
         for i in range(3):
             await TestDataFactory.create_post(
                 db_session,
-                user_id=f"user_{i}",
+                user_id=user.id,
                 content=f"内容{i}",
                 status="normal",
                 risk_status="approved"
@@ -359,15 +371,22 @@ class TestCursorPaginatorWithCursor:
     @pytest.mark.asyncio
     async def test_paginate_with_filter_and_cursor(self, db_session: AsyncSession):
         """测试带过滤条件的游标分页"""
+        # 创建用户
+        user = await TestDataFactory.create_user(db_session)
+
         # 创建不同状态的帖子
+        base_time = datetime.utcnow()
         for i in range(5):
-            await TestDataFactory.create_post(
+            post = await TestDataFactory.create_post(
                 db_session,
-                user_id=f"user_{i}",
+                user_id=user.id,
                 content=f"内容{i}",
                 status="normal" if i < 3 else "deleted",
                 risk_status="approved"
             )
+            # 手动设置created_at以确保不同时间
+            post.created_at = base_time + timedelta(hours=i)
+            await db_session.commit()
 
         # 使用过滤条件
         paginator = CursorPaginator(
@@ -402,24 +421,32 @@ class TestCursorPaginatorWithCursor:
     @pytest.mark.asyncio
     async def test_paginate_empty_result_with_cursor(self, db_session: AsyncSession):
         """测试游标指向超出范围的数据"""
-        # 创建1个帖子
-        await TestDataFactory.create_post(
+        # 创建用户
+        user = await TestDataFactory.create_user(db_session)
+
+        # 创建1个帖子 - 手动设置created_at为一个较早的时间
+        base_time = datetime.utcnow()
+        post = await TestDataFactory.create_post(
             db_session,
-            user_id="user_1",
+            user_id=user.id,
             content="内容1",
             status="normal",
             risk_status="approved"
         )
+        post.created_at = base_time - timedelta(days=1)  # 昨天
+        await db_session.commit()
 
         paginator = CursorPaginator(Post, order_by=[desc(Post.created_at)])
 
         # 第一页获取数据
         result1 = await paginator.paginate(db_session, limit=10)
-        # 创建一个指向未来的游标
-        future_time = datetime.utcnow() + timedelta(days=30)
-        future_cursor = paginator._encode_cursor((future_time,))
+        # 创建一个指向过去的游标（post创建之前）
+        # 对于降序排序，游标条件是 created_at < cursor_value
+        # 所以要返回空结果，需要 cursor_value <= post.created_at
+        past_time = base_time - timedelta(days=2)  # 两天前
+        past_cursor = paginator._encode_cursor((past_time,))
 
-        # 使用未来的游标应该返回空结果
-        result2 = await paginator.paginate(db_session, limit=10, cursor=future_cursor)
+        # 使用过去的游标应该返回空结果
+        result2 = await paginator.paginate(db_session, limit=10, cursor=past_cursor)
         assert len(result2.items) == 0
         assert result2.has_more is False

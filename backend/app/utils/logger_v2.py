@@ -52,8 +52,8 @@ class StructuredLogger:
         }
 
         # 添加线程本地存储的上下文信息（request_id、user_id等）
-        if hasattr(_log_context, 'get'):
-            context = _log_context.get()
+        if hasattr(_log_context, 'context'):
+            context = _log_context.context
             if context:
                 for key, value in context.items():
                     if key not in log_entry:
@@ -132,7 +132,9 @@ def set_log_context(**kwargs) -> None:
     Example:
         set_log_context(request_id='123-456', user_id='user-001')
     """
-    _log_context.update(kwargs)
+    if not hasattr(_log_context, 'context'):
+        _log_context.context = {}
+    _log_context.context.update(kwargs)
 
 
 def clear_log_context() -> None:
@@ -141,8 +143,8 @@ def clear_log_context() -> None:
 
     通常在请求结束后调用
     """
-    if hasattr(_log_context, 'clear'):
-        _log_context.clear()
+    if hasattr(_log_context, 'context'):
+        _log_context.context.clear()
 
 
 def get_logger(name: str) -> StructuredLogger:
@@ -162,6 +164,25 @@ def get_logger(name: str) -> StructuredLogger:
     return StructuredLogger(name)
 
 
+class JsonFormatter(logging.Formatter):
+    """JSON格式化器"""
+    def format(self, record: logging.LogRecord) -> str:
+        log_obj = {
+            "timestamp": self.formatTime(record),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        # 添加extra字段
+        if hasattr(record, '__dict__'):
+            log_obj.update(record.__dict__)
+        return json.dumps(log_obj, ensure_ascii=False)
+
+    def formatTime(self, record: logging.LogRecord) -> str:
+        from datetime import datetime
+        return datetime.fromtimestamp(record.created).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def setup_json_handler(filename: Optional[str] = None) -> logging.Handler:
     """
     设置JSON格式化handler，用于输出到文件
@@ -176,23 +197,6 @@ def setup_json_handler(filename: Optional[str] = None) -> logging.Handler:
         # 确保日志目录存在
         log_path = Path(filename)
         log_path.parent.mkdir(parents=True, exist_ok=True)
-
-        class JsonFormatter(logging.Formatter):
-            def format(self, record: logging.LogRecord) -> str:
-                log_obj = {
-                    "timestamp": self.formatTime(record),
-                    "level": record.levelname,
-                    "logger": record.name,
-                    "message": record.getMessage(),
-                }
-                # 添加extra字段
-                if hasattr(record, '__dict__'):
-                    log_obj.update(record.__dict__)
-                return json.dumps(log_obj, ensure_ascii=False)
-
-            def formatTime(self, record: logging.LogRecord) -> str:
-                from datetime import datetime
-                return datetime.fromtimestamp(record.created).strftime("%Y-%m-%dT%H:%M:%SZ")
 
         handler = logging.FileHandler(
             filename=filename,
@@ -219,7 +223,7 @@ def configure_logging(log_file: Optional[str] = None, log_level: str = None):
         configure_logging(log_file='logs/app.log', log_level='INFO')
     """
     # 设置根logger的日志级别
-    level = getattr(logging, log_level.upper() if log_level else logging.INFO)
+    level = getattr(logging, (log_level or "INFO").upper())
 
     # 配置handler
     handlers = [setup_json_handler(log_file)]

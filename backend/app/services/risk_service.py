@@ -53,7 +53,7 @@ FALLBACK_SENSITIVE_WORDS = [
 CONTACT_PATTERNS = [
     re.compile(r"1[3-9]\d{9}"),
     re.compile(r"[\w.-]+@[\w.-]+\.\w+"),
-    re.compile(r"qq[：:\s]*\d{5,12}", re.I),
+    re.compile(r"qq[号]?[：:\s]*\d{5,12}", re.I),  # 支持QQ、QQ号格式，大小写不敏感
     re.compile(r"微信[：:\s]*[a-zA-Z0-9_-]{6,20}"),
 ]
 
@@ -70,9 +70,22 @@ def _text_contact_score(content: str) -> tuple[int, Optional[str]]:
 
 
 def _text_sensitive_score(content: str) -> tuple[int, Optional[str]]:
-    """敏感词检测（已废弃，使用_text_sensitive_score_from_db），保留以向后兼容"""
-    # 此函数已不再使用，调用 _text_sensitive_score_from_db
-    # 但需要db参数，所以这里直接返回0，避免错误
+    """
+    敏感词检测（简化版，使用硬编码列表）
+
+    注意：此函数不查询数据库，仅使用硬编码的备用列表。
+    生产环境应使用 _text_sensitive_score_from_db 以获取最新的敏感词配置。
+    """
+    if not (content or content.strip()):
+        return 0, None
+
+    text = content.strip().lower()
+
+    # 使用硬编码的备用敏感词列表
+    for word in FALLBACK_SENSITIVE_WORDS:
+        if word.lower() in text:
+            return 90, "含违规内容"
+
     return 0, None
 
 
