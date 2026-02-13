@@ -19,7 +19,6 @@ Admin API 端点测试
 import pytest
 
 
-@pytest.mark.asyncio
 class TestAdminLoginEndpoint:
     """测试POST /api/v1/admin/auth/login端点"""
 
@@ -86,7 +85,6 @@ class TestAdminLoginEndpoint:
         assert response.status_code == 422
 
 
-@pytest.mark.asyncio
 class TestAdminUserListEndpoint:
     """测试GET /api/v1/admin/users端点"""
 
@@ -166,7 +164,6 @@ class TestAdminUserListEndpoint:
         assert response.status_code == 401
 
 
-@pytest.mark.asyncio
 class TestAdminUserDetailEndpoint:
     """测试GET /api/v1/admin/users/{user_id}端点"""
 
@@ -212,7 +209,6 @@ class TestAdminUserDetailEndpoint:
         assert response.status_code in [401, 403]
 
 
-@pytest.mark.asyncio
 class TestAdminSalaryListEndpoint:
     """测试GET /api/v1/admin/salary-records端点"""
 
@@ -279,7 +275,6 @@ class TestAdminSalaryListEndpoint:
         assert response.status_code in [401, 403]
 
 
-@pytest.mark.asyncio
 class TestAdminSalaryDeleteEndpoint:
     """测试DELETE /api/v1/admin/salary-records/{record_id}端点"""
 
@@ -297,13 +292,10 @@ class TestAdminSalaryDeleteEndpoint:
             payday=25,
         )
         db_session.add(config)
-        import asyncio
-        asyncio.run(db_session.commit())
-        asyncio.run(db_session.refresh(config))
+        db_session.commit()
+        db_session.refresh(config)
 
-        salary = asyncio.run(
-            TestDataFactory.create_salary(db_session, test_user.id, config.id)
-        )
+        salary = TestDataFactory.create_salary(db_session, test_user.id, config.id)
 
         # 删除记录（需要CSRF token）
         headers_with_csrf = admin_headers.copy()
@@ -346,7 +338,6 @@ class TestAdminSalaryDeleteEndpoint:
         assert response.status_code in [401, 403]
 
 
-@pytest.mark.asyncio
 class TestAdminSalaryUpdateRiskEndpoint:
     """测试PUT /api/v1/admin/salary-records/{record_id}/risk端点"""
 
@@ -418,7 +409,6 @@ class TestAdminSalaryUpdateRiskEndpoint:
         assert response.status_code == 422
 
 
-@pytest.mark.asyncio
 class TestAdminStatisticsEndpoint:
     """测试GET /api/v1/admin/statistics端点"""
 
@@ -446,7 +436,6 @@ class TestAdminStatisticsEndpoint:
         assert response.status_code in [401, 403]
 
 
-@pytest.mark.asyncio
 class TestAdminPostListEndpoint:
     """测试GET /api/v1/admin/posts端点"""
 
@@ -525,7 +514,6 @@ class TestAdminPostListEndpoint:
         assert response.status_code in [401, 403]
 
 
-@pytest.mark.asyncio
 class TestAdminPostDetailEndpoint:
     """测试GET /api/v1/admin/posts/{post_id}端点"""
 
@@ -568,7 +556,6 @@ class TestAdminPostDetailEndpoint:
         assert response.status_code in [401, 403]
 
 
-@pytest.mark.asyncio
 class TestAdminPostUpdateStatusEndpoint:
     """测试PUT /api/v1/admin/posts/{post_id}/status端点"""
 
@@ -673,7 +660,6 @@ class TestAdminPostUpdateStatusEndpoint:
         assert response.status_code in [401, 403]
 
 
-@pytest.mark.asyncio
 class TestAdminPostDeleteEndpoint:
     """测试DELETE /api/v1/admin/posts/{post_id}端点"""
 
@@ -717,7 +703,6 @@ class TestAdminPostDeleteEndpoint:
         assert response.status_code in [401, 403]
 
 
-@pytest.mark.asyncio
 class TestAdminCommentListEndpoint:
     """测试GET /api/v1/admin/comments端点"""
 
@@ -796,7 +781,6 @@ class TestAdminCommentListEndpoint:
         assert response.status_code in [401, 403]
 
 
-@pytest.mark.asyncio
 class TestAdminCommentUpdateRiskEndpoint:
     """测试PUT /api/v1/admin/comments/{comment_id}/risk端点"""
 
