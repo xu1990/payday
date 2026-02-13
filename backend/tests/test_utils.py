@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
 from app.models.post import Post
+from app.models.comment import Comment
 from app.models.salary import SalaryRecord
 from app.models.membership import Membership, MembershipOrder
 from app.models.notification import Notification
@@ -60,6 +61,26 @@ class TestDataFactory:
         await db_session.commit()
         await db_session.refresh(post)
         return post
+
+    @staticmethod
+    async def create_comment(
+        db_session: AsyncSession,
+        user_id: str,
+        post_id: str,
+        content: str = "测试评论",
+        **kwargs
+    ) -> Comment:
+        """创建测试评论"""
+        comment = Comment(
+            user_id=user_id,
+            post_id=post_id,
+            anonymous_name=kwargs.get("anonymous_name", "匿名用户"),
+            content=content,
+        )
+        db_session.add(comment)
+        await db_session.commit()
+        await db_session.refresh(comment)
+        return comment
 
     @staticmethod
     async def create_salary(

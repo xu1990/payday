@@ -22,7 +22,7 @@ class TencentYuService:
 
     def __init__(self):
         """初始化天御客户端"""
-        if not all([settings.TENCENT_SECRET_ID, settings.TENCENT_SECRET_KEY]):
+        if not all([settings.tencent_secret_id, settings.tencent_secret_key]):
             logger.warning("腾讯云密钥未配置，天御服务将不可用")
             self._enabled = False
             self.ims_client = None
@@ -33,8 +33,8 @@ class TencentYuService:
         try:
             # 初始化认证
             cred = credential.Credential(
-                settings.TENCENT_SECRET_ID,
-                settings.TENCENT_SECRET_KEY
+                settings.tencent_secret_id,
+                settings.tencent_secret_key
             )
 
             # 图片审核客户端

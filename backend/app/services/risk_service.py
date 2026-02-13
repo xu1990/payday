@@ -70,13 +70,9 @@ def _text_contact_score(content: str) -> tuple[int, Optional[str]]:
 
 
 def _text_sensitive_score(content: str) -> tuple[int, Optional[str]]:
-    """敏感词检测，返回 0-100 分与原因。"""
-    if not (content or content.strip()):
-        return 0, None
-    text = text.lower().strip()
-    for w in SENSITIVE_WORDS:
-        if w.lower() in text:
-            return 90, "含违规内容"
+    """敏感词检测（已废弃，使用_text_sensitive_score_from_db），保留以向后兼容"""
+    # 此函数已不再使用，调用 _text_sensitive_score_from_db
+    # 但需要db参数，所以这里直接返回0，避免错误
     return 0, None
 
 
