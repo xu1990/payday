@@ -83,19 +83,52 @@ sys.modules['app.utils.date'] = date_utils_mock
 
 @pytest.fixture
 def client(db_session):
-    """测试客户端 fixture - FastAPI TestClient with test database override"""
+    """
+    测试客户端 fixture - FastAPI TestClient with test database override
+
+    这是解决 TestClient async/await 问题的关键 fixture
+    它将测试数据库会话注入到 FastAPI 的依赖注入系统中
+    """
     from fastapi.testclient import TestClient
     from app.main import app
     from app.core.database import get_db
+    from app.core import cache as cache_module
+    from unittest.mock import AsyncMock, MagicMock
 
-    # Override the database dependency
-    async def override_get_db():
-        yield db_session
+    # 保存原始 Redis 客户端
+    original_redis = cache_module.redis_client
 
+    # 创建一个覆盖函数，返回测试数据库会话
+    # 注意：db_session 已经是一个 AsyncSession 对象，直接 yield 它即可
+    def override_get_db():
+        try:
+            yield db_session
+        finally:
+            pass
+
+    # 覆盖依赖
     app.dependency_overrides[get_db] = override_get_db
 
-    with TestClient(app) as test_client:
-        yield test_client
+    try:
+        # Mock Redis for tests
+        mock_redis_client = MagicMock()
+        mock_redis_client.get = AsyncMock(return_value=None)
+        mock_redis_client.set = AsyncMock(return_value=True)
+        mock_redis_client.setex = AsyncMock(return_value=True)
+        mock_redis_client.delete = AsyncMock(return_value=True)
+        mock_redis_client.incr = AsyncMock(return_value=1)
+        mock_redis_client.decr = AsyncMock(return_value=0)
+        mock_redis_client.zadd = AsyncMock(return_value=1)
+        mock_redis_client.zrevrange = AsyncMock(return_value=[])
+        mock_redis_client.exists = AsyncMock(return_value=0)
+        mock_redis_client.zrem = AsyncMock(return_value=1)
+        cache_module.redis_client = mock_redis_client
 
-    # Clean up override
-    app.dependency_overrides.clear()
+        # 使用 TestClient，它在同步上下文中运行
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        # 清理依赖覆盖
+        app.dependency_overrides.clear()
+        # 恢复原始 Redis 客户端
+        cache_module.redis_client = original_redis
