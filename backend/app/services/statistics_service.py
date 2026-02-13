@@ -159,11 +159,11 @@ async def get_insights_distributions(db: AsyncSession) -> dict:
     # 发薪日分布（每月1-31号）
     from app.models.payday import PaydayConfig
     payday_result = await db.execute(
-        select(func.count().label("count"), PaydayConfig.day)
+        select(func.count().label("count"), PaydayConfig.payday)
         .join(User, PaydayConfig.user_id == User.id)
-        .where(PaydayConfig.type == "solar")
-        .group_by(PaydayConfig.day)
-        .order_by(PaydayConfig.day)
+        .where(PaydayConfig.calendar_type == "solar")
+        .group_by(PaydayConfig.payday)
+        .order_by(PaydayConfig.payday)
     )
 
     payday_dist = [{"label": f"{r[1]}号", "value": r[0]} for r in payday_result.all()]

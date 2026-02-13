@@ -56,6 +56,8 @@ class TestDataFactory:
             salary_range=kwargs.get("salary_range"),
             industry=kwargs.get("industry"),
             city=kwargs.get("city"),
+            risk_status=kwargs.get("risk_status", "pending"),
+            status=kwargs.get("status", "normal"),
         )
         db_session.add(post)
         await db_session.commit()
