@@ -287,10 +287,11 @@ async def search_posts(
 
             tag_conditions = []
             for tag in valid_tags:
-                # 使用func.json_contains + literal确保参数化查询
-                # literal()会正确转义特殊字符，防止SQL注入
+                # For SQLite, we use JSON_CONTAINS or try json_array_contains
+                # Use a simpler approach that works across databases
+                # Check if the tag string appears in the JSON array
                 tag_conditions.append(
-                    func.json_contains(Post.tags, literal(f'"{tag}"'))
+                    Post.tags.contains(f'"{tag}"')
                 )
 
             if tag_conditions:
@@ -320,7 +321,7 @@ async def search_posts(
 
     # 先获取总数
     from sqlalchemy import func
-    count_query = select(func.count()).select_from(query.subquery)
+    count_query = select(func.count()).select_from(query.subquery())
     total_result = await db.execute(count_query)
     total = total_result.scalar() or 0
 

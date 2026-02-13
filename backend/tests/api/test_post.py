@@ -19,7 +19,7 @@ Only tests that don't require database access (like token refresh) pass.
 """
 import pytest
 from datetime import datetime
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, MagicMock
 
 
 @pytest.mark.asyncio
@@ -49,9 +49,12 @@ class TestCreatePostEndpoint:
         )
 
         # 验证HTTP响应
+        if response.status_code != 200:
+            print(f"ERROR: Status {response.status_code}")
+            print(f"Response: {response.json()}")
         assert response.status_code == 200
         data = response.json()
-        assert data["content"] == "今天发工资了,好开心!"
+        assert data["content"] == "今天发工资了，好开心！"  # sanitize_html preserves original punctuation
         assert data["type"] == "sharing"
         assert data["images"] == ["https://example.com/image1.jpg"]
         assert data["tags"] == ["发工资", "开心"]

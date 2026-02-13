@@ -10,6 +10,7 @@ from app.api.v1.schemas.payment import (
     PaymentErrorResponse,
 )
 from app.core.deps import get_db, get_current_user
+from app.core.exceptions import BusinessException, NotFoundException
 from app.models.user import User
 from app.services.payment_service import (
     create_membership_payment,
@@ -119,14 +120,17 @@ async def create_payment(
             message="支付参数生成成功",
         )
 
-    except ValueError as e:
+    except (ValueError, NotFoundException, BusinessException) as e:
         # 业务逻辑错误（如订单不存在、状态不对）
         return PaymentErrorResponse(
             success=False,
             message=str(e),
         )
-    except Exception:
+    except Exception as e:
         # 其他未知错误，不暴露详细信息
+        # Log the error for debugging
+        import logging
+        logging.error(f"Payment creation error: {type(e).__name__}: {e}")
         return PaymentErrorResponse(
             success=False,
             message="创建支付失败，请稍后重试",

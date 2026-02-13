@@ -17,22 +17,37 @@ sys.modules['celery'] = celery_mock
 # Mock rate limiter to prevent TypeError during app import
 # This is needed because RateLimiter is not callable but used as a dependency
 from unittest.mock import AsyncMock
-rate_limiter_mock = MagicMock()
-rate_limiter_mock.__call__ = lambda *args, **kwargs: None  # Make it callable
-rate_limiter_mock.check = AsyncMock(return_value=None)  # Make check() awaitable
 
-# Create a proper mock module that keeps real functions but mocks RateLimiter
-# We need to import the real module first, then extract what we need
+# Create a mock RateLimiter class that returns callable instances
+class MockRateLimiter:
+    """Mock RateLimiter that is callable and has async check method"""
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __call__(self, *args, **kwargs):
+        """Make instances callable for FastAPI Depends()"""
+        # Just return None, FastAPI will handle this
+        return None
+
+    async def check(self, key, request):
+        """Mock check method"""
+        pass
+
+# Create instances for the constants
+RATE_LIMIT_GENERAL = MockRateLimiter()
+RATE_LIMIT_LOGIN = MockRateLimiter()
+RATE_LIMIT_POST = MockRateLimiter()
+RATE_LIMIT_COMMENT = MockRateLimiter()
+
+# Create a proper mock module
 mock_rate_limit_module = MagicMock()
-mock_rate_limit_module.RateLimiter = lambda *args, **kwargs: rate_limiter_mock
-# Mock the async functions that are used
+mock_rate_limit_module.RateLimiter = MockRateLimiter
 mock_rate_limit_module.get_client_identifier = AsyncMock(return_value="test_client")
 mock_rate_limit_module.get_client_ip = lambda request: "127.0.0.1"
-# Mock the rate limiter constants
-mock_rate_limit_module.RATE_LIMIT_GENERAL = rate_limiter_mock
-mock_rate_limit_module.RATE_LIMIT_LOGIN = rate_limiter_mock
-mock_rate_limit_module.RATE_LIMIT_POST = rate_limiter_mock
-mock_rate_limit_module.RATE_LIMIT_COMMENT = rate_limiter_mock
+mock_rate_limit_module.RATE_LIMIT_GENERAL = RATE_LIMIT_GENERAL
+mock_rate_limit_module.RATE_LIMIT_LOGIN = RATE_LIMIT_LOGIN
+mock_rate_limit_module.RATE_LIMIT_POST = RATE_LIMIT_POST
+mock_rate_limit_module.RATE_LIMIT_COMMENT = RATE_LIMIT_COMMENT
 
 sys.modules['app.core.rate_limit'] = mock_rate_limit_module
 
@@ -145,9 +160,12 @@ def client(db_session):
 
         # Mock CSRF validation - patch at the module level where it's imported
         with patch('app.core.deps.csrf_manager', mock_csrf_manager):
-            # 使用 TestClient，它在同步上下文中运行
-            with TestClient(app) as test_client:
-                yield test_client
+            # Mock background tasks to prevent async_session_maker issues
+            # Patch at the import location in post.py
+            with patch('app.api.v1.post.run_risk_check_for_post', return_value=None):
+                # 使用 TestClient，它在同步上下文中运行
+                with TestClient(app) as test_client:
+                    yield test_client
     finally:
         # 清理依赖覆盖
         app.dependency_overrides.clear()

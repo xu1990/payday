@@ -7,7 +7,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, RATE_LIMIT_POST
+from app.core.deps import get_current_user, rate_limit_post
 from app.models.user import User
 from app.schemas.post import PostCreate, PostResponse
 from app.services.post_service import create as create_post, get_by_id, list_posts, search_posts
@@ -50,7 +50,7 @@ async def post_create(
     body: PostCreate,
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
-    _rate_limit: bool = Depends(RATE_LIMIT_POST),
+    _rate_limit: bool = Depends(rate_limit_post),
     db: AsyncSession = Depends(get_db),
 ):
     # 发帖使用当前用户匿名昵称（与 PRD/技术方案一致）

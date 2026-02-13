@@ -176,7 +176,8 @@ def mock_wechat_pay():
         "paySign": "test_sign",
         "out_trade_no": "test_order_id",
     }
-    with patch('app.utils.wechat_pay.create_mini_program_payment', mock):
+    # Patch at the import location in payment_service
+    with patch('app.services.payment_service.create_mini_program_payment', mock):
         yield mock
 
 

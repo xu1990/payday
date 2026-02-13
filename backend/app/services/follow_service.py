@@ -17,6 +17,17 @@ async def follow_user(db: AsyncSession, follower_id: str, following_id: str) -> 
     if follower_id == following_id:
         return False
 
+    # 先检查是否已关注
+    existing = await db.execute(
+        select(Follow).where(
+            Follow.follower_id == follower_id,
+            Follow.following_id == following_id,
+        )
+    )
+    if existing.scalar_one_or_none():
+        # 已关注，返回True表示成功（幂等）
+        return True
+
     try:
         # 直接尝试插入，依赖唯一约束防止重复
         db.add(Follow(follower_id=follower_id, following_id=following_id))
@@ -39,7 +50,7 @@ async def follow_user(db: AsyncSession, follower_id: str, following_id: str) -> 
     except IntegrityError:
         # 并发情况下，唯一约束冲突说明已关注
         await db.rollback()
-        return False
+        return True  # 已存在，返回True表示成功（幂等）
 
 
 async def unfollow_user(db: AsyncSession, follower_id: str, following_id: str) -> bool:

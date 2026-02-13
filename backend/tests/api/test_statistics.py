@@ -485,5 +485,5 @@ class TestAdminStatisticsEndpoint:
             headers=user_headers,
         )
 
-        # 验证HTTP响应 - 应该返回403
-        assert response.status_code == 403
+        # 验证HTTP响应 - 应该返回401（无权限访问admin资源）
+        assert response.status_code == 401

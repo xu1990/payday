@@ -41,6 +41,8 @@ class TestCreatePaymentEndpoint:
         # 验证HTTP响应
         assert response.status_code == 200
         data = response.json()
+        if not data.get("success"):
+            print(f"Payment creation failed: {data}")
         assert data["success"] is True
         assert "data" in data
         assert data["data"]["out_trade_no"] == test_order.id

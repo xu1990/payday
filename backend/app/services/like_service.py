@@ -52,7 +52,7 @@ async def like_post(db: AsyncSession, user_id: str, post_id: str) -> tuple["Like
 
         # 更新缓存
         try:
-            LikeCacheService.set_like_status(user_id, "post", post_id)
+            await LikeCacheService.set_like_status(user_id, "post", post_id)
         except Exception as e:
             from app.utils.logger import get_logger
             logger = get_logger(__name__)
@@ -124,7 +124,7 @@ async def like_comment(db: AsyncSession, user_id: str, comment_id: str) -> tuple
 
         # 更新缓存
         try:
-            LikeCacheService.set_like_status(user_id, "comment", comment_id)
+            await LikeCacheService.set_like_status(user_id, "comment", comment_id)
         except Exception as e:
             from app.utils.logger import get_logger
             logger = get_logger(__name__)

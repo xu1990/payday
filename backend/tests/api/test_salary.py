@@ -343,7 +343,7 @@ class TestUpdateSalaryEndpoint:
         # 验证HTTP响应 - 应该返回404
         assert response.status_code == 404
         data = response.json()
-        assert "不存在" in data["detail"]
+        assert "不存在" in data.get("message", data.get("detail", ""))
 
     def test_update_salary_invalid_mood(
         self,
