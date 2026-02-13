@@ -257,3 +257,169 @@ class TestCursorPaginatorBasic:
         assert "offset" in result
         assert isinstance(result["items"], list)
         assert isinstance(result["total"], int)
+
+
+class TestCursorPaginatorWithCursor:
+    """测试游标分页器 - 带游标的分页"""
+
+    @pytest.mark.asyncio
+    async def test_paginate_with_cursor_single_order(self, db_session: AsyncSession):
+        """测试使用游标的分页 - 单一排序字段"""
+        # 创建5个帖子
+        base_time = datetime.utcnow()
+        for i in range(5):
+            post = await TestDataFactory.create_post(
+                db_session,
+                user_id=f"user_{i}",
+                content=f"内容{i}",
+                status="normal",
+                risk_status="approved"
+            )
+            # 手动设置created_at以确保不同时间
+            post.created_at = base_time + timedelta(hours=i)
+            await db_session.commit()
+
+        # 使用游标分页
+        paginator = CursorPaginator(
+            Post,
+            order_by=[desc(Post.created_at)]
+        )
+
+        # 第一页
+        result1 = await paginator.paginate(db_session, limit=2)
+        assert len(result1.items) == 2
+        assert result1.has_more is True
+        assert result1.next_cursor is not None
+
+        # 第二页使用游标
+        result2 = await paginator.paginate(db_session, limit=2, cursor=result1.next_cursor)
+        assert len(result2.items) == 2
+        assert result2.has_more is True
+        assert result2.next_cursor is not None
+
+        # 第三页 - 应该只有1条数据
+        result3 = await paginator.paginate(db_session, limit=2, cursor=result2.next_cursor)
+        assert len(result3.items) == 1
+        assert result3.has_more is False
+        assert result3.next_cursor is None
+
+    @pytest.mark.asyncio
+    async def test_paginate_with_cursor_multiple_orders(self, db_session: AsyncSession):
+        """测试使用游标的分页 - 多个排序字段"""
+        # 创建5个帖子
+        base_time = datetime.utcnow()
+        for i in range(5):
+            await TestDataFactory.create_post(
+                db_session,
+                user_id=f"user_{i}",
+                content=f"内容{i}",
+                status="normal",
+                risk_status="approved"
+            )
+
+        # 使用多个排序字段
+        paginator = CursorPaginator(
+            Post,
+            order_by=[desc(Post.created_at), desc(Post.id)]
+        )
+
+        # 第一页
+        result1 = await paginator.paginate(db_session, limit=2)
+        assert len(result1.items) == 2
+
+        # 第二页使用游标
+        result2 = await paginator.paginate(db_session, limit=2, cursor=result1.next_cursor)
+        assert len(result2.items) == 2
+        # 验证没有返回相同的数据
+        ids1 = {item["id"] for item in result1.items}
+        ids2 = {item["id"] for item in result2.items}
+        assert ids1.isdisjoint(ids2)
+
+    @pytest.mark.asyncio
+    async def test_paginate_with_count(self, db_session: AsyncSession):
+        """测试带总数的游标分页"""
+        # 创建3个帖子
+        for i in range(3):
+            await TestDataFactory.create_post(
+                db_session,
+                user_id=f"user_{i}",
+                content=f"内容{i}",
+                status="normal",
+                risk_status="approved"
+            )
+
+        paginator = CursorPaginator(Post, order_by=[desc(Post.created_at)])
+
+        result = await paginator.paginate(db_session, limit=2, with_count=True)
+
+        assert len(result.items) == 2
+        assert result.total == 3
+        assert result.has_more is True
+
+    @pytest.mark.asyncio
+    async def test_paginate_with_filter_and_cursor(self, db_session: AsyncSession):
+        """测试带过滤条件的游标分页"""
+        # 创建不同状态的帖子
+        for i in range(5):
+            await TestDataFactory.create_post(
+                db_session,
+                user_id=f"user_{i}",
+                content=f"内容{i}",
+                status="normal" if i < 3 else "deleted",
+                risk_status="approved"
+            )
+
+        # 使用过滤条件
+        paginator = CursorPaginator(
+            Post,
+            order_by=[desc(Post.created_at)],
+            filter_expr=Post.status == "normal"
+        )
+
+        # 第一页
+        result1 = await paginator.paginate(db_session, limit=2)
+        assert len(result1.items) == 2
+
+        # 第二页使用游标
+        result2 = await paginator.paginate(db_session, limit=2, cursor=result1.next_cursor)
+        assert len(result2.items) == 1
+        assert result2.has_more is False
+
+    @pytest.mark.asyncio
+    async def test_cursor_values_length_mismatch_raises_error(self, db_session: AsyncSession):
+        """测试游标值数量不匹配时抛出错误"""
+        paginator = CursorPaginator(
+            Post,
+            order_by=[Post.created_at, Post.id]
+        )
+
+        # 创建一个只有1个值的游标（但order_by需要2个值）
+        invalid_cursor = paginator._encode_cursor(("2024-01-01",))
+
+        with pytest.raises(ValueError, match="Cursor does not match"):
+            paginator._build_conditions(invalid_cursor)
+
+    @pytest.mark.asyncio
+    async def test_paginate_empty_result_with_cursor(self, db_session: AsyncSession):
+        """测试游标指向超出范围的数据"""
+        # 创建1个帖子
+        await TestDataFactory.create_post(
+            db_session,
+            user_id="user_1",
+            content="内容1",
+            status="normal",
+            risk_status="approved"
+        )
+
+        paginator = CursorPaginator(Post, order_by=[desc(Post.created_at)])
+
+        # 第一页获取数据
+        result1 = await paginator.paginate(db_session, limit=10)
+        # 创建一个指向未来的游标
+        future_time = datetime.utcnow() + timedelta(days=30)
+        future_cursor = paginator._encode_cursor((future_time,))
+
+        # 使用未来的游标应该返回空结果
+        result2 = await paginator.paginate(db_session, limit=10, cursor=future_cursor)
+        assert len(result2.items) == 0
+        assert result2.has_more is False

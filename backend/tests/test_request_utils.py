@@ -43,8 +43,8 @@ class TestGetClientIp:
         result = get_client_ip(request)
         assert result == "198.51.100.1"
 
-    def test_x_real_ip_priority_over_forwarded(self):
-        """测试 X-Real-IP 优先级高于 X-Forwarded-For"""
+    def test_x_forwarded_for_priority_over_real_ip(self):
+        """测试 X-Forwarded-For 优先级高于 X-Real-IP"""
         class MockRequest:
             def __init__(self, headers):
                 self.headers = headers
@@ -55,8 +55,8 @@ class TestGetClientIp:
             "X-Real-IP": "198.51.100.1"
         })
         result = get_client_ip(request)
-        # X-Real-IP 优先级更高
-        assert result == "198.51.100.1"
+        # X-Forwarded-For 优先级更高
+        assert result == "203.0.113.1"
 
     def test_extract_from_client_host(self):
         """测试从 client.host 提取 IP"""

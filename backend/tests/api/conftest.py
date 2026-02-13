@@ -8,71 +8,21 @@ from datetime import datetime
 from unittest.mock import MagicMock, Mock
 import pytest
 
+# Store the original modules before mocking
+_original_modules = {}
+
 # Setup mocks immediately when this file is loaded (before any test imports)
-# Mock Celery
+# Mock Celery for API tests (this is loaded by tests/api/ only)
 celery_mock = MagicMock()
 celery_mock.shared_task = lambda **kwargs: lambda f: f
+_original_modules['celery'] = sys.modules.get('celery')
 sys.modules['celery'] = celery_mock
 
-# Mock rate limiter to prevent TypeError during app import
-# This is needed because RateLimiter is not callable but used as a dependency
-from unittest.mock import AsyncMock
-
-# Create a mock RateLimiter class that returns callable instances
-class MockRateLimiter:
-    """Mock RateLimiter that is callable and has async check method"""
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def __call__(self, *args, **kwargs):
-        """Make instances callable for FastAPI Depends()"""
-        # Just return None, FastAPI will handle this
-        return None
-
-    async def check(self, key, request):
-        """Mock check method"""
-        pass
-
-# Create instances for the constants
-RATE_LIMIT_GENERAL = MockRateLimiter()
-RATE_LIMIT_LOGIN = MockRateLimiter()
-RATE_LIMIT_POST = MockRateLimiter()
-RATE_LIMIT_COMMENT = MockRateLimiter()
-
-# Create a proper mock module
-mock_rate_limit_module = MagicMock()
-mock_rate_limit_module.RateLimiter = MockRateLimiter
-mock_rate_limit_module.get_client_identifier = AsyncMock(return_value="test_client")
-mock_rate_limit_module.get_client_ip = lambda request: "127.0.0.1"
-mock_rate_limit_module.RATE_LIMIT_GENERAL = RATE_LIMIT_GENERAL
-mock_rate_limit_module.RATE_LIMIT_LOGIN = RATE_LIMIT_LOGIN
-mock_rate_limit_module.RATE_LIMIT_POST = RATE_LIMIT_POST
-mock_rate_limit_module.RATE_LIMIT_COMMENT = RATE_LIMIT_COMMENT
-
-sys.modules['app.core.rate_limit'] = mock_rate_limit_module
-
-# Mock tencentcloud with simple module stubs that support attribute access
-class ModuleStub:
-    """Simple module stub that returns itself for any attribute access"""
-    def __init__(self, name=''):
-        self.__name__ = name or 'tencentcloud'
-
-    def __getattr__(self, name):
-        # Return a new stub for any attribute access
-        return ModuleStub(f'{self.__name__}.{name}')
-
-    def __getitem__(self, name):
-        return ModuleStub(f'{self.__name__}.{name}')
-
-sys.modules['tencentcloud'] = ModuleStub()
-# Pre-register commonly used submodules
-for submodule in ['common', 'common.credential', 'common.exception', 'common.exception.tencent_cloud_sdk_exception',
-                  'tms', 'tms.v20200713', 'tms.v20200713.models',
-                  'ims', 'ims.v20201229', 'ims.v20201229.models',
-                  'ocr', 'ocr.v20181119', 'ocr.v20181119.models']:
-    sys.modules[f'tencentcloud.{submodule}'] = ModuleStub(f'tencentcloud.{submodule}')
+# Note: Removed app.core.rate_limit mock to avoid breaking test_rate_limit.py
+# API tests don't use rate_limit directly
 
 # Mock OSS
+_original_modules['oss2'] = sys.modules.get('oss2')
 sys.modules['oss2'] = MagicMock()
 
 # Mock sentry_sdk
@@ -87,28 +37,30 @@ class MockSentrySdk:
         pass
 
 mock_sentry = MockSentrySdk()
-sys.modules['sentry_sdk'] = mock_sentry
-sys.modules['sentry_sdk.integrations'] = MagicMock()
-sys.modules['sentry_sdk.integrations.fastapi'] = MagicMock()
-sys.modules['sentry_sdk.integrations.sqlalchemy'] = MagicMock()
-sys.modules['sentry_sdk.integrations.celery'] = MagicMock()
-sys.modules['sentry_sdk.integrations.redis'] = MagicMock()
-sys.modules['sentry_sdk.integrations.redis'] = MagicMock()
-sys.modules['sentry_sdk.integrations.argv'] = MagicMock()
-sys.modules['sentry_sdk.integrations.logging'] = MagicMock()
-sys.modules['sentry_sdk.integrations.excepthook'] = MagicMock()
-sys.modules['sentry_sdk.integrations.dedupe'] = MagicMock()
-sys.modules['sentry_sdk.integrations.httpx'] = MagicMock()
+_sentry_modules = ['sentry_sdk', 'sentry_sdk.integrations', 'sentry_sdk.integrations.fastapi',
+    'sentry_sdk.integrations.sqlalchemy', 'sentry_sdk.integrations.celery', 'sentry_sdk.integrations.redis',
+    'sentry_sdk.integrations.argv', 'sentry_sdk.integrations.logging', 'sentry_sdk.integrations.excepthook',
+    'sentry_sdk.integrations.dedupe', 'sentry_sdk.integrations.httpx']
 
-# Mock the tencent_yu service to prevent initialization issues
-# This is needed because it tries to access settings attributes that don't exist
-tencent_yu_mock = MagicMock()
-sys.modules['app.utils.tencent_yu'] = tencent_yu_mock
+for mod in _sentry_modules:
+    _original_modules[mod] = sys.modules.get(mod)
+    sys.modules[mod] = MagicMock() if not mod.endswith('integrations') else MagicMock()
 
-# Mock the date utils module which doesn't exist
-date_utils_mock = MagicMock()
-date_utils_mock.now = MagicMock(return_value=datetime.now())
-sys.modules['app.utils.date'] = date_utils_mock
+# Note: Removed global mocks for app.utils.tencent_yu and app.utils.date
+# These were causing test pollution for test_tencent_yu.py
+# API tests should patch these locally if needed
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_api_mocks():
+    """Clean up mocks after all api tests are done"""
+    yield
+    # Restore original modules
+    for mod_name, original_module in _original_modules.items():
+        if original_module is None:
+            sys.modules.pop(mod_name, None)
+        else:
+            sys.modules[mod_name] = original_module
 
 
 @pytest.fixture

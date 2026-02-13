@@ -261,6 +261,56 @@ class TestCommentCreateEndpoint:
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    async def test_create_comment_on_non_normal_post(
+        self, client, test_user: User, user_headers: dict, db_session: AsyncSession
+    ):
+        """测试评论状态异常的帖子"""
+        from app.models.post import Post
+        # 创建状态不是normal的帖子
+        post = Post(
+            user_id=test_user.id,
+            content="测试帖子",
+            anonymous_name=test_user.anonymous_name,
+            status="deleted",  # 非normal状态
+            risk_status="approved",
+        )
+        db_session.add(post)
+        await db_session.commit()
+        await db_session.refresh(post)
+
+        response = client.post(
+            f"/api/v1/posts/{post.id}/comments",
+            json={"content": "评论"},
+            headers=user_headers,
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    async def test_create_comment_on_pending_post(
+        self, client, test_user: User, user_headers: dict, db_session: AsyncSession
+    ):
+        """测试评论未通过审核的帖子"""
+        from app.models.post import Post
+        # 创建风险状态未通过的帖子
+        post = Post(
+            user_id=test_user.id,
+            content="测试帖子",
+            anonymous_name=test_user.anonymous_name,
+            status="normal",
+            risk_status="pending",  # 未通过审核
+        )
+        db_session.add(post)
+        await db_session.commit()
+        await db_session.refresh(post)
+
+        response = client.post(
+            f"/api/v1/posts/{post.id}/comments",
+            json={"content": "评论"},
+            headers=user_headers,
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
     async def test_create_comment_with_invalid_parent(
         self, client, test_user: User, user_headers: dict, db_session: AsyncSession
     ):
@@ -270,6 +320,33 @@ class TestCommentCreateEndpoint:
         response = client.post(
             f"/api/v1/posts/{post_id}/comments",
             json={"content": "回复", "parent_id": "invalid_parent_id"},
+            headers=user_headers,
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    async def test_create_comment_with_parent_from_different_post(
+        self, client, test_user: User, user_headers: dict, db_session: AsyncSession
+    ):
+        """测试回复其他帖子的评论"""
+        # 创建第一个帖子并添加评论
+        post1_id = await create_test_post(db_session, test_user.id)
+
+        root = await create_comment(
+            db_session,
+            post1_id,
+            test_user.id,
+            test_user.anonymous_name,
+            "帖子1的评论",
+        )
+        await db_session.commit()
+
+        # 创建第二个帖子，尝试使用第一个帖子的评论作为parent
+        post2_id = await create_test_post(db_session, test_user.id)
+
+        response = client.post(
+            f"/api/v1/posts/{post2_id}/comments",
+            json={"content": "回复", "parent_id": root.id},
             headers=user_headers,
         )
 

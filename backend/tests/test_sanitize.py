@@ -116,3 +116,8 @@ class TestSanitizeStrict:
         result = sanitize_strict(input_text)
         # 纯文本保留，但被 HTML 转义
         assert "Just plain text" in result or "Just plain text" == result
+
+    def test_handles_empty_input(self):
+        """测试空输入"""
+        assert sanitize_strict(None) is None
+        assert sanitize_strict("") == ""

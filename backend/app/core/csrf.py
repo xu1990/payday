@@ -71,7 +71,10 @@ class CSRFTokenManager:
 
         # 使用常量时间比较防止时序攻击
         import hmac
-        return hmac.compare_digest(token, stored_token.encode() if isinstance(stored_token, str) else stored_token)
+        # 确保两个参数都是相同类型（都转换为bytes）
+        token_bytes = token.encode('utf-8') if isinstance(token, str) else token
+        stored_bytes = stored_token.encode('utf-8') if isinstance(stored_token, str) else stored_token
+        return hmac.compare_digest(token_bytes, stored_bytes)
 
     async def delete_token(self, user_id: str) -> None:
         """删除用户的 CSRF token（登出时调用）"""
