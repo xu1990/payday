@@ -22,9 +22,10 @@ To run these tests after the infrastructure is fixed:
     pytest tests/api/test_statistics.py -v
 """
 import pytest
-from datetime import date, datetime
+from datetime import date
 
 
+@pytest.mark.asyncio
 class TestStatisticsSummaryEndpoint:
     """测试GET /api/v1/statistics/summary端点"""
 
@@ -185,6 +186,7 @@ class TestStatisticsSummaryEndpoint:
         assert response.status_code == 401
 
 
+@pytest.mark.asyncio
 class TestStatisticsTrendEndpoint:
     """测试GET /api/v1/statistics/trend端点"""
 
@@ -299,6 +301,7 @@ class TestStatisticsTrendEndpoint:
         assert response.status_code == 401
 
 
+@pytest.mark.asyncio
 class TestStatisticsInsightsEndpoint:
     """测试GET /api/v1/statistics/insights端点"""
 
@@ -396,6 +399,7 @@ class TestStatisticsInsightsEndpoint:
         assert response.status_code == 401
 
 
+@pytest.mark.asyncio
 class TestAdminStatisticsEndpoint:
     """测试GET /api/v1/admin/statistics端点（管理员仪表盘统计）"""
 
