@@ -8,7 +8,7 @@ from app.models.user import User
 from app.models.post import Post
 from app.models.comment import Comment
 from app.models.salary import SalaryRecord
-from app.models.membership import Membership, MembershipOrder
+from app.models.membership import Membership, MembershipOrder, AppTheme
 from app.models.notification import Notification
 from app.utils.encryption import encrypt_amount
 
@@ -193,3 +193,25 @@ class TestDataFactory:
         await db_session.commit()
         await db_session.refresh(notification)
         return notification
+
+    @staticmethod
+    async def create_theme(
+        db_session: AsyncSession,
+        name: str = "默认主题",
+        code: str = "default",
+        **kwargs
+    ) -> AppTheme:
+        """创建测试主题"""
+        theme = AppTheme(
+            name=name,
+            code=code,
+            preview_image=kwargs.get("preview_image"),
+            config=kwargs.get("config"),
+            is_premium=kwargs.get("is_premium", False),
+            is_active=kwargs.get("is_active", True),
+            sort_order=kwargs.get("sort_order", 0),
+        )
+        db_session.add(theme)
+        await db_session.commit()
+        await db_session.refresh(theme)
+        return theme

@@ -14,7 +14,7 @@ from app.models.base import Base
 from app.models.user import User
 from app.models.post import Post
 from app.models.salary import SalaryRecord
-from app.models.membership import Membership, MembershipOrder
+from app.models.membership import Membership, MembershipOrder, AppTheme
 from app.models.notification import Notification
 from tests.test_utils import TestDataFactory
 
@@ -260,3 +260,9 @@ async def test_comment(db_session: AsyncSession, test_user: User, test_post: Pos
         test_user.id,
         test_post.id,
     )
+
+
+@pytest.fixture
+async def test_theme(db_session: AsyncSession) -> AppTheme:
+    """创建测试主题"""
+    return await TestDataFactory.create_theme(db_session)
