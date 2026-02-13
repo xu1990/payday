@@ -2,7 +2,7 @@
 主题表 - Sprint 3.4 主题与设置
 """
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, ForeignKey
+from sqlalchemy import Column, String, DateTime, ForeignKey, Integer
 
 from .base import Base
 from .user import gen_uuid
