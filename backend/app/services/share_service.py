@@ -109,8 +109,8 @@ async def get_share_stats(
         )
     )
 
-    # 修复：先存储结果，避免双重迭代导致的空结果
-    all_shares = result.all()
+    # 获取Share对象列表
+    all_shares = result.scalars().all()
     total_shares = len(all_shares)
     success_shares = len([s for s in all_shares if s.share_status == "success"])
     success_rate = (success_shares / total_shares * 100) if total_shares > 0 else 0

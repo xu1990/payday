@@ -2,6 +2,7 @@
 话题 Pydantic Schemas
 """
 from typing import Optional
+from datetime import datetime
 from pydantic import BaseModel, Field
 
 
@@ -28,8 +29,8 @@ class TopicResponse(BaseModel):
     post_count: int
     is_active: bool
     sort_order: int
-    created_at: str
-    updated_at: Optional[str]
+    created_at: datetime
+    updated_at: Optional[datetime]
 
     class Config:
         from_attributes = True

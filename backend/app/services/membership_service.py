@@ -8,7 +8,7 @@ from sqlalchemy import select, func, and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.membership import Membership, MembershipOrder, User
+from app.models.membership import Membership, MembershipOrder
 from app.schemas.membership import MembershipOrderCreate
 from app.core.exceptions import BusinessException, NotFoundException, ValidationException
 
@@ -34,7 +34,7 @@ async def create_order(
     """创建会员订单"""
     # 幂等性检查：防止重复创建pending订单
     recent_time = datetime.utcnow() - timedelta(minutes=15)
-    existing_order = await db.execute(
+    existing_result = await db.execute(
         select(MembershipOrder)
         .where(
             and_(
@@ -44,7 +44,8 @@ async def create_order(
                 MembershipOrder.created_at >= recent_time
             )
         )
-    ).scalar_one_or_none()
+    )
+    existing_order = existing_result.scalar_one_or_none()
 
     if existing_order:
         raise BusinessException(
@@ -53,10 +54,10 @@ async def create_order(
         )
 
     # 获取套餐信息
-    membership = await db.execute(
+    membership_result = await db.execute(
         select(Membership).where(Membership.id == membership_id)
     )
-    membership_obj = membership.scalar_one_or_none()
+    membership_obj = membership_result.scalar_one_or_none()
     if not membership_obj:
         raise NotFoundException("会员套餐不存在")
     if not membership_obj.is_active:
@@ -115,9 +116,10 @@ async def get_active_membership(db: AsyncSession, user_id: str) -> Optional[dict
     if not active_order:
         return None  # OK: 没有激活的会员是正常情况
 
-    membership = await db.execute(
+    membership_result = await db.execute(
         select(Membership).where(Membership.id == active_order.membership_id)
-    ).scalar_one_or_none()
+    )
+    membership = membership_result.scalar_one_or_none()
 
     if not membership:
         raise NotFoundException("会员套餐信息不存在")

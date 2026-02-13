@@ -59,19 +59,13 @@ async def get_user_profile_data(db: AsyncSession, user_id: str, target_user_id: 
     follower_count_task = db.execute(
         select(func.count(Follow.id))
         .select_from(Follow)
-        .where(
-            Follow.following_id == target_user_id,
-            Follow.is_deleted == False
-        )
+        .where(Follow.following_id == target_user_id)
     )
 
     following_count_task = db.execute(
         select(func.count(Follow.id))
         .select_from(Follow)
-        .where(
-            Follow.follower_id == target_user_id,
-            Follow.is_deleted == False
-        )
+        .where(Follow.follower_id == target_user_id)
     )
 
     # 并发执行所有查询

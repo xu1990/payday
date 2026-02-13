@@ -19,6 +19,7 @@ class Share(Base):
     target_id = Column(String(36), nullable=True, comment="分享目标ID（帖子ID/工资记录ID等）")
     share_channel = Column(String(20), nullable=False, comment="分享渠道：wechat_friend/wechat_moments")
     share_status = Column(String(20), default="pending", nullable=False, comment="分享状态：pending/success/failed")
+    error_message = Column(String(500), nullable=True, comment="失败原因（仅当status=failed时有值）")
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, comment="创建时间")
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False, comment="更新时间")
 

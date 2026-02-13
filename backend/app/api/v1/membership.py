@@ -7,12 +7,14 @@ from fastapi import APIRouter, Depends, Query
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
+from app.models.user import User
 from app.models.membership import MembershipOrder
 from app.schemas.membership import MembershipListResponse, MembershipOrderCreate
 from app.services.membership_service import (
     cancel_order,
     create_order,
     get_active_membership,
+    get_my_orders,
     list_memberships,
     verify_membership_benefits,
 )
@@ -28,7 +30,17 @@ async def list_memberships_endpoint(
 ):
     """获取所有可用会员套餐"""
     memberships = await list_memberships(db)
-    return MembershipListResponse(items=memberships)
+    items = []
+    for m in memberships:
+        items.append({
+            "id": m.id,
+            "name": m.name,
+            "description": m.description,
+            "price": float(m.price) if m.price else 0,
+            "duration_days": m.duration_days,
+            "is_active": bool(m.is_active) if m.is_active is not None else True,
+        })
+    return MembershipListResponse(items=items)
 
 
 @router.post("/order", response_model=dict)

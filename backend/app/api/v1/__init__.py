@@ -16,9 +16,11 @@ from .recommendation import router as recommendation_router
 from .admin_config import router as admin_config_router
 from .payment import router as payment_router
 from .cache import router as cache_router
+from .membership import router as membership_router
 from .storage import router as storage_router
 from .theme import router as theme_router
 from .checkin import router as checkin_router
+from .share import router as share_router
 
 api_router = APIRouter(prefix="/api/v1", tags=["v1"])
 
@@ -38,9 +40,11 @@ api_router.include_router(recommendation_router)
 api_router.include_router(admin_config_router)
 api_router.include_router(payment_router)
 api_router.include_router(cache_router)
+api_router.include_router(membership_router)
 api_router.include_router(storage_router)
 api_router.include_router(theme_router)
 api_router.include_router(checkin_router)
+api_router.include_router(share_router)
 
 
 @api_router.get("/ping")

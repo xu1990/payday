@@ -56,15 +56,18 @@ class TestLikePostEndpoint:
         test_post,
     ):
         """测试点赞帖子成功 - 重复点赞返回200（幂等）"""
+        # Store the post_id before any HTTP requests to avoid expired attribute issues
+        post_id = str(test_post.id)
+
         # 首次点赞
         client.post(
-            f"/api/v1/posts/{test_post.id}/like",
+            f"/api/v1/posts/{post_id}/like",
             headers=user_headers,
         )
 
         # 再次点赞 - 应该返回200而不是201（幂等行为）
         response = client.post(
-            f"/api/v1/posts/{test_post.id}/like",
+            f"/api/v1/posts/{post_id}/like",
             headers=user_headers,
         )
 
@@ -73,7 +76,7 @@ class TestLikePostEndpoint:
         data = response.json()
         assert "id" in data
         assert data["target_type"] == "post"
-        assert data["target_id"] == str(test_post.id)
+        assert data["target_id"] == post_id
 
     def test_like_post_not_found(
         self,
@@ -211,15 +214,18 @@ class TestLikeCommentEndpoint:
         test_comment,
     ):
         """测试点赞评论成功 - 重复点赞返回200（幂等）"""
+        # Store the comment_id before any HTTP requests to avoid expired attribute issues
+        comment_id = str(test_comment.id)
+
         # 首次点赞
         client.post(
-            f"/api/v1/comments/{test_comment.id}/like",
+            f"/api/v1/comments/{comment_id}/like",
             headers=user_headers,
         )
 
         # 再次点赞 - 应该返回200而不是201（幂等行为）
         response = client.post(
-            f"/api/v1/comments/{test_comment.id}/like",
+            f"/api/v1/comments/{comment_id}/like",
             headers=user_headers,
         )
 
@@ -228,7 +234,7 @@ class TestLikeCommentEndpoint:
         data = response.json()
         assert "id" in data
         assert data["target_type"] == "comment"
-        assert data["target_id"] == str(test_comment.id)
+        assert data["target_id"] == comment_id
 
     def test_like_comment_not_found(
         self,

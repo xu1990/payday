@@ -1,7 +1,8 @@
 """
 分享请求/响应模型 - P1-2 分享功能
 """
-from typing import Optional, Literal
+from typing import Optional, Literal, List
+from datetime import datetime
 from pydantic import BaseModel, Field
 
 
@@ -26,12 +27,18 @@ class ShareResponse(BaseModel):
     target_id: str
     share_channel: str
     share_status: str
-    created_at: str
-    updated_at: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
     error_message: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+
+class ShareListResponse(BaseModel):
+    """分享记录列表响应"""
+    items: List[ShareResponse]
+    total: int
 
 
 class ShareStatsResponse(BaseModel):

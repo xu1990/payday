@@ -32,6 +32,7 @@ class TestDataFactory:
             anonymous_name=anonymous_name,
             avatar=kwargs.get("avatar"),
             bio=kwargs.get("bio"),
+            status=kwargs.get("status", "normal"),
         )
         db_session.add(user)
         await db_session.commit()

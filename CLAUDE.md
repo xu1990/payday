@@ -26,7 +26,7 @@ The project follows the technical specification in `docs/技术方案_v1.0.md` a
 cd backend
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -r requirements-dev.txt  # Includes dev tools (pytest, black, pylint, etc.)
 
 # Run database migrations (required after model changes)
 python3 -m alembic upgrade head
@@ -42,6 +42,10 @@ pytest
 
 # Run tests with coverage report
 pytest --cov=app --cov-report=html
+
+# Lint and format (from root directory)
+cd .. && npm run lint:backend    # Pylint
+cd .. && npm run format:backend  # Black + isort
 \`\`\`
 
 **Important**: Always run migrations after model changes. The backend uses Alembic for database versioning.
@@ -62,6 +66,10 @@ npm run build
 
 # Type check
 npm run type-check
+
+# Lint and format (from root directory)
+cd .. && npm run lint:admin    # ESLint
+cd .. && npm run format:admin  # Prettier
 \`\`\`
 
 The admin panel runs on port 5174 and proxies API requests to `http://127.0.0.1:8000`.
@@ -82,6 +90,10 @@ npm run build
 
 # Type check
 npm run type-check
+
+# Lint and format (from root directory)
+cd .. && npm run lint:miniapp    # ESLint
+cd .. && npm run format:miniapp  # Prettier
 \`\`\`
 
 ---
@@ -266,6 +278,9 @@ pytest -m "not integration and not slow"
 
 # Run async tests only
 pytest -m asyncio
+
+# Run tests matching a keyword expression
+pytest -k "test_login" -v
 \`\`\`
 
 ### Code Style
@@ -273,6 +288,14 @@ pytest -m asyncio
 - **Python**: Follow PEP 8, use type hints (mypy strict mode)
 - **TypeScript**: Vue3 Composition API style
 - **Git Commits**: Use conventional commits format: \`feat(scope): description\`
+
+Root-level scripts for running lint/format across all components:
+- \`npm run lint:backend\` - Pylint
+- \`npm run lint:admin\` - ESLint (admin-web)
+- \`npm run lint:miniapp\` - ESLint (miniapp)
+- \`npm run format:backend\` - Black + isort
+- \`npm run format:admin\` - Prettier (admin-web)
+- \`npm run format:miniapp\` - Prettier (miniapp)
 
 ---
 

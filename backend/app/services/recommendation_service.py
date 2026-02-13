@@ -42,10 +42,7 @@ async def recommend_posts_for_user(
     # 1. 获取用户关注的人
     follow_result = await db.execute(
         select(Follow.following_id)
-        .where(
-            Follow.follower_id == user_id,
-            Follow.is_deleted == False,
-        )
+        .where(Follow.follower_id == user_id)
     )
     following_ids = [row[0] for row in follow_result.fetchall()]
 

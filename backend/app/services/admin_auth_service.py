@@ -25,7 +25,7 @@ async def login_admin(db: AsyncSession, username: str, password: str) -> Optiona
         (jwt_token, csrf_token) 或 None
     """
     admin = await get_admin_by_username(db, username)
-    if not admin or not verify_password(password, admin.password_hash):
+    if not admin or not password or not verify_password(password, admin.password_hash):
         return None  # OK: 登录失败返回 None 是正常流程
 
     # 生成 JWT token

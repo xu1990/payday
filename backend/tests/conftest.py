@@ -167,15 +167,18 @@ def mock_wechat_auth():
 @pytest.fixture
 def mock_wechat_pay():
     """Mock微信支付API"""
-    mock = AsyncMock()
-    mock.return_value = {
-        "timeStamp": "1234567890",
-        "nonceStr": "test_nonce",
-        "package": "prepay_id=test",
-        "signType": "MD5",
-        "paySign": "test_sign",
-        "out_trade_no": "test_order_id",
-    }
+    async def mock_create_payment(**kwargs):
+        """Mock that returns the actual out_trade_no that was passed in"""
+        return {
+            "timeStamp": "1234567890",
+            "nonceStr": "test_nonce",
+            "package": "prepay_id=test",
+            "signType": "MD5",
+            "paySign": "test_sign",
+            "out_trade_no": kwargs.get("out_trade_no", "test_order_id"),
+        }
+
+    mock = AsyncMock(side_effect=mock_create_payment)
     # Patch at the import location in payment_service
     with patch('app.services.payment_service.create_mini_program_payment', mock):
         yield mock
