@@ -72,6 +72,8 @@ async def login_with_code(db: AsyncSession, code: str) -> Optional[Tuple[str, st
         (access_token, refresh_token, user) 或 None
     """
     data = await code2session(code)
+    if not data:
+        return None  # OK: 微信登录失败返回 None 是正常流程
     openid = data.get("openid")
     if not openid:
         return None  # OK: 微信登录失败返回 None 是正常流程

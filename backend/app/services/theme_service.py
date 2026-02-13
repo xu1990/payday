@@ -34,9 +34,9 @@ async def get_user_settings(db: AsyncSession, user_id: str) -> dict:
 
     return {
         "theme_id": settings.theme_id,
-        "privacy_profile": settings.privacy_profile or 0,
-        "allow_stranger_notice": settings.allow_stranger_notice or 1,
-        "allow_comment": settings.allow_comment or 1,
+        "privacy_profile": settings.privacy_profile if settings.privacy_profile is not None else 0,
+        "allow_stranger_notice": settings.allow_stranger_notice if settings.allow_stranger_notice is not None else 1,
+        "allow_comment": settings.allow_comment if settings.allow_comment is not None else 1,
     }
 
 

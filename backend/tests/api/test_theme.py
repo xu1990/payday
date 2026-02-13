@@ -201,6 +201,7 @@ class TestGetMySettingsEndpoint:
             is_system=1,
         )
         db_session.add(theme)
+        await db_session.flush()  # Flush to get the theme ID
 
         # 创建用户设置
         user_setting = UserSetting(
@@ -265,6 +266,7 @@ class TestUpdateMySettingsEndpoint:
             is_system=1,
         )
         db_session.add(theme)
+        await db_session.flush()  # Flush to get the theme ID
         await db_session.commit()
 
         # 更新设置
@@ -355,6 +357,7 @@ class TestUpdateMySettingsEndpoint:
             is_system=1,
         )
         db_session.add(theme)
+        await db_session.flush()  # Flush to get the theme ID
         await db_session.commit()
 
         # 更新所有字段
@@ -397,6 +400,7 @@ class TestUpdateMySettingsEndpoint:
             is_system=1,
         )
         db_session.add(theme)
+        await db_session.flush()  # Flush to get the theme ID
 
         # 先创建设置
         user_setting = UserSetting(

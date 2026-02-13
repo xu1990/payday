@@ -35,7 +35,7 @@ async def get_user_checkin_streak(db: AsyncSession, user_id: str) -> int:
             select(CheckIn)
             .where(CheckIn.user_id == user_id, CheckIn.check_date == prev_date)
         )
-        if prev.scalar_one_or_none():
+        if not prev.scalar_one_or_none():
             break  # 没有打卡，连续中断
         streak += 1
         check_date = prev_date
@@ -90,8 +90,9 @@ async def get_checkin_calendar(
         .order_by(CheckIn.check_date)
     )
 
+    # result.scalars() returns date objects directly since we selected check_date
     return [
-        {"date": r.check_date.isoformat()}
+        {"date": r.isoformat()}
         for r in result.scalars().all()
     ]
 

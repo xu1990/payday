@@ -43,7 +43,7 @@ async def update_my_settings(
     db: AsyncSession = Depends(get_db),
 ):
     """更新用户设置"""
-    settings = await update_user_settings(
+    settings_obj = await update_user_settings(
         db,
         current_user.id,
         theme_id=body.theme_id,
@@ -51,4 +51,11 @@ async def update_my_settings(
         allow_stranger_notice=body.allow_stranger_notice,
         allow_comment=body.allow_comment,
     )
+    # Convert UserSetting object to dict format expected by response model
+    settings = {
+        "theme_id": settings_obj.theme_id,
+        "privacy_profile": settings_obj.privacy_profile if settings_obj.privacy_profile is not None else 0,
+        "allow_stranger_notice": settings_obj.allow_stranger_notice if settings_obj.allow_stranger_notice is not None else 1,
+        "allow_comment": settings_obj.allow_comment if settings_obj.allow_comment is not None else 1,
+    }
     return UserSettingsResponse(**settings)

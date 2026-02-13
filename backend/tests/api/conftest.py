@@ -16,10 +16,25 @@ sys.modules['celery'] = celery_mock
 
 # Mock rate limiter to prevent TypeError during app import
 # This is needed because RateLimiter is not callable but used as a dependency
+from unittest.mock import AsyncMock
 rate_limiter_mock = MagicMock()
 rate_limiter_mock.__call__ = lambda *args, **kwargs: None  # Make it callable
-sys.modules['app.core.rate_limit'] = MagicMock()
-sys.modules['app.core.rate_limit'].RateLimiter = lambda *args, **kwargs: rate_limiter_mock
+rate_limiter_mock.check = AsyncMock(return_value=None)  # Make check() awaitable
+
+# Create a proper mock module that keeps real functions but mocks RateLimiter
+# We need to import the real module first, then extract what we need
+mock_rate_limit_module = MagicMock()
+mock_rate_limit_module.RateLimiter = lambda *args, **kwargs: rate_limiter_mock
+# Mock the async functions that are used
+mock_rate_limit_module.get_client_identifier = AsyncMock(return_value="test_client")
+mock_rate_limit_module.get_client_ip = lambda request: "127.0.0.1"
+# Mock the rate limiter constants
+mock_rate_limit_module.RATE_LIMIT_GENERAL = rate_limiter_mock
+mock_rate_limit_module.RATE_LIMIT_LOGIN = rate_limiter_mock
+mock_rate_limit_module.RATE_LIMIT_POST = rate_limiter_mock
+mock_rate_limit_module.RATE_LIMIT_COMMENT = rate_limiter_mock
+
+sys.modules['app.core.rate_limit'] = mock_rate_limit_module
 
 # Mock tencentcloud with simple module stubs that support attribute access
 class ModuleStub:
@@ -99,12 +114,10 @@ def client(db_session):
     original_redis = cache_module.redis_client
 
     # 创建一个覆盖函数，返回测试数据库会话
-    # 注意：db_session 已经是一个 AsyncSession 对象，直接 yield 它即可
+    # The key is that we yield db_session which is an active AsyncSession
+    # The dependency system will handle calling this properly
     def override_get_db():
-        try:
-            yield db_session
-        finally:
-            pass
+        yield db_session
 
     # 覆盖依赖
     app.dependency_overrides[get_db] = override_get_db
@@ -127,6 +140,7 @@ def client(db_session):
         mock_redis_client.zrevrange = AsyncMock(return_value=[])
         mock_redis_client.exists = AsyncMock(return_value=0)
         mock_redis_client.zrem = AsyncMock(return_value=1)
+        mock_redis_client.close = AsyncMock(return_value=None)  # Mock close method
         cache_module.redis_client = mock_redis_client
 
         # Mock CSRF validation - patch at the module level where it's imported
