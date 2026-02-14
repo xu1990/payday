@@ -1,0 +1,165 @@
+# Prometheus 告警规则
+# 定义触发告警的条件
+
+groups:
+  - name: payday_alerts
+    interval: 30s
+    rules:
+      # 应用可用性告警
+      - alert: ApplicationDown
+        expr: up{job=~"payday.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: 'backend'
+        annotations:
+          summary: "应用实例 {{ $labels.instance }} 宕机"
+          description: "{{ $labels.job }} on {{ $labels.instance }} is down for more than 1 minute."
+
+      # 高错误率告警
+      - alert: HighErrorRate
+        expr: |
+          (rate(http_requests_total{job="payday-backend",status=~"5.."}[5m])
+          /
+          rate(http_requests_total{job="payday-backend"}[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: 'backend'
+        annotations:
+          summary: "后端错误率过高"
+          description: "错误率超过 5% (当前: {{ $value | humanize }})"
+
+      # 高延迟告警
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{job="payday-backend"}[5m])) by (le)
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: 'backend'
+        annotations:
+          summary: "API 响应时间过长"
+          description: "P95 延迟超过 1s (当前: {{ $value }}s)"
+
+      # 数据库连接池告警
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          (
+            db_pool_connections_open{job="payday-backend"}
+            /
+            db_pool_connections_limit{job="payday-backend"}
+          ) > 0.9
+        for: 5m
+        labels:
+          severity: critical
+          service: 'database'
+        annotations:
+          summary: "数据库连接池接近耗尽"
+          description: "连接池使用率 {{ $value | humanize }}"
+
+      # Redis 连接告警
+      - alert: RedisConnectionLost
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: 'cache'
+        annotations:
+          summary: "Redis 连接丢失"
+          description: "Redis 实例 {{ $labels.instance }} 已宕机超过 1 分钟"
+
+      # 磁盘空间告警
+      - alert: DiskSpaceLow
+        expr: |
+          (
+            node_filesystem_avail_bytes{job="node",mountpoint="/"}
+            /
+            node_filesystem_size_bytes{job="node",mountpoint="/"}
+          ) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: 'system'
+        annotations:
+          summary: "磁盘空间不足"
+          description: "可用空间低于 10% (剩余: {{ $value | humanize }})"
+
+      # 内存使用告警
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            1 - (
+              node_memory_MemAvailable_bytes{job="node"}
+              /
+              node_memory_MemTotal_bytes{job="node"}
+            )
+          ) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: 'system'
+        annotations:
+          summary: "内存使用率过高"
+          description: "内存使用率 {{ $value | humanize }}"
+
+      # CPU 使用告警
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg by (instance) (irate(node_cpu_seconds_total{job="node"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+          service: 'system'
+        annotations:
+          summary: "CPU 使用率过高"
+          description: "CPU 使用率持续 10 分钟超过 80%"
+
+      # 请求量突降告警（可能攻击）
+      - alert: SuddenDropInRequests
+        expr: |
+          (
+            rate(http_requests_total{job="payday-backend"}[5m])
+            /
+            rate(http_requests_total{job="payday-backend"}[5m] offset 1h)
+          ) < 0.5
+        for: 5m
+        labels:
+          severity: warning
+          service: 'security'
+        annotations:
+          summary: "请求量异常下降"
+          description: "请求量相比 1 小时前下降超过 50%"
+
+  - name: frontend_alerts
+    interval: 30s
+    rules:
+      # 前端性能告警
+      - alert: PoorWebVitals
+        expr: |
+          (
+            sum(increase(web_vitals_poor_total{job="payday-backend"}[10m]))
+            /
+            sum(increase(web_vitals_total{job="payday-backend"}[10m]))
+          ) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          service: 'frontend'
+        annotations:
+          summary: "前端 Core Web Vitals 表现较差"
+          description: "超过 10% 的用户体验到 poor 性能"
+
+      # 前端 JS 错误告警
+      - alert: HighJavaScriptErrorRate
+        expr: |
+          sum(rate(js_errors_total[5m])) by (env) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: 'frontend'
+        annotations:
+          summary: "JavaScript 错误率过高"
+          description: "{{ $labels.env }} 环境错误率: {{ $value }} errors/s"

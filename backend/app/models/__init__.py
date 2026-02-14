@@ -9,6 +9,14 @@ from .comment import Comment
 from .like import Like
 from .notification import Notification
 from .follow import Follow
+from .checkin import CheckIn
+from .membership import Membership, MembershipOrder, AppTheme
+from .push import PushNotification
+from .risk_alert import RiskAlert
+from .sensitive_word import SensitiveWord
+from .share import Share
+from .theme import Theme, UserSetting
+from .topic import Topic
 
 __all__ = [
     "Base",
@@ -21,4 +29,15 @@ __all__ = [
     "Like",
     "Notification",
     "Follow",
+    "CheckIn",
+    "Membership",
+    "MembershipOrder",
+    "AppTheme",
+    "PushNotification",
+    "RiskAlert",
+    "SensitiveWord",
+    "Share",
+    "Theme",
+    "UserSetting",
+    "Topic",
 ]

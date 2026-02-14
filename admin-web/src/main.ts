@@ -7,6 +7,12 @@ import App from './App.vue'
 import router from './router'
 import './styles/design-tokens.css'
 
+// 性能监控
+import { initPerformanceMonitoring } from './utils/performance'
+
+// 初始化性能监控（应在应用启动时立即调用）
+initPerformanceMonitoring()
+
 const app = createApp(App)
 const pinia = createPinia()
 app.use(pinia)

@@ -9,7 +9,13 @@
     "typecheck": "vue-tsc --noEmit",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.ts,.tsx --fix",
-    "format": "prettier --write \"src/**/*.{vue,ts,tsx,css,scss,json,md}\""
+    "format": "prettier --write \"src/**/*.{vue,ts,tsx,css,scss,json,md}\"",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
@@ -17,7 +23,8 @@
     "element-plus": "^2.4.4",
     "pinia": "^2.1.7",
     "vue": "^3.4.0",
-    "vue-router": "^4.2.5"
+    "vue-router": "^4.2.5",
+    "web-vitals": "^3.5.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.5.2",
@@ -30,6 +37,19 @@
     "@vue/eslint-config-typescript": "^12.0.0",
     "eslint": "^8.57.0",
     "eslint-plugin-vue": "^9.22.0",
-    "prettier": "^3.2.5"
+    "prettier": "^3.2.5",
+    "@vue/test-utils": "^2.4.5",
+    "vitest": "^1.6.0",
+    "@vitest/ui": "^1.6.0",
+    "jsdom": "^24.0.0",
+    "@vitest/coverage-v8": "^1.6.0",
+    "@storybook/vue3-vite": "^8.0.0",
+    "@storybook/addon-essentials": "^8.0.0",
+    "@storybook/addon-interactions": "^8.0.0",
+    "@storybook/addon-links": "^8.0.0",
+    "@storybook/addon-themes": "^8.0.0",
+    "@storybook/addon-docs": "^8.0.0",
+    "@storybook/api-vite": "^1.0.0",
+    "storybook": "^8.0.0"
   }
 }

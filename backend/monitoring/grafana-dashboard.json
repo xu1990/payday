@@ -1,0 +1,276 @@
+{
+  "dashboard": {
+    "title": "PayDay 性能监控面板",
+    "tags": ["payday", "performance"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 0,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "应用健康状态",
+        "type": "stat",
+        "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "up{job=\"payday-backend\"}",
+            "legendFormat": "{{ instance }}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 1, "color": "green" }
+              ]
+            },
+            "mappings": [
+              { "value": 0, "text": "DOWN" },
+              { "value": 1, "text": "UP" }
+            ]
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "请求速率 (RPS)",
+        "type": "graph",
+        "gridPos": { "x": 6, "y": 0, "w": 12, "h": 4 },
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{job=\"payday-backend\"}[5m]))",
+            "legendFormat": "总请求"
+          },
+          {
+            "expr": "sum(rate(http_requests_total{job=\"payday-backend\",status=~\"2..\"}[5m]))",
+            "legendFormat": "成功请求 (2xx)"
+          },
+          {
+            "expr": "sum(rate(http_requests_total{job=\"payday-backend\",status=~\"4..\"}[5m]))",
+            "legendFormat": "客户端错误 (4xx)"
+          },
+          {
+            "expr": "sum(rate(http_requests_total{job=\"payday-backend\",status=~\"5..\"}[5m]))",
+            "legendFormat": "服务端错误 (5xx)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "reqps"
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "P95 响应时间",
+        "type": "graph",
+        "gridPos": { "x": 0, "y": 4, "w": 12, "h": 6 },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"payday-backend\"}[5m])) by (le)",
+            "legendFormat": "P95 延迟"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "错误率",
+        "type": "gauge",
+        "gridPos": { "x": 12, "y": 4, "w": 6, "h": 6 },
+        "targets": [
+          {
+            "expr": |
+              sum(rate(http_requests_total{job=\"payday-backend\",status=~\"5..\"}[5m]))
+              /
+              sum(rate(http_requests_total{job=\"payday-backend\"}[5m]))
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 1, "color": "yellow" },
+                { "value": 5, "color": "red" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "数据库连接池使用率",
+        "type": "gauge",
+        "gridPos": { "x": 0, "y": 10, "w": 8, "h": 6 },
+        "targets": [
+          {
+            "expr": |
+              db_pool_connections_open{job="payday-backend"}
+              /
+              db_pool_connections_limit{job="payday-backend"}
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 70, "color": "yellow" },
+                { "value": 90, "color": "red" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Redis 命中率",
+        "type": "stat",
+        "gridPos": { "x": 8, "y": 10, "w": 6, "h": 6 },
+        "targets": [
+          {
+            "expr": "redis_up{job=\"redis\"}",
+            "legendFormat": "Redis"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 1, "color": "green" }
+              ]
+            },
+            "mappings": [
+              { "value": 0, "text": "DOWN" },
+              { "value": 1, "text": "UP" }
+            ]
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "系统 CPU 使用率",
+        "type": "graph",
+        "gridPos": { "x": 0, "y": 16, "w": 12, "h": 6 },
+        "targets": [
+          {
+            "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{job=\"node\"}[5m])) * 100)",
+            "legendFormat": "{{ instance }}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "max": 100
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "系统内存使用率",
+        "type": "graph",
+        "gridPos": { "x": 12, "y": 16, "w": 12, "h": 6 },
+        "targets": [
+          {
+            "expr": |
+              100 - (
+                node_memory_MemAvailable_bytes{job=\"node\"}
+                /
+                node_memory_MemTotal_bytes{job=\"node\"}
+              * 100
+            )
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "max": 100
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "磁盘空间使用",
+        "type": "gauge",
+        "gridPos": { "x": 0, "y": 22, "w": 12, "h": 6 },
+        "targets": [
+          {
+            "expr": |
+              100 - (
+                node_filesystem_avail_bytes{job=\"node\",mountpoint=\"/\"}
+                /
+                node_filesystem_size_bytes{job=\"node\",mountpoint=\"/\"}
+              * 100
+            )
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 80, "color": "yellow" },
+                { "value": 90, "color": "red" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "活跃用户数",
+        "type": "stat",
+        "gridPos": { "x": 12, "y": 22, "w": 6, "h": 6 },
+        "targets": [
+          {
+            "expr": "active_users_total{job=\"payday-backend\"}"
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "前端 Core Web Vitals",
+        "type": "graph",
+        "gridPos": { "x": 0, "y": 28, "w": 18, "h": 8 },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(web_vitals_lcp_seconds_bucket[5m]))",
+            "legendFormat": "P95 LCP"
+          },
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(web_vitals_fid_seconds_bucket[5m]))",
+            "legendFormat": "P95 FID"
+          },
+          {
+            "expr": "sum(rate(web_vitals_cls_total[5m]))",
+            "legendFormat": "CLS Rate"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -110,6 +110,175 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
+def custom_openapi():
+    """
+    自定义 OpenAPI 架构信息
+    增强Swagger 文档的元数据和说明
+    """
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    from fastapi.openapi.utils import get_openapi
+
+    openapi_schema = get_openapi(
+        title="薪日 PayDay API",
+        version=getattr(settings, 'app_version', '1.0.0'),
+        description="""
+# 薪日 PayDay 小程序 API
+
+## 概述
+
+薪日是一个为工人设计的薪日心情追踪小程序，支持社交分享和社区互动。
+
+## 主要功能
+
+- **用户管理**: 微信小程序登录、用户信息管理
+- **薪日配置**: 设置发薪日、获取薪日倒计时
+- **薪资记录**: 加密记录每月薪资（HKDF + Fernet 加密）
+- **社区功能**: 发帖、评论、点赞、关注
+- **通知系统**: 推送通知和站内消息
+- **会员系统**: 会员订阅和订单管理
+- **数据统计**: 个人数据和统计分析
+
+## 认证方式
+
+### 小程序端（用户）
+
+使用 **JWT Bearer Token** 认证：
+
+```http
+Authorization: Bearer <access_token>
+```
+
+- **Access Token**: 有效期 15 分钟
+- **Refresh Token**: 有效期 7 天
+- 获取方式: `/api/v1/auth/wechat`
+
+### 管理后台
+
+使用 **JWT Bearer Token** 认证（带 admin scope）：
+
+```http
+Authorization: Bearer <admin_token>
+```
+
+- **Token**: 包含 `scope: admin` 声明
+- 获取方式: `/api/v1/admin/login`
+
+## 数据加密
+
+- **薪资金额**: 使用 HKDF 密钥派生 + Fernet 对称加密
+- **每条记录**: 独立的 32 字节随机 salt
+- **密钥管理**: 基于 `ENCRYPTION_SECRET_KEY` 环境变量
+
+## 速率限制
+
+- **普通端点**: 100 请求/分钟
+- **登录端点**: 10 请求/分钟
+- **上传端点**: 20 请求/分钟
+
+## 错误响应
+
+所有错误响应遵循统一格式：
+
+```json
+{
+  "code": "ERROR_CODE",
+  "message": "用户友好的错误消息",
+  "details": {}  // 可选的详细信息
+}
+```
+
+## 技术栈
+
+- **框架**: FastAPI (Python 3.11+)
+- **数据库**: MySQL 8.0+ (SQLAlchemy 异步 ORM)
+- **缓存**: Redis (缓存回退到内存)
+- **任务队列**: Celery + Redis
+- **对象存储**: 腾讯云 COS / 阿里云 OSS
+- **内容安全**: 腾讯云天御
+
+## 文档
+
+- **Swagger UI**: `/docs`
+- **ReDoc**: `/redoc`
+- **OpenAPI Schema**: `/openapi.json`
+
+---
+
+**技术方案**: 参见 `docs/技术方案_v1.0.md`
+**Sprint 规划**: 参见 `docs/迭代规划_Sprint与任务.md`
+        """,
+        routes=app.routes,
+        tags=[
+            {
+                "name": "认证",
+                "description": "用户和管理员认证相关接口"
+            },
+            {
+                "name": "用户",
+                "description": "用户信息管理"
+            },
+            {
+                "name": "薪日",
+                "description": "薪日配置和倒计时"
+            },
+            {
+                "name": "薪资",
+                "description": "薪资记录管理（加密存储）"
+            },
+            {
+                "name": "社区",
+                "description": "帖子、评论、点赞等社交功能"
+            },
+            {
+                "name": "通知",
+                "description": "推送通知和站内消息"
+            },
+            {
+                "name": "会员",
+                "description": "会员订阅和订单管理"
+            },
+            {
+                "name": "管理后台",
+                "description": "管理员专用接口"
+            },
+        ]
+    )
+
+    # 添加服务器信息（开发/生产环境）
+    openapi_schema["servers"] = [
+        {
+            "url": "http://localhost:8000",
+            "description": "开发环境"
+        },
+        {
+            "url": "https://api.yourdomain.com",
+            "description": "生产环境（请替换为实际域名）"
+        }
+    ]
+
+    # 添加联系信息
+    openapi_schema["info"]["contact"] = {
+        "name": "PayDay Team",
+        "email": "support@payday.com",
+        "url": "https://github.com/yourorg/payday"
+    }
+
+    # 添加许可证信息
+    openapi_schema["info"]["license"] = {
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT"
+    }
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+# 覆盖默认的 OpenAPI 函数
+app.openapi = custom_openapi
+
 # CORS 中间件
 # SECURITY: 使用环境变量配置白名单，限制跨域请求
 _cors_origins = [origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()]

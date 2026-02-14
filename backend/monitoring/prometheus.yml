@@ -1,0 +1,85 @@
+# Prometheus 配置文件
+# 用于收集和存储 PayDay 应用的性能指标
+
+global:
+  scrape_interval: 15s  # 每 15 秒抓取一次指标
+  evaluation_interval: 15s  # 每 15 秒评估规则
+  external_labels:
+    cluster: 'payday-cluster'
+    replica: '1'
+
+# 告警管理配置
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            # 替换为你的告警接收器
+            - 'http://localhost:9093/api/v1/alerts'
+
+# 告警规则
+rule_files:
+  - '/etc/prometheus/alerts.yml'
+
+# 抓取配置
+scrape_configs:
+  # Backend FastAPI 应用
+  - job_name: 'payday-backend'
+    static_configs:
+      - targets:
+          - 'backend:8000'  # Docker 服务名
+        labels:
+          service: 'backend'
+          env: 'production'
+    metrics_path: '/metrics'  # FastAPI Prometheus 指标端点
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # Node Exporter（系统指标）
+  - job_name: 'node'
+    static_configs:
+      - targets:
+          - 'node-exporter:9100'
+        labels:
+          service: 'system'
+    scrape_interval: 15s
+
+  # MySQL Exporter（数据库指标）
+  - job_name: 'mysql'
+    static_configs:
+      - targets:
+          - 'mysql-exporter:9104'
+        labels:
+          service: 'database'
+    scrape_interval: 30s
+
+  # Redis Exporter（缓存指标）
+  - job_name: 'redis'
+    static_configs:
+      - targets:
+          - 'redis-exporter:9121'
+        labels:
+          service: 'cache'
+    scrape_interval: 15s
+
+  # Cadvisor（容器指标）
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets:
+          - 'cadvisor:8080'
+        labels:
+          service: 'containers'
+    scrape_interval: 30s
+
+# 存储配置
+storage:
+  tsdb:
+    retention:
+      time: 15d  # 保留 15 天的数据
+      size: 10GB   # 最大存储大小
+
+# 压缩配置（节省存储空间）
+compression: zstd
+
+# 日志配置
+log_level: info
+log_format: json
