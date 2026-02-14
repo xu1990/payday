@@ -15,6 +15,8 @@ const baseURL = import.meta.env.VITE_API_BASE_URL || ''
 // 防止多个请求同时尝试刷新 token
 let isRefreshing = false
 let refreshPromise: Promise<boolean> | null = null
+let refreshAttempts = 0
+const MAX_REFRESH_ATTEMPTS = 3
 
 export type RequestOptions = Omit<UniApp.RequestOption, 'url'> & {
   url: string
@@ -49,9 +51,24 @@ function isTokenExpired(token: string): boolean {
     const parts = token.split('.')
     if (parts.length !== 3) return true
 
-    // 解码payload (Base64) - 使用 uni-app 的 API
+    // 解码payload (Base64) - 使用跨平台兼容的方法
+    let decoded: string
+    // #ifdef H5
+    // H5环境使用 atob 或 polyfill
+    if (typeof atob !== 'undefined') {
+      decoded = atob(parts[1])
+    } else {
+      // 简单的 Base64 解码（仅适用于URL-safe Base64）
+      decoded = decodeURIComponent(escape(atob(parts[1])))
+    }
+    // #endif
+
+    // #ifndef H5
+    // 小程序环境使用 uni-app API
     const arrayBuffer = uni.base64ToArrayBuffer(parts[1])
-    const decoded = new TextDecoder().decode(arrayBuffer)
+    decoded = new TextDecoder().decode(arrayBuffer)
+    // #endif
+
     const payload = JSON.parse(decoded)
 
     if (!payload.exp) return true
@@ -67,14 +84,29 @@ function isTokenExpired(token: string): boolean {
 
 /**
  * 尝试刷新 access token
+ * SECURITY: 改进队列机制和重试限制，防止竞态条件
  */
 async function tryRefreshToken(): Promise<boolean> {
-  // 如果正在刷新，等待刷新完成
-  if (isRefreshing && refreshPromise) {
-    return refreshPromise
+  // 如果正在刷新，等待现有刷新完成
+  if (refreshPromise) {
+    try {
+      return await refreshPromise
+    } catch {
+      // 先前刷新失败，尝试再次刷新
+    }
   }
 
+  // 检查重试次数
+  if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
+    console.error('[request] Max refresh attempts reached, clearing tokens')
+    clearToken()
+    refreshAttempts = 0
+    return false
+  }
+
+  refreshAttempts++
   isRefreshing = true
+
   refreshPromise = (async () => {
     try {
       const refreshToken = await getRefreshToken()
@@ -88,11 +120,19 @@ async function tryRefreshToken(): Promise<boolean> {
 
       // 保存新的 tokens
       await saveToken(result.access_token, result.refresh_token, userId)
+
+      // 重置重试计数
+      refreshAttempts = 0
       return true
     } catch (error) {
       console.error('[request] Token refresh failed:', error)
-      // 刷新失败，清除所有 token
-      clearToken()
+
+      // 如果达到最大重试次数，清除所有 token
+      if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
+        clearToken()
+        refreshAttempts = 0
+      }
+
       return false
     } finally {
       isRefreshing = false

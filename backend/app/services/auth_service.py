@@ -24,43 +24,38 @@ def _gen_anonymous_name() -> str:
 
 
 async def get_or_create_user(db: AsyncSession, openid: str, unionid: Optional[str] = None) -> User:
-    """根据 openid 查询或创建用户（带并发控制）"""
-    # 先尝试查询用户
-    result = await db.execute(select(User).where(User.openid == openid))
-    user = result.scalar_one_or_none()
-    if user:
-        return user
+    """根据 openid 查询或创建用户（带并发控制）
 
-    # 用户不存在，创建新用户
-    new_user = User(
+    SECURITY: 使用 MySQL 的 INSERT ... ON DUPLICATE KEY UPDATE 避免并发创建冲突
+    这样可以原子性地处理并发请求，避免 TOCTOU 竞态条件
+    """
+    from sqlalchemy.dialects.mysql import insert as mysql_insert
+    from app.utils.logger import get_logger
+    logger = get_logger(__name__)
+
+    # 使用 MySQL 的 upsert 语法原子性地创建或更新用户
+    # 这样可以避免并发创建导致的 IntegrityError
+    stmt = mysql_insert(User).values(
         openid=openid,
         unionid=unionid,
         anonymous_name=_gen_anonymous_name(),
     )
 
-    try:
-        db.add(new_user)
-        await db.commit()
-        await db.refresh(new_user)
-        return new_user
-    except sqlalchemy_exc.IntegrityError as e:
-        # 处理并发创建导致的唯一约束冲突
-        await db.rollback()
-        from app.utils.logger import get_logger
-        logger = get_logger(__name__)
-        logger.warning(f"Concurrent user creation detected for openid {openid}, retrying...")
+    # 如果 openid 已存在，更新 unionid 和匿名昵称（保持数据最新）
+    stmt = stmt.on_duplicate_key_update(
+        unionid=stmt.inserted.unionid,
+        anonymous_name=stmt.inserted.anonymous_name,
+    )
 
-        # 重试查询（可能其他请求已创建）
-        result = await db.execute(select(User).where(User.openid == openid))
-        user = result.scalar_one_or_none()
-        if user:
-            return user
+    await db.execute(stmt)
+    await db.commit()
 
-        # 仍然不存在，可能是其他类型的错误
-        raise BusinessException("用户创建失败：并发冲突")
-    except Exception as e:
-        await db.rollback()
-        raise BusinessException(f"用户创建失败: {str(e)}")
+    # 查询并返回用户
+    result = await db.execute(select(User).where(User.openid == openid))
+    user = result.scalar_one()
+
+    logger.info(f"User {user.id} retrieved/created for openid {openid}")
+    return user
 
 
 async def login_with_code(db: AsyncSession, code: str) -> Optional[Tuple[str, str, User]]:
@@ -113,7 +108,6 @@ async def refresh_access_token(refresh_token: str, user_id: str) -> Optional[Tup
     Returns:
         (new_access_token, new_refresh_token) 或 None
     """
-    import hmac
     from app.core.security import decode_token, verify_token_type
 
     # 验证 Refresh Token

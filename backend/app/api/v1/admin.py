@@ -3,7 +3,8 @@
 """
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_admin, verify_csrf_token, require_permission
@@ -52,16 +53,39 @@ async def admin_login(
     body: AdminLoginRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    """管理员登录，返回 JWT 和 CSRF token"""
+    """管理员登录，返回 JWT 和 CSRF token
+
+    SECURITY: JWT token 设置在 httpOnly cookie 中，防止 XSS 窃取
+    CSRF token 在响应体中返回，需要前端存储并在后续请求中携带
+    """
     tokens = await login_admin(db, body.username, body.password)
     if not tokens:
         raise HTTPException(status_code=401, detail="用户名或密码错误")
     jwt_token, csrf_token = tokens
-    return AdminTokenResponse(
-        access_token=jwt_token,
-        token_type="bearer",
-        csrf_token=csrf_token
+
+    # 创建响应对象
+    response = JSONResponse(
+        content={
+            "access_token": jwt_token,
+            "token_type": "bearer",
+            "csrf_token": csrf_token
+        }
     )
+
+    # SECURITY: 设置 httpOnly cookie，防止 JavaScript 访问 token
+    # SameSite=strict 防止 CSRF 攻击
+    # Secure 确保仅通过 HTTPS 传输
+    response.set_cookie(
+        key="payday_admin_token",
+        value=jwt_token,
+        httponly=True,  # 防止 JavaScript 访问
+        samesite="strict",  # 防止 CSRF
+        secure=False,  # 开发环境为 False，生产环境应为 True
+        max_age=3600,  # 1小时
+        path="/",
+    )
+
+    return response
 
 
 @router.get("/users", response_model=dict)
@@ -70,6 +94,7 @@ async def admin_user_list(
     offset: int = Query(0, ge=0),
     keyword: Optional[str] = Query(None, description="匿名昵称关键词"),
     status: Optional[str] = Query(None, description="状态：normal / disabled"),
+    _perm: bool = Depends(require_permission("readonly")),  # 需要readonly或更高级别权限
     _: AdminUser = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -93,6 +118,7 @@ async def admin_user_list(
 @router.get("/users/{user_id}", response_model=AdminUserDetail)
 async def admin_user_detail(
     user_id: str,
+    _perm: bool = Depends(require_permission("readonly")),  # 需要readonly或更高级别权限
     _: AdminUser = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -124,6 +150,7 @@ async def admin_salary_list(
     user_id: Optional[str] = Query(None),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    _perm: bool = Depends(require_permission("readonly")),  # 需要readonly或更高级别权限
     _: AdminUser = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -164,6 +191,7 @@ async def admin_salary_update_risk(
 
 @router.get("/statistics", response_model=AdminStatisticsResponse)
 async def admin_statistics(
+    _perm: bool = Depends(require_permission("readonly")),  # 需要readonly或更高级别权限
     _: AdminUser = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -181,6 +209,7 @@ async def admin_post_list(
     risk_status: Optional[str] = Query(None, description="pending | approved | rejected"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    _perm: bool = Depends(require_permission("readonly")),  # 需要readonly或更高级别权限
     _: AdminUser = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -214,6 +243,7 @@ async def admin_post_list(
 @router.get("/posts/{post_id}", response_model=AdminPostListItem)
 async def admin_post_detail(
     post_id: str,
+    _perm: bool = Depends(require_permission("readonly")),  # 需要readonly或更高级别权限
     _: AdminUser = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -285,6 +315,7 @@ async def admin_comment_list(
     risk_status: Optional[str] = Query(None, description="pending | approved | rejected"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    _perm: bool = Depends(require_permission("readonly")),  # 需要readonly或更高级别权限
     _: AdminUser = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):

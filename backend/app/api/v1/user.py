@@ -3,7 +3,7 @@
 """
 from fastapi import APIRouter, Depends, Query
 
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, verify_csrf_token
 from app.models.user import User
 from app.schemas.user import UserResponse, UserUpdate
 from app.services.user_service import update_user, get_user_profile_data
@@ -39,6 +39,7 @@ async def get_me(current_user: User = Depends(get_current_user)):
 async def update_me(
     body: UserUpdate,
     current_user: User = Depends(get_current_user),
+    _csrf: bool = Depends(verify_csrf_token),  # 添加 CSRF 保护
     db: AsyncSession = Depends(get_db),
 ):
     user = await update_user(db, current_user.id, body)

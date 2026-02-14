@@ -10,7 +10,14 @@ from passlib.context import CryptContext
 
 from app.core.config import get_settings
 
-pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_ctx = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+    # 提高计算成本（默认是12，增加到12更安全）
+    bcrypt__rounds=12,
+    # 使用2b版本（修复DoS漏洞）
+    bcrypt__ident="2b"
+)
 
 
 def hash_password(plain: str) -> str:

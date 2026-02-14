@@ -69,9 +69,29 @@ async function handleLogin() {
       provider: 'weixin'
     })
 
-    // 检查错误
-    if (err || !loginRes?.code) {
-      showError(err?.errMsg || '获取微信授权失败')
+    // 检查错误，提供更详细的错误信息
+    if (err) {
+      const errMsg = err.errMsg || ''
+
+      // 用户取消授权（不需要显示错误提示）
+      if (errMsg.includes('cancel') || errMsg.includes('auth deny')) {
+        console.info('[login] User cancelled WeChat authorization')
+        return
+      }
+
+      // 网络错误
+      if (errMsg.includes('network') || errMsg.includes('timeout')) {
+        showError('网络连接失败，请检查网络后重试')
+        return
+      }
+
+      // 其他错误
+      showError('微信登录失败：' + (errMsg || '未知错误'))
+      return
+    }
+
+    if (!loginRes?.code) {
+      showError('获取微信授权码失败，请重试')
       return
     }
 

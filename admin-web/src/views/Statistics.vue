@@ -33,7 +33,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import { getStatistics, type AdminStatistics } from '@/api/admin'
+import { getCommonApiErrorMessage } from '@/utils/error'
 
 const loading = ref(true)
 const stats = ref<AdminStatistics | null>(null)
@@ -42,7 +44,9 @@ onMounted(async () => {
   try {
     const { data } = await getStatistics()
     stats.value = data
-  } catch {
+  } catch (e: unknown) {
+    console.error('Failed to load statistics:', e)
+    ElMessage.error(getCommonApiErrorMessage(e))
     stats.value = null
   } finally {
     loading.value = false

@@ -2,7 +2,6 @@
  * 认证相关 API - 与 backend /api/v1/auth 一致
  */
 import request from '@/utils/request'
-import { encrypt, decrypt } from '@/utils/crypto'
 
 const PREFIX = '/api/v1/auth'
 const TOKEN_KEY = 'payday_token'
@@ -62,73 +61,77 @@ export function refreshAccessToken(refreshToken: string, userId: string): Promis
 }
 
 /**
- * 保存 Token 到本地存储（使用 AES-GCM 加密）
+ * 保存 Token 到本地存储（直接存储，使用 HTTPS 保护传输）
  *
- * SECURITY: 使用设备绑定的密钥加密存储 Token
- * 虽然密钥存储在本地，但加密可以防止：
- * 1. 其他小程序通过 uni.getStorageSync() 直接读取
- * 2. 设备备份/取证时直接获取明文 token
- * 3. 调试时意外泄露 token
+ * SECURITY: 移除客户端加密的原因
+ * 1. HTTPS 已提供传输安全保护
+ * 2. 设备绑定密钥也存储在本地，加密无实际意义
+ * 3. 微信小程序提供存储隔离，其他小程序无法直接读取
+ * 4. 真正的安全由 JWT 签名 + 后端验证提供
  */
 export async function saveToken(token: string, refreshToken?: string, userId?: string): Promise<void> {
   try {
-    const encrypted = await encrypt(token)
-    uni.setStorageSync(TOKEN_KEY, encrypted)
-
-    // 同时保存 refresh token 和 user_id
-    if (refreshToken) {
-      const encryptedRefresh = await encrypt(refreshToken)
-      uni.setStorageSync(REFRESH_TOKEN_KEY, encryptedRefresh)
-    }
-    if (userId) {
-      uni.setStorageSync(USER_ID_KEY, userId)
-    }
+    uni.setStorageSync(TOKEN_KEY, token)
+    if (refreshToken) uni.setStorageSync(REFRESH_TOKEN_KEY, refreshToken)
+    if (userId) uni.setStorageSync(USER_ID_KEY, userId)
   } catch (e) {
-    // Token save failed
+    // SECURITY: 存储失败可能表示存储空间不足或被禁用
+    // 给用户明确的错误提示
+    const errorMsg = e instanceof Error ? e.message : String(e)
+
+    if (errorMsg.includes('quota') || errorMsg.includes('storage')) {
+      uni.showModal({
+        title: '存储失败',
+        content: '浏览器存储空间不足，请清理缓存后重试',
+        showCancel: false
+      })
+    } else if (errorMsg.includes('access') || errorMsg.includes('permission')) {
+      uni.showModal({
+        title: '存储失败',
+        content: '存储权限被禁用，请在设置中允许后重试',
+        showCancel: false
+      })
+    } else {
+      uni.showModal({
+        title: '存储失败',
+        content: '无法保存登录信息，请检查浏览器设置',
+        showCancel: false
+      })
+    }
+
     console.error('Token save failed:', e)
+    throw e // 重新抛出，让调用方处理
   }
 }
 
 /**
- * 获取本地存储的 Token（解密）
+ * 获取本地存储的 Token（直接读取）
  */
 export async function getToken(): Promise<string> {
   try {
-    const encrypted = uni.getStorageSync(TOKEN_KEY)
-    if (!encrypted) return ''
-
-    const decrypted = await decrypt(encrypted)
-    if (!decrypted) {
-      console.warn('[auth] Token decryption returned empty')
+    const token = uni.getStorageSync(TOKEN_KEY)
+    if (!token) {
+      console.warn('[auth] No token found in storage')
       return ''
     }
-    return decrypted
+    return token
   } catch (error) {
     console.error('[auth] Token retrieval failed:', error)
-    // 清理可能损坏的token
-    try {
-      uni.removeStorageSync(TOKEN_KEY)
-    } catch (e) {
-      // 忽略清理错误
-    }
     return ''
   }
 }
 
 /**
- * 获取本地存储的 Refresh Token（解密）
+ * 获取本地存储的 Refresh Token（直接读取）
  */
 export async function getRefreshToken(): Promise<string> {
   try {
-    const encrypted = uni.getStorageSync(REFRESH_TOKEN_KEY)
-    if (!encrypted) return ''
-
-    const decrypted = await decrypt(encrypted)
-    if (!decrypted) {
-      console.warn('[auth] Refresh token decryption returned empty')
+    const token = uni.getStorageSync(REFRESH_TOKEN_KEY)
+    if (!token) {
+      console.warn('[auth] No refresh token found in storage')
       return ''
     }
-    return decrypted
+    return token
   } catch (error) {
     console.error('[auth] Refresh token retrieval failed:', error)
     return ''
@@ -136,7 +139,7 @@ export async function getRefreshToken(): Promise<string> {
 }
 
 /**
- * 获取本地存储的 User ID
+ * 获取本地存储的 User ID（直接读取）
  */
 export function getUserId(): string {
   try {
@@ -156,7 +159,7 @@ export function clearToken(): void {
     uni.removeStorageSync(REFRESH_TOKEN_KEY)
     uni.removeStorageSync(USER_ID_KEY)
   } catch (e) {
-    // Token clear failed
+    console.error('Token clear failed:', e)
   }
 }
 

@@ -90,13 +90,21 @@ const activeMembership = ref<ActiveMembership | null>(null)
 const loading = ref(true)
 const submitting = ref(false)  // 防止重复提交
 
-// 生成幂等性key - 使用更可靠的随机数生成
+// 生成幂等性key - 使用加密安全的随机数生成
+// SECURITY: 支付幂等性密钥必须使用加密安全随机数，防止密钥冲突
+// 使用 crypto.getRandomValues() 而非 Math.random()
 const generateIdempotencyKey = () => {
+  // 使用时间戳（36进制）提供时间维度唯一性
   const timestamp = Date.now().toString(36)
-  const random = Math.random().toString(36).substring(2, 15)
-  // 添加额外随机位增加唯一性
-  const extra = Math.random().toString(36).substring(2, 6)
-  return `${timestamp}-${random}-${extra}`
+
+  // 使用加密安全的随机数生成器
+  const array = new Uint8Array(16)
+  crypto.getRandomValues(array)
+
+  // 转换为16进制字符串
+  const random = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('')
+
+  return `${timestamp}-${random}`
 }
 
 // 支付验证重试逻辑 - 指数退避

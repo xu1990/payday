@@ -73,6 +73,10 @@ async def create(
     content: str,
     parent_id: Optional[str] = None,
 ) -> Comment:
+    # SECURITY: 使用显式事务边界隔离所有数据库操作
+    # 这样可以防止竞态条件，确保数据一致性
+    from sqlalchemy import select
+
     comment = Comment(
         post_id=post_id,
         user_id=user_id,
@@ -80,29 +84,40 @@ async def create(
         content=content,
         parent_id=parent_id,
     )
-    db.add(comment)
-    await db.flush()
-    await db.execute(
-        update(Post).where(Post.id == post_id).values(comment_count=Post.comment_count + 1)
-    )
-    # 通知：根评论通知帖子作者，回复通知被回复人
-    r = await db.execute(select(Post).where(Post.id == post_id))
-    post = r.scalar_one_or_none()
-    if post and str(post.user_id) != str(user_id) and parent_id is None:
-        await notification_service.create_notification(
-            db, str(post.user_id), "comment", "新评论", content or "", comment.id
-        )
-    if parent_id:
-        parent = await get_by_id(db, parent_id)
-        if parent and str(parent.user_id) != str(user_id):
-            await notification_service.create_notification(
-                db, str(parent.user_id), "reply", "新回复", content or "", comment.id
-            )
+
     try:
-        await db.commit()
-        await db.refresh(comment)
-        return comment
-    except SQLAlchemyError:
+        # 开始事务
+        async with db.begin():
+            # 添加评论
+            db.add(comment)
+            await db.flush()
+
+            # 原子性更新帖子评论数
+            await db.execute(
+                update(Post).where(Post.id == post_id).values(comment_count=Post.comment_count + 1)
+            )
+
+            # 通知：根评论通知帖子作者，回复通知被回复人
+            r = await db.execute(select(Post).where(Post.id == post_id))
+            post = r.scalar_one_or_none()
+            if post and str(post.user_id) != str(user_id) and parent_id is None:
+                await notification_service.create_notification(
+                    db, str(post.user_id), "comment", "新评论", content or "", comment.id
+                )
+            if parent_id:
+                parent = await get_by_id(db, parent_id)
+                if parent and str(parent.user_id) != str(user_id):
+                    await notification_service.create_notification(
+                        db, str(parent.user_id), "reply", "新回复", content or "", comment.id
+                    )
+
+            # 提交事务
+            await db.commit()
+
+            # 刷新评论对象以获取数据库生成的值
+            await db.refresh(comment)
+            return comment
+    except SQLAlchemyError as e:
         await db.rollback()
         raise
 
@@ -165,11 +180,9 @@ async def update_comment_risk_for_admin(
     if not comment:
         raise NotFoundException("评论不存在")
     comment.risk_status = risk_status
-    if risk_reason is not None:
-        if not hasattr(Comment, "risk_reason"):
-            pass  # Comment 模型若无 risk_reason 字段则忽略
-        else:
-            comment.risk_reason = risk_reason
+    # 简化逻辑：仅在字段存在且提供了新值时更新
+    if risk_reason is not None and hasattr(comment, "risk_reason"):
+        comment.risk_reason = risk_reason
     try:
         await db.commit()
         await db.refresh(comment)

@@ -113,5 +113,6 @@ export function formatNumber(num: number): string {
   if (typeof num !== 'number' || isNaN(num)) {
     return '0'
   }
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '$1,')
+  // 使用toLocaleString添加千位分隔符
+  return num.toLocaleString('zh-CN')
 }

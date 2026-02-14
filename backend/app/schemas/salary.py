@@ -60,6 +60,19 @@ class SalaryRecordCreate(SalaryRecordBase):
     注意：amount 字段为明文，由 salary_service.create() 使用 encrypt_amount() 加密后存储
     """
 
+    @field_validator('amount')
+    @classmethod
+    def validate_amount(cls, v):
+        """验证金额范围和精度"""
+        # 确保金额为正数且在合理范围内
+        if not (0 < v <= 100000000):
+            raise ValueError('金额必须在 0 到 100,000,000 元之间')
+        # 确保最多2位小数
+        if round(v, 2) != v:
+            raise ValueError('金额最多保留2位小数')
+        return round(v, 2)
+
+
 
 class SalaryRecordUpdate(BaseModel):
     amount: Optional[float] = Field(None, gt=0)

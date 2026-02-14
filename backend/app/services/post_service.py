@@ -276,22 +276,25 @@ async def search_posts(
             if len(tag) > 20:
                 continue
             # 标签验证：仅允许字母数字、中文、空格、连字符、下划线
-            if not re.match(r'^[\w\u4e00-\u9fff\s\-_]+$', tag):
+            if not re.match(r'^[\\w\u4e00-\\u9fff\\s\\-_]+$', tag):
                 continue
             valid_tags.append(tag)
 
         # 使用验证后的标签列表进行JSON包含查询
-        # 使用参数化查询防止SQL注入
+        # SECURITY: 使用参数化查询防止SQL注入
         if valid_tags:
-            from sqlalchemy import or_, func, literal
+            from sqlalchemy import or_, text, bindparam
 
             tag_conditions = []
             for tag in valid_tags:
-                # For SQLite, we use JSON_CONTAINS or try json_array_contains
-                # Use a simpler approach that works across databases
-                # Check if the tag string appears in the JSON array
+                # SECURITY: 创建命名参数并安全绑定
+                # JSON_CONTAINS 是 MySQL 的安全函数，使用参数化查询
+                param_name = f'tag_{len(tag_conditions)}'
+                tag_value = json.dumps([tag])  # 使用 json.dumps 确保安全转义
                 tag_conditions.append(
-                    Post.tags.contains(f'"{tag}"')
+                    text(f"JSON_CONTAINS(tags, :{param_name})").bindparams(
+                        bindparam(param_name, tag_value)
+                    )
                 )
 
             if tag_conditions:
