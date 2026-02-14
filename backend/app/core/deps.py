@@ -146,31 +146,60 @@ async def verify_csrf_token(
         - POST/PUT/DELETE 等状态变更操作需要验证
         - 使用 Redis 存储 token，避免内存多实例问题
         - 使用常量时间比较防止时序攻击
+        - 管理端点路径必须验证CSRF（更严格的安全策略）
     """
     # 安全的GET请求方法（标准REST只读操作）
     SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 
+    # SECURITY: 对于管理端点，要求更严格的CSRF验证
+    # 管理路径通常包含 /api/v1/admin/
+    request_path = request.url.path.lower()
+    is_admin_endpoint = "/admin/" in request_path
+
     # 对于安全方法，检查是否有query parameters
     # 如果有query parameters，仍然需要CSRF验证（防止通过GET参数执行状态变更）
     if request.method in SAFE_METHODS:
-        # 定义允许跳过CSRF的只读参数（如分页、排序、过滤等）
-        READONLY_PARAMS = {
-            "page", "page_size", "limit", "offset",
-            "sort", "order", "search", "query",
-            "user_id", "industry", "city", "salary_range",
-            "status", "start_date", "end_date",
-            "tag", "tags", "category", "type"
-        }
+        # SECURITY: 管理端点的GET请求也需要CSRF验证（除非是纯列表查询）
+        if is_admin_endpoint:
+            # 定义管理端允许跳过CSRF的纯只读操作（仅列表查询）
+            ADMIN_READONLY_PARAMS = {
+                "page", "page_size", "limit", "offset",
+                "sort", "order", "search", "query",
+                "status", "risk_status", "start_date", "end_date"
+            }
 
-        # 如果有query参数，检查是否都是已知的只读参数
-        if request.query_params:
-            param_names = set(request.query_params.keys())
-            # 如果存在非只读参数，需要CSRF验证
-            if not param_names.issubset(READONLY_PARAMS):
-                # 有可疑的参数，需要CSRF验证
+            if request.query_params:
+                param_names = set(request.query_params.keys())
+                # 如果不是纯只读参数，需要CSRF验证
+                if not param_names.issubset(ADMIN_READONLY_PARAMS):
+                    is_valid = await csrf_manager.validate_token(request, str(admin.id))
+                    if not is_valid:
+                        raise CSRFException("CSRF token 无效或已过期，请重新登录")
+            else:
+                # 管理端点无参数的GET请求也需要CSRF验证
                 is_valid = await csrf_manager.validate_token(request, str(admin.id))
                 if not is_valid:
                     raise CSRFException("CSRF token 无效或已过期，请重新登录")
+        else:
+            # 用户端点的GET请求 - 更宽松的策略
+            # 定义允许跳过CSRF的只读参数（如分页、排序、过滤等）
+            USER_READONLY_PARAMS = {
+                "page", "page_size", "limit", "offset",
+                "sort", "order", "search", "query",
+                "user_id", "industry", "city", "salary_range",
+                "status", "start_date", "end_date",
+                "tag", "tags", "category", "type"
+            }
+
+            # 如果有query参数，检查是否都是已知的只读参数
+            if request.query_params:
+                param_names = set(request.query_params.keys())
+                # 如果存在非只读参数，需要CSRF验证
+                if not param_names.issubset(USER_READONLY_PARAMS):
+                    # 有可疑的参数，需要CSRF验证
+                    is_valid = await csrf_manager.validate_token(request, str(admin.id))
+                    if not is_valid:
+                        raise CSRFException("CSRF token 无效或已过期，请重新登录")
 
         # 标准的只读GET请求，跳过CSRF验证
         return True

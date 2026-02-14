@@ -101,3 +101,55 @@ export const commonStatusMessages: Record<number, string> = {
 export function getCommonApiErrorMessage(error: unknown): string {
   return getApiErrorMessage(error, commonStatusMessages)
 }
+
+/**
+ * 类型守卫：检查错误是否为 API 错误响应
+ *
+ * SECURITY: 使用类型守卫替代不安全的 `as` 类型断言
+ * 提供运行时验证，确保类型安全
+ *
+ * @param error - 未知错误对象
+ * @returns 是否为包含 response.status 的错误对象
+ */
+export function isApiResponseError(error: unknown): error is ErrorResponse {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error &&
+    typeof (error as ErrorResponse).response === 'object' &&
+    (error as ErrorResponse).response !== null &&
+    'status' in (error as ErrorResponse).response!
+  )
+}
+
+/**
+ * 类型守卫：检查是否为特定状态码的 API 错误
+ *
+ * @param error - 未知错误对象
+ * @param status - 期望的 HTTP 状态码
+ * @returns 是否匹配该状态码
+ */
+export function isApiErrorResponseWithStatus(
+  error: unknown,
+  status: number
+): error is ErrorResponse {
+  return isApiResponseError(error) && error.response!.status === status
+}
+
+/**
+ * 便捷的状态码检查函数
+ */
+export const is404ErrorResponse = (error: unknown): boolean =>
+  isApiErrorResponseWithStatus(error, 404)
+
+export const is401ErrorResponse = (error: unknown): boolean =>
+  isApiErrorResponseWithStatus(error, 401)
+
+export const is403ErrorResponse = (error: unknown): boolean =>
+  isApiErrorResponseWithStatus(error, 403)
+
+export const is422ErrorResponse = (error: unknown): boolean =>
+  isApiErrorResponseWithStatus(error, 422)
+
+export const is500ErrorResponse = (error: unknown): boolean =>
+  isApiErrorResponseWithStatus(error, 500)

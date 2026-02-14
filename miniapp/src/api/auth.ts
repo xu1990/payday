@@ -2,6 +2,7 @@
  * 认证相关 API - 与 backend /api/v1/auth 一致
  */
 import request from '@/utils/request'
+import * as crypto from '@/utils/crypto'
 
 const PREFIX = '/api/v1/auth'
 const TOKEN_KEY = 'payday_token'
@@ -71,8 +72,13 @@ export function refreshAccessToken(refreshToken: string, userId: string): Promis
  */
 export async function saveToken(token: string, refreshToken?: string, userId?: string): Promise<void> {
   try {
-    uni.setStorageSync(TOKEN_KEY, token)
-    if (refreshToken) uni.setStorageSync(REFRESH_TOKEN_KEY, refreshToken)
+    // SECURITY: Encrypt token before storage
+    const encryptedToken = await crypto.encrypt(token)
+    uni.setStorageSync(TOKEN_KEY, encryptedToken)
+    if (refreshToken) {
+      const encryptedRefreshToken = await crypto.encrypt(refreshToken)
+      uni.setStorageSync(REFRESH_TOKEN_KEY, encryptedRefreshToken)
+    }
     if (userId) uni.setStorageSync(USER_ID_KEY, userId)
   } catch (e) {
     // SECURITY: 存储失败可能表示存储空间不足或被禁用
@@ -109,12 +115,14 @@ export async function saveToken(token: string, refreshToken?: string, userId?: s
  */
 export async function getToken(): Promise<string> {
   try {
-    const token = uni.getStorageSync(TOKEN_KEY)
-    if (!token) {
+    const encryptedToken = uni.getStorageSync(TOKEN_KEY)
+    if (!encryptedToken) {
       console.warn('[auth] No token found in storage')
       return ''
     }
-    return token
+    // SECURITY: Decrypt token
+    const decryptedToken = await crypto.decrypt(encryptedToken)
+    return decryptedToken || ''
   } catch (error) {
     console.error('[auth] Token retrieval failed:', error)
     return ''

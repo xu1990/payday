@@ -88,6 +88,57 @@ async def admin_login(
     return response
 
 
+@router.post("/auth/refresh")
+async def admin_refresh_token(
+    refresh_token: str = Form(...),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    刷新管理员 Access Token
+
+    Args:
+        refresh_token: 刷新令牌
+
+    Returns:
+        新的 access_token 和 csrf_token，以及新的 refresh_token
+
+    SECURITY:
+    - 从 refresh token 中解析 admin ID
+    - 验证 token 有效性和未撤销
+    - 生成新的 token 对并撤销旧的 refresh token
+    """
+    from app.services.admin_auth_service import refresh_admin_token
+
+    result = await refresh_admin_token(db, refresh_token)
+    if not result:
+        raise HTTPException(status_code=401, detail="无效或过期的 Refresh Token")
+
+    new_access_token, new_csrf_token, new_refresh_token = result
+
+    # 创建响应对象
+    response = JSONResponse(
+        content={
+            "access_token": new_access_token,
+            "csrf_token": new_csrf_token,
+            "refresh_token": new_refresh_token,
+            "token_type": "bearer"
+        }
+    )
+
+    # SECURITY: 更新 httpOnly cookie
+    response.set_cookie(
+        key="payday_admin_token",
+        value=new_access_token,
+        httponly=True,
+        samesite="strict",
+        secure=False,  # 开发环境为 False，生产环境应为 True
+        max_age=3600,  # 1小时
+        path="/",
+    )
+
+    return response
+
+
 @router.get("/users", response_model=dict)
 async def admin_user_list(
     limit: int = Query(20, ge=1, le=100),

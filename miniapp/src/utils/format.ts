@@ -59,7 +59,9 @@ export function formatNumber(num: number | null | undefined): string {
   if (typeof num !== 'number' || isNaN(num)) {
     return '0'
   }
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  // SECURITY: 使用toLocaleString进行格式化，避免正则表达式错误
+  // 自动处理千分位和本地化
+  return num.toLocaleString('zh-CN')
 }
 
 /**

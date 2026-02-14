@@ -1,40 +1,48 @@
 """
 内容净化工具 - 防止 XSS 攻击
+
+使用 bleach 库进行白名单式净化，避免 ReDoS 攻击
 """
-import re
-import html
 from typing import Optional
+
+try:
+    import bleach
+    BLEACH_AVAILABLE = True
+except ImportError:
+    BLEACH_AVAILABLE = False
+    import re
+    import html
 
 
 def sanitize_html(content: Optional[str]) -> Optional[str]:
     """
     净化用户输入的文本内容，防止 XSS 攻击
 
-    策略：
-    1. 移除 on* 事件处理器（如 onclick, onload）
-    2. 转义 HTML 特殊字符（<, >, &）
-    3. 移除控制字符（除了换行、制表符、回车）
+    SECURITY: 使用 bleach 库的白名单式净化，避免 ReDoS 攻击
+    - 不允许任何 HTML 标签
+    - 移除所有危险内容
+    - 使用经过实战检验的库
 
-    注意：这是一个基础实现，生产环境建议使用 bleach 库：
-    pip install bleach
-    import bleach
-    return bleach.clean(content, tags=[], strip=True)
+    如果 bleach 不可用，则回退到基础实现（次优方案）
     """
     if not content:
         return content
 
-    # 移除 on* 事件处理器（如 onclick, onload）- 在转义前处理
-    content = re.sub(r'\s*on\w+\s*=\s*["\'][^"\']*["\']', '', content, flags=re.IGNORECASE)
-
-    # HTML 转义（确保特殊字符被正确转义）
-    # 使用 html.escape 将 <, >, & 转义为 HTML 实体
-    # quote=False 表示不转义引号，因为引号在文本内容中通常是安全的
-    content = html.escape(content, quote=False)
-
-    # 移除控制字符（除了换行、制表符、回车）
-    content = ''.join(char for char in content if ord(char) >= 32 or char in '\n\t\r')
-
-    return content
+    if BLEACH_AVAILABLE:
+        # 使用 bleach 的白名单式净化（最安全）
+        return bleach.clean(
+            content,
+            tags=[],           # 不允许任何 HTML 标签
+            strip=True,         # 移除而非转义标签
+            strip_comments=True  # 移除 HTML 注释
+        )
+    else:
+        # 回退方案：基础 HTML 转义
+        # WARNING: 不如 bleach 安全，但在 bleach 不可用时提供基本保护
+        content = html.escape(content, quote=False)
+        # 移除控制字符（除了换行、制表符、回车）
+        content = ''.join(char for char in content if ord(char) >= 32 or char in '\n\t\r')
+        return content
 
 
 def sanitize_strict(content: Optional[str], max_length: int = 5000) -> Optional[str]:
@@ -49,17 +57,21 @@ def sanitize_strict(content: Optional[str], max_length: int = 5000) -> Optional[
     if not content:
         return content
 
-    # 移除所有 HTML 标签
-    content = re.sub(r'<[^>]+>', '', content)
-
-    # HTML 实体解码（处理 &lt; 等）
-    content = html.unescape(content)
-
-    # 再次转义，确保安全
-    content = html.escape(content)
+    if BLEACH_AVAILABLE:
+        # 使用 bleach 进行彻底净化
+        cleaned = bleach.clean(
+            content,
+            tags=[],
+            strip=True,
+            strip_comments=True
+        )
+    else:
+        # 回退方案：移除 HTML 标签并转义
+        cleaned = html.unescape(re.sub(r'<[^>]*>', '', content))
+        cleaned = html.escape(cleaned)
 
     # 截断到最大长度
-    if len(content) > max_length:
-        content = content[:max_length]
+    if len(cleaned) > max_length:
+        cleaned = cleaned[:max_length]
 
-    return content
+    return cleaned

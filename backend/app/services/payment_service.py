@@ -70,10 +70,15 @@ async def handle_payment_notify(
     notify_data: dict,
 ) -> bool:
     """
-    处理支付回调通知 - 优化并发安全
+    处理支付回调通知 - 优化并发安全 + 重放攻击防护
 
     支持幂等性：同一笔交易的重复通知会被安全处理
     使用数据库行锁 + 唯一约束防止并发问题
+
+    SECURITY:
+    - 时间戳验证：通知时间必须在可接受范围内（5分钟）
+    - Nonce检查：使用Redis检测重放攻击
+    - 金额验证：防止金额篡改
 
     Args:
         db: 数据库会话
@@ -82,6 +87,7 @@ async def handle_payment_notify(
     Returns:
         处理是否成功
     """
+    from datetime import datetime, timedelta
     from sqlalchemy.exc import IntegrityError
 
     out_trade_no = notify_data.get("out_trade_no")
@@ -91,6 +97,64 @@ async def handle_payment_notify(
 
     if not out_trade_no or not transaction_id:
         return False
+
+    # SECURITY: 验证时间戳，防止重放攻击
+    if time_end:
+        try:
+            # 解析微信时间格式：yyyyMMddHHmmss
+            from app.utils.logger import get_logger
+            logger = get_logger(__name__)
+
+            notify_time = datetime.strptime(time_end, "%Y%m%d%H%M%S")
+            current_time = datetime.utcnow()
+
+            # SECURITY: 检查通知时间是否在合理范围内（5分钟内）
+            # 注意：微信服务器可能有时间偏差，给予一定容错空间
+            max_acceptable_delay = timedelta(minutes=5)
+            time_diff = (current_time - notify_time).total_seconds()
+
+            # 如果通知时间超过当前时间5分钟以上，拒绝
+            if abs(time_diff) > max_acceptable_delay.total_seconds():
+                logger.warning(
+                    f"Payment notification time validation failed: {time_end}, "
+                    f"diff={time_diff}s"
+                )
+                return False
+
+        except (ValueError, TypeError) as e:
+            from app.utils.logger import get_logger
+            logger = get_logger(__name__)
+            logger.warning(f"Invalid time_end format: {time_end}, error={e}")
+            # 不暴露具体的格式错误信息
+            return False
+
+    # SECURITY: 使用 nonce 检查防止重放攻击
+    from app.core.cache import get_redis_client
+    redis = await get_redis_client()
+    if redis:
+        try:
+            nonce_key = f"payment_nonce:{transaction_id}"
+            # 检查是否已存在相同的 transaction_id（重放检测）
+            if await redis.exists(nonce_key):
+                from app.utils.logger import get_logger
+                logger = get_logger(__name__)
+                logger.warning(f"Replay attack detected: transaction_id={transaction_id}")
+                # 已处理过的通知，返回True避免微信重复通知
+                # 但需要验证订单状态
+                result = await db.execute(
+                    select(MembershipOrder).where(MembershipOrder.id == out_trade_no)
+                )
+                order = result.scalar_one_or_none()
+                return order and order.status == "paid"
+
+            # 存储 nonce，有效期1小时
+            await redis.setex(nonce_key, 3600, "1")
+        except Exception as e:
+            # SECURITY: 不暴露详细的错误信息
+            from app.utils.logger import get_logger
+            logger = get_logger(__name__)
+            logger.error(f"Failed to check payment nonce")
+            # nonce检查失败不应阻止支付流程，继续处理
 
     try:
         # 查询订单并加锁（SKIP LOCKED 避免长时间等待）
@@ -115,8 +179,9 @@ async def handle_payment_notify(
         # order.amount 存储的是浮点数，需要转换为 Decimal 进行精确计算
         try:
             expected_amount = Decimal(str(order.amount)) * Decimal(100)
-            # 使用银行家舍入（四舍六入五取偶）避免精度损失
-            expected_amount = expected_amount.quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+            # SECURITY: 使用Decimal('0.01')保留分位精度（2位小数）
+            # 避免round(Decimal('1'))四舍五入取整导致的精度损失
+            expected_amount = expected_amount.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
             if fee_amount != int(expected_amount):  # 转换为分比较
                 return False

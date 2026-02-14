@@ -3,7 +3,8 @@
 参考文档: https://pay.weixin.qq.com/wiki/doc/apiv3/open/pay/chapter2_7_2.shtml
 """
 import hashlib
-import random
+import hmac
+import secrets
 import string
 import time
 from typing import Any
@@ -18,8 +19,8 @@ settings = get_settings()
 
 
 def generate_nonce_str() -> str:
-    """生成随机字符串"""
-    return "".join(random.choice(string.ascii_letters + string.digits) for _ in range(32))
+    """生成随机字符串 - 使用 secrets 模块确保密码学安全"""
+    return "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(32))
 
 
 def dict_to_xml(data: dict[str, Any]) -> str:
@@ -58,10 +59,16 @@ def sign_md5(data: dict[str, Any], api_key: str) -> str:
 
 
 def verify_sign(data: dict[str, Any], api_key: str) -> bool:
-    """验证签名"""
+    """
+    验证签名 - 使用常量时间比较防止时序攻击
+
+    SECURITY: 使用 hmac.compare_digest() 进行常量时间比较
+    防止攻击者通过响应时间逐步猜测签名
+    """
     received_sign = data.get("sign", "")
     calculated_sign = sign_md5(data, api_key)
-    return received_sign == calculated_sign
+    # 使用常量时间比较，防止时序攻击
+    return hmac.compare_digest(received_sign, calculated_sign)
 
 
 async def create_mini_program_payment(

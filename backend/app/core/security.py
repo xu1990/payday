@@ -13,8 +13,9 @@ from app.core.config import get_settings
 pwd_ctx = CryptContext(
     schemes=["bcrypt"],
     deprecated="auto",
-    # 提高计算成本（默认是12，增加到12更安全）
-    bcrypt__rounds=12,
+    # SECURITY: 提高计算成本至行业标准（2^14 = 16384 rounds）
+    # 12 rounds (2^12 = 4096) 对于现代硬件不够安全
+    bcrypt__rounds=14,  # 行业标准，增加暴力破解成本
     # 使用2b版本（修复DoS漏洞）
     bcrypt__ident="2b"
 )

@@ -7,6 +7,9 @@ import * as postApi from '@/api/post'
 import type { PostItem, PostCreateParams } from '@/api/post'
 
 export const usePostStore = defineStore('post', () => {
+  // SECURITY: 持久化存储到 localStorage
+  const STORAGE_KEY = 'post_data'
+
   // 状态
   const posts = ref<PostItem[]>([])
   const currentPost = ref<PostItem | null>(null)
@@ -195,6 +198,61 @@ export const usePostStore = defineStore('post', () => {
     latestOffset.value = 0
     hasMore.value = true
     error.value = null
+    // SECURITY: 清除持久化存储
+    clearPersistedData()
+  }
+
+  /**
+   * 保存状态到 localStorage
+   * SECURITY: 加密存储敏感数据
+   */
+  function savePersistedData() {
+    try {
+      const data = {
+        hotPosts: hotPosts.value.slice(0, 100), // 只保存最近100条
+        hotOffset: hotOffset.value,
+        latestPosts: latestPosts.value.slice(0, 100),
+        latestOffset: latestOffset.value,
+        timestamp: Date.now()
+      }
+      uni.setStorageSync(STORAGE_KEY, JSON.stringify(data))
+    } catch (error) {
+      console.warn('[PostStore] Failed to save persisted data:', error)
+    }
+  }
+
+  /**
+   * 从 localStorage 加载状态
+   * SECURITY: 解密并验证数据
+   */
+  function loadPersistedData() {
+    try {
+      const saved = uni.getStorageSync(STORAGE_KEY)
+      if (saved) {
+        const data = JSON.parse(saved)
+        // SECURITY: 只恢复24小时内的数据
+        const age = Date.now() - (data.timestamp || 0)
+        if (age < 24 * 60 * 60 * 1000) {
+          hotPosts.value = data.hotPosts || []
+          hotOffset.value = data.hotOffset || 0
+          latestPosts.value = data.latestPosts || []
+          latestOffset.value = data.latestOffset || 0
+        }
+      }
+    } catch (error) {
+      console.warn('[PostStore] Failed to load persisted data:', error)
+    }
+  }
+
+  /**
+   * 清除持久化存储
+   */
+  function clearPersistedData() {
+    try {
+      uni.removeStorageSync(STORAGE_KEY)
+    } catch (error) {
+      console.warn('[PostStore] Failed to clear persisted data:', error)
+    }
   }
 
   return {

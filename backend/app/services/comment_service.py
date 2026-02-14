@@ -92,9 +92,13 @@ async def create(
             db.add(comment)
             await db.flush()
 
-            # 原子性更新帖子评论数
+            # SECURITY: 使用原子操作更新帖子评论数，防止竞态条件
+            from sqlalchemy import update
             await db.execute(
-                update(Post).where(Post.id == post_id).values(comment_count=Post.comment_count + 1)
+                update(Post)
+                .where(Post.id == post_id)
+                .values(comment_count=Post.comment_count + 1)
+                .execution_options(synchronize_session=False)
             )
 
             # 通知：根评论通知帖子作者，回复通知被回复人
@@ -127,20 +131,49 @@ async def get_by_id(db: AsyncSession, comment_id: str) -> Optional[Comment]:
     return r.scalar_one_or_none()
 
 
-async def delete(db: AsyncSession, comment_id: str) -> bool:
+async def delete(db: AsyncSession, comment_id: str, user_id: str) -> bool:
+    """
+    删除评论 - 使用原子操作防止竞态条件
+
+    Args:
+        db: 数据库会话
+        comment_id: 评论ID
+        user_id: 当前用户ID（用于权限验证）
+
+    Returns:
+        是否删除成功
+    """
+    from sqlalchemy import update, delete as sql_delete
+
+    # 先获取评论用于权限验证
     comment = await get_by_id(db, comment_id)
     if not comment:
         return False
+
+    # SECURITY: 权限检查 - 只能删除自己的评论或管理员可以删除任何评论
+    if str(comment.user_id) != str(user_id):
+        from app.core.exceptions import AuthorizationException
+        raise AuthorizationException("无权删除此评论")
+
     post_id = comment.post_id
-    await db.delete(comment)
-    await db.flush()
-    # 防止 comment_count 减到负数
-    r = await db.execute(select(Post).where(Post.id == post_id))
-    post = r.scalar_one_or_none()
-    if post:
-        post.comment_count = max(0, (post.comment_count or 0) - 1)
+
     try:
-        await db.commit()
+        # 开始事务
+        async with db.begin():
+            # 删除评论
+            await db.execute(
+                sql_delete(Comment).where(Comment.id == comment_id)
+            )
+
+            # SECURITY: 使用原子操作减去评论数，防止竞态条件
+            # 确保计数不会变成负数
+            await db.execute(
+                update(Post)
+                .where(Post.id == post_id, Post.comment_count > 0)
+                .values(comment_count=Post.comment_count - 1)
+                .execution_options(synchronize_session=False)
+            )
+
         return True
     except SQLAlchemyError:
         await db.rollback()

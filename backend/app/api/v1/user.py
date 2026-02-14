@@ -53,5 +53,9 @@ async def get_profile_data(
     db: AsyncSession = Depends(get_db),
 ):
     """获取用户主页数据（帖子、打卡记录、粉丝数、关注数）"""
+    # SECURITY: 验证target_user_id格式
+    from app.utils.validation import validate_uuid
+    validate_uuid(target_user_id, "target_user_id")
+
     data = await get_user_profile_data(db, current_user.id, target_user_id)
     return data

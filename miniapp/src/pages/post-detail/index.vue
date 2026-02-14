@@ -8,6 +8,7 @@ import {
 } from '@/api/comment'
 import { likePost, unlikePost } from '@/api/like'
 import { likeComment, unlikeComment } from '@/api/like'
+import { sanitizePost, isValidImageUrl } from '@/utils/sanitize'
 
 const id = ref('')
 const post = ref<PostItem | null>(null)
@@ -73,6 +74,18 @@ const timeStr = computed(() => {
   if (!post.value?.created_at) return ''
   const d = new Date(post.value.created_at)
   return d.toLocaleString()
+})
+
+// SECURITY: 净化帖子内容，防止 XSS 攻击
+const safeContent = computed(() => {
+  if (!post.value?.content) return ''
+  return sanitizePost(post.value.content)
+})
+
+// SECURITY: 验证图片 URL 安全性，过滤恶意 URL
+const safeImages = computed(() => {
+  if (!post.value?.images) return []
+  return post.value.images.filter((img: string) => isValidImageUrl(img))
 })
 
 function commentTime(createdAt: string) {
@@ -194,10 +207,10 @@ async function shareToMoments() {
         <text class="name">{{ post.anonymous_name }}</text>
         <text class="time">{{ timeStr }}</text>
       </view>
-      <text class="content">{{ post.content }}</text>
-      <view v-if="post.images?.length" class="imgs">
+      <text class="content">{{ safeContent }}</text>
+      <view v-if="safeImages.length" class="imgs">
         <image
-          v-for="(img, i) in post.images"
+          v-for="(img, i) in safeImages"
           :key="i"
           class="thumb"
           :src="img"

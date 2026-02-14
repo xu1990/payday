@@ -91,11 +91,11 @@ adminApi.interceptors.response.use(
     refreshPromise = (async () => {
       try {
         const refreshToken = authStore.refreshToken
-        const userId = authStore.userId
 
+        // SECURITY: 管理端不需要user_id进行token刷新
+        // 后端可以从refresh token中解析admin信息
         const { data } = await adminApi.post('/api/v1/admin/auth/refresh', {
-          refresh_token: refreshToken,
-          user_id: userId
+          refresh_token: refreshToken
         })
 
         // 更新token

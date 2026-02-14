@@ -294,15 +294,15 @@ async def search_posts(
             valid_tags.append(tag)
 
         # 使用验证后的标签列表进行JSON包含查询
-        # SECURITY: 使用参数化查询防止SQL注入
+        # SECURITY: 使用参数化查询防止SQL注入，使用固定参数名避免动态参数名问题
         if valid_tags:
             from sqlalchemy import or_, text, bindparam
 
             tag_conditions = []
-            for tag in valid_tags:
-                # SECURITY: 创建命名参数并安全绑定
+            for idx, tag in enumerate(valid_tags):
+                # SECURITY: 使用固定参数名格式，避免动态参数名潜在的SQL注入风险
                 # JSON_CONTAINS 是 MySQL 的安全函数，使用参数化查询
-                param_name = f'tag_{len(tag_conditions)}'
+                param_name = f'tag_{idx}'
                 tag_value = json.dumps([tag])  # 使用 json.dumps 确保安全转义
                 tag_conditions.append(
                     text(f"JSON_CONTAINS(tags, :{param_name})").bindparams(

@@ -39,3 +39,4 @@ oss2>=2.18.0
 
 # 工具
 python-dotenv>=1.0
+bleach>=6.1.0
