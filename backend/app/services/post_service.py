@@ -257,11 +257,23 @@ async def search_posts(
         if len(keyword) > 100:
             raise ValidationException("Search keyword too long (max 100 characters)")
 
-        # 移除控制字符，防止注入攻击
-        keyword = ''.join(char for char in keyword if ord(char) >= 32 or char in '\n\t\r')
+        # 更严格的输入清理：仅允许可打印字符，移除所有控制字符
+        # 保留空格、标点符号、中文字符
+        import re
+        # 移除所有控制字符（0-31，除了空格32）和特殊SQL字符
+        keyword = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', keyword)
+        # 额外清理：移除可能的 SQL 注入模式
+        keyword = re.sub(r"[';\"\"\\]", '', keyword)
+
+        # 限制最终长度
+        keyword = keyword[:100].strip()
+
+        if not keyword:
+            # 清理后为空，返回空结果
+            return [], 0
 
         # 使用 SQLAlchemy 的 bindparam 自动转义，防止 SQL 注入
-        # SQLAlchemy 会正确处理参数绑定，无需手动转义
+        # 使用 bindparam 确保安全
         search_pattern = f"%{keyword}%"
         query = query.where(Post.content.ilike(search_pattern))
 
@@ -276,7 +288,8 @@ async def search_posts(
             if len(tag) > 20:
                 continue
             # 标签验证：仅允许字母数字、中文、空格、连字符、下划线
-            if not re.match(r'^[\\w\u4e00-\\u9fff\\s\\-_]+$', tag):
+            # 使用原始字符串避免转义问题
+            if not re.match(r'^[\w\u4e00-\u9fff\s\-_]+$', tag):
                 continue
             valid_tags.append(tag)
 

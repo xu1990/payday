@@ -19,9 +19,18 @@ let isRefreshing = false
 let refreshPromise: Promise<boolean> | null = null
 // 存储等待重试的请求
 let failedQueue: Array<(token: string) => void> = []
+// 刷新重试计数器，防止无限重试
+let refreshRetryCount = 0
+const MAX_REFRESH_RETRIES = 3
 
 const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach(prom => prom(error || token))
+  failedQueue.forEach(prom => {
+    try {
+      prom(error || token)
+    } catch (err) {
+      console.error('[adminApi] Error processing queue item:', err)
+    }
+  })
   failedQueue = []
 }
 
@@ -55,6 +64,13 @@ adminApi.interceptors.response.use(
       return Promise.reject(error)
     }
 
+    // 检查重试次数，防止无限重试
+    if (refreshRetryCount >= MAX_REFRESH_RETRIES) {
+      console.error('[adminApi] Max refresh retries reached')
+      authStore.logout()
+      return Promise.reject(error)
+    }
+
     // 如果正在刷新，将请求加入队列
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
@@ -69,6 +85,7 @@ adminApi.interceptors.response.use(
 
     originalRequest._retry = true
     isRefreshing = true
+    refreshRetryCount++
 
     // 开始刷新token
     refreshPromise = (async () => {
@@ -87,6 +104,8 @@ adminApi.interceptors.response.use(
         // 处理队列中的请求
         processQueue(null, data.access_token)
 
+        // 重置重试计数器
+        refreshRetryCount = 0
         isRefreshing = false
         return true
       } catch (refreshError) {
@@ -96,6 +115,8 @@ adminApi.interceptors.response.use(
         processQueue(refreshError, null)
         authStore.logout()
 
+        // 重置状态
+        refreshRetryCount = 0
         isRefreshing = false
         return false
       }

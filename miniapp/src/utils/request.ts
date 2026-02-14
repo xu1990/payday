@@ -230,7 +230,8 @@ function manageLoading(show: boolean, text?: string) {
     }
     loadingCount++
   } else {
-    loadingCount--
+    // 确保 loadingCount 不会变成负数
+    loadingCount = Math.max(0, loadingCount - 1)
     if (loadingCount <= 0) {
       loadingCount = 0
       hideLoading()
