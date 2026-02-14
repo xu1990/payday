@@ -142,6 +142,14 @@ class TestCommentListEndpoint:
         response = client.get(f"/api/v1/posts/{post_id}/comments?offset=-1")
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
+    async def test_list_comments_nonexistent_post(self, client, db_session: AsyncSession):
+        """测试获取不存在帖子的评论列表 - 返回空列表而不是404"""
+        response = client.get("/api/v1/posts/nonexistent_post_id/comments")
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data == []
+
 
 @pytest.mark.asyncio
 class TestCommentCreateEndpoint:
@@ -249,6 +257,28 @@ class TestCommentCreateEndpoint:
         # 应该通过验证（min_length=1）但可能在业务层被处理
         assert response.status_code in (status.HTTP_200_OK, status.HTTP_422_UNPROCESSABLE_ENTITY)
 
+    async def test_create_comment_on_non_normal_post(
+        self, client, test_user: User, user_headers: dict, db_session: AsyncSession
+    ):
+        """测试成功对正常帖子创建评论"""
+        from app.models.post import Post
+
+        # 创建一个正常的帖子
+        post = await create_test_post(db_session, test_user.id, "正常帖子")
+        post.risk_status = "approved"
+        await db_session.commit()
+
+        response = client.post(
+            f"/api/v1/posts/{post.id}/comments",
+            json={
+                "content": "这是评论",
+            },
+            headers=user_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["content"] == "这是评论"
     async def test_create_comment_nonexistent_post(
         self, client, test_user: User, user_headers: dict
     ):
