@@ -24,7 +24,6 @@ issue is resolved.
 import pytest
 
 
-@pytest.mark.asyncio
 class TestLikePostEndpoint:
     """测试 POST /api/v1/posts/{post_id}/like 端点"""
 
@@ -108,7 +107,6 @@ class TestLikePostEndpoint:
         assert response.status_code == 401
 
 
-@pytest.mark.asyncio
 class TestUnlikePostEndpoint:
     """测试 DELETE /api/v1/posts/{post_id}/like 端点"""
 
@@ -182,7 +180,6 @@ class TestUnlikePostEndpoint:
         assert response.status_code == 401
 
 
-@pytest.mark.asyncio
 class TestLikeCommentEndpoint:
     """测试 POST /api/v1/comments/{comment_id}/like 端点"""
 
@@ -265,7 +262,6 @@ class TestLikeCommentEndpoint:
         assert response.status_code == 401
 
 
-@pytest.mark.asyncio
 class TestUnlikeCommentEndpoint:
     """测试 DELETE /api/v1/comments/{comment_id}/like 端点"""
 

@@ -26,7 +26,6 @@ import pytest
 from datetime import datetime
 
 
-@pytest.mark.asyncio
 class TestListNotificationsEndpoint:
     """测试 GET /api/v1/notifications 端点"""
 
@@ -247,7 +246,6 @@ class TestListNotificationsEndpoint:
         assert response.status_code == 401
 
 
-@pytest.mark.asyncio
 class TestGetUnreadCountEndpoint:
     """测试 GET /api/v1/notifications/unread_count 端点"""
 
@@ -324,7 +322,6 @@ class TestGetUnreadCountEndpoint:
         assert response.status_code == 401
 
 
-@pytest.mark.asyncio
 class TestMarkReadEndpoint:
     """测试 PUT /api/v1/notifications/read 端点"""
 
@@ -463,7 +460,6 @@ class TestMarkReadEndpoint:
         assert response.status_code == 401
 
 
-@pytest.mark.asyncio
 class TestMarkOneReadEndpoint:
     """测试 PUT /api/v1/notifications/{id}/read 端点"""
 
@@ -529,7 +525,6 @@ class TestMarkOneReadEndpoint:
         assert response.status_code == 401
 
 
-@pytest.mark.asyncio
 class TestDeleteNotificationsEndpoint:
     """测试 DELETE /api/v1/notifications 端点"""
 
