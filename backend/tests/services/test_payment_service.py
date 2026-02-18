@@ -14,6 +14,11 @@ from app.core.exceptions import NotFoundException, BusinessException
 from tests.test_utils import TestDataFactory
 
 
+def get_current_wechat_time():
+    """生成当前时间的微信支付时间格式 (yyyyMMddHHmmss)"""
+    return datetime.utcnow().strftime("%Y%m%d%H%M%S")
+
+
 class TestCreateMembershipPayment:
     """测试创建会员订单支付"""
 
@@ -181,7 +186,7 @@ class TestHandlePaymentNotify:
             "out_trade_no": order.id,
             "transaction_id": "wx_txn_123456",
             "total_fee": "9900",  # 99.00元 = 9900分
-            "time_end": "20241215143000",  # 2024-12-15 14:30:00
+            "time_end": get_current_wechat_time(),  # 2024-12-15 14:30:00
         }
 
         result = await handle_payment_notify(db_session, notify_data)
@@ -223,7 +228,7 @@ class TestHandlePaymentNotify:
             "out_trade_no": order.id,
             "transaction_id": "wx_txn_123456",
             "total_fee": "9900",
-            "time_end": "20241215143000",
+            "time_end": get_current_wechat_time(),
         }
 
         # 第一次处理
@@ -246,7 +251,7 @@ class TestHandlePaymentNotify:
             "out_trade_no": "nonexistent_order_id",
             "transaction_id": "wx_txn_123",
             "total_fee": "9900",
-            "time_end": "20241215143000",
+            "time_end": get_current_wechat_time(),
         }
 
         result = await handle_payment_notify(db_session, notify_data)
@@ -261,7 +266,7 @@ class TestHandlePaymentNotify:
         notify_data = {
             "out_trade_no": "order_123",
             "total_fee": "9900",
-            "time_end": "20241215143000",
+            "time_end": get_current_wechat_time(),
         }
 
         result = await handle_payment_notify(db_session, notify_data)
@@ -288,7 +293,7 @@ class TestHandlePaymentNotify:
             "out_trade_no": order.id,
             "transaction_id": "wx_txn_123",
             "total_fee": "10000",  # 100元
-            "time_end": "20241215143000",
+            "time_end": get_current_wechat_time(),
         }
 
         result = await handle_payment_notify(db_session, notify_data)
@@ -322,7 +327,7 @@ class TestHandlePaymentNotify:
             "out_trade_no": order.id,
             "transaction_id": "wx_txn_different",  # 不同的交易ID
             "total_fee": "9900",
-            "time_end": "20241215143000",
+            "time_end": get_current_wechat_time(),
         }
 
         result = await handle_payment_notify(db_session, notify_data)
@@ -360,12 +365,12 @@ class TestHandlePaymentNotify:
 
         result = await handle_payment_notify(db_session, notify_data)
 
-        # 时间解析失败不应阻止支付成功
-        assert result is True
+        # SECURITY: 无效的时间格式应该被拒绝，防止恶意请求
+        assert result is False
 
-        # 验证订单已支付
+        # 验证订单状态未改变
         await db_session.refresh(order)
-        assert order.status == "paid"
+        assert order.status == "pending"
 
     @pytest.mark.asyncio
     async def test_handle_notify_decimal_precision(
@@ -388,7 +393,7 @@ class TestHandlePaymentNotify:
             "out_trade_no": order.id,
             "transaction_id": "wx_txn_123",
             "total_fee": "9999",  # 9999分
-            "time_end": "20241215143000",
+            "time_end": get_current_wechat_time(),
         }
 
         result = await handle_payment_notify(db_session, notify_data)
@@ -418,7 +423,7 @@ class TestHandlePaymentNotify:
             "out_trade_no": order.id,
             "transaction_id": "wx_txn_123",
             "total_fee": "10000",  # 舍入后10000分
-            "time_end": "20241215143000",
+            "time_end": get_current_wechat_time(),
         }
 
         result = await handle_payment_notify(db_session, notify_data)
@@ -526,7 +531,7 @@ class TestPaymentServiceEdgeCases:
             "out_trade_no": order.id,
             "transaction_id": "wx_txn_123",
             "total_fee": "invalid_amount",
-            "time_end": "20241215143000",
+            "time_end": get_current_wechat_time(),
         }
 
         result = await handle_payment_notify(db_session, notify_data)
@@ -555,7 +560,7 @@ class TestPaymentServiceEdgeCases:
             "out_trade_no": order.id,
             "transaction_id": "wx_txn_123",  # 相同的交易ID
             "total_fee": "9900",
-            "time_end": "20241215143000",
+            "time_end": get_current_wechat_time(),
         }
 
         result = await handle_payment_notify(db_session, notify_data)
@@ -583,7 +588,7 @@ class TestPaymentServiceEdgeCases:
             "out_trade_no": order.id,
             "transaction_id": "wx_txn_123",
             "total_fee": "9900",
-            "time_end": "20241215143000",
+            "time_end": get_current_wechat_time(),
         }
 
         # 模拟两次并发处理

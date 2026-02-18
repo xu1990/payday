@@ -10,6 +10,7 @@ from app.models.comment import Comment
 from app.models.salary import SalaryRecord
 from app.models.membership import Membership, MembershipOrder, AppTheme
 from app.models.notification import Notification
+from app.models.payday import PaydayConfig
 from app.utils.encryption import encrypt_amount
 
 
@@ -36,6 +37,8 @@ class TestDataFactory:
         )
         db_session.add(user)
         await db_session.commit()
+        # 清理事务状态，避免后续服务代码调用 async with db.begin() 时冲突
+        await db_session.rollback()
         await db_session.refresh(user)
         return user
 
@@ -62,6 +65,7 @@ class TestDataFactory:
         )
         db_session.add(post)
         await db_session.commit()
+        await db_session.rollback()
         await db_session.refresh(post)
         return post
 
@@ -82,6 +86,7 @@ class TestDataFactory:
         )
         db_session.add(comment)
         await db_session.commit()
+        await db_session.rollback()
         await db_session.refresh(comment)
         return comment
 
@@ -117,6 +122,7 @@ class TestDataFactory:
         )
         db_session.add(salary)
         await db_session.commit()
+        await db_session.rollback()
         await db_session.refresh(salary)
         return salary
 
@@ -139,6 +145,7 @@ class TestDataFactory:
         )
         db_session.add(membership)
         await db_session.commit()
+        await db_session.rollback()
         await db_session.refresh(membership)
         return membership
 
@@ -170,6 +177,7 @@ class TestDataFactory:
         )
         db_session.add(order)
         await db_session.commit()
+        await db_session.rollback()
         await db_session.refresh(order)
         return order
 
@@ -192,6 +200,7 @@ class TestDataFactory:
         )
         db_session.add(notification)
         await db_session.commit()
+        await db_session.rollback()
         await db_session.refresh(notification)
         return notification
 
@@ -214,5 +223,28 @@ class TestDataFactory:
         )
         db_session.add(theme)
         await db_session.commit()
+        await db_session.rollback()
         await db_session.refresh(theme)
         return theme
+
+    @staticmethod
+    async def create_payday_config(
+        db_session: AsyncSession,
+        user_id: str,
+        job_name: str = "测试工作",
+        payday: int = 25,
+        **kwargs
+    ) -> PaydayConfig:
+        """创建测试发薪日配置"""
+        config = PaydayConfig(
+            user_id=user_id,
+            job_name=job_name,
+            payday=payday,
+            payday_type=kwargs.get("payday_type", "fixed"),
+            advance_remind_days=kwargs.get("advance_remind_days", 1),
+        )
+        db_session.add(config)
+        await db_session.commit()
+        await db_session.rollback()
+        await db_session.refresh(config)
+        return config

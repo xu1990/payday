@@ -14,6 +14,7 @@ from app.models.base import Base
 from app.models.user import User
 from app.models.post import Post
 from app.models.salary import SalaryRecord
+from app.models.payday import PaydayConfig
 from app.models.membership import Membership, MembershipOrder, AppTheme
 from app.models.notification import Notification
 from tests.test_utils import TestDataFactory
@@ -53,14 +54,15 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
         engine, class_=AsyncSession, expire_on_commit=False
     )
 
-    async with async_session_maker() as session:
+    session = async_session_maker()
+    try:
         yield session
-
-    # 清理
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-
-    await engine.dispose()
+    finally:
+        # 清理
+        await session.close()
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+        await engine.dispose()
 
 
 @pytest.fixture
@@ -270,3 +272,9 @@ async def test_comment(db_session: AsyncSession, test_user: User, test_post: Pos
 async def test_theme(db_session: AsyncSession) -> AppTheme:
     """创建测试主题"""
     return await TestDataFactory.create_theme(db_session)
+
+
+@pytest.fixture
+async def test_payday_config(db_session: AsyncSession, test_user: User) -> PaydayConfig:
+    """创建测试发薪日配置"""
+    return await TestDataFactory.create_payday_config(db_session, test_user.id)

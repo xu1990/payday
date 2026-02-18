@@ -10,7 +10,16 @@
     "lint:miniapp": "cd miniapp && npm run lint",
     "format:backend": "cd backend && black app tests && isort app tests",
     "format:admin": "cd admin-web && npm run format",
-    "format:miniapp": "cd miniapp && npm run format"
+    "format:miniapp": "cd miniapp && npm run format",
+    "test": "npm run test:backend && npm run test:admin && npm run test:miniapp",
+    "test:backend": "cd backend && pytest -v",
+    "test:backend:coverage": "cd backend && pytest --cov=app --cov-report=html",
+    "test:admin": "cd admin-web && npm run test:run",
+    "test:admin:coverage": "cd admin-web && npm run test:coverage",
+    "test:miniapp": "cd miniapp && npm run test:run",
+    "test:miniapp:coverage": "cd miniapp && npm run test:coverage",
+    "test:all": "npm run test",
+    "test:ci": "npm run test:backend:coverage && npm run test:admin:coverage && npm run test:miniapp:coverage"
   },
   "devDependencies": {}
 }

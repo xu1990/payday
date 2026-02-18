@@ -1,8 +1,8 @@
 /**
  * ActionButtons 组件单元测试
- * 测试操作按钮组的显示和事件触发
+ * 测试操作按钮组组件
  */
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ActionButtons from '@/components/ActionButtons.vue'
 
@@ -85,7 +85,7 @@ describe('ActionButtons 组件', () => {
       await editButton.trigger('click')
 
       expect(wrapper.emitted('edit')).toBeTruthy()
-      expect(wrapper.emitted('edit').length).toBe(1)
+      expect(wrapper.emitted('edit')?.length).toBe(1)
     })
 
     it('点击切换按钮触发 toggle 事件', async () => {
@@ -95,7 +95,7 @@ describe('ActionButtons 组件', () => {
       await toggleButton.trigger('click')
 
       expect(wrapper.emitted('toggle')).toBeTruthy()
-      expect(wrapper.emitted('toggle').length).toBe(1)
+      expect(wrapper.emitted('toggle')?.length).toBe(1)
     })
 
     it('点击删除按钮触发 delete 事件', async () => {
@@ -105,7 +105,7 @@ describe('ActionButtons 组件', () => {
       await deleteButton.trigger('click')
 
       expect(wrapper.emitted('delete')).toBeTruthy()
-      expect(wrapper.emitted('delete').length).toBe(1)
+      expect(wrapper.emitted('delete')?.length).toBe(1)
     })
   })
 

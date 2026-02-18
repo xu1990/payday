@@ -86,8 +86,9 @@ async def create(
     )
 
     try:
-        # 开始事务
-        async with db.begin():
+        # 使用嵌套事务(Savepoint)，可以在现有事务中使用
+        # 这样既支持生产环境的独立事务，也支持测试环境的外部事务
+        async with db.begin_nested():
             # 添加评论
             db.add(comment)
             await db.flush()
@@ -115,12 +116,15 @@ async def create(
                         db, str(parent.user_id), "reply", "新回复", content or "", comment.id
                     )
 
-            # 提交事务
+            # 提交嵌套事务(savepoint)
             await db.commit()
 
-            # 刷新评论对象以获取数据库生成的值
-            await db.refresh(comment)
-            return comment
+        # 提交外部事务（如果存在）
+        await db.commit()
+
+        # 刷新评论对象以获取数据库生成的值
+        await db.refresh(comment)
+        return comment
     except SQLAlchemyError as e:
         await db.rollback()
         raise
@@ -158,8 +162,8 @@ async def delete(db: AsyncSession, comment_id: str, user_id: str) -> bool:
     post_id = comment.post_id
 
     try:
-        # 开始事务
-        async with db.begin():
+        # 使用嵌套事务(Savepoint)，可以在现有事务中使用
+        async with db.begin_nested():
             # 删除评论
             await db.execute(
                 sql_delete(Comment).where(Comment.id == comment_id)
@@ -173,6 +177,12 @@ async def delete(db: AsyncSession, comment_id: str, user_id: str) -> bool:
                 .values(comment_count=Post.comment_count - 1)
                 .execution_options(synchronize_session=False)
             )
+
+            # 提交嵌套事务(savepoint)
+            await db.commit()
+
+        # 提交外部事务（如果存在）
+        await db.commit()
 
         return True
     except SQLAlchemyError:

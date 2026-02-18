@@ -133,9 +133,11 @@ class TestEncodeCursor:
 
     def test_encode_decode_roundtrip(self):
         """测试编码解码往返"""
+        from datetime import datetime
         paginator = CursorPaginator(User, order_by=[desc(User.id)])
 
-        original_values = ("2024-01-01T10:30:00", "user123", "extra")
+        # 使用 datetime 对象，因为 decode_cursor 会将 ISO 字符串转换为 datetime
+        original_values = (datetime(2024, 1, 1, 10, 30), "user123", "extra")
         encoded = paginator._encode_cursor(original_values)
         decoded = paginator._decode_cursor(encoded)
 
