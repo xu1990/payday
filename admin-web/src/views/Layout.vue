@@ -51,6 +51,14 @@
           <el-icon><Tickets /></el-icon>
           <span>订单管理</span>
         </el-menu-item>
+        <el-menu-item index="/miniprogram" aria-label="小程序配置页面">
+          <el-icon><Setting /></el-icon>
+          <span>小程序配置</span>
+        </el-menu-item>
+        <el-menu-item index="/agreements" aria-label="协议管理页面">
+          <el-icon><Document /></el-icon>
+          <span>协议管理</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>
@@ -68,7 +76,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DataAnalysis, User, List, Document, ChatDotRound, DocumentChecked, PriceTag, UserFilled, Brush, Tickets } from '@element-plus/icons-vue'
+import { DataAnalysis, User, List, Document, ChatDotRound, DocumentChecked, PriceTag, UserFilled, Brush, Tickets, Setting } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()

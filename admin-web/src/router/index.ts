@@ -22,6 +22,8 @@ const router = createRouter({
         { path: 'memberships', name: 'Memberships', component: () => import('@/views/Membership.vue') },
         { path: 'themes', name: 'Themes', component: () => import('@/views/Theme.vue') },
         { path: 'orders', name: 'Orders', component: () => import('@/views/Order.vue') },
+        { path: 'miniprogram', name: 'Miniprogram', component: () => import('@/views/MiniprogramConfig.vue') },
+        { path: 'agreements', name: 'Agreements', component: () => import('@/views/AgreementManagement.vue') },
       ],
     },
   ],
