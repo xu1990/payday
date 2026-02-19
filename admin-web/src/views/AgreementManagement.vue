@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import { ElMessage } from 'element-plus'
@@ -10,6 +10,18 @@ const userContent = ref('')
 const privacyContent = ref('')
 const loading = ref(false)
 const saving = ref(false)
+
+// 计算属性：当前活动标签的内容
+const currentContent = computed({
+  get: () => activeTab.value === 'user' ? userContent.value : privacyContent.value,
+  set: (value: string) => {
+    if (activeTab.value === 'user') {
+      userContent.value = value
+    } else {
+      privacyContent.value = value
+    }
+  }
+})
 
 async function loadData() {
   loading.value = true
@@ -41,10 +53,6 @@ async function save() {
   }
 }
 
-function switchTab(tab: 'user' | 'privacy') {
-  activeTab.value = tab
-}
-
 onMounted(loadData)
 </script>
 
@@ -54,14 +62,14 @@ onMounted(loadData)
       <h2>协议管理</h2>
     </div>
 
-    <el-tabs v-model="activeTab" @tab-change="switchTab">
+    <el-tabs v-model="activeTab">
       <el-tab-pane label="用户协议" name="user" />
       <el-tab-pane label="隐私协议" name="privacy" />
     </el-tabs>
 
     <div v-loading="loading" class="editor-container">
       <QuillEditor
-        v-model:content="activeTab === 'user' ? userContent : privacyContent"
+        v-model:content="currentContent"
         contentType="html"
         theme="snow"
         :toolbar="[
