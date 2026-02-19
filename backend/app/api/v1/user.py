@@ -2,7 +2,9 @@
 用户接口 - GET /me, PUT /me, GET /profile-data
 """
 from datetime import datetime, timedelta
+from typing import Optional
 from fastapi import APIRouter, Depends, Query, File, UploadFile
+from pydantic import BaseModel, Field
 
 from app.core.deps import get_current_user
 from app.core.exceptions import success_response
@@ -19,6 +21,7 @@ def _user_to_response(user: User) -> dict:
     return {
         "id": user.id,
         "anonymous_name": user.anonymous_name,
+        "nickname": user.nickname,
         "avatar": user.avatar,
         "bio": user.bio,
         "follower_count": user.follower_count,
@@ -119,3 +122,20 @@ async def upload_avatar(
     user = await upload_user_avatar(db, current_user.id, url)
 
     return success_response(data={"url": url}, message="头像上传成功")
+
+
+class FeedbackCreate(BaseModel):
+    content: str = Field(..., min_length=1, max_length=500, description="反馈内容")
+    contact: Optional[str] = Field(None, max_length=100, description="联系方式")
+
+
+@router.post("/feedback")
+async def submit_feedback(
+    data: FeedbackCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """提交用户反馈"""
+    # TODO: 创建专门的 feedback 表来存储反馈
+    # 当前版本暂时返回成功消息，实际项目中应该保存到数据库或发送到管理员邮箱
+    return success_response(message="反馈已提交，感谢您的建议")

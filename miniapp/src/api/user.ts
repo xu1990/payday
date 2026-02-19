@@ -186,6 +186,20 @@ export function logout(): Promise<{ message: string }> {
   })
 }
 
+/**
+ * 提交反馈
+ */
+export function submitFeedback(data: {
+  content: string
+  contact?: string
+}): Promise<{ message: string }> {
+  return request({
+    url: `${PREFIX}/feedback`,
+    method: 'POST',
+    data
+  })
+}
+
 export default {
   getCurrentUser,
   updateCurrentUser,
@@ -199,4 +213,5 @@ export default {
   getUserFollowing,
   deactivateAccount,
   logout,
+  submitFeedback,
 }

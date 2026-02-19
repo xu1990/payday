@@ -54,6 +54,18 @@ async def check_in(
     note: Optional[str] = None,
 ) -> CheckIn:
     """打卡"""
+    from app.core.exceptions import BusinessException
+
+    # 检查今天是否已经打卡
+    existing = await db.execute(
+        select(CheckIn).where(
+            CheckIn.user_id == user_id,
+            CheckIn.check_date == check_date
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise BusinessException("今天已经打卡了", code="ALREADY_CHECKED_IN_TODAY")
+
     checkin = CheckIn(
         user_id=user_id,
         check_date=check_date,

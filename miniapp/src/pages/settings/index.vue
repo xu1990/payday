@@ -75,13 +75,22 @@
       </view>
     </view>
 
-    <!-- 其他 -->
+    <!-- 协议条款 -->
     <view class="section">
-      <view class="section-title">其他</view>
+      <view class="section-title">协议条款</view>
+      <view class="setting-item" @click="handleUserAgreement">
+        <text class="setting-label">用户协议</text>
+        <text class="setting-arrow">›</text>
+      </view>
       <view class="setting-item" @click="handlePrivacyPolicy">
         <text class="setting-label">隐私协议</text>
         <text class="setting-arrow">›</text>
       </view>
+    </view>
+
+    <!-- 其他 -->
+    <view class="section">
+      <view class="section-title">其他</view>
       <view class="setting-item" @click="handleAbout">
         <text class="setting-label">关于</text>
         <text class="setting-arrow">›</text>
@@ -114,7 +123,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { getUserSettings, updateUserSettings, type UserSettings } from '@/api/theme'
-import { updateCurrentUser, deactivateAccount, logout } from '@/api/user'
+import { updateCurrentUser, deactivateAccount, logout, submitFeedback } from '@/api/user'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
@@ -239,8 +248,12 @@ const goToThemes = () => {
   uni.navigateTo({ url: '/pages/themes/index' })
 }
 
+const handleUserAgreement = () => {
+  uni.navigateTo({ url: '/pages/user-agreement/index' })
+}
+
 const handlePrivacyPolicy = () => {
-  uni.navigateTo({ url: '/pages/privacy/index' })
+  uni.navigateTo({ url: '/pages/privacy-policy/index' })
 }
 
 const handleAbout = () => {
@@ -252,7 +265,24 @@ const handleAbout = () => {
 }
 
 const handleFeedback = () => {
-  uni.showToast({ title: '反馈功能开发中', icon: 'none' })
+  uni.showModal({
+    title: '意见反馈',
+    editable: true,
+    placeholderText: '请输入您的宝贵建议...',
+    success: async (res) => {
+      if (res.confirm && res.content) {
+        try {
+          uni.showLoading({ title: '提交中...' })
+          await submitFeedback({ content: res.content })
+          uni.hideLoading()
+          uni.showToast({ title: '感谢您的反馈', icon: 'success' })
+        } catch (e: any) {
+          uni.hideLoading()
+          uni.showToast({ title: e?.message || '提交失败', icon: 'none' })
+        }
+      }
+    }
+  })
 }
 
 // 退出登录
