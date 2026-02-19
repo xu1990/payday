@@ -1,7 +1,7 @@
 """
 公共配置 API - 小程序获取协议、开屏配置等
 """
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
