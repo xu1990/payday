@@ -7,7 +7,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import * as authApi from '@/api/auth'
-import type * as AuthType from '@/api/auth'
+import * as tokenStorage from '@/utils/tokenStorage'
 
 export const useAuthStore = defineStore('auth', () => {
   // 状态
@@ -21,7 +21,7 @@ export const useAuthStore = defineStore('auth', () => {
    * 初始化 - 从本地存储恢复 token
    */
   async function init() {
-    const savedToken = await authApi.getToken()
+    const savedToken = await tokenStorage.getToken()
     if (savedToken) {
       token.value = savedToken
       // Token 存在，用户信息由 userStore 负责获取
@@ -38,7 +38,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       // 保存 token
       token.value = response.access_token
-      await authApi.saveToken(response.access_token)
+      await tokenStorage.saveToken(response.access_token, response.refresh_token, response.user.id)
 
       // 注意：不再在 authStore 中保存用户信息
       // 用户信息由调用方使用 userStore.fetchCurrentUser() 获取
@@ -56,7 +56,7 @@ export const useAuthStore = defineStore('auth', () => {
    */
   function logout() {
     token.value = ''
-    authApi.clearToken()
+    tokenStorage.clearToken()
     // 注意：不再清除 userInfo，由 userStore 负责
   }
 

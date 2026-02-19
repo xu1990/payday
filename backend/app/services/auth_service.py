@@ -78,6 +78,40 @@ async def login_with_code(db: AsyncSession, code: str) -> Optional[Tuple[str, st
     Returns:
         (access_token, refresh_token, user) 或 None
     """
+    # 开发环境模拟登录（如果未配置微信凭证）
+    from app.core.config import get_settings
+    settings = get_settings()
+
+    if not settings.wechat_app_id or not settings.wechat_app_secret:
+        # 开发环境：使用模拟 openid（仅用于开发测试）
+        from app.utils.logger import get_logger
+        logger = get_logger(__name__)
+        logger.warning(f"[DEV_MODE] Using mock login - WECHAT_APP_ID or WECHAT_APP_SECRET not configured")
+
+        # 使用 code 的前 28 位作为模拟 openid（避免重复）
+        mock_openid = f"dev_openid_{code[:28]}"
+
+        user = await get_or_create_user(db, openid=mock_openid, unionid=None)
+
+        # 生成 Access Token 和 Refresh Token
+        access_token = create_access_token(data={"sub": user.id})
+        refresh_token = create_refresh_token(data={"sub": user.id})
+
+        # 将 Refresh Token 存储到 Redis（7天过期）
+        redis = await get_redis_client()
+        if redis:
+            try:
+                await redis.setex(
+                    f"refresh_token:{user.id}",
+                    7 * 24 * 60 * 60,  # 7天
+                    refresh_token
+                )
+            except Exception as e:
+                logger.warning(f"Failed to store refresh token in Redis: {e}")
+
+        return access_token, refresh_token, user
+
+    # 生产环境：调用微信 code2session
     data = await code2session(code)
     if not data:
         return None  # OK: 微信登录失败返回 None 是正常流程

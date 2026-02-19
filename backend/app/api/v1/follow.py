@@ -93,7 +93,7 @@ async def my_feed(
     total = await count_following_posts(db, current_user.id)
     posts = await list_following_posts(db, current_user.id, limit=limit, offset=offset)
     data = {
-        "items": [PostResponse.model_validate(p).model_dump() for p in posts],
+        "items": [PostResponse.model_validate(p).model_dump(mode='json') for p in posts],
         "total": total,
     }
     return success_response(data=data, message="获取关注流成功")

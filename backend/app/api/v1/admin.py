@@ -212,7 +212,7 @@ async def admin_user_detail(
         allow_comment=user.allow_comment,
         updated_at=user.updated_at,
     )
-    return success_response(data=data.model_dump(), message="获取用户详情成功")
+    return success_response(data=data.model_dump(mode='json'), message="获取用户详情成功")
 
 
 @router.get("/salary-records")
@@ -260,7 +260,7 @@ async def admin_salary_update_risk(
     if not record:
         raise NotFoundException("记录不存在")
     return success_response(
-        data=salary_record_to_response(record).model_dump(),
+        data=salary_record_to_response(record).model_dump(mode='json'),
         message="更新工资记录风控状态成功"
     )
 
@@ -350,7 +350,7 @@ async def admin_post_detail(
     )
 
     return success_response(
-        data=post_data.model_dump(),
+        data=post_data.model_dump(mode='json'),
         message="获取帖子详情成功"
     )
 

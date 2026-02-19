@@ -8,7 +8,7 @@
  * - 后端通过其他机制（如速率限制）防止滥用
  */
 import { hideLoading, showLoading, showError } from './toast'
-import { getToken as getStoredToken, getRefreshToken, getUserId, saveToken, clearToken, refreshAccessToken } from '@/api/auth'
+import { getToken as getStoredToken, getRefreshToken, getUserId, saveToken, clearToken } from './tokenStorage'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || ''
 
@@ -83,6 +83,36 @@ function isTokenExpired(token: string): boolean {
 }
 
 /**
+ * 刷新 access token（内部实现，避免循环依赖）
+ */
+async function refreshAccessTokenInternal(refreshToken: string, userId: string): Promise<{
+  access_token: string
+  refresh_token: string
+}> {
+  const url = resolveUrl('/api/v1/auth/refresh')
+
+  return new Promise((resolve, reject) => {
+    uni.request({
+      url,
+      method: 'POST',
+      data: { refresh_token: refreshToken, user_id: userId },
+      header: { 'Content-Type': 'application/json' },
+      timeout: 10000,
+      success: (res) => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(res.data as { access_token: string; refresh_token: string })
+        } else {
+          reject(new Error(`Token refresh failed with status ${res.statusCode}`))
+        }
+      },
+      fail: (err) => {
+        reject(new Error(err.errMsg || 'Token refresh request failed'))
+      },
+    })
+  })
+}
+
+/**
  * 尝试刷新 access token
  * SECURITY: 改进队列机制和重试限制，防止竞态条件
  */
@@ -116,7 +146,7 @@ async function tryRefreshToken(): Promise<boolean> {
         return false
       }
 
-      const result = await refreshAccessToken(refreshToken, userId)
+      const result = await refreshAccessTokenInternal(refreshToken, userId)
 
       // 保存新的 tokens
       await saveToken(result.access_token, result.refresh_token, userId)

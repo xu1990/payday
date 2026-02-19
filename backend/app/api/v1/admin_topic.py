@@ -29,7 +29,7 @@ async def list_topics(
     )
     return success_response(
         data={
-            "items": [TopicResponse.model_validate(t).model_dump() for t in items],
+            "items": [TopicResponse.model_validate(t).model_dump(mode='json') for t in items],
             "total": total,
         },
         message="获取话题列表成功"
@@ -51,7 +51,7 @@ async def create_topic(
         sort_order=data.sort_order,
     )
     return success_response(
-        data=TopicResponse.model_validate(topic).model_dump(),
+        data=TopicResponse.model_validate(topic).model_dump(mode='json'),
         message="创建话题成功"
     )
 
@@ -67,7 +67,7 @@ async def get_topic(
     if not topic:
         raise NotFoundException("资源不存在")
     return success_response(
-        data=TopicResponse.model_validate(topic).model_dump(),
+        data=TopicResponse.model_validate(topic).model_dump(mode='json'),
         message="获取话题成功"
     )
 
@@ -92,7 +92,7 @@ async def update_topic(
     if not topic:
         raise NotFoundException("资源不存在")
     return success_response(
-        data=TopicResponse.model_validate(topic).model_dump(),
+        data=TopicResponse.model_validate(topic).model_dump(mode='json'),
         message="更新话题成功"
     )
 

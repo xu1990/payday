@@ -44,4 +44,4 @@ class PaydayConfigResponse(BaseModel):
 
 
 def payday_to_response(m: PaydayConfig) -> dict:
-    return PaydayConfigResponse.model_validate(m).model_dump()
+    return PaydayConfigResponse.model_validate(m).model_dump(mode='json')

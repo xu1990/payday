@@ -31,7 +31,7 @@ async def like_post(
         raise NotFoundException("资源不存在")
     like, created = await like_service.like_post(db, current_user.id, post_id)
     response.status_code = 201 if created else 200
-    return success_response(data=LikeResponse.model_validate(like).model_dump(), message="点赞成功")
+    return success_response(data=LikeResponse.model_validate(like).model_dump(mode='json'), message="点赞成功")
 
 
 @router.delete("/posts/{post_id}/like", status_code=204)
@@ -61,7 +61,7 @@ async def like_comment(
         raise NotFoundException("资源不存在")
     like, created = await like_service.like_comment(db, current_user.id, comment_id)
     response.status_code = 201 if created else 200
-    return success_response(data=LikeResponse.model_validate(like).model_dump(), message="点赞成功")
+    return success_response(data=LikeResponse.model_validate(like).model_dump(mode='json'), message="点赞成功")
 
 
 @router.delete("/comments/{comment_id}/like", status_code=204)

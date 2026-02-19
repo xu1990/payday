@@ -168,7 +168,7 @@ async def list_memberships(
     result = await db.execute(q)
     items = list(result.scalars().all())
 
-    items_data = [MembershipResponse.model_validate(m).model_dump() for m in items]
+    items_data = [MembershipResponse.model_validate(m).model_dump(mode='json') for m in items]
 
     return success_response(
         data={"items": items_data, "total": total},
@@ -189,7 +189,7 @@ async def create_membership(
     await db.refresh(membership)
 
     return success_response(
-        data=MembershipResponse.model_validate(membership).model_dump(),
+        data=MembershipResponse.model_validate(membership).model_dump(mode='json'),
         message="创建会员套餐成功"
     )
 
@@ -221,7 +221,7 @@ async def update_membership(
     await db.refresh(membership)
 
     return success_response(
-        data=MembershipResponse.model_validate(membership).model_dump(),
+        data=MembershipResponse.model_validate(membership).model_dump(mode='json'),
         message="更新会员套餐成功"
     )
 

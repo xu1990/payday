@@ -6,7 +6,7 @@ from typing import Optional
 
 from fastapi import Depends, HTTPException, Query
 
-from app.core.deps import get_current_user, verify_csrf_token_for_user
+from app.core.deps import get_current_user
 from app.core.exceptions import NotFoundException, AuthenticationException, BusinessException, success_response
 from app.core.database import get_db
 from app.models.user import User
@@ -36,7 +36,7 @@ async def salary_list(
     db: AsyncSession = Depends(get_db),
 ):
     records = await list_by_user(db, current_user.id, config_id, from_date, to_date, limit, offset)
-    data = [SalaryRecordResponse(**record_to_response(r)).model_dump() for r in records]
+    data = [SalaryRecordResponse(**record_to_response(r)).model_dump(mode='json') for r in records]
     return success_response(data=data, message="获取工资记录成功")
 
 
@@ -44,11 +44,10 @@ async def salary_list(
 async def salary_create(
     body: SalaryRecordCreate,
     current_user: User = Depends(get_current_user),
-    _csrf: bool = Depends(verify_csrf_token_for_user),  # 用户 CSRF 保护
     db: AsyncSession = Depends(get_db),
 ):
     record = await create_record(db, current_user.id, body)
-    return success_response(data=SalaryRecordResponse(**record_to_response(record)).model_dump(), message="创建工资记录成功")
+    return success_response(data=SalaryRecordResponse(**record_to_response(record)).model_dump(mode='json'), message="创建工资记录成功")
 
 
 @router.get("/{record_id}")
@@ -60,7 +59,7 @@ async def salary_get(
     record = await get_by_id(db, record_id, current_user.id)
     if not record:
         raise NotFoundException("资源不存在")
-    return success_response(data=SalaryRecordResponse(**record_to_response(record)).model_dump(), message="获取工资记录成功")
+    return success_response(data=SalaryRecordResponse(**record_to_response(record)).model_dump(mode='json'), message="获取工资记录成功")
 
 
 @router.put("/{record_id}")
@@ -68,20 +67,18 @@ async def salary_update(
     record_id: str,
     body: SalaryRecordUpdate,
     current_user: User = Depends(get_current_user),
-    _csrf: bool = Depends(verify_csrf_token_for_user),  # 用户 CSRF 保护
     db: AsyncSession = Depends(get_db),
 ):
     record = await update_record(db, record_id, current_user.id, body)
     if not record:
         raise NotFoundException("资源不存在")
-    return success_response(data=SalaryRecordResponse(**record_to_response(record)).model_dump(), message="更新工资记录成功")
+    return success_response(data=SalaryRecordResponse(**record_to_response(record)).model_dump(mode='json'), message="更新工资记录成功")
 
 
 @router.delete("/{record_id}")
 async def salary_delete(
     record_id: str,
     current_user: User = Depends(get_current_user),
-    _csrf: bool = Depends(verify_csrf_token_for_user),  # 用户 CSRF 保护
     db: AsyncSession = Depends(get_db),
 ):
     ok = await delete_record(db, record_id, current_user.id)

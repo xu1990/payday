@@ -59,7 +59,7 @@ async def post_create(
     # SECURITY: 速率限制已通过 _rate_limit 依赖应用
     post = await create_post(db, current_user.id, body, anonymous_name=current_user.anonymous_name)
     background_tasks.add_task(run_risk_check_for_post, post.id)
-    return success_response(data=PostResponse.model_validate(post).model_dump(), message="发帖成功")
+    return success_response(data=PostResponse.model_validate(post).model_dump(mode='json'), message="发帖成功")
 
 
 @router.get("")
@@ -70,7 +70,7 @@ async def post_list(
     db: AsyncSession = Depends(get_db),
 ):
     posts = await list_posts(db, sort=sort, limit=limit, offset=offset)
-    data = [PostResponse.model_validate(p).model_dump() for p in posts]
+    data = [PostResponse.model_validate(p).model_dump(mode='json') for p in posts]
     return success_response(data=data, message="获取帖子列表成功")
 
 
@@ -83,4 +83,4 @@ async def post_get(
     post = await get_by_id(db, post_id, only_approved=True, increment_view=True)
     if not post:
         raise NotFoundException("资源不存在")
-    return success_response(data=PostResponse.model_validate(post).model_dump(), message="获取帖子详情成功")
+    return success_response(data=PostResponse.model_validate(post).model_dump(mode='json'), message="获取帖子详情成功")

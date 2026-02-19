@@ -36,7 +36,7 @@ async def create_share_endpoint(
         target_id=data.target_id,
         share_channel=data.share_channel,
     )
-    return success_response(data=ShareResponse.model_validate(share).model_dump(), message="创建分享记录成功")
+    return success_response(data=ShareResponse.model_validate(share).model_dump(mode='json'), message="创建分享记录成功")
 
 
 @router.get("")
@@ -55,7 +55,7 @@ async def list_shares(
         limit=limit,
         offset=offset,
     )
-    items = [ShareResponse.model_validate(s).model_dump() for s in shares]
+    items = [ShareResponse.model_validate(s).model_dump(mode='json') for s in shares]
     return success_response(data={"items": items, "total": total}, message="获取分享记录成功")
 
 
@@ -86,4 +86,4 @@ async def update_status(
     )
     if not share:
         raise NotFoundException("资源不存在")
-    return success_response(data=ShareResponse.model_validate(share).model_dump(), message="更新分享状态成功")
+    return success_response(data=ShareResponse.model_validate(share).model_dump(mode='json'), message="更新分享状态成功")

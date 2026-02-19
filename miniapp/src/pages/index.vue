@@ -137,36 +137,48 @@ function setMood(mood: MoodType) {
   }
 }
 
+// 检查登录状态，未登录则跳转登录页
+function checkLogin() {
+  if (!authStore.isLoggedIn) {
+    uni.navigateTo({ url: '/pages/login/index' })
+    return false
+  }
+  return true
+}
+
 function goFeed() {
+  if (!checkLogin()) return
   uni.navigateTo({ url: '/pages/feed/index' })
 }
 
 function goPaydaySetting() {
+  if (!checkLogin()) return
   uni.navigateTo({ url: '/pages/payday-setting/index' })
 }
 
 function goSalaryRecord() {
+  if (!checkLogin()) return
   uni.navigateTo({ url: '/pages/salary-record/index' })
 }
 
 function goInsights() {
+  if (!checkLogin()) return
   uni.navigateTo({ url: '/pages/insights/index' })
 }
 
 function goMembership() {
+  if (!checkLogin()) return
   uni.navigateTo({ url: '/pages/membership/index' })
 }
 
 function goCheckIn() {
+  if (!checkLogin()) return
   uni.navigateTo({ url: '/pages/checkin/index' })
 }
 
 function goProfile() {
+  if (!checkLogin()) return
   uni.navigateTo({ url: '/pages/profile/index' })
-}
-
-function goLogin() {
-  uni.navigateTo({ url: '/pages/login/index' })
 }
 </script>
 
@@ -215,32 +227,24 @@ function goLogin() {
       <text class="progress-desc">{{ progress.passed }} / {{ progress.total }} 天</text>
     </view>
 
-    <!-- 未登录提示 -->
-    <view v-if="!isLoggedIn" class="login-prompt">
-      <text class="prompt-text">登录后记录发薪日和工资</text>
-      <button class="btn-login" @click="goLogin">立即登录</button>
+    <!-- 功能入口 - 所有操作都需要登录 -->
+    <view class="entry-row">
+      <button class="btn-primary" @click="goSalaryRecord">记工资</button>
+      <button class="btn-secondary" @click="goPaydaySetting">设置发薪日</button>
     </view>
 
-    <!-- 登录后的功能入口 -->
-    <template v-else>
-      <view class="entry-row">
-        <button class="btn-primary" @click="goSalaryRecord">记工资</button>
-        <button class="btn-secondary" @click="goPaydaySetting">设置发薪日</button>
-      </view>
+    <view class="entry-row">
+      <button class="btn-outline" @click="goFeed">关注流</button>
+    </view>
 
-      <view class="entry-row">
-        <button class="btn-outline" @click="goFeed">关注流</button>
-      </view>
+    <view class="entry-row">
+      <button class="btn-secondary" @click="goCheckIn">每日打卡</button>
+      <button class="btn-secondary" @click="goInsights">数据洞察</button>
+    </view>
 
-      <view class="entry-row">
-        <button class="btn-secondary" @click="goCheckIn">每日打卡</button>
-        <button class="btn-secondary" @click="goInsights">数据洞察</button>
-      </view>
-
-      <view class="entry-row">
-        <button class="btn-outline" @click="goMembership">会员中心</button>
-      </view>
-    </template>
+    <view class="entry-row">
+      <button class="btn-outline" @click="goMembership">会员中心</button>
+    </view>
 
     <InputEntry />
     <AppFooter />
@@ -283,28 +287,6 @@ function goLogin() {
 .user-arrow {
   font-size: 40rpx;
   color: #999;
-}
-
-/* 登录提示 */
-.login-prompt {
-  padding: 2rem 1rem;
-  text-align: center;
-}
-
-.prompt-text {
-  display: block;
-  font-size: 28rpx;
-  color: #666;
-  margin-bottom: 1rem;
-}
-
-.btn-login {
-  padding: 0.8rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-  border: none;
-  border-radius: 50rpx;
-  font-size: 30rpx;
 }
 
 .payday-card {

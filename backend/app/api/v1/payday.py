@@ -26,7 +26,7 @@ async def payday_list(
     db: AsyncSession = Depends(get_db),
 ):
     configs = await list_by_user(db, current_user.id)
-    data = [PaydayConfigResponse.model_validate(c).model_dump() for c in configs]
+    data = [PaydayConfigResponse.model_validate(c).model_dump(mode='json') for c in configs]
     return success_response(data=data, message="获取发薪日配置成功")
 
 
@@ -37,7 +37,7 @@ async def payday_create(
     db: AsyncSession = Depends(get_db),
 ):
     config = await create_config(db, current_user.id, body)
-    return success_response(data=PaydayConfigResponse.model_validate(config).model_dump(), message="创建发薪日配置成功")
+    return success_response(data=PaydayConfigResponse.model_validate(config).model_dump(mode='json'), message="创建发薪日配置成功")
 
 
 @router.get("/{config_id}")
@@ -49,7 +49,7 @@ async def payday_get(
     config = await get_by_id(db, config_id, current_user.id)
     if not config:
         raise NotFoundException("资源不存在")
-    return success_response(data=PaydayConfigResponse.model_validate(config).model_dump(), message="获取发薪日配置成功")
+    return success_response(data=PaydayConfigResponse.model_validate(config).model_dump(mode='json'), message="获取发薪日配置成功")
 
 
 @router.put("/{config_id}")
@@ -62,7 +62,7 @@ async def payday_update(
     config = await update_config(db, config_id, current_user.id, body)
     if not config:
         raise NotFoundException("资源不存在")
-    return success_response(data=PaydayConfigResponse.model_validate(config).model_dump(), message="更新发薪日配置成功")
+    return success_response(data=PaydayConfigResponse.model_validate(config).model_dump(mode='json'), message="更新发薪日配置成功")
 
 
 @router.delete("/{config_id}")

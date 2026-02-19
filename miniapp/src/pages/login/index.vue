@@ -49,8 +49,8 @@ onMounted(() => {
   authStore.init()
   if (authStore.isLoggedIn) {
     // 已登录，跳转到首页
-    uni.switchTab({
-      url: '/pages/index/index'
+    uni.reLaunch({
+      url: '/pages/index'
     })
   }
 })
@@ -64,18 +64,24 @@ async function handleLogin() {
   try {
     isLoading.value = true
 
-    // 调用微信登录 - uni-app 返回 [error, result]
-    const [err, loginRes] = await uni.login({
+    console.log('[login] 开始微信授权登录...')
+
+    // 调用微信登录
+    // 注意：微信小程序中 uni.login 不返回 [err, result] 格式
+    const loginRes: any = await uni.login({
       provider: 'weixin'
     })
 
-    // 检查错误，提供更详细的错误信息
-    if (err) {
-      const errMsg = err.errMsg || ''
+    console.log('[login] uni.login 结果:', loginRes)
+
+    // 检查是否有错误 - errMsg 不是 "login:ok" 表示失败
+    if (loginRes.errMsg && loginRes.errMsg !== 'login:ok') {
+      const errMsg = loginRes.errMsg || ''
+      console.error('[login] 微信登录失败:', loginRes)
 
       // 用户取消授权（不需要显示错误提示）
       if (errMsg.includes('cancel') || errMsg.includes('auth deny')) {
-        console.info('[login] User cancelled WeChat authorization')
+        console.info('[login] 用户取消授权')
         return
       }
 
@@ -91,29 +97,43 @@ async function handleLogin() {
     }
 
     if (!loginRes?.code) {
+      console.error('[login] 未获取到微信授权码')
       showError('获取微信授权码失败，请重试')
       return
     }
 
+    console.log('[login] 获取到微信授权码:', loginRes.code)
+
     // 调用后端登录接口
+    console.log('[login] 开始调用后端登录接口...')
     const success = await authStore.login(loginRes.code)
+
+    console.log('[login] 后端登录结果:', success)
 
     if (success) {
       showSuccess('登录成功')
 
       // 获取用户详细信息
-      await userStore.fetchCurrentUser()
+      console.log('[login] 获取用户信息...')
+      try {
+        await userStore.fetchCurrentUser()
+        console.log('[login] 用户信息获取成功')
+      } catch (e) {
+        console.warn('[login] 用户信息获取失败，但不影响登录:', e)
+      }
 
       // 延迟跳转首页
       setTimeout(() => {
-        uni.switchTab({
-          url: '/pages/index/index'
+        uni.reLaunch({
+          url: '/pages/index'
         })
       }, 500)
     } else {
-      showError('登录失败，请重试')
+      console.error('[login] 后端登录接口返回失败')
+      showError('登录失败，请检查后端服务是否启动')
     }
   } catch (error: unknown) {
+    console.error('[login] 登录过程抛出异常:', error)
     const message = error instanceof Error ? error.message : '登录失败，请重试'
     showError(message)
   } finally {

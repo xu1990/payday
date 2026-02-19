@@ -31,7 +31,7 @@ async def comment_list(
 ):
     """帖子下的评论列表（根评论分页，带二级回复）。"""
     roots = await list_roots_with_replies(db, post_id, limit=limit, offset=offset)
-    data = [CommentResponse.model_validate(r).model_dump() for r in roots]
+    data = [CommentResponse.model_validate(r).model_dump(mode='json') for r in roots]
     return success_response(data=data, message="获取评论列表成功")
 
 
@@ -75,7 +75,7 @@ async def comment_create(
     )
     # 异步风控检查
     background_tasks.add_task(run_risk_check_for_comment, comment.id)
-    return success_response(data=CommentResponse.model_validate(comment).model_dump(), message="评论成功")
+    return success_response(data=CommentResponse.model_validate(comment).model_dump(mode='json'), message="评论成功")
 
 
 @router.delete("/comments/{comment_id}", status_code=204)
