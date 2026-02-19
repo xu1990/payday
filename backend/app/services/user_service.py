@@ -108,3 +108,43 @@ async def list_users_for_admin(
     q = base.order_by(User.created_at.desc()).limit(limit).offset(offset)
     result = await db.execute(q)
     return list(result.scalars().all()), total_count
+
+
+async def deactivate_user(db: AsyncSession, user_id: str) -> User:
+    """注销用户（软删除）"""
+    from datetime import datetime, timedelta
+    from sqlalchemy import update, select
+
+    # 设置注销时间
+    result = await db.execute(
+        update(User)
+        .where(User.id == user_id)
+        .values(deactivated_at=datetime.utcnow())
+        .returning(User)
+    )
+    await db.commit()
+
+    user_result = await db.execute(select(User).where(User.id == user_id))
+    user = user_result.scalar_one()
+    return user
+
+
+async def reactivate_user(db: AsyncSession, user_id: str) -> User:
+    """恢复已注销的用户"""
+    from sqlalchemy import update, select
+
+    await db.execute(
+        update(User)
+        .where(User.id == user_id)
+        .values(deactivated_at=None)
+    )
+    await db.commit()
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one()
+    return user
+
+
+async def upload_user_avatar(db: AsyncSession, user_id: str, avatar_url: str) -> User:
+    """更新用户头像"""
+    return await update_user(db, user_id, UserUpdate(avatar=avatar_url))
