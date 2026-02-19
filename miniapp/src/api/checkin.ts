@@ -61,3 +61,25 @@ export function getCheckInStats() {
     method: 'GET',
   })
 }
+
+/** 打卡列表项（用于用户主页展示） */
+export interface CheckinItem {
+  id: string
+  check_date: string
+  note: string | null
+}
+
+/** 打卡列表响应 */
+export interface CheckinListRes {
+  items: CheckinItem[]
+  total: number
+}
+
+/** 获取打卡列表（分页） */
+export function getCheckinList(params: { limit?: number; offset?: number }): Promise<CheckinListRes> {
+  const { limit = 30, offset = 0 } = params
+  return request<CheckinListRes>({
+    url: `${PREFIX}/list?limit=${limit}&offset=${offset}`,
+    method: 'GET',
+  })
+}

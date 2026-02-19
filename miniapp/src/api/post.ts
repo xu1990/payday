@@ -80,3 +80,45 @@ export function getFeed(params?: { limit?: number; offset?: number }): Promise<F
     method: 'GET',
   })
 }
+
+// ==================== 搜索 ====================
+
+export interface SearchParams {
+  keyword?: string
+  tags?: string[]
+  user_id?: string
+  industry?: string
+  city?: string
+  salary_range?: string
+  sort?: 'hot' | 'latest'
+  limit?: number
+  offset?: number
+}
+
+/** 搜索帖子 */
+export function searchPosts(params: SearchParams): Promise<FeedListRes> {
+  const {
+    keyword,
+    tags,
+    user_id,
+    industry,
+    city,
+    salary_range,
+    sort = 'latest',
+    limit = 20,
+    offset = 0,
+  } = params
+
+  const query: Record<string, string | number> = { sort, limit, offset }
+  if (keyword) query.keyword = keyword
+  if (tags && tags.length > 0) query.tags = tags.join(',')
+  if (user_id) query.user_id = user_id
+  if (industry) query.industry = industry
+  if (city) query.city = city
+  if (salary_range) query.salary_range = salary_range
+
+  return request<FeedListRes>({
+    url: `${PREFIX}/search${queryString(query)}`,
+    method: 'GET',
+  })
+}

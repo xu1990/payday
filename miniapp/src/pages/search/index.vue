@@ -117,6 +117,7 @@
         <text>加载中...</text>
       </view>
     </view>
+  </view>
 </template>
 
 <script setup lang="ts">

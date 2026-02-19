@@ -23,6 +23,18 @@ const commentContent = ref('')
 const submitLoading = ref(false)
 const keyboardHeight = ref(0)
 
+// Computed property for v-model conditional binding
+const inputContent = computed({
+  get: () => replyingTo.value ? replyInput.value : commentContent.value,
+  set: (value: string) => {
+    if (replyingTo.value) {
+      replyInput.value = value
+    } else {
+      commentContent.value = value
+    }
+  }
+})
+
 onMounted(() => {
   const pages = getCurrentPages()
   const page = pages[pages.length - 1] as any
@@ -288,7 +300,7 @@ async function shareToMoments() {
         <text class="cancel" @tap="cancelReply">取消</text>
       </view>
       <input
-        v-model="replyingTo ? replyInput : commentContent"
+        v-model="inputContent"
         class="input"
         placeholder="说点什么..."
         confirm-type="send"
