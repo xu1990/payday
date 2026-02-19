@@ -24,6 +24,7 @@ const router = createRouter({
         { path: 'orders', name: 'Orders', component: () => import('@/views/Order.vue') },
         { path: 'miniprogram', name: 'Miniprogram', component: () => import('@/views/MiniprogramConfig.vue') },
         { path: 'agreements', name: 'Agreements', component: () => import('@/views/AgreementManagement.vue') },
+        { path: 'splash', name: 'Splash', component: () => import('@/views/SplashSettings.vue') },
       ],
     },
   ],

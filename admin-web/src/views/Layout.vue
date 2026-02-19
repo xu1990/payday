@@ -59,6 +59,10 @@
           <el-icon><Document /></el-icon>
           <span>协议管理</span>
         </el-menu-item>
+        <el-menu-item index="/splash" aria-label="开屏设置页面">
+          <el-icon><Document /></el-icon>
+          <span>开屏设置</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>

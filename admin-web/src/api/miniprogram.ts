@@ -90,3 +90,29 @@ export function updateAgreement(data: {
 }): Promise<{ message: string }> {
   return request({ url: '/admin/config/agreements', method: 'POST', data })
 }
+
+export interface SplashConfigData {
+  image_url: string
+  content: string
+  countdown: number
+  is_active: boolean
+}
+
+export interface SplashConfigResponse {
+  data: SplashConfigData
+  message: string
+}
+
+/**
+ * 获取开屏配置
+ */
+export function getSplashConfig(): Promise<SplashConfigResponse> {
+  return request({ url: '/admin/config/splash', method: 'GET' })
+}
+
+/**
+ * 更新开屏配置
+ */
+export function updateSplashConfig(data: SplashConfigData): Promise<{ message: string }> {
+  return request({ url: '/admin/config/splash', method: 'POST', data })
+}
