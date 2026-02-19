@@ -10,7 +10,7 @@ const paydayList = ref<PaydayConfig[]>([])
 const loading = ref(true)
 const errMsg = ref('')
 const saving = ref(false)
-const tempFilePath = ref('')
+const posterUrl = ref('')
 
 const moodText: Record<MoodType, string> = {
   happy: '开心',
@@ -29,6 +29,7 @@ onLoad((query: any) => {
 onShareAppMessage(() => ({
   title: '发薪海报',
   path: recordId.value ? `/pages/poster/index?recordId=${recordId.value}` : '/pages/poster/index',
+  imageUrl: posterUrl.value || '',
 }))
 
 async function loadData() {
@@ -38,8 +39,11 @@ async function loadData() {
     const [paydayRes, recordData] = await Promise.all([listPayday(), fetchRecord()])
     paydayList.value = paydayRes || []
     record.value = recordData
-    if (record.value) await drawPoster()
+    if (record.value) {
+      await drawPoster()
+    }
   } catch (e: any) {
+    console.error('[poster] Load failed:', e)
     errMsg.value = e?.message || '加载失败'
   } finally {
     loading.value = false
@@ -68,40 +72,73 @@ function drawPoster(): Promise<void> {
     const padding = 24
     const lineH = 28
 
-    // 背景
-    ctx.setFillStyle('#1a1a2e')
+    // 背景 - 渐变色
+    const gradient = ctx.createLinearGradient(0, 0, 0, h)
+    gradient.addColorStop(0, '#667eea')
+    gradient.addColorStop(1, '#764ba2')
+    ctx.setFillStyle(gradient)
     ctx.fillRect(0, 0, w, h)
 
     // 顶部装饰条
-    ctx.setFillStyle('#07c160')
+    ctx.setFillStyle('rgba(255,255,255,0.2)')
     ctx.fillRect(0, 0, w, 6)
 
     // 标题
     ctx.setFillStyle('#fff')
     ctx.setFontSize(16)
-    ctx.fillText('发薪日', padding, 50)
+    ctx.setTextAlign('center')
+    ctx.fillText('发薪日', w / 2, 50)
+
+    // 金额背景
+    ctx.setFillStyle('rgba(255,255,255,0.15)')
+    ctx.beginPath()
+    ctx.roundRect(padding - 12, 80, w - padding * 2 + 24, 100, 16)
+    ctx.fill()
 
     // 金额
-    ctx.setFillStyle('#07c160')
-    ctx.setFontSize(42)
+    ctx.setFillStyle('#fff')
+    ctx.setFontSize(48)
     ctx.setFontWeight('bold')
-    ctx.fillText(`¥ ${r.amount}`, padding, 130)
+    ctx.setTextAlign('center')
+    ctx.fillText(`¥${r.amount}`, w / 2, 145)
     ctx.setFontWeight('normal')
 
-    // 发薪日期、工作名
-    ctx.setFillStyle('rgba(255,255,255,0.85)')
+    // 发薪日期
+    ctx.setFillStyle('rgba(255,255,255,0.9)')
     ctx.setFontSize(14)
-    ctx.fillText(`${r.payday_date} · ${jobName.value(r.config_id)}`, padding, 180)
+    ctx.setTextAlign('center')
+    ctx.fillText(r.payday_date, w / 2, 185)
 
-    // 心情
-    ctx.setFillStyle('rgba(255,255,255,0.7)')
+    // 工作名
+    ctx.setFillStyle('rgba(255,255,255,0.8)')
     ctx.setFontSize(13)
-    ctx.fillText(moodText[r.mood] || r.mood, padding, 180 + lineH)
+    ctx.fillText(jobName.value(r.config_id), w / 2, 210)
+
+    // 分隔线
+    ctx.setStrokeStyle('rgba(255,255,255,0.2)')
+    ctx.setLineWidth(1)
+    ctx.beginPath()
+    ctx.moveTo(padding, 240)
+    ctx.lineTo(w - padding, 240)
+    ctx.stroke()
+
+    // 心情标签
+    const moodBg = 'rgba(255,255,255,0.2)'
+    ctx.setFillStyle(moodBg)
+    ctx.beginPath()
+    ctx.roundRect(w / 2 - 40, 260, 80, 32, 16)
+    ctx.fill()
+
+    ctx.setFillStyle('#fff')
+    ctx.setFontSize(14)
+    ctx.setTextAlign('center')
+    ctx.fillText(moodText[r.mood] || r.mood, w / 2, 282)
 
     // 底部文案
-    ctx.setFillStyle('rgba(255,255,255,0.5)')
+    ctx.setFillStyle('rgba(255,255,255,0.6)')
     ctx.setFontSize(12)
-    ctx.fillText('薪日 PayDay · 记录每一次到账', padding, h - 30)
+    ctx.setTextAlign('center')
+    ctx.fillText('薪日 PayDay · 记录每一次到账', w / 2, h - 30)
 
     ctx.draw(false, () => {
       setTimeout(() => {
@@ -111,28 +148,39 @@ function drawPoster(): Promise<void> {
           height: h,
           destWidth: w * 2,
           destHeight: h * 2,
+          fileType: 'png',
           success: (res) => {
-            tempFilePath.value = res.tempFilePath
+            console.log('[poster] Canvas to temp file success:', res.tempFilePath)
+            posterUrl.value = res.tempFilePath
             resolve()
           },
-          fail: (e) => reject(e),
+          fail: (e) => {
+            console.error('[poster] Canvas to temp file failed:', e)
+            reject(e)
+          },
         })
-      }, 350)
+      }, 500)
     })
   })
 }
 
 async function saveToAlbum() {
-  if (!tempFilePath.value) {
+  if (!posterUrl.value) {
     uni.showToast({ title: '请先生成海报', icon: 'none' })
     return
   }
   saving.value = true
   try {
-    await uni.authorize({ scope: 'scope.writePhotosAlbum' }).catch(() => ({}))
-    await uni.saveImageToPhotosAlbum({ filePath: tempFilePath.value })
-    uni.showToast({ title: '已保存到相册' })
+    // 先检查权限
+    const authRes = await uni.getSetting()
+    if (!authRes.authSetting['scope.writePhotosAlbum']) {
+      // 没有权限，请求权限
+      await uni.authorize({ scope: 'scope.writePhotosAlbum' })
+    }
+    await uni.saveImageToPhotosAlbum({ filePath: posterUrl.value })
+    uni.showToast({ title: '已保存到相册', icon: 'success' })
   } catch (e: any) {
+    console.error('[poster] Save failed:', e)
     if (e?.errMsg?.includes('auth deny')) {
       uni.showModal({
         title: '提示',
@@ -152,6 +200,14 @@ function onShare() {
   uni.showToast({ title: '请点击右上角分享', icon: 'none' })
 }
 
+function previewImage() {
+  if (!posterUrl.value) return
+  uni.previewImage({
+    urls: [posterUrl.value],
+    current: posterUrl.value,
+  })
+}
+
 onMounted(() => {
   loadData()
 })
@@ -159,30 +215,199 @@ onMounted(() => {
 
 <template>
   <view class="page">
-    <view v-if="loading" class="loading">加载中...</view>
-    <view v-else-if="errMsg" class="err">{{ errMsg }}</view>
-    <view v-else-if="!record" class="empty">暂无工资记录，先去记一笔吧</view>
+    <!-- Loading -->
+    <view v-if="loading" class="loading-wrapper">
+      <view class="loading-icon"></view>
+      <text class="loading-text">生成海报中...</text>
+    </view>
+
+    <!-- Error -->
+    <view v-else-if="errMsg" class="error-wrapper">
+      <text class="error-icon">⚠️</text>
+      <text class="error-text">{{ errMsg }}</text>
+      <button class="retry-btn" @click="loadData">重试</button>
+    </view>
+
+    <!-- Empty -->
+    <view v-else-if="!record" class="empty-wrapper">
+      <text class="empty-icon">💰</text>
+      <text class="empty-text">暂无工资记录</text>
+      <text class="empty-hint">先去记一笔吧</text>
+    </view>
+
+    <!-- Content -->
     <view v-else class="content">
+      <!-- Canvas (hidden, used for rendering) -->
       <canvas
         canvas-id="posterCanvas"
         class="canvas"
         :style="{ width: '375px', height: '500px' }"
       />
+
+      <!-- Generated Poster Image -->
+      <image
+        v-if="posterUrl"
+        class="poster-image"
+        :src="posterUrl"
+        mode="widthFix"
+        @click="previewImage"
+      />
+
+      <!-- Actions -->
       <view class="actions">
-        <button class="btn primary" :loading="saving" @click="saveToAlbum">保存到相册</button>
-        <button class="btn" open-type="share">分享给好友</button>
+        <button class="btn primary" :loading="saving" @click="saveToAlbum">
+          保存到相册
+        </button>
+        <button class="btn secondary" open-type="share">分享给好友</button>
       </view>
+
+      <!-- Hint -->
+      <view class="hint">点击海报可预览大图</view>
     </view>
   </view>
 </template>
 
-<style scoped>
-.page { min-height: 100vh; background: #111; padding: 24rpx; box-sizing: border-box; }
-.loading, .err, .empty { padding: 80rpx 0; text-align: center; color: #999; }
-.content { display: flex; flex-direction: column; align-items: center; }
-.canvas { background: #1a1a2e; border-radius: 16rpx; margin-bottom: 32rpx; }
-.actions { display: flex; flex-direction: column; gap: 20rpx; width: 100%; max-width: 400rpx; }
-.btn { padding: 24rpx; border-radius: 12rpx; font-size: 30rpx; }
-.btn.primary { background: #07c160; color: #fff; border: none; }
-.btn:not(.primary) { background: #333; color: #fff; border: none; }
+<style scoped lang="scss">
+.page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+// Loading
+.loading-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 0;
+}
+
+.loading-icon {
+  width: 60rpx;
+  height: 60rpx;
+  border: 4rpx solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  margin-top: 32rpx;
+  font-size: 28rpx;
+  color: #fff;
+}
+
+// Error
+.error-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 0;
+}
+
+.error-icon {
+  font-size: 80rpx;
+  margin-bottom: 24rpx;
+}
+
+.error-text {
+  font-size: 28rpx;
+  color: #fff;
+  margin-bottom: 40rpx;
+}
+
+.retry-btn {
+  padding: 20rpx 48rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 48rpx;
+  color: #fff;
+  font-size: 28rpx;
+}
+
+// Empty
+.empty-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 0;
+}
+
+.empty-icon {
+  font-size: 100rpx;
+  margin-bottom: 24rpx;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 12rpx;
+}
+
+.empty-hint {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+// Content
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.canvas {
+  position: fixed;
+  left: -9999rpx;
+  top: -9999rpx;
+}
+
+.poster-image {
+  width: 100%;
+  max-width: 600rpx;
+  border-radius: 24rpx;
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.2);
+  margin-bottom: 40rpx;
+  background: #fff;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+  width: 100%;
+  max-width: 500rpx;
+}
+
+.btn {
+  padding: 28rpx;
+  border-radius: 48rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+}
+
+.btn.primary {
+  background: #fff;
+  color: #667eea;
+  box-shadow: 0 8rpx 24rpx rgba(255, 255, 255, 0.3);
+}
+
+.btn.secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.hint {
+  margin-top: 32rpx;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
 </style>

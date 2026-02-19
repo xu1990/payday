@@ -3,139 +3,169 @@
     {
       "path": "pages/index",
       "style": {
-        "navigationBarTitleText": "薪日"
+        "navigationBarTitleText": "薪日",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/login/index",
       "style": {
-        "navigationBarTitleText": "登录"
+        "navigationBarTitleText": "登录",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/payday-setting/index",
       "style": {
-        "navigationBarTitleText": "发薪日设置"
+        "navigationBarTitleText": "发薪日设置",
+        "navigationStyle": "default"
       }
     },
     {
       "path": "pages/salary-record/index",
       "style": {
-        "navigationBarTitleText": "工资记录"
+        "navigationBarTitleText": "工资记录",
+        "navigationStyle": "default"
       }
     },
     {
       "path": "pages/statistics/index",
       "style": {
-        "navigationBarTitleText": "工资统计"
+        "navigationBarTitleText": "工资统计",
+        "navigationStyle": "default"
       }
     },
     {
       "path": "pages/profile/index",
       "style": {
-        "navigationBarTitleText": "个人中心"
+        "navigationBarTitleText": "个人中心",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/feed/index",
       "style": {
-        "navigationBarTitleText": "关注流"
+        "navigationBarTitleText": "关注流",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/poster/index",
       "style": {
-        "navigationBarTitleText": "发薪海报"
+        "navigationBarTitleText": "发薪海报",
+        "navigationStyle": "default"
       }
     },
     {
       "path": "pages/square/index",
       "style": {
-        "navigationBarTitleText": "吐槽广场"
+        "navigationBarTitleText": "吐槽广场",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/post-create/index",
       "style": {
-        "navigationBarTitleText": "发帖"
+        "navigationBarTitleText": "发帖",
+        "navigationStyle": "default"
       }
     },
     {
       "path": "pages/post-detail/index",
       "style": {
-        "navigationBarTitleText": "帖子详情"
+        "navigationBarTitleText": "帖子详情",
+        "navigationStyle": "default"
       }
     },
     {
       "path": "pages/notification/list",
       "style": {
-        "navigationBarTitleText": "消息"
+        "navigationBarTitleText": "消息",
+        "navigationStyle": "default"
       }
     },
     {
       "path": "pages/checkin/index",
       "style": {
-        "navigationBarTitleText": "每日打卡"
+        "navigationBarTitleText": "每日打卡",
+        "navigationStyle": "default"
       }
     },
     {
       "path": "pages/insights/index",
       "style": {
-        "navigationBarTitleText": "数据洞察"
+        "navigationBarTitleText": "数据洞察",
+        "navigationStyle": "default"
       }
     },
     {
       "path": "pages/themes/index",
       "style": {
-        "navigationBarTitleText": "主题中心"
+        "navigationBarTitleText": "主题中心",
+        "navigationStyle": "default"
       }
     },
     {
       "path": "pages/settings/index",
       "style": {
-        "navigationBarTitleText": "设置"
+        "navigationBarTitleText": "设置",
+        "navigationStyle": "default"
       }
     },
     {
       "path": "pages/membership/index",
       "style": {
-        "navigationBarTitleText": "会员中心"
+        "navigationBarTitleText": "会员中心",
+        "navigationStyle": "default"
       }
     },
     {
       "path": "pages/orders/index",
       "style": {
-        "navigationBarTitleText": "我的订单"
+        "navigationBarTitleText": "我的订单",
+        "navigationStyle": "default"
+      }
+    },
+    {
+      "path": "pages/followers/index",
+      "style": {
+        "navigationBarTitleText": "粉丝/关注",
+        "navigationStyle": "default"
       }
     },
     {
       "path": "pages/user-list/index",
       "style": {
-        "navigationBarTitleText": "用户列表"
+        "navigationBarTitleText": "用户列表",
+        "navigationStyle": "default"
       }
     },
     {
       "path": "pages/search/index",
       "style": {
-        "navigationBarTitleText": "搜索"
+        "navigationBarTitleText": "搜索",
+        "navigationStyle": "default"
       }
     },
     {
       "path": "pages/user-home/index",
       "style": {
-        "navigationBarTitleText": "用户主页"
+        "navigationBarTitleText": "用户主页",
+        "navigationStyle": "default"
       }
     },
     {
       "path": "pages/user-agreement/index",
       "style": {
-        "navigationBarTitleText": "用户协议"
+        "navigationBarTitleText": "用户协议",
+        "navigationStyle": "default"
       }
     },
     {
       "path": "pages/privacy-policy/index",
       "style": {
-        "navigationBarTitleText": "隐私政策"
+        "navigationBarTitleText": "隐私政策",
+        "navigationStyle": "default"
       }
     }
   ],
@@ -144,10 +174,9 @@
     "backgroundColorBottom": "@bgColorBottom",
     "backgroundColorTop": "@bgColorTop",
     "backgroundTextStyle": "@bgTxtStyle",
-    "navigationBarBackgroundColor": "#000000",
-    "navigationBarTextStyle": "@navTxtStyle",
-    "navigationBarTitleText": "薪日 PayDay",
-    "navigationStyle": "custom"
+    "navigationBarBackgroundColor": "#667eea",
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "薪日 PayDay"
   },
   "tabBar": {
     "color": "#999999",

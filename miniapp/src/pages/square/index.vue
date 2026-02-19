@@ -2,11 +2,13 @@
 import { ref, watch } from 'vue'
 import { getPostList, type PostItem } from '@/api/post'
 import { useDebounceFn } from '@/composables/useDebounce'
+import { useAuthStore } from '@/stores/auth'
 
 type Sort = 'hot' | 'latest'
 const activeTab = ref<Sort>('hot')
 const list = ref<PostItem[]>([])
 const loading = ref(false)
+const authStore = useAuthStore()
 
 function formatTime(created_at: string) {
   const d = new Date(created_at)
@@ -40,6 +42,10 @@ function goDetail(id: string) {
 }
 
 function goCreate() {
+  if (!authStore.isLoggedIn) {
+    uni.navigateTo({ url: '/pages/login/index' })
+    return
+  }
   uni.navigateTo({ url: '/pages/post-create/index' })
 }
 </script>

@@ -43,15 +43,24 @@ const authStore = useAuthStore()
 const userStore = useUserStore()
 
 const isLoading = ref(false)
+const isChecking = ref(true)
 
 // 初始化检查登录状态
-onMounted(() => {
-  authStore.init()
-  if (authStore.isLoggedIn) {
-    // 已登录，跳转到首页
-    uni.reLaunch({
-      url: '/pages/index'
-    })
+onMounted(async () => {
+  try {
+    isChecking.value = true
+    await authStore.init()
+
+    if (authStore.isLoggedIn) {
+      // 已登录，跳转到首页
+      uni.reLaunch({
+        url: '/pages/index'
+      })
+    }
+  } catch (e) {
+    console.error('[login] Init failed:', e)
+  } finally {
+    isChecking.value = false
   }
 })
 
@@ -67,19 +76,18 @@ async function handleLogin() {
     console.log('[login] 开始微信授权登录...')
 
     // 调用微信登录
-    // 注意：微信小程序中 uni.login 不返回 [err, result] 格式
     const loginRes: any = await uni.login({
       provider: 'weixin'
     })
 
     console.log('[login] uni.login 结果:', loginRes)
 
-    // 检查是否有错误 - errMsg 不是 "login:ok" 表示失败
+    // 检查是否有错误
     if (loginRes.errMsg && loginRes.errMsg !== 'login:ok') {
       const errMsg = loginRes.errMsg || ''
       console.error('[login] 微信登录失败:', loginRes)
 
-      // 用户取消授权（不需要显示错误提示）
+      // 用户取消授权
       if (errMsg.includes('cancel') || errMsg.includes('auth deny')) {
         console.info('[login] 用户取消授权')
         return
@@ -102,7 +110,7 @@ async function handleLogin() {
       return
     }
 
-    console.log('[login] 获取到微信授权码:', loginRes.code)
+    console.log('[login] 获取到微信授权码')
 
     // 调用后端登录接口
     console.log('[login] 开始调用后端登录接口...')
@@ -124,7 +132,7 @@ async function handleLogin() {
 
       // 延迟跳转首页
       setTimeout(() => {
-        uni.reLaunch({
+        uni.switchTab({
           url: '/pages/index'
         })
       }, 500)
