@@ -59,7 +59,7 @@ async def get_topic(
     if not topic:
         from fastapi import HTTPException
 
-        raise HTTPException(status_code=404, detail="话题不存在")
+        raise NotFoundException("资源不存在")
     return TopicResponse.model_validate(topic)
 
 
@@ -83,7 +83,7 @@ async def update_topic(
     if not topic:
         from fastapi import HTTPException
 
-        raise HTTPException(status_code=404, detail="话题不存在")
+        raise NotFoundException("资源不存在")
     return TopicResponse.model_validate(topic)
 
 
@@ -98,5 +98,5 @@ async def delete_topic(
     if not success:
         from fastapi import HTTPException
 
-        raise HTTPException(status_code=404, detail="话题不存在")
+        raise NotFoundException("资源不存在")
     return {"deleted": success}

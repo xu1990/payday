@@ -2,7 +2,8 @@
 认证接口 - POST /login 微信 code 登录
 支持 Refresh Token 机制
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
+from app.core.exceptions import BusinessException, AuthenticationException, success_response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -15,28 +16,29 @@ from app.services.auth_service import login_with_code, refresh_access_token, rev
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/login", response_model=LoginResponse, dependencies=[Depends(rate_limit_login)])
+@router.post("/login", dependencies=[Depends(rate_limit_login)])
 async def login(
     body: LoginRequest,
     db: AsyncSession = Depends(get_db),
 ):
     result = await login_with_code(db, body.code)
     if not result:
-        raise HTTPException(status_code=400, detail="微信登录失败，请重试")
+        raise BusinessException("请求参数错误", code="VALIDATION_ERROR")
     access_token, refresh_token, user = result
     user_info = {
         "id": user.id,
         "anonymous_name": user.anonymous_name,
         "avatar": user.avatar,
     }
-    return LoginResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        user=user_info
-    )
+    data = {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "user": user_info
+    }
+    return success_response(data=data, message="登录成功")
 
 
-@router.post("/refresh", response_model=RefreshTokenResponse)
+@router.post("/refresh")
 async def refresh(
     body: RefreshTokenRequest,
 ):
@@ -47,13 +49,14 @@ async def refresh(
     """
     result = await refresh_access_token(body.refresh_token, body.user_id)
     if not result:
-        raise HTTPException(status_code=401, detail="无效或过期的 Refresh Token")
+        raise AuthenticationException("认证失败", code="AUTH_FAILED")
 
     new_access_token, new_refresh_token = result
-    return RefreshTokenResponse(
-        access_token=new_access_token,
-        refresh_token=new_refresh_token
-    )
+    data = {
+        "access_token": new_access_token,
+        "refresh_token": new_refresh_token
+    }
+    return success_response(data=data, message="刷新成功")
 
 
 @router.post("/logout")
@@ -64,4 +67,4 @@ async def logout(
     登出 - 撤销 Refresh Token
     """
     await revoke_refresh_token(current_user.id)
-    return {"message": "登出成功"}
+    return success_response(message="登出成功")

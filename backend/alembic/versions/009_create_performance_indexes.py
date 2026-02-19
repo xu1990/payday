@@ -1,15 +1,15 @@
 """Add performance indexes for better query performance
 
-Revision ID: 010
-Revises: 009
+Revision ID: 009
+Revises: 008
 Create Date: 2025-02-12
 
 """
 from alembic import op
 import sqlalchemy as sa
 
-revision = '010'
-down_revision = '009'
+revision = '009'
+down_revision = '008'
 
 
 def upgrade():

@@ -8,25 +8,55 @@ from typing import AsyncGenerator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.pool import NullPool
 from .config import get_settings
 
+nullpool = NullPool
+
 settings = get_settings()
+
+
+def _get_connect_args():
+    """根据数据库类型返回连接参数"""
+    db_url = settings.effective_database_url
+    if db_url.startswith("sqlite"):
+        # SQLite 不需要额外连接参数
+        return {}
+    else:
+        # MySQL 连接参数
+        return {
+            "charset": "utf8mb4",
+            "connect_timeout": 10,
+        }
+
+
+def _get_pool_config():
+    """根据数据库类型返回连接池配置"""
+    db_url = settings.effective_database_url
+    if db_url.startswith("sqlite"):
+        # SQLite 不需要连接池
+        return {
+            "poolclass": nullpool,  # SQLite 使用空连接池
+        }
+    else:
+        # MySQL 连接池配置
+        return {
+            "pool_size": 20,
+            "max_overflow": 40,
+            "pool_pre_ping": True,
+            "pool_recycle": 3600,
+        }
+
 
 # 同步引擎（用于 Alembic 迁移）
 # 技术方案 4.2.2 - 连接池配置优化
 sync_engine = create_engine(
-    settings.database_url,
+    settings.effective_database_url,
     # 连接池配置
-    pool_size=20,              # 连接池大小
-    max_overflow=40,           # 最大溢出连接数
-    pool_pre_ping=True,         # 连接前检测
-    pool_recycle=3600,          # 连接回收时间(秒)
+    **_get_pool_config(),
     # 性能优化
     echo=settings.debug,
-    connect_args={
-        "charset": "utf8mb4",
-        "connect_timeout": 10,
-    },
+    connect_args=_get_connect_args(),
 )
 
 # 同步会话（用于 Alembic）
@@ -49,21 +79,24 @@ def _get_async_engine():
     """获取或创建异步引擎（延迟初始化）"""
     global _async_engine, _AsyncSessionLocal, async_session_maker
     if _async_engine is None:
-        async_database_url = settings.database_url.replace("mysql+pymysql://", "mysql+aiomysql://")
+        db_url = settings.effective_database_url
+
+        # 转换为异步驱动 URL
+        if db_url.startswith("mysql+pymysql://"):
+            async_database_url = db_url.replace("mysql+pymysql://", "mysql+aiomysql://")
+        elif db_url.startswith("sqlite://"):
+            async_database_url = db_url.replace("sqlite://", "sqlite+aiosqlite://")
+        else:
+            async_database_url = db_url
+
         # 技术方案 4.2.2 - 异步连接池配置优化
         _async_engine = create_async_engine(
             async_database_url,
             # 连接池配置
-            pool_size=20,              # 连接池大小
-            max_overflow=40,           # 最大溢出连接数
-            pool_pre_ping=True,         # 连接前检测
-            pool_recycle=3600,          # 连接回收时间(秒)
+            **_get_pool_config(),
             # 性能优化
             echo=settings.debug,
-            connect_args={
-                "charset": "utf8mb4",
-                "connect_timeout": 10,
-            },
+            connect_args=_get_connect_args(),
         )
         _AsyncSessionLocal = async_sessionmaker(
             bind=_async_engine,

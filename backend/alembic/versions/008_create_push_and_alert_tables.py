@@ -1,7 +1,7 @@
 """create push_notifications and risk_alerts tables
 
-Revision ID: 009
-Revises: 008
+Revision ID: 008
+Revises: 007
 Create Date: 2025-02-12
 
 """
@@ -9,8 +9,8 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import func
 
-revision = '009'
-down_revision = '008'
+revision = '008'
+down_revision = '007'
 
 
 def upgrade():

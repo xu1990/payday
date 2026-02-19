@@ -1,12 +1,19 @@
 """add additional performance indexes
 
-Revision ID: 011
+Revision ID: 011_add_additional_performance_indexes
 Revises: 010_add_membership_and_checkin_tables
 Create Date: 2026-02-12
 
 """
 from alembic import op
 import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision = '011_add_additional_performance_indexes'
+down_revision = '010_add_membership_and_checkin_tables'
+branch_labels = None
+depends_on = None
 
 
 def upgrade():

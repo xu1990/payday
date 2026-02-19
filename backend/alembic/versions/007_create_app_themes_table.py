@@ -9,8 +9,8 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import func
 
-revision = '008'
-down_revision = '007'
+revision = '007'
+down_revision = '006b_create_topics_table'
 
 
 def upgrade():

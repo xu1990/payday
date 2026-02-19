@@ -4,6 +4,7 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.core.deps import get_current_user, verify_csrf_token_for_user
+from app.core.exceptions import success_response
 from app.models.user import User
 from app.schemas.user import UserResponse, UserUpdate
 from app.services.user_service import update_user, get_user_profile_data
@@ -30,12 +31,12 @@ def _user_to_response(user: User) -> dict:
     }
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get("/me")
 async def get_me(current_user: User = Depends(get_current_user)):
-    return UserResponse(**_user_to_response(current_user))
+    return success_response(data=_user_to_response(current_user), message="获取用户信息成功")
 
 
-@router.put("/me", response_model=UserResponse)
+@router.put("/me")
 async def update_me(
     body: UserUpdate,
     current_user: User = Depends(get_current_user),
@@ -43,7 +44,7 @@ async def update_me(
     db: AsyncSession = Depends(get_db),
 ):
     user = await update_user(db, current_user.id, body)
-    return UserResponse(**_user_to_response(user))
+    return success_response(data=_user_to_response(user), message="更新用户信息成功")
 
 
 @router.get("/profile-data/{target_user_id}")
@@ -58,4 +59,4 @@ async def get_profile_data(
     validate_uuid(target_user_id, "target_user_id")
 
     data = await get_user_profile_data(db, current_user.id, target_user_id)
-    return data
+    return success_response(data=data, message="获取用户主页数据成功")

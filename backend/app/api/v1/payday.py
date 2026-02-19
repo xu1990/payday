@@ -4,6 +4,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.deps import get_current_user
+from app.core.exceptions import NotFoundException, AuthenticationException, BusinessException, success_response
 from app.core.database import get_db
 from app.models.user import User
 from app.schemas.payday import PaydayConfigCreate, PaydayConfigResponse, PaydayConfigUpdate
@@ -19,26 +20,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 router = APIRouter(prefix="/payday", tags=["payday"])
 
 
-@router.get("", response_model=list[PaydayConfigResponse])
+@router.get("")
 async def payday_list(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     configs = await list_by_user(db, current_user.id)
-    return [PaydayConfigResponse.model_validate(c) for c in configs]
+    data = [PaydayConfigResponse.model_validate(c).model_dump() for c in configs]
+    return success_response(data=data, message="获取发薪日配置成功")
 
 
-@router.post("", response_model=PaydayConfigResponse)
+@router.post("")
 async def payday_create(
     body: PaydayConfigCreate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     config = await create_config(db, current_user.id, body)
-    return PaydayConfigResponse.model_validate(config)
+    return success_response(data=PaydayConfigResponse.model_validate(config).model_dump(), message="创建发薪日配置成功")
 
 
-@router.get("/{config_id}", response_model=PaydayConfigResponse)
+@router.get("/{config_id}")
 async def payday_get(
     config_id: str,
     current_user: User = Depends(get_current_user),
@@ -46,11 +48,11 @@ async def payday_get(
 ):
     config = await get_by_id(db, config_id, current_user.id)
     if not config:
-        raise HTTPException(status_code=404, detail="发薪日配置不存在")
-    return PaydayConfigResponse.model_validate(config)
+        raise NotFoundException("资源不存在")
+    return success_response(data=PaydayConfigResponse.model_validate(config).model_dump(), message="获取发薪日配置成功")
 
 
-@router.put("/{config_id}", response_model=PaydayConfigResponse)
+@router.put("/{config_id}")
 async def payday_update(
     config_id: str,
     body: PaydayConfigUpdate,
@@ -59,11 +61,11 @@ async def payday_update(
 ):
     config = await update_config(db, config_id, current_user.id, body)
     if not config:
-        raise HTTPException(status_code=404, detail="发薪日配置不存在")
-    return PaydayConfigResponse.model_validate(config)
+        raise NotFoundException("资源不存在")
+    return success_response(data=PaydayConfigResponse.model_validate(config).model_dump(), message="更新发薪日配置成功")
 
 
-@router.delete("/{config_id}", status_code=204)
+@router.delete("/{config_id}")
 async def payday_delete(
     config_id: str,
     current_user: User = Depends(get_current_user),
@@ -71,4 +73,5 @@ async def payday_delete(
 ):
     ok = await delete_config(db, config_id, current_user.id)
     if not ok:
-        raise HTTPException(status_code=404, detail="发薪日配置不存在")
+        raise NotFoundException("资源不存在")
+    return success_response(message="删除发薪日配置成功")

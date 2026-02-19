@@ -10,7 +10,7 @@ from app.api.v1.schemas.payment import (
     PaymentErrorResponse,
 )
 from app.core.deps import get_db, get_current_user
-from app.core.exceptions import BusinessException, NotFoundException
+from app.core.exceptions import BusinessException, NotFoundException, success_response
 from app.models.user import User
 from app.services.payment_service import (
     create_membership_payment,
@@ -76,7 +76,7 @@ def _get_client_ip(request: Request) -> str:
     return "0.0.0.0"  # 表示无法确定真实IP
 
 
-@router.post("/create", response_model=CreatePaymentResponse)
+@router.post("/create")
 async def create_payment(
     data: CreatePaymentRequest,
     request: Request,
@@ -98,43 +98,19 @@ async def create_payment(
     # 获取用户的 openid
     openid = current_user.openid
     if not openid:
-        return PaymentErrorResponse(
-            success=False,
-            message="用户未绑定微信",
-        )
+        raise BusinessException("用户未绑定微信")
 
     # 获取客户端真实 IP
     client_ip = _get_client_ip(request)
 
-    try:
-        payment_params = await create_membership_payment(
-            db=db,
-            order_id=data.order_id,
-            openid=openid,
-            client_ip=client_ip,
-        )
+    payment_params = await create_membership_payment(
+        db=db,
+        order_id=data.order_id,
+        openid=openid,
+        client_ip=client_ip,
+    )
 
-        return CreatePaymentResponse(
-            success=True,
-            data=payment_params,
-            message="支付参数生成成功",
-        )
-
-    except (ValueError, NotFoundException, BusinessException) as e:
-        # 业务逻辑错误（如订单不存在、状态不对）
-        return PaymentErrorResponse(
-            success=False,
-            message=str(e),
-        )
-    except Exception as e:
-        # 其他未知错误，不暴露详细信息
-        # Log the error for debugging
-        import logging
-        logging.error(f"Payment creation error: {type(e).__name__}: {e}")
-        return PaymentErrorResponse(
-            success=False,
-            message="创建支付失败，请稍后重试",
-        )
+    return success_response(data=payment_params, message="支付参数生成成功")
 
 
 @router.get("/orders/{order_id}")
@@ -156,7 +132,7 @@ async def get_order_status(
     """
     from sqlalchemy import select
     from app.models.membership import MembershipOrder
-    from app.core.exceptions import NotFoundException
+    from app.core.exceptions import NotFoundException, AuthorizationException
 
     # 查询订单
     result = await db.execute(
@@ -169,11 +145,10 @@ async def get_order_status(
 
     # 验证订单属于当前用户
     if order.user_id != current_user.id:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=403, detail="无权访问该订单")
+        raise AuthorizationException("无权限访问")
 
     # 返回订单信息
-    return {
+    data = {
         "id": order.id,
         "user_id": order.user_id,
         "membership_id": order.membership_id,
@@ -186,6 +161,7 @@ async def get_order_status(
         "auto_renew": bool(order.auto_renew),
         "created_at": order.created_at.isoformat() if order.created_at else None,
     }
+    return success_response(data=data, message="获取订单状态成功")
 
 
 @router.post("/notify/wechat")

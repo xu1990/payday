@@ -116,11 +116,22 @@ def error_response(
 ) -> JSONResponse:
     """统一错误响应格式"""
     content: Dict[str, Any] = {
-        "success": False,
-        "message": message,
         "code": code,
+        "message": message,
+        "details": details or {},
     }
-    if details:
-        content["details"] = details
-
     return JSONResponse(status_code=status_code, content=content)
+
+
+def success_response(
+    data: Any = None,
+    message: str = "操作成功",
+    code: str = "SUCCESS",
+) -> JSONResponse:
+    """统一成功响应格式"""
+    content: Dict[str, Any] = {
+        "code": code,
+        "message": message,
+        "details": data if data is not None else {},
+    }
+    return JSONResponse(content=content)

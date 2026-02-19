@@ -1,6 +1,6 @@
 """create topics table
 
-Revision ID: 007
+Revision ID: 006b_create_topics_table
 Revises: 006
 Create Date: 2025-02-12
 
@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import func
 
-revision = '007'
+revision = '006b_create_topics_table'
 down_revision = '006'
 
 

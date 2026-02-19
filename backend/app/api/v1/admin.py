@@ -3,12 +3,17 @@
 """
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, Form, Query, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_admin, verify_csrf_token, require_permission
 from app.core.database import get_db
+from app.core.exceptions import (
+    AuthenticationException,
+    NotFoundException,
+    success_response,
+)
 from app.models.admin import AdminUser
 from app.schemas.admin import (
     AdminLoginRequest,
@@ -48,7 +53,7 @@ from app.services.comment_service import (
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
-@router.post("/auth/login", response_model=AdminTokenResponse)
+@router.post("/auth/login")
 async def admin_login(
     body: AdminLoginRequest,
     db: AsyncSession = Depends(get_db),
@@ -60,15 +65,22 @@ async def admin_login(
     """
     tokens = await login_admin(db, body.username, body.password)
     if not tokens:
-        raise HTTPException(status_code=401, detail="用户名或密码错误")
+        raise AuthenticationException("用户名或密码错误", code="INVALID_CREDENTIALS")
     jwt_token, csrf_token = tokens
 
-    # 创建响应对象
+    # 统一响应格式
+    token_data = {
+        "access_token": jwt_token,
+        "token_type": "bearer",
+        "csrf_token": csrf_token
+    }
+
+    # 创建响应对象（使用统一格式）
     response = JSONResponse(
         content={
-            "access_token": jwt_token,
-            "token_type": "bearer",
-            "csrf_token": csrf_token
+            "code": "SUCCESS",
+            "message": "登录成功",
+            "details": token_data
         }
     )
 
@@ -111,17 +123,23 @@ async def admin_refresh_token(
 
     result = await refresh_admin_token(db, refresh_token)
     if not result:
-        raise HTTPException(status_code=401, detail="无效或过期的 Refresh Token")
+        raise AuthenticationException("无效或过期的 Refresh Token", code="INVALID_REFRESH_TOKEN")
 
     new_access_token, new_csrf_token, new_refresh_token = result
 
-    # 创建响应对象
+    token_data = {
+        "access_token": new_access_token,
+        "csrf_token": new_csrf_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer"
+    }
+
+    # 创建响应对象（使用统一格式）
     response = JSONResponse(
         content={
-            "access_token": new_access_token,
-            "csrf_token": new_csrf_token,
-            "refresh_token": new_refresh_token,
-            "token_type": "bearer"
+            "code": "SUCCESS",
+            "message": "刷新成功",
+            "details": token_data
         }
     )
 
@@ -139,7 +157,7 @@ async def admin_refresh_token(
     return response
 
 
-@router.get("/users", response_model=dict)
+@router.get("/users")
 async def admin_user_list(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
@@ -163,10 +181,10 @@ async def admin_user_list(
         )
         for u in users
     ]
-    return {"items": items, "total": total}
+    return success_response(data={"items": items, "total": total}, message="获取用户列表成功")
 
 
-@router.get("/users/{user_id}", response_model=AdminUserDetail)
+@router.get("/users/{user_id}")
 async def admin_user_detail(
     user_id: str,
     _perm: bool = Depends(require_permission("readonly")),  # 需要readonly或更高级别权限
@@ -176,9 +194,9 @@ async def admin_user_detail(
     """管理端用户详情"""
     user = await get_user_by_id(db, user_id)
     if not user:
-        raise HTTPException(status_code=404, detail="用户不存在")
+        raise NotFoundException("用户不存在")
     status_val = user.status.value if hasattr(user.status, "value") else str(user.status)
-    return AdminUserDetail(
+    data = AdminUserDetail(
         id=user.id,
         openid=user.openid,
         anonymous_name=user.anonymous_name,
@@ -194,9 +212,10 @@ async def admin_user_detail(
         allow_comment=user.allow_comment,
         updated_at=user.updated_at,
     )
+    return success_response(data=data.model_dump(), message="获取用户详情成功")
 
 
-@router.get("/salary-records", response_model=dict)
+@router.get("/salary-records")
 async def admin_salary_list(
     user_id: Optional[str] = Query(None),
     limit: int = Query(20, ge=1, le=100),
@@ -207,7 +226,10 @@ async def admin_salary_list(
 ):
     """管理端工资记录列表（可选按 user_id 过滤）"""
     items, total = await list_all_for_admin(db, user_id=user_id, limit=limit, offset=offset)
-    return {"items": [AdminSalaryRecordItem(**x) for x in items], "total": total}
+    return success_response(
+        data={"items": [AdminSalaryRecordItem(**x) for x in items], "total": total},
+        message="获取工资记录成功"
+    )
 
 
 @router.delete("/salary-records/{record_id}", status_code=204)
@@ -221,7 +243,7 @@ async def admin_salary_delete(
     """管理端删除工资记录（需要 CSRF token）"""
     ok = await delete_for_admin(db, record_id)
     if not ok:
-        raise HTTPException(status_code=404, detail="记录不存在")
+        raise NotFoundException("记录不存在")
 
 
 @router.put("/salary-records/{record_id}/risk", response_model=AdminSalaryRecordItem)
@@ -236,11 +258,11 @@ async def admin_salary_update_risk(
     """管理端人工审核工资记录（通过/拒绝）（需要 CSRF token）"""
     record = await update_risk_for_admin(db, record_id, body.risk_status)
     if not record:
-        raise HTTPException(status_code=404, detail="记录不存在")
+        raise NotFoundException("记录不存在")
     return salary_record_to_response(record)
 
 
-@router.get("/statistics", response_model=AdminStatisticsResponse)
+@router.get("/statistics")
 async def admin_statistics(
     _perm: bool = Depends(require_permission("readonly")),  # 需要readonly或更高级别权限
     _: AdminUser = Depends(get_current_admin),
@@ -248,13 +270,13 @@ async def admin_statistics(
 ):
     """管理端仪表盘统计"""
     stats = await get_admin_dashboard_stats(db)
-    return AdminStatisticsResponse(**stats)
+    return success_response(data=stats, message="获取统计数据成功")
 
 
 # ----- 帖子管理（Sprint 2.4） -----
 
 
-@router.get("/posts", response_model=AdminPostListResponse)
+@router.get("/posts")
 async def admin_post_list(
     status: Optional[str] = Query(None, description="normal | hidden | deleted"),
     risk_status: Optional[str] = Query(None, description="pending | approved | rejected"),
@@ -288,7 +310,10 @@ async def admin_post_list(
         )
         for p in posts
     ]
-    return AdminPostListResponse(items=items, total=total)
+    return success_response(
+        data={"items": items, "total": total},
+        message="获取帖子列表成功"
+    )
 
 
 @router.get("/posts/{post_id}", response_model=AdminPostListItem)
@@ -301,7 +326,7 @@ async def admin_post_detail(
     """管理端帖子详情"""
     post = await get_post_by_id_for_admin(db, post_id)
     if not post:
-        raise HTTPException(status_code=404, detail="帖子不存在")
+        raise NotFoundException("帖子不存在")
     return AdminPostListItem(
         id=post.id,
         user_id=post.user_id,
@@ -339,7 +364,7 @@ async def admin_post_update_status(
         risk_reason=body.risk_reason,
     )
     if not post:
-        raise HTTPException(status_code=404, detail="帖子不存在")
+        raise NotFoundException("帖子不存在")
     return {"ok": True, "id": post_id}
 
 
@@ -354,13 +379,13 @@ async def admin_post_delete(
     """管理端软删帖子（status=deleted）（需要 CSRF token）"""
     ok = await delete_post_for_admin(db, post_id)
     if not ok:
-        raise HTTPException(status_code=404, detail="帖子不存在")
+        raise NotFoundException("帖子不存在")
 
 
 # ----- 评论管理（Sprint 2.4） -----
 
 
-@router.get("/comments", response_model=AdminCommentListResponse)
+@router.get("/comments")
 async def admin_comment_list(
     post_id: Optional[str] = Query(None),
     risk_status: Optional[str] = Query(None, description="pending | approved | rejected"),
@@ -388,7 +413,10 @@ async def admin_comment_list(
         )
         for c in comments
     ]
-    return AdminCommentListResponse(items=items, total=total)
+    return success_response(
+        data={"items": items, "total": total},
+        message="获取评论列表成功"
+    )
 
 
 @router.put("/comments/{comment_id}/risk")
@@ -405,5 +433,5 @@ async def admin_comment_update_risk(
         db, comment_id, risk_status=body.risk_status, risk_reason=body.risk_reason
     )
     if not comment:
-        raise HTTPException(status_code=404, detail="评论不存在")
+        raise NotFoundException("评论不存在")
     return {"ok": True, "id": comment_id}

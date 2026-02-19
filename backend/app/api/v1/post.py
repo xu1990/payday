@@ -7,6 +7,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.exceptions import NotFoundException, AuthenticationException, BusinessException, success_response
 from app.core.deps import get_current_user, rate_limit_post
 from app.models.user import User
 from app.schemas.post import PostCreate, PostResponse
@@ -16,7 +17,7 @@ from app.tasks.risk_check import run_risk_check_for_post
 router = APIRouter(prefix="/posts", tags=["posts"])
 
 
-@router.get("/search", response_model=dict)
+@router.get("/search")
 async def post_search(
     keyword: Optional[str] = Query(None, description="搜索关键词"),
     tags: Optional[str] = Query(None, description="标签搜索，逗号分隔"),
@@ -42,10 +43,11 @@ async def post_search(
         limit=limit,
         offset=offset
     )
-    return {"items": [PostResponse.model_validate(p) for p in posts], "total": total}
+    items = [PostResponse.model_validate(p) for p in posts]
+    return success_response(data={"items": items, "total": total}, message="搜索成功")
 
 
-@router.post("", response_model=PostResponse)
+@router.post("")
 async def post_create(
     body: PostCreate,
     background_tasks: BackgroundTasks,
@@ -57,10 +59,10 @@ async def post_create(
     # SECURITY: 速率限制已通过 _rate_limit 依赖应用
     post = await create_post(db, current_user.id, body, anonymous_name=current_user.anonymous_name)
     background_tasks.add_task(run_risk_check_for_post, post.id)
-    return PostResponse.model_validate(post)
+    return success_response(data=PostResponse.model_validate(post).model_dump(), message="发帖成功")
 
 
-@router.get("", response_model=list[PostResponse])
+@router.get("")
 async def post_list(
     sort: Literal["hot", "latest"] = Query("latest", description="hot=热门 latest=最新"),
     limit: int = Query(20, ge=1, le=50),
@@ -68,10 +70,11 @@ async def post_list(
     db: AsyncSession = Depends(get_db),
 ):
     posts = await list_posts(db, sort=sort, limit=limit, offset=offset)
-    return [PostResponse.model_validate(p) for p in posts]
+    data = [PostResponse.model_validate(p).model_dump() for p in posts]
+    return success_response(data=data, message="获取帖子列表成功")
 
 
-@router.get("/{post_id}", response_model=PostResponse)
+@router.get("/{post_id}")
 async def post_get(
     post_id: str,
     db: AsyncSession = Depends(get_db),
@@ -79,5 +82,5 @@ async def post_get(
     # 获取帖子详情并增加浏览量（从缓存计数）
     post = await get_by_id(db, post_id, only_approved=True, increment_view=True)
     if not post:
-        raise HTTPException(status_code=404, detail="帖子不存在或未通过")
-    return PostResponse.model_validate(post)
+        raise NotFoundException("资源不存在")
+    return success_response(data=PostResponse.model_validate(post).model_dump(), message="获取帖子详情成功")

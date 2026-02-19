@@ -65,7 +65,11 @@ class Settings(BaseSettings):
     app_name: str = "薪日 PayDay"
     debug: bool = False
 
-    # MySQL（技术方案 2.2）
+    # 数据库配置（支持 MySQL 和 SQLite）
+    # 优先使用 database_url，如果未设置则使用 mysql_* 配置
+    database_url: str = ""
+
+    # MySQL 配置（技术方案 2.2）
     mysql_host: str = "127.0.0.1"
     mysql_port: int = 3306
     mysql_user: str = "payday"
@@ -73,12 +77,20 @@ class Settings(BaseSettings):
     mysql_database: str = "payday_main"
 
     @property
-    def database_url(self) -> str:
+    def mysql_database_url(self) -> str:
+        """MySQL 数据库 URL（用于 database_url 未设置时）"""
         return (
             f"mysql+pymysql://{self.mysql_user}:{self.mysql_password}"
             f"@{self.mysql_host}:{self.mysql_port}/{self.mysql_database}"
             f"?charset=utf8mb4"
         )
+
+    @property
+    def effective_database_url(self) -> str:
+        """实际使用的数据库 URL"""
+        if self.database_url:
+            return self.database_url
+        return self.mysql_database_url
 
     # Redis（技术方案 2.3）
     redis_url: str = "redis://127.0.0.1:6379/0"

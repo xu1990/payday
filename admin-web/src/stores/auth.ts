@@ -80,8 +80,9 @@ function safeGetItem(key: string): string {
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    // JWT token 在 httpOnly cookie 中，前端不存储
-    token: '',
+    // JWT token 存储在内存中用于 Authorization header
+    // 同时也在 httpOnly cookie 中作为备份
+    token: safeGetItem('payday_admin_token'),
     refreshToken: '',
     csrfToken: safeGetItem(CSRF_KEY),
     // 记忆存储是否可用
@@ -96,7 +97,16 @@ export const useAuthStore = defineStore('auth', {
   },
   actions: {
     setToken(t: string, csrfToken?: string, refreshToken?: string) {
-      // JWT token 已在 httpOnly cookie 中，无需前端存储
+      // 存储 JWT token 到 state 和 localStorage
+      // 用于 Authorization header
+      // token 也在 httpOnly cookie 中作为备份
+      this.token = t
+      if (t) {
+        safeSetItem('payday_admin_token', t)
+      } else {
+        safeRemoveItem('payday_admin_token')
+      }
+
       // 只保存 CSRF token 到 localStorage
       if (csrfToken !== undefined) {
         this.csrfToken = csrfToken
@@ -131,6 +141,7 @@ export const useAuthStore = defineStore('auth', {
       this.refreshToken = ''
       this.csrfToken = ''
       this._isLoggedIn = false
+      safeRemoveItem('payday_admin_token')
       safeRemoveItem(CSRF_KEY)
       safeRemoveItem('payday_admin_refresh_token')
 

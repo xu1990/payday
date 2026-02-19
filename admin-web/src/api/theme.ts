@@ -3,7 +3,7 @@
  */
 import { request } from '@/utils/request'
 
-const PREFIX = '/api/v1/admin/config/themes'
+const PREFIX = '/admin/config/themes'
 
 export interface ThemeItem {
   id: string

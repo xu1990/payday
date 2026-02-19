@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.exceptions import NotFoundException, AuthenticationException, BusinessException, success_response
 from app.core.deps import get_current_user
 from app.models.post import Post
 from app.models.user import User
@@ -21,7 +22,7 @@ from app.tasks.risk_check import run_risk_check_for_comment
 router = APIRouter(prefix="/posts", tags=["comments"])
 
 
-@router.get("/{post_id}/comments", response_model=list[CommentResponse])
+@router.get("/{post_id}/comments")
 async def comment_list(
     post_id: str,
     limit: int = Query(20, ge=1, le=50),
@@ -30,10 +31,11 @@ async def comment_list(
 ):
     """帖子下的评论列表（根评论分页，带二级回复）。"""
     roots = await list_roots_with_replies(db, post_id, limit=limit, offset=offset)
-    return [CommentResponse.model_validate(r) for r in roots]
+    data = [CommentResponse.model_validate(r).model_dump() for r in roots]
+    return success_response(data=data, message="获取评论列表成功")
 
 
-@router.post("/{post_id}/comments", response_model=CommentResponse)
+@router.post("/{post_id}/comments")
 async def comment_create(
     post_id: str,
     body: CommentCreate,
@@ -45,7 +47,7 @@ async def comment_create(
     r = await db.execute(select(Post).where(Post.id == post_id))
     post = r.scalar_one_or_none()
     if not post or post.status != "normal" or post.risk_status != "approved":
-        raise HTTPException(status_code=404, detail="帖子不存在或未通过")
+        raise NotFoundException("资源不存在")
 
     # SECURITY: 检查用户是否被帖子作者拉黑
     # TODO: 实现用户拉黑/屏蔽功能后，需要添加以下检查
@@ -62,7 +64,7 @@ async def comment_create(
     if body.parent_id:
         parent = await get_comment(db, body.parent_id)
         if not parent or parent.post_id != post_id:
-            raise HTTPException(status_code=400, detail="父评论不存在或不属于该帖子")
+            raise BusinessException("请求参数错误", code="VALIDATION_ERROR")
     comment = await create_comment(
         db,
         post_id=post_id,
@@ -73,7 +75,7 @@ async def comment_create(
     )
     # 异步风控检查
     background_tasks.add_task(run_risk_check_for_comment, comment.id)
-    return CommentResponse.model_validate(comment)
+    return success_response(data=CommentResponse.model_validate(comment).model_dump(), message="评论成功")
 
 
 @router.delete("/comments/{comment_id}", status_code=204)
@@ -85,7 +87,7 @@ async def comment_delete(
     """删除评论（仅本人可删）。"""
     comment = await get_comment(db, comment_id)
     if not comment:
-        raise HTTPException(status_code=404, detail="评论不存在")
+        raise NotFoundException("资源不存在")
     if comment.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="只能删除自己的评论")
     await delete_comment(db, comment_id)

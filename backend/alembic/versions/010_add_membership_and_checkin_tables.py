@@ -1,7 +1,7 @@
-"""add membership and checkin tables
+"""add membership tables
 
-Revision ID: 011
-Revises: 010
+Revision ID: 010_add_membership_and_checkin_tables
+Revises: 009
 Create Date: 2025-02-12
 
 """
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "011"
-down_revision: Union[str, None] = "010"
+revision: str = "010_add_membership_and_checkin_tables"
+down_revision: Union[str, None] = "009"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -50,23 +50,7 @@ def upgrade() -> None:
     )
     op.create_index("ix_membership_orders_user_id", "membership_orders", ["user_id"])
 
-    # 打卡表
-    op.create_table(
-        "check_ins",
-        sa.Column("id", sa.String(36), primary_key=True),
-        sa.Column("user_id", sa.String(36), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("check_date", sa.Date(), nullable=False, comment="打卡日期"),
-        sa.Column("note", sa.String(500), nullable=True, comment="打卡备注"),
-        sa.Column("created_at", sa.DateTime(), nullable=True),
-    )
-    op.create_index("ix_check_ins_user_id", "check_ins", ["user_id"])
-    op.create_index("ix_check_ins_check_date", "check_ins", ["check_date"])
-
-    # 唯一约束：每个用户每天只能打卡一次
-    op.create_unique_constraint("uq_check_ins_user_date", "check_ins", ["user_id", "check_date"])
-
 
 def downgrade() -> None:
-    op.drop_table("check_ins")
     op.drop_table("membership_orders")
     op.drop_table("memberships")

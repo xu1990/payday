@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.exceptions import NotFoundException, AuthenticationException, BusinessException, success_response
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.schemas.share import ShareCreate, ShareResponse, ShareStatsResponse, ShareUpdateStatus, ShareListResponse
@@ -21,7 +22,7 @@ from app.services.share_service import (
 router = APIRouter(prefix="/share", tags=["share"])
 
 
-@router.post("", response_model=ShareResponse)
+@router.post("")
 async def create_share_endpoint(
     data: ShareCreate,
     current_user: User = Depends(get_current_user),
@@ -35,10 +36,10 @@ async def create_share_endpoint(
         target_id=data.target_id,
         share_channel=data.share_channel,
     )
-    return ShareResponse.model_validate(share)
+    return success_response(data=ShareResponse.model_validate(share).model_dump(), message="创建分享记录成功")
 
 
-@router.get("", response_model=ShareListResponse)
+@router.get("")
 async def list_shares(
     current_user: User = Depends(get_current_user),
     target_type: Optional[str] = Query(None, description="筛选分享目标类型"),
@@ -54,10 +55,11 @@ async def list_shares(
         limit=limit,
         offset=offset,
     )
-    return {"items": [ShareResponse.model_validate(s) for s in shares], "total": total}
+    items = [ShareResponse.model_validate(s).model_dump() for s in shares]
+    return success_response(data={"items": items, "total": total}, message="获取分享记录成功")
 
 
-@router.get("/stats", response_model=ShareStatsResponse)
+@router.get("/stats")
 async def get_stats(
     current_user: User = Depends(get_current_user),
     days: int = Query(7, ge=1, le=30, description="统计最近N天"),
@@ -65,10 +67,10 @@ async def get_stats(
 ):
     """获取分享统计（最近N天的分享次数、成功率）"""
     stats = await get_share_stats(db, current_user.id, days)
-    return stats
+    return success_response(data=stats, message="获取分享统计成功")
 
 
-@router.put("/{share_id}/status", response_model=ShareResponse)
+@router.put("/{share_id}/status")
 async def update_status(
     share_id: str,
     data: ShareUpdateStatus,
@@ -83,5 +85,5 @@ async def update_status(
         error_message=data.error_message,
     )
     if not share:
-        raise HTTPException(status_code=404, detail="分享记录不存在")
-    return ShareResponse.model_validate(share)
+        raise NotFoundException("资源不存在")
+    return success_response(data=ShareResponse.model_validate(share).model_dump(), message="更新分享状态成功")

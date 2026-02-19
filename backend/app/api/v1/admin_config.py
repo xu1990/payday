@@ -98,7 +98,7 @@ async def update_theme(
     if not theme:
         from fastapi import HTTPException
 
-        raise HTTPException(status_code=404, detail="主题不存在")
+        raise NotFoundException("资源不存在")
 
     update_data = {k: v for k, v in data.model_dump().items() if v is not None}
     await db.execute(
@@ -183,7 +183,7 @@ async def update_membership(
     if not membership:
         from fastapi import HTTPException
 
-        raise HTTPException(status_code=404, detail="套餐不存在")
+        raise NotFoundException("资源不存在")
 
     update_data = data.model_dump()
     await db.execute(
@@ -288,7 +288,7 @@ async def update_order_status(
     order = result.scalar_one_or_none()
     if not order:
         from fastapi import HTTPException
-        raise HTTPException(status_code=404, detail="订单不存在")
+        raise NotFoundException("资源不存在")
 
     await db.execute(
         update(MembershipOrder)

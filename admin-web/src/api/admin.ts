@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || ''
+const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 
 /**
  * CSRF 保护说明：
@@ -52,9 +52,17 @@ adminApi.interceptors.request.use(
   }
 )
 
-// 响应拦截器：处理401错误
+// 响应拦截器：自动解包统一响应格式 + 处理401错误
 adminApi.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // 自动解包统一响应格式 {code, message, details}
+    const data = response.data
+    if (data && typeof data === 'object' && 'code' in data && 'details' in data) {
+      // 统一格式响应，直接提取 details
+      response.data = data.details
+    }
+    return response
+  },
   async (error) => {
     const authStore = useAuthStore()
     const originalRequest = error.config
@@ -94,7 +102,7 @@ adminApi.interceptors.response.use(
 
         // SECURITY: 管理端不需要user_id进行token刷新
         // 后端可以从refresh token中解析admin信息
-        const { data } = await adminApi.post('/api/v1/admin/auth/refresh', {
+        const { data } = await adminApi.post('/admin/auth/refresh', {
           refresh_token: refreshToken
         })
 
@@ -139,3 +147,223 @@ adminApi.interceptors.response.use(
 )
 
 export default adminApi
+
+// ==================== 认证 ====================
+
+export interface LoginRequest {
+  username: string
+  password: string
+}
+
+export interface LoginResponse {
+  access_token: string
+  refresh_token: string
+  csrf_token: string
+  admin: {
+    id: number
+    username: string
+  }
+}
+
+export async function login(data: LoginRequest): Promise<LoginResponse> {
+  const res = await adminApi.post<LoginResponse>('/admin/auth/login', data)
+  return res.data
+}
+
+// ==================== 用户管理 ====================
+
+export interface AdminUserListItem {
+  id: number
+  openid: string
+  nickname: string
+  avatar_url: string
+  status: string
+  created_at: string
+  post_count: number
+  follower_count: number
+  following_count: number
+}
+
+export interface AdminUserDetail extends AdminUserListItem {
+  phone?: string
+  email?: string
+  bio?: string
+  salary_count: number
+  last_login_at?: string
+}
+
+export interface UserListParams {
+  page?: number
+  page_size?: number
+  keyword?: string
+  status?: string
+}
+
+export async function getUsers(params?: UserListParams): Promise<{
+  items: AdminUserListItem[]
+  total: number
+}> {
+  const res = await adminApi.get('/admin/users', { params })
+  return res.data
+}
+
+export async function getUser(userId: number): Promise<AdminUserDetail> {
+  const res = await adminApi.get(`/admin/users/${userId}`)
+  return res.data
+}
+
+// ==================== 帖子管理 ====================
+
+export interface AdminPostListItem {
+  id: number
+  user_id: number
+  user_nickname: string
+  user_avatar: string
+  content: string
+  images: string[]
+  topic_id?: number
+  topic_name?: string
+  status: string
+  created_at: string
+  like_count: number
+  comment_count: number
+  risk_status?: string
+}
+
+export interface PostListParams {
+  page?: number
+  page_size?: number
+  status?: string
+  risk_status?: string
+  user_id?: number
+  topic_id?: number
+  keyword?: string
+}
+
+export async function getPosts(params?: PostListParams): Promise<{
+  items: AdminPostListItem[]
+  total: number
+}> {
+  const res = await adminApi.get('/admin/posts', { params })
+  return res.data
+}
+
+export async function getPost(postId: number): Promise<AdminPostListItem> {
+  const res = await adminApi.get(`/admin/posts/${postId}`)
+  return res.data
+}
+
+export async function updatePostStatus(
+  postId: number,
+  status: string,
+  reason?: string
+): Promise<void> {
+  await adminApi.put(`/admin/posts/${postId}/status`, { status, reason })
+}
+
+export async function deletePost(postId: number): Promise<void> {
+  await adminApi.delete(`/admin/posts/${postId}`)
+}
+
+// ==================== 评论管理 ====================
+
+export interface AdminCommentListItem {
+  id: number
+  post_id: number
+  user_id: number
+  user_nickname: string
+  user_avatar: string
+  content: string
+  status: string
+  created_at: string
+  risk_status?: string
+}
+
+export interface CommentListParams {
+  page?: number
+  page_size?: number
+  post_id?: number
+  user_id?: number
+  status?: string
+  risk_status?: string
+}
+
+export async function getComments(params?: CommentListParams): Promise<{
+  items: AdminCommentListItem[]
+  total: number
+}> {
+  const res = await adminApi.get('/admin/comments', { params })
+  return res.data
+}
+
+export async function updateCommentRisk(
+  commentId: number,
+  riskStatus: string,
+  reason?: string
+): Promise<void> {
+  await adminApi.put(`/admin/comments/${commentId}/risk`, {
+    risk_status: riskStatus,
+    reason
+  })
+}
+
+// ==================== 薪资记录 ====================
+
+export interface AdminSalaryRecord {
+  id: number
+  user_id: number
+  user_nickname: string
+  amount: number
+  mood: string
+  created_at: string
+  risk_status?: string
+}
+
+export interface SalaryListParams {
+  page?: number
+  page_size?: number
+  user_id?: number
+  risk_status?: string
+}
+
+export async function getSalaryRecords(
+  params?: SalaryListParams
+): Promise<{
+  items: AdminSalaryRecord[]
+  total: number
+}> {
+  const res = await adminApi.get('/admin/salary-records', { params })
+  return res.data
+}
+
+export async function deleteSalaryRecord(recordId: number): Promise<void> {
+  await adminApi.delete(`/admin/salary-records/${recordId}`)
+}
+
+export async function updateSalaryRecordRisk(
+  recordId: number,
+  riskStatus: string,
+  reason?: string
+): Promise<void> {
+  await adminApi.put(`/admin/salary-records/${recordId}/risk`, {
+    risk_status: riskStatus,
+    reason
+  })
+}
+
+// ==================== 统计 ====================
+
+export interface AdminStatistics {
+  user_count: number
+  post_count: number
+  comment_count: number
+  salary_count: number
+  active_users_today: number
+  new_users_today: number
+  posts_today: number
+}
+
+export async function getStatistics(): Promise<AdminStatistics> {
+  const res = await adminApi.get('/admin/statistics')
+  return res.data
+}

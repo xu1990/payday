@@ -21,7 +21,7 @@ settings = get_settings()
 
 # 直接设置到 section 避免 ConfigParser 的插值问题
 section = config.get_section(config.config_ini_section, {})
-section["sqlalchemy.url"] = settings.database_url
+section["sqlalchemy.url"] = settings.effective_database_url
 
 
 def run_migrations_offline() -> None:
@@ -39,7 +39,7 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     section = config.get_section(config.config_ini_section, {})
-    section["sqlalchemy.url"] = settings.database_url
+    section["sqlalchemy.url"] = settings.effective_database_url
     connectable = engine_from_config(
         section,
         prefix="sqlalchemy.",

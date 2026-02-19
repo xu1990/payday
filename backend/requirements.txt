@@ -11,6 +11,7 @@ sqlalchemy>=2.0
 alembic>=1.12
 pymysql>=1.1.0
 aiomysql>=0.2.0
+aiosqlite>=0.19.0
 cryptography>=41.0
 
 # 校验与配置

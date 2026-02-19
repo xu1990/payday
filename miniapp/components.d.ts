@@ -9,6 +9,11 @@ declare module 'vue' {
   export interface GlobalComponents {
     AppFooter: typeof import('./src/components/AppFooter.vue')['default']
     AppLogos: typeof import('./src/components/AppLogos.vue')['default']
+    EmptyState: typeof import('./src/components/EmptyState.vue')['default']
     InputEntry: typeof import('./src/components/InputEntry.vue')['default']
+    LazyImage: typeof import('./src/components/LazyImage.vue')['default']
+    Loading: typeof import('./src/components/Loading.vue')['default']
+    UniPopup: typeof import('@dcloudio/uni-ui/lib/uni-popup/uni-popup.vue')['default']
+    UniTransition: typeof import('@dcloudio/uni-ui/lib/uni-transition/uni-transition.vue')['default']
   }
 }

@@ -3,7 +3,7 @@
  */
 import { request } from '@/utils/request'
 
-const PREFIX = '/api/v1/admin/config/orders'
+const PREFIX = '/admin/config/orders'
 
 export interface OrderItem {
   id: string

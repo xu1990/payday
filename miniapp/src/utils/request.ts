@@ -290,7 +290,13 @@ export async function request<T = unknown>(options: RequestOptions): Promise<T> 
         }
 
         if (res.statusCode >= 200 && res.statusCode < 300) {
-          resolve(res.data as T)
+          // 自动解包统一响应格式 {code, message, details}
+          let responseData = res.data as T
+          if (responseData && typeof responseData === 'object' && 'code' in responseData && 'details' in responseData) {
+            // 统一格式响应，直接提取 details
+            responseData = (responseData as { details: T }).details
+          }
+          resolve(responseData)
         } else {
           const error = handleHttpError(res.statusCode, res.data)
 
