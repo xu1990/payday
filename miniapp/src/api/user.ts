@@ -8,6 +8,7 @@ const PREFIX = '/api/v1/user'
 export interface UserInfo {
   id: string
   anonymous_name: string
+  nickname: string | null
   avatar: string | null
   bio: string | null
   follower_count: number
@@ -22,6 +23,7 @@ export interface UserInfo {
 
 export interface UserUpdateParams {
   anonymous_name?: string
+  nickname?: string
   avatar?: string
   bio?: string
   allow_follow?: number
@@ -32,6 +34,7 @@ export interface UserProfileData {
   user: {
     id: string
     anonymous_name: string
+    nickname: string | null
     avatar: string | null
     bio: string | null
     follower_count: number
@@ -160,6 +163,29 @@ export function getUserFollowing(targetUserId: string, params?: { limit?: number
   })
 }
 
+/**
+ * 注销账号
+ */
+export function deactivateAccount(): Promise<{
+  data: { recovery_until: string }
+  message: string
+}> {
+  return request({
+    url: `${PREFIX}/me/deactivate`,
+    method: 'POST'
+  })
+}
+
+/**
+ * 退出登录
+ */
+export function logout(): Promise<{ message: string }> {
+  return request({
+    url: '/api/v1/auth/logout',
+    method: 'POST'
+  })
+}
+
 export default {
   getCurrentUser,
   updateCurrentUser,
@@ -171,4 +197,6 @@ export default {
   getMyFollowing,
   getUserFollowers,
   getUserFollowing,
+  deactivateAccount,
+  logout,
 }
