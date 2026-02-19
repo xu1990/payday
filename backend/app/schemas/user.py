@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 class UserResponse(BaseModel):
     id: str
     anonymous_name: str
+    nickname: Optional[str] = None
     avatar: Optional[str] = None
     bio: Optional[str] = None
     follower_count: int = 0
@@ -17,6 +18,7 @@ class UserResponse(BaseModel):
     status: str = "normal"
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+    deactivated_at: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -24,7 +26,13 @@ class UserResponse(BaseModel):
 
 class UserUpdate(BaseModel):
     anonymous_name: Optional[str] = Field(None, max_length=50)
+    nickname: Optional[str] = Field(None, max_length=50)
     avatar: Optional[str] = None
     bio: Optional[str] = Field(None, max_length=200)
     allow_follow: Optional[int] = None
     allow_comment: Optional[int] = None
+
+
+class UserDeactivate(BaseModel):
+    """用户注销请求"""
+    pass  # 空请求体，仅确认操作

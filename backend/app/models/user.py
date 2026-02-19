@@ -19,6 +19,7 @@ class User(Base):
     openid = Column(String(64), unique=True, nullable=False, index=True, comment="微信 openid")
     unionid = Column(String(64), nullable=True, comment="微信 unionid")
     anonymous_name = Column(String(50), nullable=False, comment="匿名昵称")
+    nickname = Column(String(50), nullable=True, comment="显示昵称")
     avatar = Column(String(255), nullable=True, comment="头像 URL")
     bio = Column(String(200), nullable=True, comment="个人简介")
 
@@ -36,3 +37,4 @@ class User(Base):
     )
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    deactivated_at = Column(DateTime, nullable=True, comment="注销时间（软删除）")
