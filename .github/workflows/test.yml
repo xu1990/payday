@@ -1,0 +1,199 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Backend测试
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements-dev.txt
+
+      - name: Run tests with coverage
+        run: |
+          cd backend
+          pytest --cov=app --cov-report=xml --cov-report=term --no-cov -q
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./backend/coverage.xml
+          flags: backend
+          name: backend-coverage
+
+  # Miniapp测试
+  miniapp-test:
+    name: Miniapp Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: miniapp/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd miniapp
+          npm install
+
+      - name: Run tests
+        run: |
+          cd miniapp
+          npm run test:coverage
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./miniapp/coverage/coverage-final.json
+          flags: miniapp
+          name: miniapp-coverage
+
+  # Admin-web测试
+  admin-test:
+    name: Admin Web Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: admin-web/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd admin-web
+          npm install
+
+      - name: Run tests
+        run: |
+          cd admin-web
+          npm run test:coverage
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./admin-web/coverage/coverage-final.json
+          flags: admin-web
+          name: admin-web-coverage
+
+  # 集成测试
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [backend-test]
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: payday_test
+          MYSQL_USER: payday
+          MYSQL_PASSWORD: payday123
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements-dev.txt
+
+      - name: Run database migrations
+        env:
+          DATABASE_URL: mysql://payday:payday123@localhost:3306/payday_test
+        run: |
+          cd backend
+          alembic upgrade head
+
+      - name: Run integration tests
+        env:
+          MYSQL_HOST: localhost
+          MYSQL_PORT: 3306
+          MYSQL_USER: payday
+          MYSQL_PASSWORD: payday123
+          MYSQL_DATABASE: payday_test
+          REDIS_URL: redis://localhost:6379
+        run: |
+          cd backend
+          pytest tests/integration/ -v --no-cov
+
+  # 代码质量检查
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Backend lint
+        run: |
+          cd backend
+          pip install pylint black isort
+          # 这里可以添加具体的lint命令
+          # pylint app/
+          # black --check app/
+
+      - name: Frontend lint
+        run: |
+          cd miniapp
+          npm install
+          npm run lint
+
+          cd ../admin-web
+          npm install
+          npm run lint

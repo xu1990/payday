@@ -60,7 +60,7 @@ class TestDataFactory:
             salary_range=kwargs.get("salary_range"),
             industry=kwargs.get("industry"),
             city=kwargs.get("city"),
-            risk_status=kwargs.get("risk_status", "pending"),
+            risk_status=kwargs.get("risk_status", "approved"),  # 默认已通过审核，便于测试
             status=kwargs.get("status", "normal"),
         )
         db_session.add(post)
@@ -240,8 +240,9 @@ class TestDataFactory:
             user_id=user_id,
             job_name=job_name,
             payday=payday,
-            payday_type=kwargs.get("payday_type", "fixed"),
-            advance_remind_days=kwargs.get("advance_remind_days", 1),
+            calendar_type=kwargs.get("calendar_type", "solar"),
+            estimated_salary=kwargs.get("estimated_salary"),
+            is_active=kwargs.get("is_active", 1),
         )
         db_session.add(config)
         await db_session.commit()

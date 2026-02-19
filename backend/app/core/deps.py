@@ -212,6 +212,43 @@ async def verify_csrf_token(
     return True
 
 
+async def verify_csrf_token_for_user(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+) -> bool:
+    """
+    验证用户端 CSRF token（用于用户的状态变更操作）
+
+    与 verify_csrf_token 的区别：
+    - 此函数用于普通用户端点
+    - verify_csrf_token 用于管理端点
+
+    使用方式:
+        @router.put("/user/me")
+        async def endpoint(..., _csrf: bool = Depends(verify_csrf_token_for_user)):
+            ...
+
+    安全说明:
+    - GET 请求通常不需要 CSRF 验证（只读操作）
+    - POST/PUT/DELETE 等状态变更操作需要验证
+    """
+    from fastapi import Header
+
+    # 安全的GET请求方法（标准REST只读操作）
+    SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+
+    # 对于安全方法，跳过CSRF验证
+    if request.method in SAFE_METHODS:
+        return True
+
+    # POST/PUT/DELETE/PATCH 等状态变更操作必须验证 CSRF token
+    is_valid = await csrf_manager.validate_token(request, str(current_user.id))
+    if not is_valid:
+        raise CSRFException("CSRF token 无效或已过期，请重新登录")
+
+    return True
+
+
 async def verify_request_signature(
     request: Request,
     x_timestamp: Optional[str] = Header(None),
@@ -332,6 +369,7 @@ __all__ = [
     "get_current_admin",
     "get_current_admin_user",  # Alias for get_current_admin
     "verify_csrf_token",
+    "verify_csrf_token_for_user",  # User-specific CSRF verification
     "verify_request_signature",
     "rate_limit_general",
     "rate_limit_login",

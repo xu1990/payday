@@ -278,3 +278,9 @@ async def test_theme(db_session: AsyncSession) -> AppTheme:
 async def test_payday_config(db_session: AsyncSession, test_user: User) -> PaydayConfig:
     """创建测试发薪日配置"""
     return await TestDataFactory.create_payday_config(db_session, test_user.id)
+
+
+@pytest.fixture
+async def test_notification(db_session: AsyncSession, test_user: User) -> Notification:
+    """创建测试通知"""
+    return await TestDataFactory.create_notification(db_session, test_user.id)

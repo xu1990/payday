@@ -512,7 +512,7 @@ class TestDeleteComment:
         )
 
         # 删除评论
-        result = await comment_service.delete(db_session, comment.id)
+        result = await comment_service.delete(db_session, comment.id, user.id)
 
         assert result is True
 
@@ -539,7 +539,7 @@ class TestDeleteComment:
         initial_count = post.comment_count
 
         # 删除评论
-        await comment_service.delete(db_session, comment.id)
+        await comment_service.delete(db_session, comment.id, user.id)
 
         # 刷新并验证计数减少
         await db_session.refresh(post)
@@ -548,7 +548,8 @@ class TestDeleteComment:
     @pytest.mark.asyncio
     async def test_delete_comment_not_found(self, db_session: AsyncSession):
         """测试删除不存在的评论"""
-        result = await comment_service.delete(db_session, "nonexistent_id")
+        # 需要传递 user_id 参数
+        result = await comment_service.delete(db_session, "nonexistent_id", "fake_user_id")
 
         assert result is False
 
@@ -572,7 +573,7 @@ class TestDeleteComment:
         await db_session.commit()
 
         # 删除评论
-        await comment_service.delete(db_session, comment.id)
+        await comment_service.delete(db_session, comment.id, user.id)
 
         # 刷新并验证计数不为负
         await db_session.refresh(post)

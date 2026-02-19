@@ -13,7 +13,8 @@ describe('ActionButtons 组件', () => {
 
       expect(wrapper.find('[aria-label="编辑"]').exists()).toBe(true)
       expect(wrapper.text()).toContain('编辑')
-      expect(wrapper.text()).toContain('启用')
+      // 默认 isActive=true，所以显示"禁用"按钮
+      expect(wrapper.text()).toContain('禁用')
       expect(wrapper.text()).toContain('删除')
     })
 
@@ -91,7 +92,8 @@ describe('ActionButtons 组件', () => {
     it('点击切换按钮触发 toggle 事件', async () => {
       const wrapper = mount(ActionButtons)
 
-      const toggleButton = wrapper.find('[aria-label="启用"]')
+      // 默认 isActive=true，所以找"禁用"按钮
+      const toggleButton = wrapper.find('[aria-label="禁用"]')
       await toggleButton.trigger('click')
 
       expect(wrapper.emitted('toggle')).toBeTruthy()
@@ -134,7 +136,8 @@ describe('ActionButtons 组件', () => {
       const wrapper = mount(ActionButtons)
 
       expect(wrapper.find('[aria-label="编辑"]').exists()).toBe(true)
-      expect(wrapper.find('[aria-label="启用"]').exists()).toBe(true)
+      // 默认 isActive=true，所以期待"禁用"标签
+      expect(wrapper.find('[aria-label="禁用"]').exists()).toBe(true)
       expect(wrapper.find('[aria-label="删除"]').exists()).toBe(true)
     })
   })

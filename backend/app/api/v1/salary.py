@@ -6,7 +6,7 @@ from typing import Optional
 
 from fastapi import Depends, HTTPException, Query
 
-from app.core.deps import get_current_user, verify_csrf_token
+from app.core.deps import get_current_user, verify_csrf_token_for_user
 from app.core.database import get_db
 from app.models.user import User
 from app.schemas.salary import SalaryRecordCreate, SalaryRecordResponse, SalaryRecordUpdate
@@ -42,7 +42,7 @@ async def salary_list(
 async def salary_create(
     body: SalaryRecordCreate,
     current_user: User = Depends(get_current_user),
-    _csrf: bool = Depends(verify_csrf_token),  # 添加 CSRF 保护
+    _csrf: bool = Depends(verify_csrf_token_for_user),  # 用户 CSRF 保护
     db: AsyncSession = Depends(get_db),
 ):
     record = await create_record(db, current_user.id, body)
@@ -66,7 +66,7 @@ async def salary_update(
     record_id: str,
     body: SalaryRecordUpdate,
     current_user: User = Depends(get_current_user),
-    _csrf: bool = Depends(verify_csrf_token),  # 添加 CSRF 保护
+    _csrf: bool = Depends(verify_csrf_token_for_user),  # 用户 CSRF 保护
     db: AsyncSession = Depends(get_db),
 ):
     record = await update_record(db, record_id, current_user.id, body)
@@ -79,7 +79,7 @@ async def salary_update(
 async def salary_delete(
     record_id: str,
     current_user: User = Depends(get_current_user),
-    _csrf: bool = Depends(verify_csrf_token),  # 添加 CSRF 保护
+    _csrf: bool = Depends(verify_csrf_token_for_user),  # 用户 CSRF 保护
     db: AsyncSession = Depends(get_db),
 ):
     ok = await delete_record(db, record_id, current_user.id)

@@ -1,11 +1,29 @@
 """关注服务集成测试"""
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import update
 
 from app.services import follow_service
 from app.models.follow import Follow
 from app.models.post import Post
 from tests.test_utils import TestDataFactory
+
+
+async def create_approved_post(db: AsyncSession, user_id: str, content: str, **kwargs) -> Post:
+    """创建已审核通过的帖子（用于测试）"""
+    post = Post(
+        user_id=user_id,
+        anonymous_name=kwargs.get('anonymous_name', f"{user_id}_anon"),
+        content=content,
+        images=[],
+        risk_status="approved",
+        status=kwargs.get('status', 'normal'),
+        created_at=kwargs.get('created_at'),
+    )
+    db.add(post)
+    await db.commit()
+    await db.refresh(post)
+    return post
 
 
 class TestFollowUser:
@@ -465,12 +483,35 @@ class TestFollowingPosts:
 
         await follow_service.follow_user(db_session, user1.id, user2.id)
 
-        # user2 发布不同状态的帖子
-        post1 = await TestDataFactory.create_post(db_session, user2.id, content="已审核")
-        post1.risk_status = "approved"
-        post2 = await TestDataFactory.create_post(db_session, user2.id, content="待审核")  # 默认pending
-        post3 = await TestDataFactory.create_post(db_session, user2.id, content="已拒绝")
-        post3.risk_status = "rejected"
+        # 手动创建帖子，指定 risk_status
+        post1 = Post(
+            user_id=user2.id,
+            anonymous_name="user2_anon",
+            content="已审核",
+            images=[],
+            risk_status="approved",
+            status="normal",
+        )
+        post2 = Post(
+            user_id=user2.id,
+            anonymous_name="user2_anon",
+            content="待审核",
+            images=[],
+            risk_status="pending",  # 默认pending
+            status="normal",
+        )
+        post3 = Post(
+            user_id=user2.id,
+            anonymous_name="user2_anon",
+            content="已拒绝",
+            images=[],
+            risk_status="rejected",
+            status="normal",
+        )
+
+        db_session.add(post1)
+        db_session.add(post2)
+        db_session.add(post3)
         await db_session.commit()
 
         count = await follow_service.count_following_posts(db_session, user1.id)
@@ -486,15 +527,35 @@ class TestFollowingPosts:
 
         await follow_service.follow_user(db_session, user1.id, user2.id)
 
-        # user2 发布不同状态的帖子
-        post1 = await TestDataFactory.create_post(db_session, user2.id, content="正常")
-        post1.risk_status = "approved"
-        post2 = await TestDataFactory.create_post(db_session, user2.id, content="隐藏")
-        post2.risk_status = "approved"
-        post2.status = "hidden"
-        post3 = await TestDataFactory.create_post(db_session, user2.id, content="删除")
-        post3.risk_status = "approved"
-        post3.status = "deleted"
+        # user2 发布不同状态的帖子 - 手动创建并设置状态
+        post1 = Post(
+            user_id=user2.id,
+            anonymous_name="user2_anon",
+            content="正常",
+            images=[],
+            risk_status="approved",
+            status="normal",
+        )
+        post2 = Post(
+            user_id=user2.id,
+            anonymous_name="user2_anon",
+            content="隐藏",
+            images=[],
+            risk_status="approved",
+            status="hidden",
+        )
+        post3 = Post(
+            user_id=user2.id,
+            anonymous_name="user2_anon",
+            content="删除",
+            images=[],
+            risk_status="approved",
+            status="deleted",
+        )
+
+        db_session.add(post1)
+        db_session.add(post2)
+        db_session.add(post3)
         await db_session.commit()
 
         count = await follow_service.count_following_posts(db_session, user1.id)
@@ -518,9 +579,7 @@ class TestFollowingPosts:
         user2 = await TestDataFactory.create_user(db_session, "user2")
 
         await follow_service.follow_user(db_session, user1.id, user2.id)
-        post = await TestDataFactory.create_post(db_session, user2.id, content="测试帖子")
-        post.risk_status = "approved"
-        await db_session.commit()
+        post = await create_approved_post(db_session, user2.id, content="测试帖子")
 
         posts = await follow_service.list_following_posts(db_session, user1.id)
 
@@ -531,7 +590,6 @@ class TestFollowingPosts:
     @pytest.mark.asyncio
     async def test_list_following_posts_ordered_by_created_at(self, db_session: AsyncSession):
         """测试关注流按创建时间倒序排列"""
-        import time
         from datetime import datetime, timedelta
 
         user1 = await TestDataFactory.create_user(db_session, "user1")
@@ -542,24 +600,11 @@ class TestFollowingPosts:
         # 发布多个帖子，手动设置不同的created_at时间
         now = datetime.utcnow()
 
-        post1 = await TestDataFactory.create_post(db_session, user2.id, content="帖子1")
-        post1.risk_status = "approved"
-        post1.created_at = now
-        await db_session.commit()
+        post1 = await create_approved_post(db_session, user2.id, content="帖子1", created_at=now)
 
-        time.sleep(0.01)  # 小延迟确保时间戳不同
+        post2 = await create_approved_post(db_session, user2.id, content="帖子2", created_at=now + timedelta(seconds=1))
 
-        post2 = await TestDataFactory.create_post(db_session, user2.id, content="帖子2")
-        post2.risk_status = "approved"
-        post2.created_at = now + timedelta(seconds=1)
-        await db_session.commit()
-
-        time.sleep(0.01)
-
-        post3 = await TestDataFactory.create_post(db_session, user2.id, content="帖子3")
-        post3.risk_status = "approved"
-        post3.created_at = now + timedelta(seconds=2)
-        await db_session.commit()
+        post3 = await create_approved_post(db_session, user2.id, content="帖子3", created_at=now + timedelta(seconds=2))
 
         posts = await follow_service.list_following_posts(db_session, user1.id)
 
@@ -579,9 +624,7 @@ class TestFollowingPosts:
 
         # 发布5个帖子
         for i in range(5):
-            post = await TestDataFactory.create_post(db_session, user2.id, content=f"帖子{i+1}")
-            post.risk_status = "approved"
-        await db_session.commit()
+            await create_approved_post(db_session, user2.id, content=f"帖子{i+1}")
 
         # 第一页：3个
         posts1 = await follow_service.list_following_posts(db_session, user1.id, limit=3, offset=0)
@@ -607,15 +650,11 @@ class TestFollowingPosts:
         await follow_service.follow_user(db_session, user1.id, user3.id)
 
         # user2 发布2个帖子
-        post1 = await TestDataFactory.create_post(db_session, user2.id, content="user2帖子1")
-        post1.risk_status = "approved"
-        post2 = await TestDataFactory.create_post(db_session, user2.id, content="user2帖子2")
-        post2.risk_status = "approved"
+        post1 = await create_approved_post(db_session, user2.id, content="user2帖子1")
+        post2 = await create_approved_post(db_session, user2.id, content="user2帖子2")
 
         # user3 发布1个帖子
-        post3 = await TestDataFactory.create_post(db_session, user3.id, content="user3帖子1")
-        post3.risk_status = "approved"
-        await db_session.commit()
+        post3 = await create_approved_post(db_session, user3.id, content="user3帖子1")
 
         posts = await follow_service.list_following_posts(db_session, user1.id)
 
@@ -636,13 +675,10 @@ class TestFollowingPosts:
         await follow_service.follow_user(db_session, user1.id, user2.id)
 
         # user2 发布帖子
-        post1 = await TestDataFactory.create_post(db_session, user2.id, content="user2帖子")
-        post1.risk_status = "approved"
+        post1 = await create_approved_post(db_session, user2.id, content="user2帖子")
 
         # user3 也发布帖子（但user1没有关注user3）
-        post2 = await TestDataFactory.create_post(db_session, user3.id, content="user3帖子")
-        post2.risk_status = "approved"
-        await db_session.commit()
+        post2 = await create_approved_post(db_session, user3.id, content="user3帖子")
 
         posts = await follow_service.list_following_posts(db_session, user1.id)
 

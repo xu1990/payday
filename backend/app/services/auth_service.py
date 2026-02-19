@@ -26,36 +26,48 @@ def _gen_anonymous_name() -> str:
 async def get_or_create_user(db: AsyncSession, openid: str, unionid: Optional[str] = None) -> User:
     """根据 openid 查询或创建用户（带并发控制）
 
-    SECURITY: 使用 MySQL 的 INSERT ... ON DUPLICATE KEY UPDATE 避免并发创建冲突
-    这样可以原子性地处理并发请求，避免 TOCTOU 竞态条件
+    SECURITY: 使用数据库无关的方式处理并发创建冲突
+    1. 尝试创建新用户
+    2. 如果 openid 已存在（IntegrityError），则查询现有用户
+    3. 这种方式对 MySQL 和 SQLite 都有效
     """
-    from sqlalchemy.dialects.mysql import insert as mysql_insert
     from app.utils.logger import get_logger
     logger = get_logger(__name__)
 
-    # 使用 MySQL 的 upsert 语法原子性地创建或更新用户
-    # 这样可以避免并发创建导致的 IntegrityError
-    stmt = mysql_insert(User).values(
+    # 首先尝试查询用户是否存在（避免不必要的插入尝试）
+    result = await db.execute(select(User).where(User.openid == openid))
+    user = result.scalar_one_or_none()
+
+    if user:
+        logger.info(f"Existing user {user.id} found for openid {openid}")
+        # 如果提供了新的 unionid，更新它
+        if unionid and user.unionid != unionid:
+            user.unionid = unionid
+            await db.commit()
+            await db.refresh(user)
+        return user
+
+    # 用户不存在，尝试创建
+    new_user = User(
         openid=openid,
         unionid=unionid,
         anonymous_name=_gen_anonymous_name(),
     )
 
-    # 如果 openid 已存在，更新 unionid 和匿名昵称（保持数据最新）
-    stmt = stmt.on_duplicate_key_update(
-        unionid=stmt.inserted.unionid,
-        anonymous_name=stmt.inserted.anonymous_name,
-    )
-
-    await db.execute(stmt)
-    await db.commit()
-
-    # 查询并返回用户
-    result = await db.execute(select(User).where(User.openid == openid))
-    user = result.scalar_one()
-
-    logger.info(f"User {user.id} retrieved/created for openid {openid}")
-    return user
+    try:
+        db.add(new_user)
+        await db.commit()
+        await db.refresh(new_user)
+        logger.info(f"New user {new_user.id} created for openid {openid}")
+        return new_user
+    except sqlalchemy_exc.IntegrityError:
+        # 并发请求：另一个请求已经创建了该用户
+        # Rollback 并重新查询
+        await db.rollback()
+        result = await db.execute(select(User).where(User.openid == openid))
+        user = result.scalar_one()
+        logger.info(f"User {user.id} retrieved after concurrent creation attempt for openid {openid}")
+        return user
 
 
 async def login_with_code(db: AsyncSession, code: str) -> Optional[Tuple[str, str, User]]:

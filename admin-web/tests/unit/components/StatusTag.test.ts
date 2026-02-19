@@ -162,8 +162,12 @@ describe('StatusTag 组件', () => {
         },
       })
 
+      // HTML 标签应该被移除
       expect(wrapper.text()).not.toContain('<script>')
-      expect(wrapper.text()).not.toContain('alert')
+      expect(wrapper.text()).not.toContain('</script>')
+      // 内容保留，只是不会执行（类似 backend post_service 的修复）
+      expect(wrapper.text()).toContain('alert')
+      expect(wrapper.text()).toContain('xss')
     })
   })
 

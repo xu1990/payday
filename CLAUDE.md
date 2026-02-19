@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a monorepo with three main components:
 
-- **backend/** - FastAPI service (Python 3.11+)
+- **backend/** - FastAPI service (Python 3.11+, CI uses 3.9+)
 - **miniapp/** - WeChat mini-program (uni-app + Vue3)
 - **admin-web/** - Web admin dashboard (Vue3 + Element Plus)
 
@@ -26,7 +26,7 @@ The project follows the technical specification in `docs/技术方案_v1.0.md` a
 cd backend
 
 # Install dependencies
-pip install -r requirements-dev.txt  # Includes dev tools (pytest, black, pylint, etc.)
+pip install -r requirements-dev.txt  # Includes dev tools (pytest, black, pylint, ruff, etc.)
 
 # Run database migrations (required after model changes)
 python3 -m alembic upgrade head
@@ -67,6 +67,9 @@ npm run build
 # Type check
 npm run type-check
 
+# Test with Vitest UI (interactive)
+npm run test:ui
+
 # Lint and format (from root directory)
 cd .. && npm run lint:admin    # ESLint
 cd .. && npm run format:admin  # Prettier
@@ -90,6 +93,9 @@ npm run build
 
 # Type check
 npm run type-check
+
+# Test with Vitest UI (interactive)
+npm run test:ui
 
 # Lint and format (from root directory)
 cd .. && npm run lint:miniapp    # ESLint
@@ -121,7 +127,7 @@ backend/
 
 1. **Service Layer Pattern**: Business logic lives in \`app/services/\`, API routes in \`app/api/v1/\` are thin.
 2. **Dependency Injection**: Use \`app/core/deps.py\` for database sessions (\`get_db\`) and current user (\`get_current_user\`, \`get_current_admin\`).
-3. **Pydantic Schemas**: All API inputs/outputs use schemas from \`app/schemas/\`.
+3. **Pydantic Schemas**: All API inputs/outputs use schemas from \`app/schemas/\` for validation.
 4. **SQLAlchemy ORM**: Async sessions via \`app/core/database.py\`.
 5. **Exception Handling**: Use custom exceptions from \`app/core/exceptions.py\` (PayDayException, BusinessException, AuthenticationException, etc.) and \`error_response()\` for unified error responses.
 
@@ -222,6 +228,7 @@ Mini-program tokens have \`sub: user_id\`, admin tokens have \`scope: admin\`.
 - **MySQL 8.0+** as primary database
 - **Redis** for caching (user info, payday status, hot posts, session)
 - **Planned sharding**: Content tables will be sharded by date/hash for scale
+- **Migrations**: Alembic for database version control
 
 ### Async Tasks
 
@@ -276,12 +283,21 @@ pytest tests/test_specific_file.py::test_function_name
 # Run only unit tests (exclude integration/slow)
 pytest -m "not integration and not slow"
 
+# Run integration tests only
+pytest tests/integration/ -v
+
 # Run async tests only
 pytest -m asyncio
 
 # Run tests matching a keyword expression
 pytest -k "test_login" -v
 \`\`\`
+
+**Test Markers** (configured in pytest.ini):
+- `slow` - Slow running tests (deselect with `-m "not slow"`)
+- `integration` - Integration tests (full stack with DB)
+- `unit` - Unit tests (isolated, fast)
+- `asyncio` - Async tests
 
 ### Code Style
 
@@ -296,6 +312,30 @@ Root-level scripts for running lint/format across all components:
 - \`npm run format:backend\` - Black + isort
 - \`npm run format:admin\` - Prettier (admin-web)
 - \`npm run format:miniapp\` - Prettier (miniapp)
+
+### CI/CD
+
+GitHub Actions workflow in `.github/workflows/test.yml` runs on push/PR to main/develop:
+- Backend tests with coverage (pytest, codecov)
+- Miniapp tests with coverage (vitest)
+- Admin-web tests with coverage (vitest)
+- Integration tests with MySQL + Redis services
+- Code quality checks (pylint, black, eslint)
+
+### Running All Tests (Root Level)
+
+\`\`\`bash
+# Run all tests (backend + admin + miniapp)
+npm run test
+
+# Run all tests with coverage
+npm run test:ci
+
+# Run specific component tests
+npm run test:backend
+npm run test:admin
+npm run test:miniapp
+\`\`\`
 
 ---
 
