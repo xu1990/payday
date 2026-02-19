@@ -78,6 +78,9 @@ async def login_with_code(db: AsyncSession, code: str) -> Optional[Tuple[str, st
     Returns:
         (access_token, refresh_token, user) 或 None
     """
+    from datetime import datetime, timedelta
+    from sqlalchemy import update
+
     # 开发环境模拟登录（如果未配置微信凭证）
     from app.core.config import get_settings
     settings = get_settings()
@@ -92,6 +95,23 @@ async def login_with_code(db: AsyncSession, code: str) -> Optional[Tuple[str, st
         mock_openid = f"dev_openid_{code[:28]}"
 
         user = await get_or_create_user(db, openid=mock_openid, unionid=None)
+
+        # 检查用户是否已注销
+        if user.deactivated_at:
+            # 自动恢复账号
+            recovery_deadline = user.deactivated_at + timedelta(days=30)
+
+            if datetime.utcnow() > recovery_deadline:
+                # 超过30天，无法恢复
+                raise BusinessException("账号已注销且超过恢复期限", code="ACCOUNT_PERMANENTLY_DELETED")
+
+            # 在恢复期限内，自动恢复账号
+            await db.execute(
+                update(User).where(User.id == user.id).values(deactivated_at=None)
+            )
+            await db.commit()
+            await db.refresh(user)
+            logger.info(f"User {user.id} account reactivated after deactivation")
 
         # 生成 Access Token 和 Refresh Token
         access_token = create_access_token(data={"sub": user.id})
@@ -120,6 +140,25 @@ async def login_with_code(db: AsyncSession, code: str) -> Optional[Tuple[str, st
         return None  # OK: 微信登录失败返回 None 是正常流程
     unionid = data.get("unionid")
     user = await get_or_create_user(db, openid=openid, unionid=unionid)
+
+    # 检查用户是否已注销
+    if user.deactivated_at:
+        # 自动恢复账号
+        recovery_deadline = user.deactivated_at + timedelta(days=30)
+
+        if datetime.utcnow() > recovery_deadline:
+            # 超过30天，无法恢复
+            raise BusinessException("账号已注销且超过恢复期限", code="ACCOUNT_PERMANENTLY_DELETED")
+
+        # 在恢复期限内，自动恢复账号
+        await db.execute(
+            update(User).where(User.id == user.id).values(deactivated_at=None)
+        )
+        await db.commit()
+        await db.refresh(user)
+        from app.utils.logger import get_logger
+        logger = get_logger(__name__)
+        logger.info(f"User {user.id} account reactivated after deactivation")
 
     # 生成 Access Token 和 Refresh Token
     access_token = create_access_token(data={"sub": user.id})
