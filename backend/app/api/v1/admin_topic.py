@@ -7,14 +7,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import get_current_admin_user
+from app.core.exceptions import success_response, NotFoundException
 from app.models.user import User
-from app.schemas.topic import TopicCreate, TopicUpdate, TopicResponse, TopicListResponse
+from app.schemas.topic import TopicCreate, TopicUpdate, TopicResponse
 from app.services import topic_service
 
 router = APIRouter(prefix="/admin/topics", tags=["admin-topics"])
 
 
-@router.get("", response_model=TopicListResponse)
+@router.get("")
 async def list_topics(
     active_only: bool = Query(False, description="仅启用的"),
     limit: int = Query(20, ge=1, le=100),
@@ -26,12 +27,16 @@ async def list_topics(
     items, total = await topic_service.list_topics(
         db, active_only=active_only, limit=limit, offset=offset
     )
-    return TopicListResponse(
-        items=[TopicResponse.model_validate(t) for t in items], total=total
+    return success_response(
+        data={
+            "items": [TopicResponse.model_validate(t).model_dump() for t in items],
+            "total": total,
+        },
+        message="获取话题列表成功"
     )
 
 
-@router.post("", response_model=TopicResponse)
+@router.post("")
 async def create_topic(
     data: TopicCreate,
     current_admin: User = Depends(get_current_admin_user),
@@ -45,10 +50,13 @@ async def create_topic(
         cover_image=data.cover_image,
         sort_order=data.sort_order,
     )
-    return TopicResponse.model_validate(topic)
+    return success_response(
+        data=TopicResponse.model_validate(topic).model_dump(),
+        message="创建话题成功"
+    )
 
 
-@router.get("/{topic_id}", response_model=TopicResponse)
+@router.get("/{topic_id}")
 async def get_topic(
     topic_id: str,
     current_admin: User = Depends(get_current_admin_user),
@@ -57,13 +65,14 @@ async def get_topic(
     """获取单个话题。"""
     topic = await topic_service.get_topic_by_id(db, topic_id)
     if not topic:
-        from fastapi import HTTPException
-
         raise NotFoundException("资源不存在")
-    return TopicResponse.model_validate(topic)
+    return success_response(
+        data=TopicResponse.model_validate(topic).model_dump(),
+        message="获取话题成功"
+    )
 
 
-@router.put("/{topic_id}", response_model=TopicResponse)
+@router.put("/{topic_id}")
 async def update_topic(
     topic_id: str,
     data: TopicUpdate,
@@ -81,10 +90,11 @@ async def update_topic(
         sort_order=data.sort_order,
     )
     if not topic:
-        from fastapi import HTTPException
-
         raise NotFoundException("资源不存在")
-    return TopicResponse.model_validate(topic)
+    return success_response(
+        data=TopicResponse.model_validate(topic).model_dump(),
+        message="更新话题成功"
+    )
 
 
 @router.delete("/{topic_id}")
@@ -96,7 +106,6 @@ async def delete_topic(
     """删除话题。"""
     success = await topic_service.delete_topic(db, topic_id)
     if not success:
-        from fastapi import HTTPException
-
         raise NotFoundException("资源不存在")
-    return {"deleted": success}
+    return success_response(data={"deleted": success}, message="删除话题成功")
+

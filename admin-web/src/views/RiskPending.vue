@@ -143,13 +143,13 @@ const rejectTargetComment = ref<AdminCommentListItem | null>(null)
 async function fetchPosts() {
   postsLoading.value = true
   try {
-    const { data } = await getPosts({
+    const { items, total } = await getPosts({
       risk_status: 'pending',
       limit: postsPageSize.value,
       offset: (postsPage.value - 1) * postsPageSize.value,
     })
-    posts.value = data.items
-    postsTotal.value = data.total
+    posts.value = items
+    postsTotal.value = total
   } finally {
     postsLoading.value = false
   }
@@ -158,21 +158,21 @@ async function fetchPosts() {
 async function fetchComments() {
   commentsLoading.value = true
   try {
-    const { data } = await getComments({
+    const { items, total } = await getComments({
       risk_status: 'pending',
       limit: commentsPageSize.value,
       offset: (commentsPage.value - 1) * commentsPageSize.value,
     })
-    comments.value = data.items
-    commentsTotal.value = data.total
+    comments.value = items
+    commentsTotal.value = total
   } finally {
     commentsLoading.value = false
   }
 }
 
 function openPostDetail(row: AdminPostListItem) {
-  getPost(row.id).then(({ data }) => {
-    currentPost.value = data
+  getPost(row.id).then((post) => {
+    currentPost.value = post
     postDetailVisible.value = true
   }).catch(() => ElMessage.error('获取详情失败'))
 }

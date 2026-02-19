@@ -2,7 +2,7 @@
  * 统一的HTTP请求工具
  * 基于 adminApi 封装，提供一致的请求接口
  */
-import { adminApi } from '@/api/admin'
+import adminApi from '@/api/admin'
 import type { AxiosRequestConfig } from 'axios'
 
 export interface RequestConfig extends AxiosRequestConfig {

@@ -78,9 +78,9 @@ async function fetch() {
     }
     if (keyword.value) params.keyword = keyword.value
     if (statusFilter.value) params.status = statusFilter.value
-    const { data } = await getUsers(params)
-    items.value = data.items
-    total.value = data.total
+    const { items: users, total } = await getUsers(params)
+    items.value = users
+    total.value = total
   } finally {
     loading.value = false
   }

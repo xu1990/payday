@@ -42,8 +42,7 @@ const stats = ref<AdminStatistics | null>(null)
 
 onMounted(async () => {
   try {
-    const { data } = await getStatistics()
-    stats.value = data
+    stats.value = await getStatistics()
   } catch (e: unknown) {
     console.error('Failed to load statistics:', e)
     ElMessage.error(getCommonApiErrorMessage(e))

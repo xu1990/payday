@@ -3,15 +3,16 @@
 """
 from typing import Optional
 from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel, Field
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import get_current_admin_user
+from app.core.exceptions import success_response, NotFoundException
 from app.models.user import User
 from app.models.membership import Membership, AppTheme, MembershipOrder
-from app.schemas.membership import MembershipCreate, MembershipResponse, MembershipListResponse
-from pydantic import BaseModel, Field
+from app.schemas.membership import MembershipCreate, MembershipResponse
 
 router = APIRouter(prefix="/admin/config", tags=["admin-config"])
 
@@ -19,39 +20,24 @@ router = APIRouter(prefix="/admin/config", tags=["admin-config"])
 # ==================== 主题管理 ====================
 
 class ThemeCreate(BaseModel):
-    name: str = Field(..., min_length=1, max_length=50)
-    code: str = Field(..., min_length=1, max_length=50)
-    preview_image: Optional[str] = Field(None, max_length=500)
-    config: Optional[str] = Field(None)
+    name: str
+    code: str
+    preview_image: Optional[str] = None
+    config: Optional[str] = None
     is_premium: bool = False
-    sort_order: int = Field(0, ge=0)
+    sort_order: int = 0
 
 
 class ThemeUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=50)
-    preview_image: Optional[str] = Field(None, max_length=500)
+    name: Optional[str] = None
+    preview_image: Optional[str] = None
     config: Optional[str] = None
     is_premium: Optional[bool] = None
     is_active: Optional[bool] = None
-    sort_order: Optional[int] = Field(None, ge=0)
+    sort_order: Optional[int] = None
 
 
-class ThemeResponse(BaseModel):
-    id: str
-    name: str
-    code: str
-    preview_image: Optional[str]
-    config: Optional[str]
-    is_premium: bool
-    is_active: bool
-    sort_order: int
-    created_at: str
-
-    class Config:
-        from_attributes = True
-
-
-@router.get("/themes", response_model=list[ThemeResponse])
+@router.get("/themes")
 async def list_themes(
     active_only: bool = Query(False),
     current_admin: User = Depends(get_current_admin_user),
@@ -66,10 +52,25 @@ async def list_themes(
     q = q.order_by(AppTheme.sort_order.desc(), AppTheme.created_at.desc())
     result = await db.execute(q)
     themes = list(result.scalars().all())
-    return [ThemeResponse.model_validate(t) for t in themes]
+
+    items = []
+    for t in themes:
+        items.append({
+            "id": t.id,
+            "name": t.name,
+            "code": t.code,
+            "preview_image": t.preview_image,
+            "config": t.config,
+            "is_premium": bool(t.is_premium),
+            "is_active": bool(t.is_active),
+            "sort_order": t.sort_order,
+            "created_at": t.created_at.isoformat() if t.created_at else None,
+        })
+
+    return success_response(data=items, message="获取主题列表成功")
 
 
-@router.post("/themes", response_model=ThemeResponse)
+@router.post("/themes")
 async def create_theme(
     data: ThemeCreate,
     current_admin: User = Depends(get_current_admin_user),
@@ -80,10 +81,23 @@ async def create_theme(
     db.add(theme)
     await db.flush()
     await db.refresh(theme)
-    return ThemeResponse.model_validate(theme)
+
+    result = {
+        "id": theme.id,
+        "name": theme.name,
+        "code": theme.code,
+        "preview_image": theme.preview_image,
+        "config": theme.config,
+        "is_premium": bool(theme.is_premium),
+        "is_active": bool(theme.is_active),
+        "sort_order": theme.sort_order,
+        "created_at": theme.created_at.isoformat() if theme.created_at else None,
+    }
+
+    return success_response(data=result, message="创建主题成功")
 
 
-@router.put("/themes/{theme_id}", response_model=ThemeResponse)
+@router.put("/themes/{theme_id}")
 async def update_theme(
     theme_id: str,
     data: ThemeUpdate,
@@ -96,8 +110,6 @@ async def update_theme(
     result = await db.execute(select(AppTheme).where(AppTheme.id == theme_id))
     theme = result.scalar_one_or_none()
     if not theme:
-        from fastapi import HTTPException
-
         raise NotFoundException("资源不存在")
 
     update_data = {k: v for k, v in data.model_dump().items() if v is not None}
@@ -106,7 +118,20 @@ async def update_theme(
     )
     await db.commit()
     await db.refresh(theme)
-    return ThemeResponse.model_validate(theme)
+
+    response_data = {
+        "id": theme.id,
+        "name": theme.name,
+        "code": theme.code,
+        "preview_image": theme.preview_image,
+        "config": theme.config,
+        "is_premium": bool(theme.is_premium),
+        "is_active": bool(theme.is_active),
+        "sort_order": theme.sort_order,
+        "created_at": theme.created_at.isoformat() if theme.created_at else None,
+    }
+
+    return success_response(data=response_data, message="更新主题成功")
 
 
 @router.delete("/themes/{theme_id}")
@@ -120,17 +145,12 @@ async def delete_theme(
 
     result = await db.execute(delete(AppTheme).where(AppTheme.id == theme_id))
     await db.commit()
-    return {"deleted": result.rowcount > 0}
+    return success_response(data={"deleted": result.rowcount > 0}, message="删除主题成功")
 
 
 # ==================== 会员套餐管理 ====================
 
-class MembershipListResponse(BaseModel):
-    items: list[MembershipResponse]
-    total: int
-
-
-@router.get("/memberships", response_model=MembershipListResponse)
+@router.get("/memberships")
 async def list_memberships(
     active_only: bool = Query(False),
     current_admin: User = Depends(get_current_admin_user),
@@ -147,12 +167,16 @@ async def list_memberships(
     q = q.order_by(Membership.sort_order.desc(), Membership.created_at.desc())
     result = await db.execute(q)
     items = list(result.scalars().all())
-    return MembershipListResponse(
-        items=[MembershipResponse.model_validate(m) for m in items], total=total
+
+    items_data = [MembershipResponse.model_validate(m).model_dump() for m in items]
+
+    return success_response(
+        data={"items": items_data, "total": total},
+        message="获取会员套餐列表成功"
     )
 
 
-@router.post("/memberships", response_model=MembershipResponse)
+@router.post("/memberships")
 async def create_membership(
     data: MembershipCreate,
     current_admin: User = Depends(get_current_admin_user),
@@ -163,10 +187,14 @@ async def create_membership(
     db.add(membership)
     await db.flush()
     await db.refresh(membership)
-    return MembershipResponse.model_validate(membership)
+
+    return success_response(
+        data=MembershipResponse.model_validate(membership).model_dump(),
+        message="创建会员套餐成功"
+    )
 
 
-@router.put("/memberships/{membership_id}", response_model=MembershipResponse)
+@router.put("/memberships/{membership_id}")
 async def update_membership(
     membership_id: str,
     data: MembershipCreate,
@@ -181,8 +209,6 @@ async def update_membership(
     )
     membership = result.scalar_one_or_none()
     if not membership:
-        from fastapi import HTTPException
-
         raise NotFoundException("资源不存在")
 
     update_data = data.model_dump()
@@ -193,7 +219,11 @@ async def update_membership(
     )
     await db.commit()
     await db.refresh(membership)
-    return MembershipResponse.model_validate(membership)
+
+    return success_response(
+        data=MembershipResponse.model_validate(membership).model_dump(),
+        message="更新会员套餐成功"
+    )
 
 
 @router.delete("/memberships/{membership_id}")
@@ -209,21 +239,17 @@ async def delete_membership(
         delete(Membership).where(Membership.id == membership_id)
     )
     await db.commit()
-    return {"deleted": result.rowcount > 0}
+
+    return success_response(data={"deleted": result.rowcount > 0}, message="删除会员套餐成功")
 
 
 # ==================== 会员订单管理 ====================
-
-class OrderListResponse(BaseModel):
-    items: list
-    total: int
-
 
 class OrderStatusUpdate(BaseModel):
     status: str  # pending | paid | cancelled | refunded
 
 
-@router.get("/orders", response_model=OrderListResponse)
+@router.get("/orders")
 async def list_orders(
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
@@ -269,7 +295,10 @@ async def list_orders(
         }
         items.append(item)
 
-    return OrderListResponse(items=items, total=total)
+    return success_response(
+        data={"items": items, "total": total},
+        message="获取订单列表成功"
+    )
 
 
 @router.put("/orders/{order_id}")
@@ -287,7 +316,6 @@ async def update_order_status(
     )
     order = result.scalar_one_or_none()
     if not order:
-        from fastapi import HTTPException
         raise NotFoundException("资源不存在")
 
     await db.execute(
@@ -296,4 +324,5 @@ async def update_order_status(
         .values(status=data.status)
     )
     await db.commit()
-    return {"updated": True}
+
+    return success_response(data={"updated": True}, message="更新订单状态成功")

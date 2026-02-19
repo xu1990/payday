@@ -32,11 +32,11 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """创建 JWT Access Token（短期，15分钟）"""
+    """创建 JWT Access Token（2小时）"""
     settings = get_settings()
     to_encode = data.copy()
-    # Access Token 有效期较短（15分钟）
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
+    # Access Token 有效期：2小时
+    expire = datetime.utcnow() + (expires_delta or timedelta(hours=2))
     to_encode.update({"exp": expire, "type": "access"})
     return jwt.encode(
         to_encode,

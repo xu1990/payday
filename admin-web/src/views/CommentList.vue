@@ -128,9 +128,9 @@ async function fetch() {
     }
     if (filterPostId.value) params.post_id = filterPostId.value
     if (filterRiskStatus.value) params.risk_status = filterRiskStatus.value
-    const { data } = await getComments(params)
-    items.value = data.items
-    total.value = data.total
+    const { items: comments, total } = await getComments(params)
+    items.value = comments
+    total.value = total
   } finally {
     loading.value = false
   }

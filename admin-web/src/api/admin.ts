@@ -255,10 +255,13 @@ export async function getPost(postId: number): Promise<AdminPostListItem> {
 
 export async function updatePostStatus(
   postId: number,
-  status: string,
-  reason?: string
+  data: {
+    status?: string  // normal | hidden | deleted
+    risk_status?: string  // approved | rejected
+    risk_reason?: string
+  }
 ): Promise<void> {
-  await adminApi.put(`/admin/posts/${postId}/status`, { status, reason })
+  await adminApi.put(`/admin/posts/${postId}/status`, data)
 }
 
 export async function deletePost(postId: number): Promise<void> {
@@ -298,13 +301,12 @@ export async function getComments(params?: CommentListParams): Promise<{
 
 export async function updateCommentRisk(
   commentId: number,
-  riskStatus: string,
-  reason?: string
+  data: {
+    risk_status: string  // approved | rejected
+    risk_reason?: string
+  }
 ): Promise<void> {
-  await adminApi.put(`/admin/comments/${commentId}/risk`, {
-    risk_status: riskStatus,
-    reason
-  })
+  await adminApi.put(`/admin/comments/${commentId}/risk`, data)
 }
 
 // ==================== 薪资记录 ====================
@@ -342,13 +344,12 @@ export async function deleteSalaryRecord(recordId: number): Promise<void> {
 
 export async function updateSalaryRecordRisk(
   recordId: number,
-  riskStatus: string,
-  reason?: string
+  data: {
+    risk_status: string  // approved | rejected
+    risk_reason?: string
+  }
 ): Promise<void> {
-  await adminApi.put(`/admin/salary-records/${recordId}/risk`, {
-    risk_status: riskStatus,
-    reason
-  })
+  await adminApi.put(`/admin/salary-records/${recordId}/risk`, data)
 }
 
 // ==================== 统计 ====================

@@ -246,7 +246,7 @@ async def admin_salary_delete(
         raise NotFoundException("记录不存在")
 
 
-@router.put("/salary-records/{record_id}/risk", response_model=AdminSalaryRecordItem)
+@router.put("/salary-records/{record_id}/risk")
 async def admin_salary_update_risk(
     record_id: str,
     body: AdminSalaryRecordUpdateRiskRequest,
@@ -259,7 +259,10 @@ async def admin_salary_update_risk(
     record = await update_risk_for_admin(db, record_id, body.risk_status)
     if not record:
         raise NotFoundException("记录不存在")
-    return salary_record_to_response(record)
+    return success_response(
+        data=salary_record_to_response(record).model_dump(),
+        message="更新工资记录风控状态成功"
+    )
 
 
 @router.get("/statistics")
@@ -316,7 +319,7 @@ async def admin_post_list(
     )
 
 
-@router.get("/posts/{post_id}", response_model=AdminPostListItem)
+@router.get("/posts/{post_id}")
 async def admin_post_detail(
     post_id: str,
     _perm: bool = Depends(require_permission("readonly")),  # 需要readonly或更高级别权限
@@ -327,7 +330,8 @@ async def admin_post_detail(
     post = await get_post_by_id_for_admin(db, post_id)
     if not post:
         raise NotFoundException("帖子不存在")
-    return AdminPostListItem(
+
+    post_data = AdminPostListItem(
         id=post.id,
         user_id=post.user_id,
         anonymous_name=post.anonymous_name or "",
@@ -343,6 +347,11 @@ async def admin_post_detail(
         risk_reason=post.risk_reason,
         created_at=post.created_at,
         updated_at=post.updated_at,
+    )
+
+    return success_response(
+        data=post_data.model_dump(),
+        message="获取帖子详情成功"
     )
 
 

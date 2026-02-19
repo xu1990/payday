@@ -39,8 +39,7 @@ const id = computed(() => route.params.id as string)
 onMounted(async () => {
   if (!id.value) return
   try {
-    const { data } = await getUser(id.value)
-    user.value = data
+    user.value = await getUser(id.value)
   } catch {
     user.value = null
   } finally {
