@@ -1,6 +1,13 @@
 {
   "pages": [
     {
+      "path": "pages/splash/index",
+      "style": {
+        "navigationBarTitleText": "薪日",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/index",
       "style": {
         "navigationBarTitleText": "薪日",
@@ -40,6 +47,13 @@
       "style": {
         "navigationBarTitleText": "个人中心",
         "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/profile-edit/index",
+      "style": {
+        "navigationBarTitleText": "编辑资料",
+        "navigationStyle": "default"
       }
     },
     {
