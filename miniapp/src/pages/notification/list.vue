@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import {
   getNotificationList,
   getUnreadCount,
@@ -18,6 +19,9 @@ const hasMore = ref(true)
 const loadingMore = ref(false)
 const limit = 20
 let offset = 0
+
+// Flag to prevent duplicate initial fetch (onMounted + onShow both fire on first mount)
+const hasMounted = ref(false)
 
 // 类型过滤
 type NotificationType = 'all' | 'comment' | 'reply' | 'like' | 'system'
@@ -178,7 +182,18 @@ function timeStr(created_at: string) {
   return d.toLocaleDateString()
 }
 
-onMounted(() => load())
+onMounted(() => {
+  load()
+  hasMounted.value = true
+})
+
+// Refresh notifications when page is shown (e.g., returning from another page or app wake)
+onShow(() => {
+  // Skip the first onShow (already called by onMounted)
+  if (hasMounted.value) {
+    load()
+  }
+})
 </script>
 
 <template>
