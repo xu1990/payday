@@ -18,6 +18,7 @@ from .share import Share
 from .theme import Theme, UserSetting
 from .topic import Topic
 from .miniprogram_config import MiniprogramConfig
+from .feedback import Feedback
 
 __all__ = [
     "Base",
@@ -42,4 +43,5 @@ __all__ = [
     "UserSetting",
     "Topic",
     "MiniprogramConfig",
+    "Feedback",
 ]
