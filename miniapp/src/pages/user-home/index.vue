@@ -19,7 +19,6 @@ const checkinPage = ref({ limit: 30, offset: 0 })
 const hasMore = ref(true)
 const loadingMore = ref(false)
 const isFollowing = ref(false)
-const followLoading = ref(false)
 
 const isOwnProfile = computed(() => {
   return authStore.user?.id === targetUserId.value
@@ -113,41 +112,25 @@ async function loadMore() {
 }
 
 async function handleFollow() {
-  if (followLoading.value) return
-
-  followLoading.value = true
-  try {
-    await uni.request({
-      url: `/api/v1/user/${targetUserId.value}/follow`,
-      method: 'POST',
-    })
-    isFollowing.value = true
-    followerCount.value += 1
-    uni.showToast({ title: '关注成功', icon: 'success' })
-  } catch (e: any) {
-    uni.showToast({ title: e?.message || '操作失败', icon: 'none' })
-  } finally {
-    followLoading.value = false
+  if (!authStore.isLoggedIn) {
+    uni.showToast({ title: '请先登录', icon: 'none' })
+    uni.navigateTo({ url: '/pages/login/index' })
+    return
   }
+  // Only update local state - FollowButton already made the API call
+  isFollowing.value = true
+  followerCount.value += 1
 }
 
 async function handleUnfollow() {
-  if (followLoading.value) return
-
-  followLoading.value = true
-  try {
-    await uni.request({
-      url: `/api/v1/user/${targetUserId.value}/follow`,
-      method: 'DELETE',
-    })
-    isFollowing.value = false
-    followerCount.value = Math.max(0, followerCount.value - 1)
-    uni.showToast({ title: '已取消关注', icon: 'success' })
-  } catch (e: any) {
-    uni.showToast({ title: e?.message || '操作失败', icon: 'none' })
-  } finally {
-    followLoading.value = false
+  if (!authStore.isLoggedIn) {
+    uni.showToast({ title: '请先登录', icon: 'none' })
+    uni.navigateTo({ url: '/pages/login/index' })
+    return
   }
+  // Only update local state - FollowButton already made the API call
+  isFollowing.value = false
+  followerCount.value = Math.max(0, followerCount.value - 1)
 }
 
 function switchTab(tab: 'posts' | 'checkins') {
