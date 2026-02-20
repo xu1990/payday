@@ -19,7 +19,7 @@ export interface FeedbackItem {
  */
 export function getFeedbackList(): Promise<{ data: FeedbackItem[]; message: string }> {
   return request({
-    url: '/api/v1/feedback',
+    url: '/feedback',
     method: 'GET'
   })
 }
