@@ -40,11 +40,30 @@ export const useAuthStore = defineStore('auth', () => {
       token.value = response.access_token
       await tokenStorage.saveToken(response.access_token, response.refresh_token, response.user.id)
 
+      // 多次验证 token 确实已存储成功（解决真机环境下存储异步问题）
+      let storedToken = ''
+      for (let i = 0; i < 5; i++) {
+        await new Promise(resolve => setTimeout(resolve, 100)) // 延迟100ms
+        storedToken = await tokenStorage.getToken()
+        if (storedToken) {
+          console.log(`[authStore] Token verified in storage (attempt ${i + 1}/5)`)
+          break
+        } else {
+          console.warn(`[authStore] Token not found yet, retrying... (${i + 1}/5)`)
+        }
+      }
+
+      if (!storedToken) {
+        console.error('[authStore] Token verification failed: not found after multiple attempts')
+        throw new Error('Token存储失败')
+      }
+
       // 注意：不再在 authStore 中保存用户信息
       // 用户信息由调用方使用 userStore.fetchCurrentUser() 获取
 
       return true
     } catch (error) {
+      console.error('[authStore] Login failed:', error)
       return false
     } finally {
       isLoading.value = false
@@ -54,9 +73,9 @@ export const useAuthStore = defineStore('auth', () => {
   /**
    * 退出登录
    */
-  function logout() {
+  async function logout() {
     token.value = ''
-    tokenStorage.clearToken()
+    await tokenStorage.clearToken()
     // 注意：不再清除 userInfo，由 userStore 负责
   }
 

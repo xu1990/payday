@@ -138,7 +138,7 @@ async function tryRefreshToken(): Promise<boolean> {
   // 检查重试次数
   if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
     console.error('[request] Max refresh attempts reached, clearing tokens')
-    clearToken()
+    await clearToken()
     refreshAttempts = 0
     return false
   }
@@ -149,7 +149,7 @@ async function tryRefreshToken(): Promise<boolean> {
   refreshPromise = (async () => {
     try {
       const refreshToken = await getRefreshToken()
-      const userId = getUserId()
+      const userId = await getUserId()
 
       if (!refreshToken || !userId) {
         return false
@@ -168,7 +168,7 @@ async function tryRefreshToken(): Promise<boolean> {
 
       // 如果达到最大重试次数，清除所有 token
       if (refreshAttempts >= MAX_REFRESH_ATTEMPTS) {
-        clearToken()
+        await clearToken()
         refreshAttempts = 0
       }
 
@@ -229,11 +229,11 @@ function handleHttpError(statusCode: number, data?: unknown): Error {
 }
 
 /** 默认错误处理 */
-function defaultErrorHandler(error: Error): boolean {
+async function defaultErrorHandler(error: Error): Promise<boolean> {
   // 401 错误特殊处理 - 跳转到登录页
   if (error.message.includes('登录已过期')) {
     // 清除 token
-    clearToken()
+    await clearToken()
 
     // 使用 reLaunch 清除页面栈并跳转到登录页
     uni.reLaunch({
@@ -324,7 +324,7 @@ export async function request<T = unknown>(options: RequestOptions): Promise<T> 
       url,
       header,
       timeout: 30000, // 30秒超时，防止请求长时间挂起
-      success: res => {
+      success: async res => {
         // 隐藏 loading
         if (shouldShowLoading) {
           manageLoading(false)
@@ -356,16 +356,16 @@ export async function request<T = unknown>(options: RequestOptions): Promise<T> 
           if (customErrorHandler) {
             const handled = customErrorHandler(error)
             if (!handled && shouldShowError) {
-              defaultErrorHandler(error)
+              await defaultErrorHandler(error)
             }
           } else if (shouldShowError) {
-            defaultErrorHandler(error)
+            await defaultErrorHandler(error)
           }
 
           reject(error)
         }
       },
-      fail: err => {
+      fail: async err => {
         // 隐藏 loading
         if (shouldShowLoading) {
           manageLoading(false)
@@ -383,10 +383,10 @@ export async function request<T = unknown>(options: RequestOptions): Promise<T> 
         if (customErrorHandler) {
           const handled = customErrorHandler(error)
           if (!handled && shouldShowError) {
-            defaultErrorHandler(error)
+            await defaultErrorHandler(error)
           }
         } else if (shouldShowError) {
-          defaultErrorHandler(error)
+          await defaultErrorHandler(error)
         }
 
         reject(error)

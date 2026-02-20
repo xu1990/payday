@@ -72,8 +72,10 @@ onShow(async () => {
 
   // 然后检查登录状态
   if (isLoggedIn.value) {
-    // 已登录，加载数据
-    loadPaydayData()
+    // 已登录，延迟加载数据以确保 token 可用
+    setTimeout(() => {
+      loadPaydayData()
+    }, 200)
   }
 })
 
@@ -86,7 +88,15 @@ async function loadPaydayData() {
 
     // 尝试获取用户信息（如果还没获取过）
     if (!userStore.currentUser) {
-      await userStore.fetchCurrentUser()
+      console.log('[index] Fetching current user...')
+      try {
+        await userStore.fetchCurrentUser()
+        console.log('[index] User fetched successfully')
+      } catch (e) {
+        // 如果是401错误，说明token失效，不应该继续加载
+        console.error('[index] Failed to fetch user:', e)
+        return
+      }
     }
 
     // 加载发薪日配置
@@ -101,6 +111,7 @@ async function loadPaydayData() {
     const daysList = solar.length ? solar.map(c => daysToNextPayday(c.payday)) : [999]
     daysToPayday.value = Math.min(...daysList)
   } catch (error) {
+    console.error('[index] loadPaydayData error:', error)
     hasPaydayConfig.value = false
     daysToPayday.value = null
   } finally {

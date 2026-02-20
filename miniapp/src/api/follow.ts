@@ -25,6 +25,7 @@ export interface UserItem {
   status: number
   created_at: string | null
   updated_at: string | null
+  is_following?: boolean  // 是否已关注该用户（用于前端显示）
 }
 
 /** 列表响应 */

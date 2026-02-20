@@ -15,7 +15,68 @@ const REFRESH_TOKEN_KEY = 'payday_refresh_token'
 const USER_ID_KEY = 'payday_user_id'
 
 /**
+ * Promise 封装的存储函数
+ * 解决真机环境下 setStorageSync 不是真正同步的问题
+ */
+function setStoragePromise(key: string, data: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    uni.setStorage({
+      key,
+      data,
+      success: () => resolve(),
+      fail: (err) => reject(err),
+    })
+  })
+}
+
+/**
+ * Promise 封装的读取函数（带重试机制）
+ *
+ * 真机环境下，存储操作可能需要一点时间才能完成
+ * 添加重试机制确保能读取到刚写入的数据
+ */
+function getStoragePromise(key: string, maxRetries: number = 3): Promise<string> {
+  let attempt = 0
+
+  async function tryGet(): Promise<string> {
+    attempt++
+    return new Promise((resolve, reject) => {
+      uni.getStorage({
+        key,
+        success: (res) => {
+          const data = res.data as string
+          console.log(`[tokenStorage] getStorage success for ${key}, attempt ${attempt}`)
+          resolve(data)
+        },
+        fail: (err) => {
+          // 如果是未找到数据的错误
+          if (err.errMsg && err.errMsg.includes('data not found')) {
+            // 如果还有重试次数，延迟后重试
+            if (attempt < maxRetries) {
+              console.warn(`[tokenStorage] getStorage not found for ${key}, retrying (${attempt}/${maxRetries})`)
+              setTimeout(() => {
+                tryGet().then(resolve).catch(reject)
+              }, 100 * attempt) // 递增延迟：100ms, 200ms, 300ms
+            } else {
+              console.warn(`[tokenStorage] getStorage not found for ${key} after ${maxRetries} attempts`)
+              resolve('')
+            }
+          } else {
+            reject(err)
+          }
+        },
+      })
+    })
+  }
+
+  return tryGet()
+}
+
+/**
  * 保存 Token 到本地存储
+ *
+ * 修复：使用 Promise 封装的异步存储，确保存储完成后才返回
+ * 解决真机调试时 token 未及时写入导致后续请求 401 的问题
  */
 export async function saveToken(
   token: string,
@@ -24,17 +85,20 @@ export async function saveToken(
 ): Promise<void> {
   try {
     console.log('[tokenStorage] Saving token, userId:', userId)
-    // 直接存储 token（小程序环境有存储隔离）
-    uni.setStorageSync(TOKEN_KEY, token)
+
+    // 使用异步存储并等待完成
+    await setStoragePromise(TOKEN_KEY, token)
     console.log('[tokenStorage] Token saved successfully')
 
     if (refreshToken) {
-      uni.setStorageSync(REFRESH_TOKEN_KEY, refreshToken)
+      await setStoragePromise(REFRESH_TOKEN_KEY, refreshToken)
     }
 
     if (userId) {
-      uni.setStorageSync(USER_ID_KEY, userId)
+      await setStoragePromise(USER_ID_KEY, userId)
     }
+
+    console.log('[tokenStorage] All tokens saved, userId:', userId)
   } catch (e) {
     // 存储失败处理
     const errorMsg = e instanceof Error ? e.message : String(e)
@@ -66,10 +130,12 @@ export async function saveToken(
 
 /**
  * 获取本地存储的 Token
+ *
+ * 修复：使用 Promise 封装的异步读取，解决真机环境下读取不到刚写入的 token 的问题
  */
 export async function getToken(): Promise<string> {
   try {
-    const token = uni.getStorageSync(TOKEN_KEY)
+    const token = await getStoragePromise(TOKEN_KEY)
     if (!token) {
       console.warn('[tokenStorage] No token found in storage')
       return ''
@@ -87,7 +153,7 @@ export async function getToken(): Promise<string> {
  */
 export async function getRefreshToken(): Promise<string> {
   try {
-    const token = uni.getStorageSync(REFRESH_TOKEN_KEY)
+    const token = await getStoragePromise(REFRESH_TOKEN_KEY)
     if (!token) {
       console.warn('[tokenStorage] No refresh token found in storage')
       return ''
@@ -102,9 +168,10 @@ export async function getRefreshToken(): Promise<string> {
 /**
  * 获取本地存储的 User ID
  */
-export function getUserId(): string {
+export async function getUserId(): Promise<string> {
   try {
-    return uni.getStorageSync(USER_ID_KEY) || ''
+    const userId = await getStoragePromise(USER_ID_KEY)
+    return userId || ''
   } catch (error) {
     console.error('[tokenStorage] User ID retrieval failed:', error)
     return ''
@@ -112,13 +179,26 @@ export function getUserId(): string {
 }
 
 /**
+ * Promise 封装的移除函数
+ */
+function removeStoragePromise(key: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    uni.removeStorage({
+      key,
+      success: () => resolve(),
+      fail: (err) => reject(err),
+    })
+  })
+}
+
+/**
  * 清除本地存储的 Token
  */
-export function clearToken(): void {
+export async function clearToken(): Promise<void> {
   try {
-    uni.removeStorageSync(TOKEN_KEY)
-    uni.removeStorageSync(REFRESH_TOKEN_KEY)
-    uni.removeStorageSync(USER_ID_KEY)
+    await removeStoragePromise(TOKEN_KEY)
+    await removeStoragePromise(REFRESH_TOKEN_KEY)
+    await removeStoragePromise(USER_ID_KEY)
   } catch (e) {
     console.error('[tokenStorage] Token clear failed:', e)
   }

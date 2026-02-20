@@ -73,7 +73,8 @@ async function load() {
     if (authStore.isLoggedIn && post.value?.user_id) {
       try {
         const followStatusMap = await checkBatchFollowStatus([post.value.user_id])
-        isFollowingAuthor.value = followStatusMap.get(post.value.user_id) || false
+        // followStatusMap is a plain object, not a Map
+        isFollowingAuthor.value = followStatusMap[post.value.user_id] || false
       } catch (error) {
         console.error('Failed to fetch follow status:', error)
       }

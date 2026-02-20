@@ -64,12 +64,12 @@ function handleShare() {
 </script>
 
 <template>
-  <view class="action-bar" :class="{ compact }">
-    <view class="action-btn" :class="{ liked: isLiked, loading: likeLoading }" @tap="handleLike">
+  <view class="action-bar" :class="{ compact }" @click.stop>
+    <view class="action-btn" :class="{ liked: isLiked, loading: likeLoading }" @tap.stop="handleLike">
       <text class="icon">{{ isLiked ? '❤️' : '🤍' }}</text>
       <text class="count">{{ likeCount }}</text>
     </view>
-    <view class="action-btn" @tap="handleComment">
+    <view class="action-btn" @tap.stop="handleComment">
       <text class="icon">💬</text>
       <text class="count">{{ commentCount }}</text>
     </view>
@@ -77,7 +77,7 @@ function handleShare() {
       <text class="icon">👁</text>
       <text class="count">{{ viewCount }}</text>
     </view>
-    <view class="action-btn" @tap="handleShare">
+    <view class="action-btn" @tap.stop="handleShare">
       <text class="icon">⤴</text>
     </view>
   </view>

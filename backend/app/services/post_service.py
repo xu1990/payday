@@ -56,11 +56,14 @@ async def get_by_id(
     only_approved: bool = True,
     increment_view: bool = True,
     current_user_id: Optional[str] = None,
-) -> Optional[Post]:
-    """获取帖子详情，可选是否增加浏览量（从缓存计数）
+) -> Optional[dict]:
+    """获取帖子详情，返回字典以避免 SQLAlchemy async session greenlet 问题
 
     Args:
         current_user_id: 当前认证用户ID，用于填充 is_liked 字段
+
+    Returns:
+        dict 或 None
     """
     q = select(Post).where(Post.id == post_id, Post.status == "normal")
     if only_approved:
@@ -68,34 +71,59 @@ async def get_by_id(
     result = await db.execute(q)
     post = result.scalar_one_or_none()
 
-    if post:
-        # 增加浏览计数到 Redis（异步，不阻塞响应）
-        if increment_view:
-            try:
-                view_count = await PostCacheService.increment_view_count(post_id)
-                post.view_count = view_count
-            except Exception as e:
-                # Redis 故障时记录日志但不影响主流程
-                from app.utils.logger import get_logger
-                logger = get_logger(__name__)
-                logger.error(f"Failed to increment view count for post {post_id}: {e}")
+    if not post:
+        return None
 
-        # 填充 is_liked 字段（仅认证用户）
-        # 直接查询数据库，避免使用 like_service.is_liked 的缓存（有bug）
-        if current_user_id:
-            from app.models.like import Like
-            like_result = await db.execute(
-                select(Like).where(
-                    Like.user_id == current_user_id,
-                    Like.target_type == "post",
-                    Like.target_id == post.id
-                )
+    # 增加浏览计数到 Redis（异步，不阻塞响应）
+    view_count = post.view_count
+    if increment_view:
+        try:
+            view_count = await PostCacheService.increment_view_count(post_id)
+        except Exception as e:
+            # Redis 故障时记录日志但不影响主流程
+            from app.utils.logger import get_logger
+            logger = get_logger(__name__)
+            logger.error(f"Failed to increment view count for post {post_id}: {e}")
+
+    # 查询点赞状态（仅认证用户）
+    is_liked = False
+    if current_user_id:
+        from app.models.like import Like
+        like_result = await db.execute(
+            select(Like).where(
+                Like.user_id == current_user_id,
+                Like.target_type == "post",
+                Like.target_id == post.id
             )
-            post.is_liked = like_result.scalar_one_or_none() is not None
-        else:
-            post.is_liked = False
+        )
+        like_obj = like_result.scalar_one_or_none()
+        is_liked = like_obj is not None
 
-    return post
+    # 返回字典而不是 ORM 对象，避免 greenlet 问题
+    return {
+        'id': post.id,
+        'user_id': post.user_id,
+        'anonymous_name': post.anonymous_name,
+        'content': post.content,
+        'images': post.images,
+        'tags': post.tags,
+        'type': post.type,
+        'salary_range': post.salary_range,
+        'industry': post.industry,
+        'city': post.city,
+        'topic_id': post.topic_id,
+        'visibility': post.visibility,
+        'view_count': view_count,
+        'like_count': post.like_count,
+        'comment_count': post.comment_count,
+        'status': post.status,
+        'risk_status': post.risk_status,
+        'risk_score': post.risk_score,
+        'risk_reason': post.risk_reason,
+        'created_at': post.created_at.isoformat() if post.created_at else None,
+        'updated_at': post.updated_at.isoformat() if post.updated_at else None,
+        'is_liked': is_liked
+    }
 
 
 async def list_posts(

@@ -43,7 +43,7 @@ async function handleClick() {
 </script>
 
 <template>
-  <view class="follow-btn" :class="[size, { following: isFollowing, loading }]" @tap="handleClick">
+  <view class="follow-btn" :class="[size, { following: isFollowing, loading }]" @tap.stop="handleClick">
     <text v-if="loading">加载中</text>
     <text v-else>{{ isFollowing ? '已关注' : '关注' }}</text>
   </view>

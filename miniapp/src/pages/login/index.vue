@@ -117,21 +117,16 @@ async function handleLogin() {
     if (success) {
       showSuccess('登录成功')
 
-      // 获取用户详细信息
-      console.log('[login] 获取用户信息...')
-      try {
-        await userStore.fetchCurrentUser()
-        console.log('[login] 用户信息获取成功')
-      } catch (e) {
-        console.warn('[login] 用户信息获取失败，但不影响登录:', e)
-      }
+      // 不在登录页获取用户信息，由首页的 onShow 处理
+      // 避免真机环境下 token 存储异步问题导致 401
 
-      // 延迟跳转首页
+      // 延迟跳转首页，确保 token 完全写入存储
       setTimeout(() => {
+        console.log('[login] 跳转到首页')
         uni.switchTab({
           url: '/pages/index',
         })
-      }, 500)
+      }, 800)
     } else {
       console.error('[login] 后端登录接口返回失败')
       showError('登录失败，请检查后端服务是否启动')

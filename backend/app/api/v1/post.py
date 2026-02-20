@@ -88,39 +88,14 @@ async def post_get(
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
     # 获取帖子详情并增加浏览量（从缓存计数）
-    post = await get_by_id(
+    # get_by_id 现在直接返回字典，避免 SQLAlchemy greenlet 问题
+    post_dict = await get_by_id(
         db,
         post_id,
         only_approved=True,
         increment_view=True,
         current_user_id=current_user.id if current_user else None
     )
-    if not post:
+    if not post_dict:
         raise NotFoundException("资源不存在")
-    # Convert SQLAlchemy object to dict to avoid greenlet issues
-    # Need to convert datetime to ISO format string for JSON serialization
-    post_dict = {
-        'id': post.id,
-        'user_id': post.user_id,
-        'anonymous_name': post.anonymous_name,
-        'content': post.content,
-        'images': post.images,
-        'tags': post.tags,
-        'type': post.type,
-        'salary_range': post.salary_range,
-        'industry': post.industry,
-        'city': post.city,
-        'topic_id': post.topic_id,
-        'visibility': post.visibility,
-        'view_count': post.view_count,
-        'like_count': post.like_count,
-        'comment_count': post.comment_count,
-        'status': post.status,
-        'risk_status': post.risk_status,
-        'risk_score': post.risk_score,
-        'risk_reason': post.risk_reason,
-        'created_at': post.created_at.isoformat() if post.created_at else None,
-        'updated_at': post.updated_at.isoformat() if post.updated_at else None,
-        'is_liked': getattr(post, 'is_liked', False)
-    }
     return success_response(data=post_dict, message="获取帖子详情成功")

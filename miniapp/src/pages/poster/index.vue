@@ -93,99 +93,113 @@ function drawPoster(): Promise<void> {
   if (!r) return Promise.resolve()
 
   return new Promise((resolve, reject) => {
-    const ctx = uni.createCanvasContext('posterCanvas')
-    const w = 375
-    const h = 500
-    const padding = 24
-    const lineH = 28
+    try {
+      const ctx = uni.createCanvasContext('posterCanvas')
+      const w = 375
+      const h = 500
+      const padding = 24
 
-    // 背景 - 渐变色
-    const gradient = ctx.createLinearGradient(0, 0, 0, h)
-    gradient.addColorStop(0, '#667eea')
-    gradient.addColorStop(1, '#764ba2')
-    ctx.setFillStyle(gradient)
-    ctx.fillRect(0, 0, w, h)
+      console.log('[poster] Starting canvas draw, record:', r)
 
-    // 顶部装饰条
-    ctx.setFillStyle('rgba(255,255,255,0.2)')
-    ctx.fillRect(0, 0, w, 6)
+      // 背景 - 渐变色
+      const gradient = ctx.createLinearGradient(0, 0, 0, h)
+      gradient.addColorStop(0, '#667eea')
+      gradient.addColorStop(1, '#764ba2')
+      ctx.setFillStyle(gradient)
+      ctx.fillRect(0, 0, w, h)
 
-    // 标题
-    ctx.setFillStyle('#fff')
-    ctx.setFontSize(16)
-    ctx.setTextAlign('center')
-    ctx.fillText('发薪日', w / 2, 50)
+      // 顶部装饰条
+      ctx.setFillStyle('rgba(255,255,255,0.2)')
+      ctx.fillRect(0, 0, w, 6)
 
-    // 金额背景
-    ctx.setFillStyle('rgba(255,255,255,0.15)')
-    drawRoundedRect(ctx, padding - 12, 80, w - padding * 2 + 24, 100, 16)
-    ctx.fill()
+      // 标题
+      ctx.setFillStyle('#fff')
+      ctx.setFontSize(16)
+      ctx.setTextAlign('center')
+      ctx.fillText('发薪日', w / 2, 50)
 
-    // 金额
-    ctx.setFillStyle('#fff')
-    ctx.setFontSize(48)
-    ctx.setFontWeight('bold')
-    ctx.setTextAlign('center')
-    ctx.fillText(`¥${r.amount}`, w / 2, 145)
-    ctx.setFontWeight('normal')
+      // 金额背景
+      ctx.setFillStyle('rgba(255,255,255,0.15)')
+      drawRoundedRect(ctx, padding - 12, 80, w - padding * 2 + 24, 100, 16)
+      ctx.fill()
 
-    // 发薪日期
-    ctx.setFillStyle('rgba(255,255,255,0.9)')
-    ctx.setFontSize(14)
-    ctx.setTextAlign('center')
-    ctx.fillText(r.payday_date, w / 2, 185)
+      // 金额
+      ctx.setFillStyle('#fff')
+      ctx.setFontSize(48)
+      ctx.setTextAlign('center')
+      ctx.fillText(`¥${r.amount}`, w / 2, 145)
 
-    // 工作名
-    ctx.setFillStyle('rgba(255,255,255,0.8)')
-    ctx.setFontSize(13)
-    ctx.fillText(jobName.value(r.config_id), w / 2, 210)
+      // 发薪日期
+      ctx.setFillStyle('rgba(255,255,255,0.9)')
+      ctx.setFontSize(14)
+      ctx.setTextAlign('center')
+      ctx.fillText(r.payday_date, w / 2, 185)
 
-    // 分隔线
-    ctx.setStrokeStyle('rgba(255,255,255,0.2)')
-    ctx.setLineWidth(1)
-    ctx.beginPath()
-    ctx.moveTo(padding, 240)
-    ctx.lineTo(w - padding, 240)
-    ctx.stroke()
+      // 工作名
+      ctx.setFillStyle('rgba(255,255,255,0.8)')
+      ctx.setFontSize(13)
+      ctx.fillText(jobName.value(r.config_id), w / 2, 210)
 
-    // 心情标签
-    const moodBg = 'rgba(255,255,255,0.2)'
-    ctx.setFillStyle(moodBg)
-    drawRoundedRect(ctx, w / 2 - 40, 260, 80, 32, 16)
-    ctx.fill()
+      // 分隔线
+      ctx.setStrokeStyle('rgba(255,255,255,0.2)')
+      ctx.setLineWidth(1)
+      ctx.beginPath()
+      ctx.moveTo(padding, 240)
+      ctx.lineTo(w - padding, 240)
+      ctx.stroke()
 
-    ctx.setFillStyle('#fff')
-    ctx.setFontSize(14)
-    ctx.setTextAlign('center')
-    ctx.fillText(moodText[r.mood] || r.mood, w / 2, 282)
+      // 心情标签
+      const moodBg = 'rgba(255,255,255,0.2)'
+      ctx.setFillStyle(moodBg)
+      drawRoundedRect(ctx, w / 2 - 40, 260, 80, 32, 16)
+      ctx.fill()
 
-    // 底部文案
-    ctx.setFillStyle('rgba(255,255,255,0.6)')
-    ctx.setFontSize(12)
-    ctx.setTextAlign('center')
-    ctx.fillText('薪日 PayDay · 记录每一次到账', w / 2, h - 30)
+      ctx.setFillStyle('#fff')
+      ctx.setFontSize(14)
+      ctx.setTextAlign('center')
+      ctx.fillText(moodText[r.mood] || r.mood, w / 2, 282)
 
-    ctx.draw(false, () => {
-      setTimeout(() => {
-        uni.canvasToTempFilePath({
-          canvasId: 'posterCanvas',
-          width: w,
-          height: h,
-          destWidth: w * 2,
-          destHeight: h * 2,
-          fileType: 'png',
-          success: res => {
-            console.log('[poster] Canvas to temp file success:', res.tempFilePath)
-            posterUrl.value = res.tempFilePath
-            resolve()
-          },
-          fail: e => {
-            console.error('[poster] Canvas to temp file failed:', e)
-            reject(e)
-          },
-        })
-      }, 500)
-    })
+      // 底部文案
+      ctx.setFillStyle('rgba(255,255,255,0.6)')
+      ctx.setFontSize(12)
+      ctx.setTextAlign('center')
+      ctx.fillText('薪日 PayDay · 记录每一次到账', w / 2, h - 30)
+
+      console.log('[poster] Canvas draw completed, calling ctx.draw()')
+
+      // 使用回调方式确保绘制完成
+      ctx.draw(false, () => {
+        console.log('[poster] ctx.draw() callback fired')
+        // 增加延迟时间确保渲染完成
+        setTimeout(() => {
+          console.log('[poster] Converting canvas to temp file')
+          uni.canvasToTempFilePath({
+            canvasId: 'posterCanvas',
+            x: 0,
+            y: 0,
+            width: w,
+            height: h,
+            destWidth: w * 2,
+            destHeight: h * 2,
+            fileType: 'png',
+            success: res => {
+              console.log('[poster] Canvas to temp file success:', res.tempFilePath)
+              posterUrl.value = res.tempFilePath
+              resolve()
+            },
+            fail: e => {
+              console.error('[poster] Canvas to temp file failed:', e)
+              // 即使失败也 resolve，避免卡住
+              posterUrl.value = ''
+              resolve()
+            },
+          })
+        }, 1000)
+      })
+    } catch (e) {
+      console.error('[poster] Draw error:', e)
+      reject(e)
+    }
   })
 }
 
