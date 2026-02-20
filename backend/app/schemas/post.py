@@ -42,6 +42,7 @@ class PostResponse(BaseModel):
     risk_reason: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    is_liked: bool = False
 
     class Config:
         from_attributes = True
