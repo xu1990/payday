@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 
 interface Props {
   postId: string
@@ -30,7 +30,7 @@ const likeLoading = ref(false)
 
 function handleLike() {
   if (likeLoading.value) return
-  emit('like', { postId: props.postId, isLiked: props.isLiked || false })
+  emit('like', { postId: props.postId, isLiked: props.isLiked })
 }
 
 function handleComment() {
