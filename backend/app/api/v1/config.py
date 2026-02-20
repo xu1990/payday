@@ -37,20 +37,20 @@ async def get_public_agreements(
         select(MiniprogramConfig).where(MiniprogramConfig.key == 'user_agreement')
     )
     user_config = user_result.scalar_one_or_none()
-    user_agreement = user_config.value if user_config else None
+    user_agreement = user_config.value if user_config else ""
 
     # 获取隐私协议
     privacy_result = await db.execute(
         select(MiniprogramConfig).where(MiniprogramConfig.key == 'privacy_agreement')
     )
     privacy_config = privacy_result.scalar_one_or_none()
-    privacy_agreement = privacy_config.value if privacy_config else None
+    privacy_agreement = privacy_config.value if privacy_config else ""
 
     return success_response(
-        data=AgreementResponse(
-            user_agreement=user_agreement,
-            privacy_agreement=privacy_agreement
-        ).model_dump(),
+        data={
+            "user_agreement": user_agreement,
+            "privacy_agreement": privacy_agreement
+        },
         message="获取协议成功"
     )
 

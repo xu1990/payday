@@ -6,8 +6,10 @@ import { ref, computed } from 'vue'
 import * as userApi from '@/api/user'
 import type { UserInfo, UserUpdateParams, UserProfileData } from '@/api/user'
 
+const USER_STORAGE_KEY = 'payday_user_info'
+
 export const useUserStore = defineStore('user', () => {
-  // 状态
+  // 状态 - 从本地存储初始化
   const currentUser = ref<UserInfo | null>(null)
   const isLoading = ref(false)
   const error = ref<string | null>(null)
@@ -15,8 +17,10 @@ export const useUserStore = defineStore('user', () => {
   // 请求去重：防止并发调用 fetchCurrentUser 导致多个请求
   let fetchCurrentUserPromise: Promise<boolean> | null = null
 
-  // 计算属性
+  // 计算属性 - 添加别名为 userInfo，保持向后兼容
+  const userInfo = computed(() => currentUser.value)
   const userId = computed(() => currentUser.value?.id || '')
+  const nickname = computed(() => currentUser.value?.nickname || '')
   const anonymousName = computed(() => currentUser.value?.anonymous_name || '')
   const avatar = computed(() => currentUser.value?.avatar || '')
   const bio = computed(() => currentUser.value?.bio || '')
@@ -27,12 +31,48 @@ export const useUserStore = defineStore('user', () => {
   const allowComment = computed(() => currentUser.value?.allow_comment === 1)
 
   /**
-   * 获取当前用户信息
+   * 从本地存储加载用户信息
+   */
+  function loadFromStorage() {
+    try {
+      const stored = uni.getStorageSync(USER_STORAGE_KEY)
+      if (stored) {
+        currentUser.value = JSON.parse(stored)
+        return true
+      }
+    } catch (e) {
+      console.warn('[userStore] Failed to load from storage:', e)
+    }
+    return false
+  }
+
+  /**
+   * 保存用户信息到本地存储
+   */
+  function saveToStorage() {
+    try {
+      if (currentUser.value) {
+        uni.setStorageSync(USER_STORAGE_KEY, JSON.stringify(currentUser.value))
+      } else {
+        uni.removeStorageSync(USER_STORAGE_KEY)
+      }
+    } catch (e) {
+      console.warn('[userStore] Failed to save to storage:', e)
+    }
+  }
+
+  /**
+   * 获取当前用户信息（优先从本地加载，然后从服务器获取）
    */
   async function fetchCurrentUser(): Promise<boolean> {
     // 如果正在请求中，返回现有的 promise（防止并发）
     if (fetchCurrentUserPromise) {
       return fetchCurrentUserPromise
+    }
+
+    // 如果没有本地缓存，先尝试从本地加载
+    if (!currentUser.value) {
+      loadFromStorage()
     }
 
     // 创建新的请求 promise
@@ -42,10 +82,16 @@ export const useUserStore = defineStore('user', () => {
         error.value = null
         const data = await userApi.getCurrentUser()
         currentUser.value = data
+        // 保存到本地存储
+        saveToStorage()
         return true
       } catch (e: unknown) {
         error.value = e instanceof Error ? e.message : '获取用户信息失败'
-        return false
+        // 如果有本地缓存，即使网络失败也使用缓存数据
+        if (!currentUser.value) {
+          loadFromStorage()
+        }
+        return currentUser.value !== null
       } finally {
         isLoading.value = false
         fetchCurrentUserPromise = null  // 清除 promise 引用
@@ -64,6 +110,8 @@ export const useUserStore = defineStore('user', () => {
       error.value = null
       const data = await userApi.updateCurrentUser(params)
       currentUser.value = data
+      // 更新本地存储
+      saveToStorage()
       return true
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : '更新用户信息失败'
@@ -96,6 +144,8 @@ export const useUserStore = defineStore('user', () => {
   function updateLocalUserInfo(partial: Partial<UserInfo>) {
     if (currentUser.value) {
       currentUser.value = { ...currentUser.value, ...partial }
+      // 更新本地存储
+      saveToStorage()
     }
   }
 
@@ -105,6 +155,12 @@ export const useUserStore = defineStore('user', () => {
   function clearUserInfo() {
     currentUser.value = null
     error.value = null
+    // 清除本地存储
+    try {
+      uni.removeStorageSync(USER_STORAGE_KEY)
+    } catch (e) {
+      console.warn('[userStore] Failed to clear storage:', e)
+    }
   }
 
   /**
@@ -122,7 +178,9 @@ export const useUserStore = defineStore('user', () => {
     error,
 
     // 计算属性
+    userInfo,  // 添加别名，向后兼容
     userId,
+    nickname,
     anonymousName,
     avatar,
     bio,

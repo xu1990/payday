@@ -8,17 +8,23 @@ const logoScale = ref(0)
 const showText = ref(false)
 const splashConfig = ref<any>(null)
 const showSplash = ref(false)
+const countdown = ref(0)
+let countdownTimer: number | null = null
 
 onMounted(async () => {
   // Load splash config from backend
   try {
     const res: any = await request({
       url: '/api/v1/config/public/splash',
-      method: 'GET'
+      method: 'GET',
+      noAuth: true // 公开接口，无需鉴权
     })
-    if (res.data?.is_active) {
-      splashConfig.value = res.data
+    if (res?.is_active) {
+      splashConfig.value = res
       showSplash.value = true
+      // Start countdown
+      countdown.value = res.countdown || 3
+      startCountdown()
     }
   } catch (e) {
     // Ignore error, use default splash
@@ -44,11 +50,7 @@ onMounted(async () => {
       : 1800
 
     setTimeout(() => {
-      if (authStore.isLoggedIn) {
-        uni.switchTab({ url: '/pages/index' })
-      } else {
-        uni.redirectTo({ url: '/pages/login/index' })
-      }
+      navigateToNext()
     }, delay)
   } catch (e) {
     // On error, go to login after animation
@@ -57,6 +59,35 @@ onMounted(async () => {
     }, 1800)
   }
 })
+
+function startCountdown() {
+  countdownTimer = setInterval(() => {
+    countdown.value--
+    if (countdown.value <= 0) {
+      stopCountdown()
+    }
+  }, 1000) as unknown as number
+}
+
+function stopCountdown() {
+  if (countdownTimer !== null) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
+}
+
+function skipSplash() {
+  stopCountdown()
+  navigateToNext()
+}
+
+function navigateToNext() {
+  if (authStore.isLoggedIn) {
+    uni.switchTab({ url: '/pages/index' })
+  } else {
+    uni.redirectTo({ url: '/pages/login/index' })
+  }
+}
 </script>
 
 <template>
@@ -66,6 +97,12 @@ onMounted(async () => {
       <image v-if="splashConfig.image_url" :src="splashConfig.image_url" mode="aspectFill" class="splash-image" />
       <view v-if="splashConfig.content" class="splash-content">
         <rich-text :nodes="splashConfig.content"></rich-text>
+      </view>
+
+      <!-- Countdown and Skip button -->
+      <view class="splash-controls">
+        <view class="countdown">{{ countdown }}秒</view>
+        <view class="skip-btn" @click="skipSplash">跳过</view>
       </view>
     </view>
 
@@ -130,6 +167,33 @@ onMounted(async () => {
     padding: 0 60rpx;
     text-align: center;
     color: #fff;
+  }
+
+  .splash-controls {
+    position: absolute;
+    top: 40rpx;
+    right: 40rpx;
+    display: flex;
+    align-items: center;
+    gap: 20rpx;
+    z-index: 10;
+  }
+
+  .countdown {
+    padding: 8rpx 20rpx;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 40rpx;
+    font-size: 24rpx;
+    color: #fff;
+  }
+
+  .skip-btn {
+    padding: 8rpx 24rpx;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 40rpx;
+    font-size: 26rpx;
+    color: #333;
+    font-weight: 500;
   }
 }
 

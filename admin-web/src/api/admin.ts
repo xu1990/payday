@@ -45,7 +45,17 @@ adminApi.interceptors.request.use(
   (config) => {
     const authStore = useAuthStore()
     console.log('[adminApi Request]', config.method?.toUpperCase(), config.url, 'token:', authStore.token ? `${authStore.token.substring(0, 20)}...` : 'MISSING')
-    config.headers.Authorization = `Bearer ${authStore.token}`
+
+    // 添加 JWT token 到 Authorization header
+    if (authStore.token) {
+      config.headers.Authorization = `Bearer ${authStore.token}`
+    }
+
+    // 添加 CSRF token 到请求头（用于状态变更操作）
+    if (authStore.csrfToken) {
+      config.headers['X-CSRF-Token'] = authStore.csrfToken
+    }
+
     return config
   },
   (error) => {

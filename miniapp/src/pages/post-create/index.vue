@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { createPost, type PostCreateParams, type PostType } from '@/api/post'
+import { getActiveTopics, type Topic } from '@/api/topic'
 import { VALIDATION_PATTERNS, VALIDATION_LIMITS, VALIDATION_ERRORS } from '@/constants/validation'
 import {
   VISIBILITY_OPTIONS,
@@ -25,17 +26,32 @@ const city = ref('')
 const visibility = ref<PostVisibility>('public')
 const submitting = ref(false)
 
+// 话题相关
+const topics = ref<Topic[]>([])
+const topicId = ref('')
+const topicIndex = ref(-1)
+
 // Picker 索引
 const salaryIndex = ref(-1)
 const industryIndex = ref(-1)
 const cityIndex = ref(-1)
 const visibilityIndex = ref(0)
 
+// 加载话题列表
+onMounted(async () => {
+  try {
+    topics.value = await getActiveTopics()
+  } catch (e) {
+    console.warn('Failed to load topics:', e)
+  }
+})
+
 // 计算当前选择的标签
 const salaryLabel = computed(() => salaryIndex.value >= 0 ? SALARY_RANGE_OPTIONS[salaryIndex.value] : '选填')
 const industryLabel = computed(() => industryIndex.value >= 0 ? INDUSTRY_OPTIONS[industryIndex.value] : '选填')
 const cityLabel = computed(() => cityIndex.value >= 0 ? CITY_OPTIONS[cityIndex.value] : '选填')
 const visibilityLabel = computed(() => VISIBILITY_OPTIONS[visibilityIndex.value].label)
+const topicLabel = computed(() => topicIndex.value >= 0 ? topics.value[topicIndex.value].name : '选填')
 
 // 选择图片
 async function chooseImage() {
@@ -98,6 +114,12 @@ function onVisibilityChange(e: any) {
   visibility.value = VISIBILITY_OPTIONS[visibilityIndex.value].value
 }
 
+// 选择话题
+function onTopicChange(e: any) {
+  topicIndex.value = e.detail.value
+  topicId.value = topics.value[topicIndex.value].id
+}
+
 async function submit() {
   const text = content.value.trim()
 
@@ -123,6 +145,7 @@ async function submit() {
     if (salary_range.value) data.salary_range = salary_range.value
     if (industry.value) data.industry = industry.value
     if (city.value) data.city = city.value
+    if (topicId.value) data.topic_id = topicId.value
 
     await createPost(data)
     uni.showToast({ title: '发布成功' })
@@ -234,6 +257,22 @@ async function submit() {
         >
           <view class="picker">
             {{ cityLabel }}
+            <text class="arrow">›</text>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 话题 -->
+      <view v-if="topics.length > 0" class="row picker-row">
+        <text class="label">关联话题</text>
+        <picker
+          :value="topicIndex"
+          :range="topics"
+          range-key="name"
+          @change="onTopicChange"
+        >
+          <view class="picker">
+            {{ topicLabel }}
             <text class="arrow">›</text>
           </view>
         </picker>

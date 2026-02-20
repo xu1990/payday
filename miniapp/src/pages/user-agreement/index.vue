@@ -9,10 +9,18 @@ async function loadAgreement() {
   try {
     const res: any = await request({
       url: '/api/v1/config/public/agreements',
-      method: 'GET'
+      method: 'GET',
+      noAuth: true // 公开接口，无需鉴权
     })
-    content.value = res.data?.user_agreement || '暂无用户协议'
+    // request.ts 自动解包 details 字段
+    console.log('[user-agreement] full response:', res)
+    console.log('[user-agreement] user_agreement:', res?.user_agreement)
+    // 兼容处理：如果解包失败，尝试从 details 中获取
+    const agreement = res?.user_agreement || res?.details?.user_agreement || '暂无用户协议'
+    console.log('[user-agreement] final content:', agreement)
+    content.value = agreement
   } catch (e) {
+    console.error('[user-agreement] error:', e)
     content.value = '加载失败'
   } finally {
     loading.value = false
