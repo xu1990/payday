@@ -27,6 +27,7 @@ export interface PostItem {
   risk_reason: string | null
   created_at: string
   updated_at: string
+  is_liked?: boolean
 }
 
 export interface PostCreateParams {
