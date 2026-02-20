@@ -11,6 +11,9 @@ from app.models.follow import Follow
 from app.models.user import User
 from app.models.post import Post
 from app.services.notification_service import create_notification
+from app.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 async def follow_user(db: AsyncSession, follower_id: str, following_id: str) -> bool:
@@ -42,28 +45,24 @@ async def follow_user(db: AsyncSession, follower_id: str, following_id: str) -> 
         if u_follower:
             u_follower.following_count = (u_follower.following_count or 0) + 1
 
+        # Create notification before commit (in same transaction)
+        # If notification fails, log warning but don't fail the follow operation
+        try:
+            if u_follower and u_following:
+                await create_notification(
+                    db=db,
+                    user_id=following_id,  # The user being followed
+                    type="follow",
+                    title="新粉丝",
+                    content=f"{u_follower.anonymous_name} 关注了你",
+                    related_id=follower_id,  # Store follower's user_id for reference
+                )
+        except Exception as e:
+            logger.warning(f"Failed to create follow notification: {e}", exc_info=True)
+
+        # Single commit for both follow and notification
         try:
             await db.commit()
-
-            # Create notification for the user being followed
-            # This happens after successful commit, but notification is in same transaction
-            # If notification fails, we don't want to fail the follow operation
-            try:
-                if u_follower and u_following:
-                    await create_notification(
-                        db=db,
-                        user_id=following_id,  # The user being followed
-                        type="follow",
-                        title="新粉丝",
-                        content=f"{u_follower.anonymous_name} 关注了你",
-                        related_id=follower_id,  # Store follower's user_id for reference
-                    )
-                    await db.commit()
-            except Exception:
-                # Log error but don't fail the follow operation
-                # Notification failure shouldn't break the follow feature
-                await db.rollback()
-
             return True
         except SQLAlchemyError:
             await db.rollback()
