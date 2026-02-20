@@ -7,10 +7,11 @@ from fastapi import APIRouter, Depends, Query, File, UploadFile
 from pydantic import BaseModel, Field
 
 from app.core.deps import get_current_user
-from app.core.exceptions import success_response
+from app.core.exceptions import success_response, NotFoundException
 from app.models.user import User
 from app.schemas.user import UserResponse, UserUpdate
-from app.services.user_service import update_user, get_user_profile_data, deactivate_user, reactivate_user, upload_user_avatar
+from app.services.user_service import update_user, get_user_profile_data, deactivate_user, reactivate_user, upload_user_avatar, get_user_by_id
+from app.services.follow_service import is_following
 from app.core.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -122,6 +123,20 @@ async def upload_avatar(
     user = await upload_user_avatar(db, current_user.id, url)
 
     return success_response(data={"url": url}, message="头像上传成功")
+
+
+@router.get("/{user_id}/follow-status")
+async def check_follow_status(
+    user_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Check if current user is following target user."""
+    if not await get_user_by_id(db, user_id):
+        raise NotFoundException("资源不存在")
+
+    following = await is_following(db, current_user.id, user_id)
+    return success_response(data={"is_following": following}, message="获取关注状态成功")
 
 
 class FeedbackCreate(BaseModel):
