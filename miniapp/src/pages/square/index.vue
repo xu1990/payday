@@ -24,8 +24,12 @@ function formatTime(created_at: string) {
 async function load() {
   loading.value = true
   try {
-    list.value = await getPostList({ sort: activeTab.value, limit: 20, offset: 0 })
-  } catch {
+    const result = await getPostList({ sort: activeTab.value, limit: 20, offset: 0 })
+    console.log('[Square] API returned:', result)
+    console.log('[Square] Array length:', Array.isArray(result) ? result.length : 'Not an array')
+    list.value = result
+  } catch (error) {
+    console.error('[Square] Load failed:', error)
     list.value = []
   } finally {
     loading.value = false
@@ -97,7 +101,7 @@ function goCreate() {
         </view>
       </view>
     </scroll-view>
-    <view class="fab" @click="goCreate">+ 发帖</view>
+    <view class="fab" @click="goCreate">发帖</view>
   </view>
 </template>
 

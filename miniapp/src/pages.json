@@ -101,7 +101,7 @@
     {
       "path": "pages/checkin/index",
       "style": {
-        "navigationBarTitleText": "每日打卡",
+        "navigationBarTitleText": "每日签到",
         "navigationStyle": "default"
       }
     },

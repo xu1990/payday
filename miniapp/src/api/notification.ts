@@ -30,13 +30,14 @@ export function getNotificationList(params?: {
   offset?: number
 }) {
   const { unread_only, type_filter, limit = 20, offset = 0 } = params ?? {}
-  const q = new URLSearchParams()
-  if (unread_only !== undefined) q.set('unread_only', String(unread_only))
-  if (type_filter !== undefined) q.set('type_filter', type_filter)
-  q.set('limit', String(limit))
-  q.set('offset', String(offset))
+  const queryParts: string[] = []
+  if (unread_only !== undefined) queryParts.push(`unread_only=${encodeURIComponent(String(unread_only))}`)
+  if (type_filter !== undefined) queryParts.push(`type_filter=${encodeURIComponent(type_filter)}`)
+  queryParts.push(`limit=${encodeURIComponent(limit)}`)
+  queryParts.push(`offset=${encodeURIComponent(offset)}`)
+  const q = queryParts.join('&')
   return request<NotificationListResult>({
-    url: `${PREFIX}?${q.toString()}`,
+    url: `${PREFIX}?${q}`,
     method: 'GET',
   })
 }
@@ -72,15 +73,16 @@ export function deleteNotifications(params?: {
   delete_all?: boolean
 }) {
   const { notification_ids, delete_all = false } = params ?? {}
-  const q = new URLSearchParams()
+  const queryParts: string[] = []
   if (notification_ids?.length) {
-    q.set('notification_ids', notification_ids.join(','))
+    queryParts.push(`notification_ids=${encodeURIComponent(notification_ids.join(','))}`)
   }
   if (delete_all) {
-    q.set('delete_all', 'true')
+    queryParts.push('delete_all=true')
   }
+  const q = queryParts.join('&')
   return request<{ deleted: number }>({
-    url: `${PREFIX}?${q.toString()}`,
+    url: q ? `${PREFIX}?${q}` : PREFIX,
     method: 'DELETE',
   })
 }

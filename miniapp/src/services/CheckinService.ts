@@ -1,5 +1,5 @@
 /**
- * 打卡服务 - 处理打卡相关业务逻辑
+ * 签到服务 - 处理签到相关业务逻辑
  */
 import { BaseService } from './base/BaseService'
 
@@ -29,28 +29,28 @@ export class CheckinService extends BaseService {
   }
 
   /**
-   * 创建打卡
+   * 创建签到
    */
   async createCheckIn(data: { mood: string; note?: string }) {
     return this.post<CheckinItem>('', data)
   }
 
   /**
-   * 获取打卡统计
+   * 获取签到统计
    */
   async getStats() {
     return this.get<CheckInStats>('/stats')
   }
 
   /**
-   * 获取打卡日历
+   * 获取签到日历
    */
   async getCalendar(year: number, month: number) {
     return this.get<CalendarItem[]>(`/calendar/${year}/${month}`)
   }
 
   /**
-   * 获取打卡记录列表
+   * 获取签到记录列表
    */
   async getCheckIns(params: { limit?: number; offset?: number }) {
     return this.get<CheckinItem[]>('', params)

@@ -1,5 +1,5 @@
 /**
- * 打卡 - 与 backend /api/v1/checkin 一致
+ * 签到 - 与 backend /api/v1/checkin 一致
  */
 import request from '@/utils/request'
 

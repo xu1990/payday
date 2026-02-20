@@ -78,7 +78,7 @@ export function updateCurrentUser(data: UserUpdateParams): Promise<UserInfo> {
 }
 
 /**
- * 获取用户主页数据（包含帖子、打卡记录等）
+ * 获取用户主页数据（包含帖子、签到记录等）
  */
 export function getUserProfile(targetUserId: string): Promise<UserProfileData> {
   return request<UserProfileData>({

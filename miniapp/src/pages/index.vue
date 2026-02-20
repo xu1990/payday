@@ -184,8 +184,6 @@ function goProfile() {
 
 <template>
   <view class="root-container">
-    <AppLogos />
-
     <!-- 用户信息栏 (登录后显示) -->
     <view v-if="isLoggedIn" class="user-bar" @click="goProfile">
       <image class="user-avatar" :src="userAvatar" mode="aspectFill" />
@@ -227,27 +225,6 @@ function goProfile() {
       <text class="progress-desc">{{ progress.passed }} / {{ progress.total }} 天</text>
     </view>
 
-    <!-- 功能入口 - 所有操作都需要登录 -->
-    <view class="entry-row">
-      <button class="btn-primary" @click="goSalaryRecord">记工资</button>
-      <button class="btn-secondary" @click="goPaydaySetting">设置发薪日</button>
-    </view>
-
-    <view class="entry-row">
-      <button class="btn-outline" @click="goFeed">关注流</button>
-    </view>
-
-    <view class="entry-row">
-      <button class="btn-secondary" @click="goCheckIn">每日打卡</button>
-      <button class="btn-secondary" @click="goInsights">数据洞察</button>
-    </view>
-
-    <view class="entry-row">
-      <button class="btn-outline" @click="goMembership">会员中心</button>
-    </view>
-
-    <InputEntry />
-    <AppFooter />
   </view>
 </template>
 

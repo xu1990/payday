@@ -61,6 +61,31 @@ async function fetchRecord(): Promise<SalaryRecord | null> {
   return first
 }
 
+/**
+ * Draw rounded rectangle (WeChat mini-program compatible)
+ * Replaces ctx.roundRect which is not available in mini-program environment
+ */
+function drawRoundedRect(
+  ctx: any,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number
+): void {
+  ctx.beginPath()
+  ctx.moveTo(x + radius, y)
+  ctx.lineTo(x + width - radius, y)
+  ctx.arcTo(x + width, y, x + width, y + radius, radius)
+  ctx.lineTo(x + width, y + height - radius)
+  ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius)
+  ctx.lineTo(x + radius, y + height)
+  ctx.arcTo(x, y + height, x, y + height - radius, radius)
+  ctx.lineTo(x, y + radius)
+  ctx.arcTo(x, y, x + radius, y, radius)
+  ctx.closePath()
+}
+
 function drawPoster(): Promise<void> {
   const r = record.value
   if (!r) return Promise.resolve()
@@ -91,8 +116,7 @@ function drawPoster(): Promise<void> {
 
     // 金额背景
     ctx.setFillStyle('rgba(255,255,255,0.15)')
-    ctx.beginPath()
-    ctx.roundRect(padding - 12, 80, w - padding * 2 + 24, 100, 16)
+    drawRoundedRect(ctx, padding - 12, 80, w - padding * 2 + 24, 100, 16)
     ctx.fill()
 
     // 金额
@@ -125,8 +149,7 @@ function drawPoster(): Promise<void> {
     // 心情标签
     const moodBg = 'rgba(255,255,255,0.2)'
     ctx.setFillStyle(moodBg)
-    ctx.beginPath()
-    ctx.roundRect(w / 2 - 40, 260, 80, 32, 16)
+    drawRoundedRect(ctx, w / 2 - 40, 260, 80, 32, 16)
     ctx.fill()
 
     ctx.setFillStyle('#fff')

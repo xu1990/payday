@@ -79,9 +79,8 @@ export function unfollowUser(userId: string) {
 }
 
 function queryString(params: Record<string, number | string>): string {
-  const s = new URLSearchParams()
-  Object.entries(params).forEach(([k, v]) => s.set(k, String(v)))
-  const q = s.toString()
+  const queryParts = Object.entries(params).map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`)
+  const q = queryParts.join('&')
   return q ? `?${q}` : ''
 }
 

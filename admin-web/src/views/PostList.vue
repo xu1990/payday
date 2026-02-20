@@ -192,9 +192,9 @@ async function fetch() {
     }
     if (filterStatus.value) params.status = filterStatus.value
     if (filterRiskStatus.value) params.risk_status = filterRiskStatus.value
-    const { items: posts, total } = await getPosts(params)
+    const { items: posts, total: totalCount } = await getPosts(params)
     items.value = posts
-    total.value = total
+    total.value = totalCount
   } finally {
     loading.value = false
   }

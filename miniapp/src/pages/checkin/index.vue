@@ -1,36 +1,36 @@
 <template>
   <view class="checkin-page">
     <view class="header">
-      <text class="title">每日打卡</text>
+      <text class="title">每日签到</text>
       <text class="subtitle">记录你的打工生活</text>
     </view>
 
-    <!-- 打卡统计卡片 -->
+    <!-- 签到统计卡片 -->
     <view class="stats-card">
       <view class="stat-item">
         <text class="stat-value">{{ stats.total_days }}</text>
-        <text class="stat-label">累计打卡</text>
+        <text class="stat-label">累计签到</text>
       </view>
       <view class="stat-item">
         <text class="stat-value">{{ stats.this_month }}</text>
-        <text class="stat-label">本月打卡</text>
+        <text class="stat-label">本月签到</text>
       </view>
       <view class="stat-item">
         <text class="stat-value">{{ stats.current_streak }}</text>
-        <text class="stat-label">连续打卡</text>
+        <text class="stat-label">连续签到</text>
       </view>
     </view>
 
-    <!-- 今日打卡 -->
+    <!-- 今日签到 -->
     <view class="today-section">
-      <view class="today-title">今日打卡</view>
+      <view class="today-title">今日签到</view>
       <button
         class="checkin-btn"
         :class="{ checked: todayChecked }"
         @click="handleCheckIn"
       >
-        <text v-if="todayChecked">已打卡</text>
-        <text v-else>打卡</text>
+        <text v-if="todayChecked">已签到</text>
+        <text v-else>签到</text>
       </button>
       <input
         v-model="note"
@@ -40,7 +40,7 @@
       />
     </view>
 
-    <!-- 打卡日历 -->
+    <!-- 签到日历 -->
     <view class="calendar-section">
       <view class="calendar-header">
         <text @click="prevMonth">◀</text>
@@ -136,7 +136,7 @@ const loadCalendar = async () => {
 
 const handleCheckIn = async () => {
   if (todayChecked.value) {
-    uni.showToast({ title: '今天已打卡', icon: 'none' })
+    uni.showToast({ title: '今天已签到', icon: 'none' })
     return
   }
 
@@ -146,12 +146,12 @@ const handleCheckIn = async () => {
       check_date: today,
       note: note.value || undefined
     })
-    uni.showToast({ title: '打卡成功', icon: 'success' })
+    uni.showToast({ title: '签到成功', icon: 'success' })
     note.value = ''
     await loadStats()
     await loadCalendar()
   } catch (error) {
-    uni.showToast({ title: '打卡失败', icon: 'none' })
+    uni.showToast({ title: '签到失败', icon: 'none' })
   }
 }
 

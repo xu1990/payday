@@ -9,14 +9,21 @@
  * 基础的 HTML 转义函数
  *
  * SECURITY: 转义 HTML 特殊字符，防止 XSS 攻击
+ * 使用纯字符串替换，兼容小程序环境
  *
  * @param text - 待转义的文本
  * @returns 转义后的文本
  */
 export function escapeHtml(text: string): string {
-  const div = document.createElement('div')
-  div.textContent = text
-  return div.innerHTML
+  const htmlEntities: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }
+
+  return text.replace(/[&<>"']/g, (char) => htmlEntities[char])
 }
 
 /**

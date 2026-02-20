@@ -71,13 +71,13 @@ export interface SalaryListParams {
 export function listSalary(params?: SalaryListParams) {
   let url = PREFIX
   if (params && Object.keys(params).length) {
-    const q = new URLSearchParams()
-    if (params.config_id) q.set('config_id', params.config_id)
-    if (params.from_date) q.set('from_date', params.from_date)
-    if (params.to_date) q.set('to_date', params.to_date)
-    if (params.limit != null) q.set('limit', String(params.limit))
-    if (params.offset != null) q.set('offset', String(params.offset))
-    const qs = q.toString()
+    const queryParts: string[] = []
+    if (params.config_id) queryParts.push(`config_id=${encodeURIComponent(params.config_id)}`)
+    if (params.from_date) queryParts.push(`from_date=${encodeURIComponent(params.from_date)}`)
+    if (params.to_date) queryParts.push(`to_date=${encodeURIComponent(params.to_date)}`)
+    if (params.limit != null) queryParts.push(`limit=${encodeURIComponent(String(params.limit))}`)
+    if (params.offset != null) queryParts.push(`offset=${encodeURIComponent(String(params.offset))}`)
+    const qs = queryParts.join('&')
     if (qs) url += (url.includes('?') ? '&' : '?') + qs
   }
   return request<SalaryRecord[]>({ url, method: 'GET' })

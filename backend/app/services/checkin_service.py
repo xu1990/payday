@@ -93,7 +93,7 @@ async def get_checkin_calendar(
         to_date = to_date - timedelta(days=1)
 
     result = await db.execute(
-        select(CheckIn.check_date)
+        select(CheckIn.check_date, CheckIn.note)
         .where(
             CheckIn.user_id == user_id,
             CheckIn.check_date >= from_date,
@@ -102,10 +102,10 @@ async def get_checkin_calendar(
         .order_by(CheckIn.check_date)
     )
 
-    # result.scalars() returns date objects directly since we selected check_date
+    # Return with checked=True for each checkin date
     return [
-        {"date": r.isoformat()}
-        for r in result.scalars().all()
+        {"date": r.check_date.isoformat(), "checked": True, "note": r.note}
+        for r in result.all()
     ]
 
 

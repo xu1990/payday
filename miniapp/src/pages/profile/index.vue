@@ -129,7 +129,7 @@ onMounted(load)
 
     <view class="section-title-alt">更多功能</view>
     <view class="entry-row">
-      <button class="btn-outline" @click="goCheckIn">每日打卡</button>
+      <button class="btn-outline" @click="goCheckIn">每日签到</button>
       <button class="btn-outline" @click="goSettings">设置</button>
     </view>
 

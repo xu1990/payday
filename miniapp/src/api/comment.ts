@@ -25,9 +25,9 @@ export function getCommentList(
   params?: { limit?: number; offset?: number }
 ) {
   const { limit = 20, offset = 0 } = params ?? {}
-  const q = new URLSearchParams({ limit: String(limit), offset: String(offset) }).toString()
+  const q = `limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`
   return request<CommentItem[]>({
-    url: `${PREFIX}/${postId}/comments${q ? `?${q}` : ''}`,
+    url: `${PREFIX}/${postId}/comments?${q}`,
     method: 'GET',
   })
 }

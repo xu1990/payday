@@ -44,7 +44,7 @@ async function loadProfileData() {
       posts.value = postsResult.items || []
     }
 
-    // 加载打卡详情
+    // 加载签到详情
     if (data.checkins?.length) {
       const checkinsResult = await getCheckinList({ limit: 30, offset: 0 })
       checkins.value = checkinsResult.items || []
@@ -133,7 +133,7 @@ function goToPost(postId: string) {
           :class="{ active: currentTab === 'checkins' }"
           @tap="switchTab('checkins')"
         >
-          打卡 {{ checkins.length > 0 ? `(${checkins.length})` : '' }}
+          签到 {{ checkins.length > 0 ? `(${checkins.length})` : '' }}
         </view>
       </view>
 
@@ -154,9 +154,9 @@ function goToPost(postId: string) {
         </view>
       </view>
 
-      <!-- 打卡列表 -->
+      <!-- 签到列表 -->
       <view v-if="currentTab === 'checkins'" class="list">
-        <view v-if="!checkins.length" class="tip">暂无打卡记录</view>
+        <view v-if="!checkins.length" class="tip">暂无签到记录</view>
         <view v-for="checkin in checkins" :key="checkin.id" class="checkin-card">
           <view class="checkin-header">
             <text class="checkin-date">{{ formatDate(checkin.check_date) }}</text>

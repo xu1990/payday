@@ -47,19 +47,19 @@ export interface SearchRes {
 
 /** 搜索帖子 */
 export function searchPosts(params?: SearchParams) {
-  const query = new URLSearchParams()
+  const queryParts: string[] = []
   if (params) {
-    if (params.keyword) query.set('keyword', params.keyword)
-    if (params.tags) query.set('tags', params.tags)
-    if (params.user_id) query.set('user_id', params.user_id)
-    if (params.industry) query.set('industry', params.industry)
-    if (params.city) query.set('city', params.city)
-    if (params.salary_range) query.set('salary_range', params.salary_range)
-    if (params.sort) query.set('sort', params.sort)
-    if (params.limit != null) query.set('limit', String(params.limit))
-    if (params.offset != null) query.set('offset', String(params.offset))
+    if (params.keyword) queryParts.push(`keyword=${encodeURIComponent(params.keyword)}`)
+    if (params.tags) queryParts.push(`tags=${encodeURIComponent(params.tags)}`)
+    if (params.user_id) queryParts.push(`user_id=${encodeURIComponent(params.user_id)}`)
+    if (params.industry) queryParts.push(`industry=${encodeURIComponent(params.industry)}`)
+    if (params.city) queryParts.push(`city=${encodeURIComponent(params.city)}`)
+    if (params.salary_range) queryParts.push(`salary_range=${encodeURIComponent(params.salary_range)}`)
+    if (params.sort) queryParts.push(`sort=${encodeURIComponent(params.sort)}`)
+    if (params.limit != null) queryParts.push(`limit=${encodeURIComponent(String(params.limit))}`)
+    if (params.offset != null) queryParts.push(`offset=${encodeURIComponent(String(params.offset))}`)
   }
-  const qs = query.toString()
+  const qs = queryParts.join('&')
   const url = qs ? `${PREFIX}/search?${qs}` : PREFIX
   return request<SearchRes>({ url, method: 'GET' })
 }

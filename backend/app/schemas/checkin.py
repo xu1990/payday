@@ -15,6 +15,7 @@ class CheckInCreate(BaseModel):
 class CheckInItem(BaseModel):
     """打卡日历项"""
     date: str
+    checked: bool = True
     note: Optional[str] = None
 
     class Config:
