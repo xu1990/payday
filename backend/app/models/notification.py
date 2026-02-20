@@ -14,7 +14,7 @@ class Notification(Base):
     id = Column(String(36), primary_key=True, default=gen_uuid)
     user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     type = Column(
-        Enum("comment", "reply", "like", "system", name="notification_type_enum"),
+        Enum("comment", "reply", "like", "system", "follow", name="notification_type_enum"),
         nullable=False,
     )
     title = Column(String(100), nullable=False)
