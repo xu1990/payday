@@ -55,24 +55,45 @@ async def get_by_id(
     post_id: str,
     only_approved: bool = True,
     increment_view: bool = True,
+    current_user_id: Optional[str] = None,
 ) -> Optional[Post]:
-    """获取帖子详情，可选是否增加浏览量（从缓存计数）"""
+    """获取帖子详情，可选是否增加浏览量（从缓存计数）
+
+    Args:
+        current_user_id: 当前认证用户ID，用于填充 is_liked 字段
+    """
     q = select(Post).where(Post.id == post_id, Post.status == "normal")
     if only_approved:
         q = q.where(Post.risk_status == "approved")
     result = await db.execute(q)
     post = result.scalar_one_or_none()
 
-    # 增加浏览计数到 Redis（异步，不阻塞响应）
-    if post and increment_view:
-        try:
-            view_count = await PostCacheService.increment_view_count(post_id)
-            post.view_count = view_count
-        except Exception as e:
-            # Redis 故障时记录日志但不影响主流程
-            from app.utils.logger import get_logger
-            logger = get_logger(__name__)
-            logger.error(f"Failed to increment view count for post {post_id}: {e}")
+    if post:
+        # 增加浏览计数到 Redis（异步，不阻塞响应）
+        if increment_view:
+            try:
+                view_count = await PostCacheService.increment_view_count(post_id)
+                post.view_count = view_count
+            except Exception as e:
+                # Redis 故障时记录日志但不影响主流程
+                from app.utils.logger import get_logger
+                logger = get_logger(__name__)
+                logger.error(f"Failed to increment view count for post {post_id}: {e}")
+
+        # 填充 is_liked 字段（仅认证用户）
+        # 直接查询数据库，避免使用 like_service.is_liked 的缓存（有bug）
+        if current_user_id:
+            from app.models.like import Like
+            like_result = await db.execute(
+                select(Like).where(
+                    Like.user_id == current_user_id,
+                    Like.target_type == "post",
+                    Like.target_id == post.id
+                )
+            )
+            post.is_liked = like_result.scalar_one_or_none() is not None
+        else:
+            post.is_liked = False
 
     return post
 
@@ -83,12 +104,14 @@ async def list_posts(
     limit: int = 20,
     offset: int = 0,
     user_id: Optional[str] = None,
+    current_user_id: Optional[str] = None,
 ) -> List[Post]:
     """
     帖子列表，热门从缓存获取，最新从数据库查询
 
     Args:
         user_id: 用户ID，用于查询关注者的帖子（followers可见）
+        current_user_id: 当前认证用户ID，用于填充 is_liked 字段
     """
     if sort == "hot":
         # 尝试从 Redis 获取热门帖子 ID 列表
@@ -99,7 +122,31 @@ async def list_posts(
                 # 按 ID 列表查询完整数据
                 posts = await get_posts_by_ids(db, hot_post_ids, user_id)
                 # 分页处理（offset 在缓存结果上处理）
-                return posts[offset:] if offset < len(posts) else []
+                posts = posts[offset:] if offset < len(posts) else []
+
+                # 填充 is_liked 字段（仅认证用户）
+                # 直接查询数据库，避免使用 like_service.is_liked 的缓存（有bug）
+                if current_user_id and posts:
+                    from app.models.like import Like
+
+                    # 批量查询点赞状态（优化性能）
+                    post_ids = [p.id for p in posts]
+                    like_results = await db.execute(
+                        select(Like.target_id).where(
+                            Like.user_id == current_user_id,
+                            Like.target_type == "post",
+                            Like.target_id.in_(post_ids)
+                        )
+                    )
+                    liked_post_ids = set(lr[0] for lr in like_results.all())
+
+                    for post in posts:
+                        post.is_liked = post.id in liked_post_ids
+                else:
+                    for post in posts:
+                        post.is_liked = False
+
+                return posts
         except Exception:
             # Redis 故障时降级到数据库查询
             pass
@@ -120,7 +167,35 @@ async def list_posts(
     else:
         q = q.order_by(Post.created_at.desc())
     result = await db.execute(q)
-    return list(result.scalars().all())
+    posts = list(result.scalars().all())
+
+    # 填充 is_liked 字段（仅认证用户）
+    # 直接查询数据库，避免使用 like_service.is_liked 的缓存（有bug）
+    if current_user_id:
+        from app.models.like import Like
+
+        # 批量查询点赞状态（优化性能）
+        post_ids = [p.id for p in posts]
+        if post_ids:
+            like_results = await db.execute(
+                select(Like.target_id).where(
+                    Like.user_id == current_user_id,
+                    Like.target_type == "post",
+                    Like.target_id.in_(post_ids)
+                )
+            )
+            liked_post_ids = set(lr[0] for lr in like_results.all())
+
+            for post in posts:
+                post.is_liked = post.id in liked_post_ids
+        else:
+            for post in posts:
+                post.is_liked = False
+    else:
+        for post in posts:
+            post.is_liked = False
+
+    return posts
 
 
 async def get_posts_by_ids(

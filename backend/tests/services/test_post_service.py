@@ -1052,6 +1052,146 @@ class TestAdminFunctions:
         assert result is False
 
 
+class TestIsLikedField:
+    """测试 is_liked 字段填充"""
+
+    @pytest.mark.asyncio
+    async def test_list_posts_includes_is_liked_for_authenticated_user(self, db_session: AsyncSession, test_user):
+        """Test that list_posts returns is_liked=True for liked posts"""
+        from app.models.like import Like
+        from app.schemas.post import PostResponse
+
+        # Create another user's post
+        other_user = await TestDataFactory.create_user(db_session)
+        post = await TestDataFactory.create_post(
+            db_session,
+            other_user.id,
+            content="Test post"
+        )
+        post.risk_status = "approved"
+        await db_session.commit()
+
+        # Create a like record from test_user
+        like = Like(
+            user_id=test_user.id,
+            target_type="post",
+            target_id=post.id
+        )
+        db_session.add(like)
+        await db_session.commit()
+
+        # Call list_posts with current_user_id
+        posts = await list_posts(db_session, sort="latest", limit=10, offset=0, current_user_id=test_user.id)
+
+        # Assert is_liked is True for the liked post
+        result_posts = [PostResponse.model_validate(p) for p in posts]
+        liked_post = next((p for p in result_posts if p.id == post.id), None)
+        assert liked_post is not None
+        assert liked_post.is_liked is True
+
+    @pytest.mark.asyncio
+    async def test_list_posts_is_liked_false_for_non_liked_posts(self, db_session: AsyncSession):
+        """Test that list_posts returns is_liked=False for posts not liked by user"""
+        from app.schemas.post import PostResponse
+
+        # Create a fresh user who hasn't liked anything
+        user = await TestDataFactory.create_user(db_session)
+
+        # Create another user's post
+        other_user = await TestDataFactory.create_user(db_session)
+        post = await TestDataFactory.create_post(
+            db_session,
+            other_user.id,
+            content="Test post"
+        )
+        post.risk_status = "approved"
+        await db_session.commit()
+
+        # Call list_posts with current_user_id (user didn't like the post)
+        posts = await list_posts(db_session, sort="latest", limit=10, offset=0, current_user_id=user.id)
+
+        # Assert is_liked is False
+        result_posts = [PostResponse.model_validate(p) for p in posts]
+        liked_post = next((p for p in result_posts if p.id == post.id), None)
+        assert liked_post is not None
+        assert liked_post.is_liked is False
+
+    @pytest.mark.asyncio
+    async def test_list_posts_no_is_liked_for_anonymous_user(self, db_session: AsyncSession):
+        """Test that list_posts doesn't populate is_liked for anonymous users"""
+        from app.schemas.post import PostResponse
+
+        # Create a post
+        user = await TestDataFactory.create_user(db_session)
+        post = await TestDataFactory.create_post(
+            db_session,
+            user.id,
+            content="Test post"
+        )
+        post.risk_status = "approved"
+        await db_session.commit()
+
+        # Call list_posts without current_user_id
+        posts = await list_posts(db_session, sort="latest", limit=10, offset=0)
+
+        # Assert is_liked defaults to False
+        result_posts = [PostResponse.model_validate(p) for p in posts]
+        assert len(result_posts) == 1
+        assert result_posts[0].is_liked is False
+
+    @pytest.mark.asyncio
+    async def test_get_by_id_includes_is_liked_for_authenticated_user(self, db_session: AsyncSession, test_user):
+        """Test that get_by_id returns is_liked=True for liked post"""
+        from app.models.like import Like
+
+        # Create another user's post
+        other_user = await TestDataFactory.create_user(db_session)
+        post = await TestDataFactory.create_post(
+            db_session,
+            other_user.id,
+            content="Test post"
+        )
+        post.risk_status = "approved"
+        await db_session.commit()
+
+        # Create a like record
+        like = Like(
+            user_id=test_user.id,
+            target_type="post",
+            target_id=post.id
+        )
+        db_session.add(like)
+        await db_session.commit()
+
+        # Call get_by_id with current_user_id
+        result = await get_by_id(db_session, post.id, only_approved=False, current_user_id=test_user.id)
+
+        assert result is not None
+        assert result.is_liked is True
+
+    @pytest.mark.asyncio
+    async def test_get_by_id_is_liked_false_for_non_liked_post(self, db_session: AsyncSession):
+        """Test that get_by_id returns is_liked=False for non-liked post"""
+        # Create a fresh user who hasn't liked anything
+        user = await TestDataFactory.create_user(db_session)
+
+        # Create another user's post
+        other_user = await TestDataFactory.create_user(db_session)
+        post = await TestDataFactory.create_post(
+            db_session,
+            other_user.id,
+            content="Test post"
+        )
+        post.risk_status = "approved"
+        await db_session.commit()
+
+        # Call get_by_id with current_user_id (user didn't like the post)
+        result = await get_by_id(db_session, post.id, only_approved=False, current_user_id=user.id)
+
+        assert result is not None
+        assert result.is_liked is False
+
+
 class TestDataIsolation:
     """测试数据隔离"""
 
