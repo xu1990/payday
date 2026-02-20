@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { getPostList, type PostItem } from '@/api/post'
-import { checkFollowStatus } from '@/api/follow'
+import { checkBatchFollowStatus } from '@/api/follow'
 import { useDebounceFn } from '@/composables/useDebounce'
 import { useAuthStore } from '@/stores/auth'
 import PostActionBar from '@/components/PostActionBar.vue'
@@ -27,10 +27,10 @@ function formatTime(created_at: string) {
 
 async function load() {
   loading.value = true
+  // Clear follow state at start to prevent stale state on tab switch
+  followingSet.value.clear()
   try {
     const result = await getPostList({ sort: activeTab.value, limit: 20, offset: 0 })
-    console.log('[Square] API returned:', result)
-    console.log('[Square] Array length:', Array.isArray(result) ? result.length : 'Not an array')
     list.value = result
 
     // Fetch follow status for all unique authors
@@ -46,26 +46,20 @@ async function load() {
 async function fetchFollowStatus() {
   if (!authStore.isLoggedIn) return
 
-  // Get unique user IDs from posts
-  const userIds = Array.from(new Set(list.value.map(item => item.user_id)))
-  if (userIds.length === 0) return
+  // Get unique author IDs from posts
+  const authorIds = [...new Set(list.value.map(p => p.user_id))]
+  if (authorIds.length === 0) return
 
-  followingSet.value.clear()
-
-  // Check follow status for each user
-  await Promise.all(
-    userIds.map(async userId => {
-      try {
-        const result = await checkFollowStatus(userId)
-        if (result.is_following) {
-          followingSet.value.add(userId)
-        }
-      } catch (error) {
-        // Ignore errors, default to not following
-        console.error(`[Square] Failed to check follow status for user ${userId}:`, error)
-      }
-    })
-  )
+  try {
+    const statusMap = await checkBatchFollowStatus(authorIds)
+    followingSet.value = new Set(
+      Object.entries(statusMap)
+        .filter(([, isFollowing]) => isFollowing)
+        .map(([userId]) => userId)
+    )
+  } catch (e) {
+    console.error('[Square] Failed to fetch follow status:', e)
+  }
 }
 
 // 使用防抖来避免快速切换 tab 导致多次请求

@@ -146,3 +146,15 @@ export function checkFollowStatus(userId: string) {
     method: 'GET',
   })
 }
+
+/** 批量检查关注状态响应 */
+export type BatchFollowStatusRes = Record<string, boolean>
+
+/** 批量检查关注状态 */
+export function checkBatchFollowStatus(userIds: string[]): Promise<BatchFollowStatusRes> {
+  return request<BatchFollowStatusRes>({
+    url: '/api/v1/follows/status',
+    method: 'POST',
+    data: { user_ids: userIds },
+  })
+}
