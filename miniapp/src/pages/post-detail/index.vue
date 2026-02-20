@@ -5,6 +5,10 @@ import { getCommentList, createComment, type CommentItem } from '@/api/comment'
 import { likePost, unlikePost } from '@/api/like'
 import { likeComment, unlikeComment } from '@/api/like'
 import { sanitizePost, isValidImageUrl } from '@/utils/sanitize'
+import { useAuthStore } from '@/stores/auth'
+import { useUserStore } from '@/stores/user'
+import { checkBatchFollowStatus } from '@/api/follow'
+import FollowButton from '@/components/FollowButton.vue'
 
 const id = ref('')
 const post = ref<PostItem | null>(null)
@@ -18,6 +22,11 @@ const replyingTo = ref<{ id: string; name: string } | null>(null)
 const commentContent = ref('')
 const submitLoading = ref(false)
 const keyboardHeight = ref(0)
+
+// Follow status
+const authStore = useAuthStore()
+const userStore = useUserStore()
+const isFollowingAuthor = ref(false)
 
 // Computed property for v-model conditional binding
 const inputContent = computed({
@@ -57,6 +66,18 @@ async function load() {
   loading.value = true
   try {
     post.value = await getPostDetail(id.value)
+    // Use API is_liked field
+    postLiked.value = post.value?.is_liked ?? false
+
+    // Fetch follow status if logged in
+    if (authStore.isLoggedIn && post.value?.user_id) {
+      try {
+        const followStatusMap = await checkBatchFollowStatus([post.value.user_id])
+        isFollowingAuthor.value = followStatusMap.get(post.value.user_id) || false
+      } catch (error) {
+        console.error('Failed to fetch follow status:', error)
+      }
+    }
   } catch (error) {
     post.value = null
     uni.showToast({ title: '加载帖子失败', icon: 'none' })
@@ -204,6 +225,28 @@ async function shareToMoments() {
     },
   })
 }
+
+/**
+ * Handle follow event from FollowButton
+ */
+function handleFollow(data: { targetUserId: string }) {
+  isFollowingAuthor.value = true
+  // Update follower count locally
+  if (post.value) {
+    post.value.follower_count = (post.value.follower_count || 0) + 1
+  }
+}
+
+/**
+ * Handle unfollow event from FollowButton
+ */
+function handleUnfollow(data: { targetUserId: string }) {
+  isFollowingAuthor.value = false
+  // Update follower count locally
+  if (post.value) {
+    post.value.follower_count = Math.max(0, (post.value.follower_count || 1) - 1)
+  }
+}
 </script>
 
 <template>
@@ -214,6 +257,16 @@ async function shareToMoments() {
       <view class="row">
         <text class="name">{{ post.anonymous_name }}</text>
         <text class="time">{{ timeStr }}</text>
+      </view>
+      <!-- Author section with follow button -->
+      <view v-if="authStore.isLoggedIn && post.user_id && post.user_id !== userStore.userId" class="author-section">
+        <FollowButton
+          :target-user-id="post.user_id"
+          :is-following="isFollowingAuthor"
+          size="small"
+          @follow="handleFollow"
+          @unfollow="handleUnfollow"
+        />
       </view>
       <text class="content">{{ safeContent }}</text>
       <view v-if="safeImages.length" class="imgs">
@@ -326,6 +379,11 @@ async function shareToMoments() {
 .time {
   font-size: 24rpx;
   color: #999;
+}
+.author-section {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16rpx;
 }
 .content {
   font-size: 30rpx;
