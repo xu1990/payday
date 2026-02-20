@@ -44,6 +44,7 @@ const adminApi = axios.create({
 adminApi.interceptors.request.use(
   (config) => {
     const authStore = useAuthStore()
+    console.log('[adminApi Request]', config.method?.toUpperCase(), config.url, 'token:', authStore.token ? `${authStore.token.substring(0, 20)}...` : 'MISSING')
     config.headers.Authorization = `Bearer ${authStore.token}`
     return config
   },

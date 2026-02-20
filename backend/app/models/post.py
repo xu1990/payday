@@ -24,6 +24,7 @@ class Post(Base):
     salary_range = Column(String(20), nullable=True, comment="工资区间可选")
     industry = Column(String(50), nullable=True)
     city = Column(String(50), nullable=True)
+    topic_id = Column(String(36), ForeignKey("topics.id"), nullable=True, index=True, comment="关联话题ID")
     visibility = Column(
         Enum("public", "followers", "private", name="post_visibility_enum"),
         default="public",

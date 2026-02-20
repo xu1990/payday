@@ -25,10 +25,14 @@ async def create_topic(
         cover_image=cover_image,
         sort_order=sort_order,
     )
-    db.add(topic)
-    await db.flush()
-    await db.refresh(topic)
-    return topic
+    try:
+        db.add(topic)
+        await db.commit()
+        await db.refresh(topic)
+        return topic
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
 
 
 async def get_topic_by_id(db: AsyncSession, topic_id: str) -> Topic | None:

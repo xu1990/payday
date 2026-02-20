@@ -1,12 +1,29 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import request from '@/utils/request'
 
 const authStore = useAuthStore()
 const logoScale = ref(0)
 const showText = ref(false)
+const splashConfig = ref<any>(null)
+const showSplash = ref(false)
 
 onMounted(async () => {
+  // Load splash config from backend
+  try {
+    const res: any = await request({
+      url: '/api/v1/config/public/splash',
+      method: 'GET'
+    })
+    if (res.data?.is_active) {
+      splashConfig.value = res.data
+      showSplash.value = true
+    }
+  } catch (e) {
+    // Ignore error, use default splash
+  }
+
   // Logo animation
   setTimeout(() => {
     logoScale.value = 1
@@ -22,13 +39,17 @@ onMounted(async () => {
     await authStore.init()
 
     // Wait for animation to complete before navigating
+    const delay = showSplash.value && splashConfig.value?.countdown
+      ? splashConfig.value.countdown * 1000
+      : 1800
+
     setTimeout(() => {
       if (authStore.isLoggedIn) {
         uni.switchTab({ url: '/pages/index' })
       } else {
         uni.redirectTo({ url: '/pages/login/index' })
       }
-    }, 1800)
+    }, delay)
   } catch (e) {
     // On error, go to login after animation
     setTimeout(() => {
@@ -40,7 +61,16 @@ onMounted(async () => {
 
 <template>
   <view class="splash-page">
-    <view class="content">
+    <!-- Custom splash screen from backend if available -->
+    <view v-if="showSplash && splashConfig" class="custom-splash">
+      <image v-if="splashConfig.image_url" :src="splashConfig.image_url" mode="aspectFill" class="splash-image" />
+      <view v-if="splashConfig.content" class="splash-content">
+        <rich-text :nodes="splashConfig.content"></rich-text>
+      </view>
+    </view>
+
+    <!-- Default splash screen -->
+    <view v-else class="content">
       <!-- Logo/Icon -->
       <view class="logo-wrapper" :style="{ transform: `scale(${logoScale})` }">
         <view class="logo-icon">
@@ -80,6 +110,27 @@ onMounted(async () => {
   align-items: center;
   position: relative;
   overflow: hidden;
+}
+
+.custom-splash {
+  width: 100%;
+  height: 100%;
+  position: relative;
+
+  .splash-image {
+    width: 100%;
+    height: 100%;
+  }
+
+  .splash-content {
+    position: absolute;
+    bottom: 120rpx;
+    left: 0;
+    right: 0;
+    padding: 0 60rpx;
+    text-align: center;
+    color: #fff;
+  }
 }
 
 .content {

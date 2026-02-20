@@ -62,7 +62,7 @@ async function onSubmit() {
   loading.value = true
   try {
     const res = await login(form)
-    auth.setToken(res.access_token, res.csrf_token)
+    auth.setToken(res.access_token, res.csrf_token, res.refresh_token)
     ElMessage.success('登录成功')
     const redirect = (route.query.redirect as string) || '/'
     router.replace(redirect)

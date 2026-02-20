@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import type { UploadProps } from 'element-plus'
+import type { UploadProps, UploadRequestOptions } from 'element-plus'
 import { getSplashConfig, updateSplashConfig, type SplashConfigData } from '@/api/miniprogram'
+import adminApi from '@/api/admin'
 
 const form = ref<SplashConfigData>({
   image_url: '',
@@ -12,6 +13,7 @@ const form = ref<SplashConfigData>({
 })
 const loading = ref(false)
 const saving = ref(false)
+const uploading = ref(false)
 const imageUrl = ref('')
 
 async function loadData() {
@@ -43,11 +45,35 @@ async function save() {
   }
 }
 
-const handleImageSuccess: UploadProps['onSuccess'] = (response) => {
-  if (response.data?.url) {
-    form.value.image_url = response.data.url
-    imageUrl.value = response.data.url
-    ElMessage.success('图片上传成功')
+const handleImageRequest = async (options: UploadRequestOptions) => {
+  const { file, onSuccess, onError } = options
+
+  uploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const res = await adminApi.post('/admin/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+
+    const url = res.data?.details?.url || res.data?.url
+    if (url) {
+      form.value.image_url = url
+      imageUrl.value = url
+      ElMessage.success('图片上传成功')
+      onSuccess?.(res.data)
+    } else {
+      throw new Error('上传失败：未返回URL')
+    }
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : '上传失败'
+    ElMessage.error(errorMessage)
+    onError?.(e as Error)
+  } finally {
+    uploading.value = false
   }
 }
 
@@ -76,13 +102,13 @@ onMounted(loadData)
       <el-form :model="form" label-width="120px">
         <el-form-item label="开屏图片">
           <el-upload
-            action="/api/v1/admin/upload"
             :show-file-list="false"
-            :on-success="handleImageSuccess"
+            :http-request="handleImageRequest"
             :before-upload="beforeImageUpload"
+            :disabled="uploading"
             accept="image/*"
           >
-            <el-button type="primary">选择图片</el-button>
+            <el-button type="primary" :loading="uploading">选择图片</el-button>
           </el-upload>
           <div v-if="imageUrl" class="image-preview">
             <el-image :src="imageUrl" fit="contain" style="width: 200px; height: 300px;" />

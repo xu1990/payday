@@ -16,6 +16,7 @@ class PostCreate(BaseModel):
     salary_range: Optional[str] = Field(None, max_length=20, description="工资区间")
     industry: Optional[str] = Field(None, max_length=50, description="行业")
     city: Optional[str] = Field(None, max_length=50, description="城市")
+    topic_id: Optional[str] = Field(None, description="关联话题ID")
     visibility: Literal["public", "followers", "private"] = "public"
 
 
@@ -30,6 +31,7 @@ class PostResponse(BaseModel):
     salary_range: Optional[str] = None
     industry: Optional[str] = None
     city: Optional[str] = None
+    topic_id: Optional[str] = None
     visibility: str
     view_count: int
     like_count: int

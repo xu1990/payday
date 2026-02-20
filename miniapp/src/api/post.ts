@@ -37,6 +37,7 @@ export interface PostCreateParams {
   salary_range?: string | null
   industry?: string | null
   city?: string | null
+  topic_id?: string | null
   visibility?: 'public' | 'followers' | 'private'
 }
 

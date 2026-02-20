@@ -35,6 +35,7 @@ async def create(
         salary_range=data.salary_range,
         industry=data.industry,
         city=data.city,
+        topic_id=data.topic_id,
         visibility=data.visibility,
         status="normal",
         risk_status="pending",

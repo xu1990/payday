@@ -1,7 +1,7 @@
 /**
  * 反馈相关 API
  */
-import { request } from '@/utils/request'
+import adminApi from './admin'
 
 export interface FeedbackItem {
   id: string
@@ -18,10 +18,7 @@ export interface FeedbackItem {
  * 获取反馈列表（管理员）
  */
 export function getFeedbackList(): Promise<{ data: FeedbackItem[]; message: string }> {
-  return request({
-    url: '/feedback',
-    method: 'GET'
-  })
+  return adminApi.get('/feedback/')
 }
 
 export default {

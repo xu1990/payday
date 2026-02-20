@@ -20,13 +20,15 @@ async def get_admin_by_username(db: AsyncSession, username: str) -> Optional[Adm
     return result.scalar_one_or_none()
 
 
-async def login_admin(db: AsyncSession, username: str, password: str) -> Optional[Tuple[str, str]]:
+async def login_admin(db: AsyncSession, username: str, password: str) -> Optional[Tuple[str, str, str]]:
     """
-    校验用户名密码，成功返回 (JWT, CSRF token)，失败返回 None
+    校验用户名密码，成功返回 (JWT, CSRF token, Refresh token)，失败返回 None
 
     Returns:
-        (jwt_token, csrf_token) 或 None
+        (jwt_token, csrf_token, refresh_token) 或 None
     """
+    from app.core.security import create_refresh_token
+
     admin = await get_admin_by_username(db, username)
     if not admin or not password or not verify_password(password, admin.password_hash):
         return None  # OK: 登录失败返回 None 是正常流程
@@ -38,7 +40,24 @@ async def login_admin(db: AsyncSession, username: str, password: str) -> Optiona
     csrf_token = await csrf_manager.generate_token()
     await csrf_manager.save_token(csrf_token, str(admin.id))
 
-    return jwt_token, csrf_token
+    # 生成 Refresh Token
+    refresh_token = create_refresh_token(data={"sub": str(admin.id), "scope": "admin"})
+
+    # 存储 Refresh Token 到 Redis
+    redis = await get_redis_client()
+    if redis:
+        try:
+            await redis.setex(
+                f"admin_refresh_token:{admin.id}",
+                7 * 24 * 60 * 60,  # 7天
+                refresh_token
+            )
+        except Exception as e:
+            from app.utils.logger import get_logger
+            logger = get_logger(__name__)
+            logger.error(f"Failed to store refresh token for admin {admin.id}: {e}")
+
+    return jwt_token, csrf_token, refresh_token
 
 
 async def refresh_admin_token(
@@ -98,7 +117,7 @@ async def refresh_admin_token(
     # 验证管理员是否存在且未禁用
     admin = await db.execute(select(AdminUser).where(AdminUser.id == admin_id))
     admin = admin.scalar_one_or_none()
-    if not admin or admin.status != "normal":
+    if not admin or admin.is_active != "1":
         logger.warning(f"Admin not found or disabled: {admin_id}")
         return None
 

@@ -2,8 +2,9 @@
 管理后台 - 登录、用户、工资、统计、帖子/评论管理、风控待审（Sprint 2.4）
 """
 from typing import Optional
+from pydantic import BaseModel, Field
 
-from fastapi import APIRouter, Depends, Form, Query, Response
+from fastapi import APIRouter, Depends, Form, Query, Response, UploadFile, File
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -53,6 +54,10 @@ from app.services.comment_service import (
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
+class AdminRefreshTokenRequest(BaseModel):
+    refresh_token: str = Field(..., description="刷新 Token")
+
+
 @router.post("/auth/login")
 async def admin_login(
     body: AdminLoginRequest,
@@ -66,13 +71,14 @@ async def admin_login(
     tokens = await login_admin(db, body.username, body.password)
     if not tokens:
         raise AuthenticationException("用户名或密码错误", code="INVALID_CREDENTIALS")
-    jwt_token, csrf_token = tokens
+    jwt_token, csrf_token, refresh_token = tokens
 
     # 统一响应格式
     token_data = {
         "access_token": jwt_token,
         "token_type": "bearer",
-        "csrf_token": csrf_token
+        "csrf_token": csrf_token,
+        "refresh_token": refresh_token
     }
 
     # 创建响应对象（使用统一格式）
@@ -102,14 +108,14 @@ async def admin_login(
 
 @router.post("/auth/refresh")
 async def admin_refresh_token(
-    refresh_token: str = Form(...),
+    body: AdminRefreshTokenRequest,
     db: AsyncSession = Depends(get_db),
 ):
     """
     刷新管理员 Access Token
 
     Args:
-        refresh_token: 刷新令牌
+        body: 包含 refresh_token 的请求体
 
     Returns:
         新的 access_token 和 csrf_token，以及新的 refresh_token
@@ -121,7 +127,7 @@ async def admin_refresh_token(
     """
     from app.services.admin_auth_service import refresh_admin_token
 
-    result = await refresh_admin_token(db, refresh_token)
+    result = await refresh_admin_token(db, body.refresh_token)
     if not result:
         raise AuthenticationException("无效或过期的 Refresh Token", code="INVALID_REFRESH_TOKEN")
 
@@ -178,7 +184,7 @@ async def admin_user_list(
             anonymous_name=u.anonymous_name,
             status=u.status.value if hasattr(u.status, "value") else str(u.status),
             created_at=u.created_at,
-        )
+        ).model_dump(mode='json')
         for u in users
     ]
     return success_response(data={"items": items, "total": total}, message="获取用户列表成功")
@@ -227,7 +233,7 @@ async def admin_salary_list(
     """管理端工资记录列表（可选按 user_id 过滤）"""
     items, total = await list_all_for_admin(db, user_id=user_id, limit=limit, offset=offset)
     return success_response(
-        data={"items": [AdminSalaryRecordItem(**x) for x in items], "total": total},
+        data={"items": [AdminSalaryRecordItem(**x).model_dump(mode='json') for x in items], "total": total},
         message="获取工资记录成功"
     )
 
@@ -310,7 +316,7 @@ async def admin_post_list(
             risk_reason=p.risk_reason,
             created_at=p.created_at,
             updated_at=p.updated_at,
-        )
+        ).model_dump(mode='json')
         for p in posts
     ]
     return success_response(
@@ -419,7 +425,7 @@ async def admin_comment_list(
             like_count=c.like_count or 0,
             risk_status=c.risk_status.value if hasattr(c.risk_status, "value") else str(c.risk_status),
             created_at=c.created_at,
-        )
+        ).model_dump(mode='json')
         for c in comments
     ]
     return success_response(
@@ -444,3 +450,40 @@ async def admin_comment_update_risk(
     if not comment:
         raise NotFoundException("评论不存在")
     return {"ok": True, "id": comment_id}
+
+
+# ----- 文件上传 -----
+
+
+@router.post("/upload")
+async def admin_upload_image(
+    file: UploadFile = File(...),
+    _: AdminUser = Depends(get_current_admin),
+):
+    """管理端通用图片上传接口（开屏页、话题封面等）"""
+    from app.utils.storage import storage_service
+
+    # 验证文件类型
+    if not file.content_type or not file.content_type.startswith('image/'):
+        from app.core.exceptions import ValidationException
+        raise ValidationException("只支持上传图片文件", code="INVALID_FILE_TYPE")
+
+    # 读取文件内容
+    content = await file.read()
+
+    # 验证文件大小（5MB）
+    if len(content) > 5 * 1024 * 1024:
+        from app.core.exceptions import ValidationException
+        raise ValidationException("图片大小不能超过5MB", code="FILE_TOO_LARGE")
+
+    # 生成文件路径：admin/images/年/月/日/uuid.ext
+    import uuid
+    from datetime import datetime
+    ext = file.filename.split('.')[-1] if file.filename and '.' in file.filename else 'jpg'
+    date_prefix = datetime.now().strftime("%Y/%m/%d")
+    key = f"admin/images/{date_prefix}/{uuid.uuid4()}.{ext}"
+
+    # 上传到存储服务（使用 upload_bytes 方法上传二进制数据）
+    url = await storage_service.upload_bytes(content, key, file.content_type or 'image/jpeg')
+
+    return success_response(data={"url": url}, message="图片上传成功")

@@ -181,6 +181,13 @@
         "navigationBarTitleText": "隐私政策",
         "navigationStyle": "default"
       }
+    },
+    {
+      "path": "pages/feedback/index",
+      "style": {
+        "navigationBarTitleText": "意见反馈",
+        "navigationStyle": "default"
+      }
     }
   ],
   "globalStyle": {
