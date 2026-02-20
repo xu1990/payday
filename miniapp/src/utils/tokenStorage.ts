@@ -23,8 +23,10 @@ export async function saveToken(
   userId?: string
 ): Promise<void> {
   try {
+    console.log('[tokenStorage] Saving token, userId:', userId)
     // 直接存储 token（小程序环境有存储隔离）
     uni.setStorageSync(TOKEN_KEY, token)
+    console.log('[tokenStorage] Token saved successfully')
 
     if (refreshToken) {
       uni.setStorageSync(REFRESH_TOKEN_KEY, refreshToken)
@@ -72,6 +74,7 @@ export async function getToken(): Promise<string> {
       console.warn('[tokenStorage] No token found in storage')
       return ''
     }
+    console.log('[tokenStorage] Token retrieved successfully, length:', token.length)
     return token
   } catch (error) {
     console.error('[tokenStorage] Token retrieval failed:', error)

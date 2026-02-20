@@ -299,11 +299,19 @@ export async function request<T = unknown>(options: RequestOptions): Promise<T> 
   const url = resolveUrl(rawOptions.url)
   const token = rawOptions.noAuth ? '' : await getToken()
 
+  // DEBUG: Log token presence (helps diagnose real device issues)
+  if (!rawOptions.noAuth && !token) {
+    console.warn('[request] No token available for authenticated request:', url)
+  }
+
   const header: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(rawOptions.header as Record<string, string>),
   }
-  if (token) header.Authorization = `Bearer ${token}`
+  if (token) {
+    header.Authorization = `Bearer ${token}`
+    console.log('[request] Adding Authorization header for:', url)
+  }
 
   // 显示 loading
   if (shouldShowLoading) {
