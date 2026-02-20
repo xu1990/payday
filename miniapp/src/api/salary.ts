@@ -76,7 +76,8 @@ export function listSalary(params?: SalaryListParams) {
     if (params.from_date) queryParts.push(`from_date=${encodeURIComponent(params.from_date)}`)
     if (params.to_date) queryParts.push(`to_date=${encodeURIComponent(params.to_date)}`)
     if (params.limit != null) queryParts.push(`limit=${encodeURIComponent(String(params.limit))}`)
-    if (params.offset != null) queryParts.push(`offset=${encodeURIComponent(String(params.offset))}`)
+    if (params.offset != null)
+      queryParts.push(`offset=${encodeURIComponent(String(params.offset))}`)
     const qs = queryParts.join('&')
     if (qs) url += (url.includes('?') ? '&' : '?') + qs
   }

@@ -33,7 +33,7 @@ const props = withDefaults(defineProps<Props>(), {
   type: 'spinner',
   text: '',
   fullscreen: false,
-  backgroundColor: 'rgba(255, 255, 255, 0.9)'
+  backgroundColor: 'rgba(255, 255, 255, 0.9)',
 })
 </script>
 
@@ -95,7 +95,9 @@ const props = withDefaults(defineProps<Props>(), {
 }
 
 @keyframes spinner-bounce {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     transform: scale(0);
   }
   40% {

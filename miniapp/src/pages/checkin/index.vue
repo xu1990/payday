@@ -24,20 +24,11 @@
     <!-- 今日签到 -->
     <view class="today-section">
       <view class="today-title">今日签到</view>
-      <button
-        class="checkin-btn"
-        :class="{ checked: todayChecked }"
-        @click="handleCheckIn"
-      >
+      <button class="checkin-btn" :class="{ checked: todayChecked }" @click="handleCheckIn">
         <text v-if="todayChecked">已签到</text>
         <text v-else>签到</text>
       </button>
-      <input
-        v-model="note"
-        class="note-input"
-        placeholder="写点什么..."
-        :disabled="todayChecked"
-      />
+      <input v-model="note" class="note-input" placeholder="写点什么..." :disabled="todayChecked" />
     </view>
 
     <!-- 签到日历 -->
@@ -58,7 +49,7 @@
           :class="{
             empty: !day.day,
             checked: day.checked,
-            today: day.isToday
+            today: day.isToday,
           }"
         >
           <text v-if="day.day">{{ day.day }}</text>
@@ -70,12 +61,17 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { getCheckInStats, getCheckInCalendar, createCheckIn, type CalendarItem } from '@/api/checkin'
+import {
+  getCheckInStats,
+  getCheckInCalendar,
+  createCheckIn,
+  type CalendarItem,
+} from '@/api/checkin'
 
 const stats = ref({
   total_days: 0,
   this_month: 0,
-  current_streak: 0
+  current_streak: 0,
 })
 
 const note = ref('')
@@ -110,7 +106,7 @@ const calendarDays = computed(() => {
     days.push({
       day: d,
       checked: item?.checked,
-      isToday
+      isToday,
     })
   }
 
@@ -144,7 +140,7 @@ const handleCheckIn = async () => {
     const today = new Date().toISOString().split('T')[0]
     await createCheckIn({
       check_date: today,
-      note: note.value || undefined
+      note: note.value || undefined,
     })
     uni.showToast({ title: '签到成功', icon: 'success' })
     note.value = ''

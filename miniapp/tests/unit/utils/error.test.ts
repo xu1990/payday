@@ -2,7 +2,12 @@
  * error 工具函数测试
  */
 import { describe, it, expect } from 'vitest'
-import { getErrorMessage, getApiErrorMessage, commonStatusMessages, getCommonApiErrorMessage } from '@/utils/error'
+import {
+  getErrorMessage,
+  getApiErrorMessage,
+  commonStatusMessages,
+  getCommonApiErrorMessage,
+} from '@/utils/error'
 
 describe('getErrorMessage', () => {
   it('应该从 Error 实例提取消息', () => {

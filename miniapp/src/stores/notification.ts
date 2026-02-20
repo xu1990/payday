@@ -102,7 +102,7 @@ export const useNotificationStore = defineStore('notification', () => {
       await notificationApi.markAsRead(notificationId)
 
       // 更新本地状态
-      const notification = notifications.value.find((n) => n.id === notificationId)
+      const notification = notifications.value.find(n => n.id === notificationId)
       if (notification && notification.status === 'unread') {
         notification.status = 'read'
         unreadCount.value = Math.max(0, unreadCount.value - 1)
@@ -121,7 +121,7 @@ export const useNotificationStore = defineStore('notification', () => {
       await notificationApi.markAllAsRead()
 
       // 更新本地状态
-      notifications.value.forEach((n) => {
+      notifications.value.forEach(n => {
         if (n.status === 'unread') {
           n.status = 'read'
         }
@@ -141,7 +141,7 @@ export const useNotificationStore = defineStore('notification', () => {
       await notificationApi.deleteNotification(notificationId)
 
       // 更新本地状态
-      const index = notifications.value.findIndex((n) => n.id === notificationId)
+      const index = notifications.value.findIndex(n => n.id === notificationId)
       if (index !== -1) {
         const notification = notifications.value[index]
         if (notification.status === 'unread') {

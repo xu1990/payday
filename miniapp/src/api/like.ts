@@ -7,7 +7,13 @@ const PREFIX = '/api/v1'
 
 /** 帖子点赞；已赞幂等返回 200，新赞 201 */
 export function likePost(postId: string) {
-  return request<{ id: string; user_id: string; target_type: string; target_id: string; created_at: string }>({
+  return request<{
+    id: string
+    user_id: string
+    target_type: string
+    target_id: string
+    created_at: string
+  }>({
     url: `${PREFIX}/posts/${postId}/like`,
     method: 'POST',
   })
@@ -23,7 +29,13 @@ export function unlikePost(postId: string) {
 
 /** 评论点赞；已赞幂等返回 200，新赞 201 */
 export function likeComment(commentId: string) {
-  return request<{ id: string; user_id: string; target_type: string; target_id: string; created_at: string }>({
+  return request<{
+    id: string
+    user_id: string
+    target_type: string
+    target_id: string
+    created_at: string
+  }>({
     url: `${PREFIX}/comments/${commentId}/like`,
     method: 'POST',
   })

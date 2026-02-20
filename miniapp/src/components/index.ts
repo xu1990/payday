@@ -5,11 +5,7 @@ import LazyImage from './LazyImage.vue'
 import Loading from './Loading.vue'
 import EmptyState from './EmptyState.vue'
 
-export {
-  LazyImage,
-  Loading,
-  EmptyState,
-}
+export { LazyImage, Loading, EmptyState }
 
 export default {
   LazyImage,

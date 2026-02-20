@@ -60,7 +60,13 @@ export function createPayment(data: CreatePaymentReq) {
 /** 调起微信支付 */
 export function requestWeChatPayment(params: WeChatPayParams): Promise<void> {
   // 验证必要参数
-  if (!params.timeStamp || !params.nonceStr || !params.package || !params.signType || !params.paySign) {
+  if (
+    !params.timeStamp ||
+    !params.nonceStr ||
+    !params.package ||
+    !params.signType ||
+    !params.paySign
+  ) {
     return Promise.reject(new Error('支付参数不完整'))
   }
 
@@ -102,7 +108,11 @@ export function requestWeChatPayment(params: WeChatPayParams): Promise<void> {
       },
       complete: (res: any) => {
         // 处理边缘情况：既不是success也不是fail的情况
-        if (res && res.errMsg !== 'requestPayment:ok' && res.errMsg !== 'requestPayment:fail cancel') {
+        if (
+          res &&
+          res.errMsg !== 'requestPayment:ok' &&
+          res.errMsg !== 'requestPayment:fail cancel'
+        ) {
           console.warn('Payment completed with unexpected status:', res)
         }
       },

@@ -34,13 +34,10 @@ async function getDeviceKey(): Promise<CryptoKey> {
   const encoder = new TextEncoder()
   const keyBuffer = encoder.encode(keyString.padEnd(32, '0').slice(0, 32))
 
-  return await crypto.subtle.importKey(
-    'raw',
-    keyBuffer,
-    { name: 'AES-GCM' },
-    false,
-    ['encrypt', 'decrypt']
-  )
+  return await crypto.subtle.importKey('raw', keyBuffer, { name: 'AES-GCM' }, false, [
+    'encrypt',
+    'decrypt',
+  ])
 }
 
 /**
@@ -57,11 +54,7 @@ export async function encrypt(text: string): Promise<string> {
     const iv = crypto.getRandomValues(new Uint8Array(12))
 
     // 使用 AES-GCM 加密
-    const encrypted = await crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv },
-      key,
-      data
-    )
+    const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data)
 
     // 合并 IV 和加密数据
     const combined = new Uint8Array(iv.length + encrypted.byteLength)
@@ -90,11 +83,7 @@ export async function decrypt(encoded: string): Promise<string> {
     const encrypted = combined.slice(12)
 
     // 使用 AES-GCM 解密
-    const decrypted = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv },
-      key,
-      encrypted
-    )
+    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, encrypted)
 
     const decoder = new TextDecoder()
     return decoder.decode(decrypted)
@@ -125,11 +114,7 @@ export async function hmacSha256(data: string, secret: string): Promise<string> 
   )
 
   // 生成签名
-  const signature = await crypto.subtle.sign(
-    'HMAC',
-    key,
-    dataBuffer
-  )
+  const signature = await crypto.subtle.sign('HMAC', key, dataBuffer)
 
   // 转换为十六进制字符串
   const hashArray = Array.from(new Uint8Array(signature))
@@ -137,4 +122,3 @@ export async function hmacSha256(data: string, secret: string): Promise<string> 
 
   return hashHex
 }
-

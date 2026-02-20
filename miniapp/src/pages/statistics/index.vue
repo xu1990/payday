@@ -72,13 +72,44 @@ onMounted(load)
 </template>
 
 <style scoped>
-.page { padding: 24rpx; min-height: 100vh; }
-.head { margin-bottom: 24rpx; display: flex; justify-content: space-between; align-items: flex-start; }
-.title { font-size: 36rpx; font-weight: 600; display: block; }
-.tip { display: block; margin-top: 8rpx; color: #666; font-size: 26rpx; }
-.btn-link { padding: 0; margin-top: 8rpx; background: none; border: none; color: #07c160; font-size: 26rpx; }
-.loading, .err { padding: 40rpx; text-align: center; color: #666; }
-.err { color: #e64340; }
+.page {
+  padding: 24rpx;
+  min-height: 100vh;
+}
+.head {
+  margin-bottom: 24rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.title {
+  font-size: 36rpx;
+  font-weight: 600;
+  display: block;
+}
+.tip {
+  display: block;
+  margin-top: 8rpx;
+  color: #666;
+  font-size: 26rpx;
+}
+.btn-link {
+  padding: 0;
+  margin-top: 8rpx;
+  background: none;
+  border: none;
+  color: #07c160;
+  font-size: 26rpx;
+}
+.loading,
+.err {
+  padding: 40rpx;
+  text-align: center;
+  color: #666;
+}
+.err {
+  color: #e64340;
+}
 .summary-card {
   background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
   border-radius: 16rpx;
@@ -86,13 +117,42 @@ onMounted(load)
   color: #fff;
   margin-bottom: 32rpx;
 }
-.summary-label { font-size: 26rpx; opacity: 0.9; display: block; }
-.summary-amount { font-size: 48rpx; font-weight: 700; display: block; margin-top: 8rpx; }
-.summary-meta { font-size: 24rpx; opacity: 0.85; display: block; margin-top: 8rpx; }
-.trend-section { margin-top: 24rpx; }
-.section-title { font-size: 30rpx; font-weight: 600; display: block; margin-bottom: 16rpx; }
-.empty { padding: 24rpx; color: #999; font-size: 28rpx; }
-.trend-list { display: flex; flex-direction: column; gap: 16rpx; }
+.summary-label {
+  font-size: 26rpx;
+  opacity: 0.9;
+  display: block;
+}
+.summary-amount {
+  font-size: 48rpx;
+  font-weight: 700;
+  display: block;
+  margin-top: 8rpx;
+}
+.summary-meta {
+  font-size: 24rpx;
+  opacity: 0.85;
+  display: block;
+  margin-top: 8rpx;
+}
+.trend-section {
+  margin-top: 24rpx;
+}
+.section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 16rpx;
+}
+.empty {
+  padding: 24rpx;
+  color: #999;
+  font-size: 28rpx;
+}
+.trend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
 .trend-item {
   background: #f8f8f8;
   border-radius: 12rpx;
@@ -101,7 +161,17 @@ onMounted(load)
   align-items: center;
   justify-content: space-between;
 }
-.trend-month { font-size: 28rpx; color: #333; }
-.trend-amount { font-weight: 600; font-size: 30rpx; color: #07c160; }
-.trend-count { font-size: 24rpx; color: #999; }
+.trend-month {
+  font-size: 28rpx;
+  color: #333;
+}
+.trend-amount {
+  font-weight: 600;
+  font-size: 30rpx;
+  color: #07c160;
+}
+.trend-count {
+  font-size: 24rpx;
+  color: #999;
+}
 </style>

@@ -17,7 +17,11 @@ const USER_ID_KEY = 'payday_user_id'
 /**
  * 保存 Token 到本地存储
  */
-export async function saveToken(token: string, refreshToken?: string, userId?: string): Promise<void> {
+export async function saveToken(
+  token: string,
+  refreshToken?: string,
+  userId?: string
+): Promise<void> {
   try {
     // 直接存储 token（小程序环境有存储隔离）
     uni.setStorageSync(TOKEN_KEY, token)
@@ -37,19 +41,19 @@ export async function saveToken(token: string, refreshToken?: string, userId?: s
       uni.showModal({
         title: '存储失败',
         content: '存储空间不足，请清理缓存后重试',
-        showCancel: false
+        showCancel: false,
       })
     } else if (errorMsg.includes('access') || errorMsg.includes('permission')) {
       uni.showModal({
         title: '存储失败',
         content: '存储权限被禁用，请在设置中允许后重试',
-        showCancel: false
+        showCancel: false,
       })
     } else {
       uni.showModal({
         title: '存储失败',
         content: '无法保存登录信息，请检查设置',
-        showCancel: false
+        showCancel: false,
       })
     }
 

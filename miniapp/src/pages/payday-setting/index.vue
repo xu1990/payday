@@ -55,7 +55,13 @@ async function loadList() {
 function openAdd() {
   formMode.value = 'add'
   editId.value = null
-  form.value = { job_name: '', payday: 15, calendar_type: 'solar', estimated_salaryYuan: '', is_active: 1 }
+  form.value = {
+    job_name: '',
+    payday: 15,
+    calendar_type: 'solar',
+    estimated_salaryYuan: '',
+    is_active: 1,
+  }
   showForm.value = true
 }
 
@@ -108,7 +114,7 @@ function doDelete(item: PaydayConfig) {
   uni.showModal({
     title: '确认删除',
     content: `删除「${item.job_name}」的发薪日配置？`,
-    success: async (res) => {
+    success: async res => {
       if (!res.confirm) return
       try {
         await deletePayday(item.id)
@@ -122,7 +128,7 @@ function doDelete(item: PaydayConfig) {
 }
 
 function calendarLabel(v: string) {
-  return calendarOptions.find((o) => o.value === v)?.label ?? v
+  return calendarOptions.find(o => o.value === v)?.label ?? v
 }
 
 onMounted(() => {
@@ -145,8 +151,12 @@ onMounted(() => {
       <view v-for="item in list" :key="item.id" class="card">
         <view class="card-main">
           <text class="job-name">{{ item.job_name }}</text>
-          <text class="meta">每月 {{ item.payday }} 日（{{ calendarLabel(item.calendar_type) }}）</text>
-          <text v-if="item.estimated_salary != null" class="salary">预估 {{ (item.estimated_salary / 100).toFixed(0) }} 元</text>
+          <text class="meta"
+            >每月 {{ item.payday }} 日（{{ calendarLabel(item.calendar_type) }}）</text
+          >
+          <text v-if="item.estimated_salary != null" class="salary"
+            >预估 {{ (item.estimated_salary / 100).toFixed(0) }} 元</text
+          >
         </view>
         <view class="card-actions">
           <button class="btn-sm" @click="openEdit(item)">编辑</button>
@@ -165,19 +175,37 @@ onMounted(() => {
         </view>
         <view class="form-item">
           <text class="label">发薪日（每月几日）</text>
-          <picker :value="form.payday - 1" :range="paydayOptions" range-key="label" @change="(e: any) => (form.payday = paydayOptions[e.detail.value].value)">
+          <picker
+            :value="form.payday - 1"
+            :range="paydayOptions"
+            range-key="label"
+            @change="(e: any) => (form.payday = paydayOptions[e.detail.value].value)"
+          >
             <view class="picker">{{ form.payday }} 日</view>
           </picker>
         </view>
         <view class="form-item">
           <text class="label">历法</text>
-          <picker :value="form.calendar_type === 'lunar' ? 1 : 0" :range="calendarOptions" range-key="label" @change="(e: any) => (form.calendar_type = calendarOptions[e.detail.value].value as 'solar'|'lunar')">
+          <picker
+            :value="form.calendar_type === 'lunar' ? 1 : 0"
+            :range="calendarOptions"
+            range-key="label"
+            @change="
+              (e: any) =>
+                (form.calendar_type = calendarOptions[e.detail.value].value as 'solar' | 'lunar')
+            "
+          >
             <view class="picker">{{ calendarLabel(form.calendar_type) }}</view>
           </picker>
         </view>
         <view class="form-item">
           <text class="label">预估工资（元，选填）</text>
-          <input v-model.number="form.estimated_salaryYuan" type="digit" class="input" placeholder="不填则不显示" />
+          <input
+            v-model.number="form.estimated_salaryYuan"
+            type="digit"
+            class="input"
+            placeholder="不填则不显示"
+          />
         </view>
         <view class="form-actions">
           <button class="btn-cancel" @click="closeForm">取消</button>
@@ -189,29 +217,143 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.page { padding: 24rpx; min-height: 100vh; }
-.head { margin-bottom: 24rpx; }
-.title { font-size: 36rpx; font-weight: 600; display: block; }
-.tip { display: block; margin-top: 8rpx; color: #666; font-size: 26rpx; }
-.btn-add { margin-top: 20rpx; background: #07c160; color: #fff; border: none; border-radius: 8rpx; }
-.loading, .err, .empty { padding: 40rpx; text-align: center; color: #666; }
-.list { display: flex; flex-direction: column; gap: 20rpx; }
-.card { background: #f8f8f8; border-radius: 12rpx; padding: 24rpx; display: flex; justify-content: space-between; align-items: center; }
-.card-main { flex: 1; }
-.job-name { font-weight: 600; font-size: 30rpx; display: block; }
-.meta { display: block; margin-top: 8rpx; color: #666; font-size: 26rpx; }
-.salary { display: block; margin-top: 4rpx; color: #07c160; font-size: 26rpx; }
-.card-actions { display: flex; gap: 16rpx; }
-.btn-sm { padding: 8rpx 20rpx; font-size: 24rpx; border: 1rpx solid #ccc; border-radius: 8rpx; background: #fff; }
-.btn-sm.danger { border-color: #e0e0e0; color: #e64340; }
-.mask { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; z-index: 100; }
-.form-panel { width: 100%; background: #fff; border-radius: 24rpx 24rpx 0 0; padding: 32rpx; max-height: 80vh; overflow: auto; }
-.form-title { font-size: 32rpx; font-weight: 600; display: block; margin-bottom: 24rpx; }
-.form-item { margin-bottom: 24rpx; }
-.label { display: block; margin-bottom: 8rpx; color: #666; font-size: 26rpx; }
-.input, .picker { border: 1rpx solid #e0e0e0; border-radius: 8rpx; padding: 20rpx; font-size: 28rpx; }
-.picker { background: #fff; }
-.form-actions { display: flex; gap: 20rpx; margin-top: 32rpx; }
-.btn-cancel { flex: 1; border: 1rpx solid #ccc; border-radius: 8rpx; background: #fff; }
-.btn-ok { flex: 1; background: #07c160; color: #fff; border: none; border-radius: 8rpx; }
+.page {
+  padding: 24rpx;
+  min-height: 100vh;
+}
+.head {
+  margin-bottom: 24rpx;
+}
+.title {
+  font-size: 36rpx;
+  font-weight: 600;
+  display: block;
+}
+.tip {
+  display: block;
+  margin-top: 8rpx;
+  color: #666;
+  font-size: 26rpx;
+}
+.btn-add {
+  margin-top: 20rpx;
+  background: #07c160;
+  color: #fff;
+  border: none;
+  border-radius: 8rpx;
+}
+.loading,
+.err,
+.empty {
+  padding: 40rpx;
+  text-align: center;
+  color: #666;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+.card {
+  background: #f8f8f8;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.card-main {
+  flex: 1;
+}
+.job-name {
+  font-weight: 600;
+  font-size: 30rpx;
+  display: block;
+}
+.meta {
+  display: block;
+  margin-top: 8rpx;
+  color: #666;
+  font-size: 26rpx;
+}
+.salary {
+  display: block;
+  margin-top: 4rpx;
+  color: #07c160;
+  font-size: 26rpx;
+}
+.card-actions {
+  display: flex;
+  gap: 16rpx;
+}
+.btn-sm {
+  padding: 8rpx 20rpx;
+  font-size: 24rpx;
+  border: 1rpx solid #ccc;
+  border-radius: 8rpx;
+  background: #fff;
+}
+.btn-sm.danger {
+  border-color: #e0e0e0;
+  color: #e64340;
+}
+.mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  z-index: 100;
+}
+.form-panel {
+  width: 100%;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  padding: 32rpx;
+  max-height: 80vh;
+  overflow: auto;
+}
+.form-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 24rpx;
+}
+.form-item {
+  margin-bottom: 24rpx;
+}
+.label {
+  display: block;
+  margin-bottom: 8rpx;
+  color: #666;
+  font-size: 26rpx;
+}
+.input,
+.picker {
+  border: 1rpx solid #e0e0e0;
+  border-radius: 8rpx;
+  padding: 20rpx;
+  font-size: 28rpx;
+}
+.picker {
+  background: #fff;
+}
+.form-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 32rpx;
+}
+.btn-cancel {
+  flex: 1;
+  border: 1rpx solid #ccc;
+  border-radius: 8rpx;
+  background: #fff;
+}
+.btn-ok {
+  flex: 1;
+  background: #07c160;
+  color: #fff;
+  border: none;
+  border-radius: 8rpx;
+}
 </style>

@@ -9,7 +9,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom', // 使用 happy-dom 而不是 jsdom（更适合小程序环境）
-    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', 'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    include: [
+      'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+    ],
     exclude: ['node_modules', 'dist', '.idea', '.git', '.cache', '**/*.vue'],
     coverage: {
       provider: 'v8',

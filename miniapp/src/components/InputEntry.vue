@@ -11,21 +11,14 @@ function handleClick() {
 
 <template>
   <view class="input-box">
-    <input
-      v-model="name"
-      placeholder="What's your name?"
-    >
+    <input v-model="name" placeholder="What's your name?" />
   </view>
   <view>
-    <button :disabled="!name" @click="handleClick">
-      Hello
-    </button>
+    <button :disabled="!name" @click="handleClick">Hello</button>
   </view>
 
   <uni-popup ref="popup" type="bottom">
-    <text class="popup_label">
-      Hello{{ `  ${name}` }} 👏
-    </text>
+    <text class="popup_label"> Hello{{ `  ${name}` }} 👏 </text>
   </uni-popup>
 </template>
 

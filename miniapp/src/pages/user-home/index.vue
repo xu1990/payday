@@ -55,7 +55,12 @@ async function loadProfileData() {
       url: `/api/v1/user/profile-data/${targetUserId.value}`,
       method: 'GET',
     })
-    const data = res.data as { posts: string[]; checkins: string[]; follower_count: number; following_count: number }
+    const data = res.data as {
+      posts: string[]
+      checkins: string[]
+      follower_count: number
+      following_count: number
+    }
 
     followerCount.value = data.follower_count
     followingCount.value = data.following_count
@@ -187,11 +192,7 @@ function goToPost(postId: string) {
 
       <!-- 标签切换 -->
       <view class="tabs">
-        <view
-          class="tab"
-          :class="{ active: currentTab === 'posts' }"
-          @tap="switchTab('posts')"
-        >
+        <view class="tab" :class="{ active: currentTab === 'posts' }" @tap="switchTab('posts')">
           帖子 {{ posts.length > 0 ? `(${posts.length})` : '' }}
         </view>
         <view

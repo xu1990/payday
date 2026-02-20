@@ -10,7 +10,7 @@ async function loadAgreement() {
     const res: any = await request({
       url: '/api/v1/config/public/agreements',
       method: 'GET',
-      noAuth: true // 公开接口，无需鉴权
+      noAuth: true, // 公开接口，无需鉴权
     })
     // request.ts 自动解包 details 字段
     console.log('[user-agreement] full response:', res)
@@ -31,7 +31,7 @@ onMounted(loadAgreement)
 </script>
 
 <template>
-  <view class="legal-page" v-if="!loading">
+  <view v-if="!loading" class="legal-page">
     <view class="container">
       <view class="header">
         <text class="title">用户协议</text>

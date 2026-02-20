@@ -5,7 +5,7 @@
     </view>
 
     <!-- Tab切换 -->
-    <view class="tabs" v-if="!userId">
+    <view v-if="!userId" class="tabs">
       <view
         class="tab-item"
         :class="{ active: activeTab === 'followers' }"
@@ -25,13 +25,8 @@
     </view>
 
     <!-- 用户列表 -->
-    <view class="users-list" v-if="users.length > 0">
-      <view
-        v-for="user in users"
-        :key="user.id"
-        class="user-card"
-        @click="viewUser(user.id)"
-      >
+    <view v-if="users.length > 0" class="users-list">
+      <view v-for="user in users" :key="user.id" class="user-card" @click="viewUser(user.id)">
         <image
           class="user-avatar"
           :src="user.avatar || '/static/default-avatar.png'"
@@ -39,7 +34,7 @@
         />
         <view class="user-info">
           <text class="user-name">{{ user.anonymous_name }}</text>
-          <text class="user-bio" v-if="user.bio">{{ user.bio }}</text>
+          <text v-if="user.bio" class="user-bio">{{ user.bio }}</text>
           <view class="user-stats">
             <text class="stat-item">粉丝：{{ user.follower_count }}</text>
             <text class="stat-item">关注：{{ user.following_count }}</text>
@@ -47,22 +42,22 @@
           </view>
         </view>
         <button
+          v-if="userId && activeTab === 'following'"
           class="follow-btn"
           :class="{ following: user.isFollowing }"
           @click.stop="toggleFollow(user)"
-          v-if="userId && activeTab === 'following'"
         >
           <text>{{ user.isFollowing ? '已关注' : '关注' }}</text>
         </button>
       </view>
     </view>
 
-    <view class="empty" v-else-if="!loading">
+    <view v-else-if="!loading" class="empty">
       <text class="empty-icon">👥</text>
       <text class="empty-text">暂无{{ activeTab === 'followers' ? '粉丝' : '关注' }}</text>
     </view>
 
-    <view class="loading" v-if="loading">
+    <view v-if="loading" class="loading">
       <text>加载中...</text>
     </view>
   </view>
@@ -77,7 +72,7 @@ import {
   getUserFollowing,
   followUser,
   unfollowUser,
-  type UserItem
+  type UserItem,
 } from '@/api/follow'
 
 const activeTab = ref<'followers' | 'following'>('followers')

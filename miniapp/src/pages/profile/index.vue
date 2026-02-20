@@ -38,10 +38,7 @@ async function load() {
   }
 
   try {
-    const [records, paydays] = await Promise.all([
-      listSalary({ limit: 20 }),
-      listPayday(),
-    ])
+    const [records, paydays] = await Promise.all([listSalary({ limit: 20 }), listPayday()])
     recordList.value = Array.isArray(records) ? records : []
     paydayList.value = Array.isArray(paydays) ? paydays : []
   } catch (e: any) {
@@ -60,7 +57,7 @@ async function load() {
 }
 
 function jobName(configId: string) {
-  return paydayList.value.find((c) => c.id === configId)?.job_name ?? '—'
+  return paydayList.value.find(c => c.id === configId)?.job_name ?? '—'
 }
 
 function goPaydaySetting() {
@@ -123,7 +120,9 @@ onMounted(load)
     <view class="entry-row entry-single">
       <view class="entry-item" @click="goNotification">
         <text class="entry-label">消息</text>
-        <text v-if="notificationUnread > 0" class="badge">{{ notificationUnread > 99 ? '99+' : notificationUnread }}</text>
+        <text v-if="notificationUnread > 0" class="badge">{{
+          notificationUnread > 99 ? '99+' : notificationUnread
+        }}</text>
       </view>
     </view>
 
@@ -181,9 +180,20 @@ onMounted(load)
   color: #fff;
 }
 
-.head { margin-bottom: 24rpx; }
-.title { font-size: 36rpx; font-weight: 600; display: block; }
-.tip { display: block; margin-top: 8rpx; color: #666; font-size: 26rpx; }
+.head {
+  margin-bottom: 24rpx;
+}
+.title {
+  font-size: 36rpx;
+  font-weight: 600;
+  display: block;
+}
+.tip {
+  display: block;
+  margin-top: 8rpx;
+  color: #666;
+  font-size: 26rpx;
+}
 
 .summary-row {
   display: flex;
@@ -240,7 +250,9 @@ onMounted(load)
   font-weight: 500;
 }
 
-.entry-single { margin-top: 0; }
+.entry-single {
+  margin-top: 0;
+}
 
 .entry-item {
   flex: 1;
@@ -254,7 +266,10 @@ onMounted(load)
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 }
 
-.entry-label { font-size: 28rpx; color: #333; }
+.entry-label {
+  font-size: 28rpx;
+  color: #333;
+}
 
 .badge {
   background: #ff4d4f;
@@ -287,14 +302,20 @@ onMounted(load)
   margin-bottom: 16rpx;
 }
 
-.loading, .err, .empty {
+.loading,
+.err,
+.empty {
   padding: 40rpx 0;
   text-align: center;
   color: #999;
   font-size: 26rpx;
 }
 
-.list { display: flex; flex-direction: column; gap: 16rpx; }
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
 
 .card {
   padding: 20rpx;

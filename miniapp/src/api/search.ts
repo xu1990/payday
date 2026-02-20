@@ -54,10 +54,12 @@ export function searchPosts(params?: SearchParams) {
     if (params.user_id) queryParts.push(`user_id=${encodeURIComponent(params.user_id)}`)
     if (params.industry) queryParts.push(`industry=${encodeURIComponent(params.industry)}`)
     if (params.city) queryParts.push(`city=${encodeURIComponent(params.city)}`)
-    if (params.salary_range) queryParts.push(`salary_range=${encodeURIComponent(params.salary_range)}`)
+    if (params.salary_range)
+      queryParts.push(`salary_range=${encodeURIComponent(params.salary_range)}`)
     if (params.sort) queryParts.push(`sort=${encodeURIComponent(params.sort)}`)
     if (params.limit != null) queryParts.push(`limit=${encodeURIComponent(String(params.limit))}`)
-    if (params.offset != null) queryParts.push(`offset=${encodeURIComponent(String(params.offset))}`)
+    if (params.offset != null)
+      queryParts.push(`offset=${encodeURIComponent(String(params.offset))}`)
   }
   const qs = queryParts.join('&')
   const url = qs ? `${PREFIX}/search?${qs}` : PREFIX

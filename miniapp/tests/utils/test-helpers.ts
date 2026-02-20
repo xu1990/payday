@@ -46,10 +46,10 @@ export function mockUniApi() {
 export function createMockStore<T extends Record<string, any>>(defaults: T) {
   return {
     ...defaults,
-    $reset: vi.fn(function() {
+    $reset: vi.fn(function () {
       Object.assign(this, defaults)
     }),
-    $patch: vi.fn(function(partial: Partial<T>) {
+    $patch: vi.fn(function (partial: Partial<T>) {
       Object.assign(this, partial)
     }),
   }

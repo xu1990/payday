@@ -20,10 +20,7 @@ export interface CommentItem {
 }
 
 /** 帖子下评论列表（根评论分页，带二级回复） */
-export function getCommentList(
-  postId: string,
-  params?: { limit?: number; offset?: number }
-) {
+export function getCommentList(postId: string, params?: { limit?: number; offset?: number }) {
   const { limit = 20, offset = 0 } = params ?? {}
   const q = `limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`
   return request<CommentItem[]>({

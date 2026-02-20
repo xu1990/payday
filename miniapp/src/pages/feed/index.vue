@@ -109,7 +109,7 @@ onMounted(() => {
           <text class="stat">💬 {{ post.comment_count || 0 }}</text>
         </view>
       </view>
-      
+
       <view v-if="hasMore" class="load-more" @tap="loadMore">
         <text v-if="loading">加载中...</text>
         <text v-else>加载更多</text>
@@ -126,22 +126,88 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.feed-page { min-height: 100vh; background-color: #f5f5f5; }
-.header { display: flex; align-items: center; justify-content: center; height: 44px; background-color: #fff; }
-.title { font-size: 17px; font-weight: 600; }
-.empty { display: flex; flex-direction: column; align-items: center; padding: 120rpx 60rpx; }
-.empty text { color: #999; margin-bottom: 30rpx; }
-.empty-action { padding: 16rpx 40rpx; background-color: #07c160; border-radius: 40rpx; }
-.empty-action text { color: #fff; }
-.post-list { padding-bottom: 20rpx; }
-.post-item { background-color: #fff; margin-bottom: 20rpx; padding: 30rpx; }
-.post-header { display: flex; justify-content: space-between; margin-bottom: 20rpx; }
-.username { font-size: 16px; font-weight: 600; }
-.time { font-size: 12px; color: #999; }
-.content-text { font-size: 15px; line-height: 1.6; }
-.post-stats { display: flex; gap: 40rpx; margin-top: 20rpx; }
-.stat { font-size: 13px; color: #999; }
-.load-more { padding: 30rpx; text-align: center; color: #666; }
-.no-more { padding: 30rpx; text-align: center; color: #999; }
-.loading-wrapper { display: flex; align-items: center; justify-content: center; padding: 120rpx; color: #999; }
+.feed-page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  background-color: #fff;
+}
+.title {
+  font-size: 17px;
+  font-weight: 600;
+}
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 60rpx;
+}
+.empty text {
+  color: #999;
+  margin-bottom: 30rpx;
+}
+.empty-action {
+  padding: 16rpx 40rpx;
+  background-color: #07c160;
+  border-radius: 40rpx;
+}
+.empty-action text {
+  color: #fff;
+}
+.post-list {
+  padding-bottom: 20rpx;
+}
+.post-item {
+  background-color: #fff;
+  margin-bottom: 20rpx;
+  padding: 30rpx;
+}
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+.username {
+  font-size: 16px;
+  font-weight: 600;
+}
+.time {
+  font-size: 12px;
+  color: #999;
+}
+.content-text {
+  font-size: 15px;
+  line-height: 1.6;
+}
+.post-stats {
+  display: flex;
+  gap: 40rpx;
+  margin-top: 20rpx;
+}
+.stat {
+  font-size: 13px;
+  color: #999;
+}
+.load-more {
+  padding: 30rpx;
+  text-align: center;
+  color: #666;
+}
+.no-more {
+  padding: 30rpx;
+  text-align: center;
+  color: #999;
+}
+.loading-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx;
+  color: #999;
+}
 </style>

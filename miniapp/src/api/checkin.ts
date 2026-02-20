@@ -76,7 +76,10 @@ export interface CheckinListRes {
 }
 
 /** 获取打卡列表（分页） */
-export function getCheckinList(params: { limit?: number; offset?: number }): Promise<CheckinListRes> {
+export function getCheckinList(params: {
+  limit?: number
+  offset?: number
+}): Promise<CheckinListRes> {
   const { limit = 30, offset = 0 } = params
   return request<CheckinListRes>({
     url: `${PREFIX}/list?limit=${limit}&offset=${offset}`,

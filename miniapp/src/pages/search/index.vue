@@ -3,8 +3,8 @@
     <view class="search-header">
       <view class="search-bar">
         <input
-          class="search-input"
           v-model="keyword"
+          class="search-input"
           placeholder="搜索帖子..."
           @confirm="onSearch"
         />
@@ -15,7 +15,7 @@
     </view>
 
     <!-- 标签筛选 -->
-    <view class="tags-section" v-if="searchHistory.length > 0 || commonTags.length > 0">
+    <view v-if="searchHistory.length > 0 || commonTags.length > 0" class="tags-section">
       <view class="section-title">热门标签</view>
       <view class="tags-list">
         <view
@@ -31,15 +31,11 @@
     </view>
 
     <!-- 搜索结果 -->
-    <view class="results-section" v-if="hasSearched">
+    <view v-if="hasSearched" class="results-section">
       <view class="results-header">
         <text class="results-count">找到 {{ results.length }} 个结果</text>
         <view class="sort-tabs">
-          <view
-            class="sort-tab"
-            :class="{ active: sortBy === 'hot' }"
-            @click="sortBy = 'hot'"
-          >
+          <view class="sort-tab" :class="{ active: sortBy === 'hot' }" @click="sortBy = 'hot'">
             <text>热门</text>
           </view>
           <view
@@ -53,25 +49,20 @@
       </view>
 
       <view class="posts-list">
-        <view
-          v-for="post in results"
-          :key="post.id"
-          class="post-card"
-          @click="viewPost(post.id)"
-        >
+        <view v-for="post in results" :key="post.id" class="post-card" @click="viewPost(post.id)">
           <view class="post-header">
             <view class="user-info">
               <text class="user-name">{{ post.anonymous_name }}</text>
               <text class="post-time">{{ formatTime(post.created_at) }}</text>
             </view>
-            <view class="post-tag" v-if="post.type">
+            <view v-if="post.type" class="post-tag">
               <text>{{ getTypeText(post.type) }}</text>
             </view>
           </view>
           <view class="post-content">
             <text class="content-text">{{ post.content }}</text>
           </view>
-          <view class="post-images" v-if="post.images && post.images.length > 0">
+          <view v-if="post.images && post.images.length > 0" class="post-images">
             <image
               v-for="(img, index) in post.images.slice(0, 3)"
               :key="index"
@@ -86,12 +77,8 @@
               <text class="stat-item">❤️ {{ post.like_count }}</text>
               <text class="stat-item">💬 {{ post.comment_count }}</text>
             </view>
-            <view class="post-tags" v-if="post.tags && post.tags.length > 0">
-              <text
-                v-for="(tag, index) in post.tags.slice(0, 3)"
-                :key="index"
-                class="footer-tag"
-              >
+            <view v-if="post.tags && post.tags.length > 0" class="post-tags">
+              <text v-for="(tag, index) in post.tags.slice(0, 3)" :key="index" class="footer-tag">
                 #{{ tag }}
               </text>
               <text v-if="post.tags.length > 3" class="more-tags">
@@ -103,17 +90,17 @@
       </view>
 
       <!-- 加载更多 -->
-      <view class="load-more" v-if="hasMore && !loading" @click="loadMore">
+      <view v-if="hasMore && !loading" class="load-more" @click="loadMore">
         <text>加载更多</text>
       </view>
 
       <!-- 空状态 -->
-      <view class="empty" v-if="!hasSearched && !loading">
+      <view v-if="!hasSearched && !loading" class="empty">
         <text class="empty-icon">🔍</text>
         <text class="empty-text">搜索帖子内容、标签或用户</text>
       </view>
 
-      <view class="loading" v-if="loading">
+      <view v-if="loading" class="loading">
         <text>加载中...</text>
       </view>
     </view>
@@ -166,7 +153,7 @@ const performSearch = async () => {
       keyword: keyword.value,
       tags: selectedTags.value.length > 0 ? selectedTags.value : undefined,
       sort: sortBy.value,
-      limit: limit
+      limit: limit,
     })
     results.value = data.items
     hasSearched.value = true
@@ -219,7 +206,7 @@ const getTypeText = (type: string) => {
   const typeMap: Record<string, string> = {
     complaint: '吐槽',
     sharing: '分享',
-    question: '提问'
+    question: '提问',
   }
   return typeMap[type] || '帖子'
 }

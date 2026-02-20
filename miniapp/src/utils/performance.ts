@@ -97,15 +97,12 @@ function reportMetric(metric: PerformanceMetric) {
  * 测量 API 请求时间
  * 包装请求函数并自动记录执行时间
  */
-export function measureRequest<T extends (...args: any[]) => any>(
-  name: string,
-  requestFn: T
-): T {
+export function measureRequest<T extends (...args: any[]) => any>(name: string, requestFn: T): T {
   return (...args: Parameters<T>) => {
     const start = Date.now()
 
     return requestFn(...args)
-      .then((result) => {
+      .then(result => {
         const duration = Date.now() - start
         reportMetric({
           name: `api_request_${name}`,
@@ -116,7 +113,7 @@ export function measureRequest<T extends (...args: any[]) => any>(
 
         return result
       })
-      .catch((error) => {
+      .catch(error => {
         const duration = Date.now() - start
         reportMetric({
           name: `api_request_${name}_failed`,
@@ -143,7 +140,7 @@ export function measurePageRender(pageName: string) {
   try {
     const perfData = performance.getEntries()
     const navigationEntry = perfData.find(
-      (entry) => entry.entryType === 'navigation'
+      entry => entry.entryType === 'navigation'
     ) as PerformanceEntry & { duration?: number }
 
     if (navigationEntry && navigationEntry.duration) {
@@ -204,9 +201,9 @@ export function getWeChatPerformanceData() {
  * 获取系统信息（用于性能分析）
  */
 export function getSystemInfo() {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     uni.getSystemInfo({
-      success: (res) => {
+      success: res => {
         resolve({
           brand: res.brand,
           model: res.model,
@@ -236,7 +233,7 @@ export function getMemoryInfo() {
   // #endif
 
   // #ifdef MP-WEIXIN
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     if (typeof wx === 'undefined' || !wx.getPerformance) {
       resolve(null)
       return

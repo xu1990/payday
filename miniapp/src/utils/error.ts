@@ -72,7 +72,7 @@ export function getApiErrorMessage(
 
   // 否则使用默认错误提取
   return getErrorMessage(error, defaultMessage)
-};
+}
 
 /**
  * 常见的HTTP状态码消息映射

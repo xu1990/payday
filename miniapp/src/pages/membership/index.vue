@@ -6,13 +6,13 @@
     </view>
 
     <!-- 激活的会员 -->
-    <view class="active-card" v-if="activeMembership && activeMembership.id">
+    <view v-if="activeMembership && activeMembership.id" class="active-card">
       <view class="active-info">
         <text class="active-title">当前会员：{{ activeMembership.name || '未知套餐' }}</text>
-        <text class="active-date" v-if="activeMembership.end_date">
+        <text v-if="activeMembership.end_date" class="active-date">
           有效期至：{{ formatDate(activeMembership.end_date) }}
         </text>
-        <text class="active-days" v-if="activeMembership.days_remaining !== undefined">
+        <text v-if="activeMembership.days_remaining !== undefined" class="active-days">
           剩余 {{ activeMembership.days_remaining }} 天
         </text>
       </view>
@@ -29,7 +29,7 @@
           :class="{ recommended: pkg.name.includes('年') }"
           @click="selectPackage(pkg)"
         >
-          <view class="package-badge" v-if="pkg.name.includes('年')">
+          <view v-if="pkg.name.includes('年')" class="package-badge">
             <text>推荐</text>
           </view>
           <text class="package-name">{{ pkg.name }}</text>
@@ -38,7 +38,7 @@
             <text class="price-value">{{ (pkg.price / 100).toFixed(2) }}</text>
           </view>
           <text class="package-duration">{{ pkg.duration_days }}天</text>
-          <view class="package-desc" v-if="pkg.description">
+          <view v-if="pkg.description" class="package-desc">
             <text>{{ pkg.description }}</text>
           </view>
         </view>
@@ -68,7 +68,7 @@
       </view>
     </view>
 
-    <view class="loading" v-if="loading">
+    <view v-if="loading" class="loading">
       <text>加载中...</text>
     </view>
   </view>
@@ -81,14 +81,14 @@ import {
   getActiveMembership,
   createMembershipOrder,
   type MembershipItem,
-  type ActiveMembership
+  type ActiveMembership,
 } from '@/api/membership'
 import { createPayment, requestWeChatPayment, verifyPayment } from '@/api/payment'
 
 const packages = ref<MembershipItem[]>([])
 const activeMembership = ref<ActiveMembership | null>(null)
 const loading = ref(true)
-const submitting = ref(false)  // 防止重复提交
+const submitting = ref(false) // 防止重复提交
 
 // 生成幂等性key - 使用加密安全的随机数生成
 // SECURITY: 支付幂等性密钥必须使用加密安全随机数，防止密钥冲突
@@ -108,7 +108,10 @@ const generateIdempotencyKey = () => {
 }
 
 // 支付验证重试逻辑 - 指数退避
-async function verifyPaymentWithRetry(orderId: string, maxRetries = 3): Promise<{ success: boolean; message?: string }> {
+async function verifyPaymentWithRetry(
+  orderId: string,
+  maxRetries = 3
+): Promise<{ success: boolean; message?: string }> {
   for (let i = 0; i < maxRetries; i++) {
     const verifyRes = await verifyPayment(orderId)
     if (verifyRes.success) {
@@ -127,10 +130,7 @@ async function verifyPaymentWithRetry(orderId: string, maxRetries = 3): Promise<
 
 onMounted(async () => {
   try {
-    const [pkgsRes, active] = await Promise.all([
-      getMemberships(),
-      getActiveMembership()
-    ])
+    const [pkgsRes, active] = await Promise.all([getMemberships(), getActiveMembership()])
     packages.value = pkgsRes.items.filter(pkg => pkg.is_active)
     // 检查active是否有有效的id，再赋值
     if (active && typeof active === 'object' && 'id' in active && active.id) {
@@ -158,7 +158,7 @@ const selectPackage = async (pkg: MembershipItem) => {
   uni.showModal({
     title: '确认购买',
     content: `确认购买 ${pkg.name}？\n价格：¥${(pkg.price / 100).toFixed(2)}`,
-    success: async (res) => {
+    success: async res => {
       if (res.confirm) {
         submitting.value = true
         const idempotencyKey = generateIdempotencyKey()
@@ -169,7 +169,7 @@ const selectPackage = async (pkg: MembershipItem) => {
             membership_id: pkg.id,
             amount: pkg.price,
             payment_method: 'wechat',
-            idempotency_key: idempotencyKey
+            idempotency_key: idempotencyKey,
           })
 
           // 安全地提取订单ID
@@ -187,7 +187,12 @@ const selectPackage = async (pkg: MembershipItem) => {
           }
 
           // 验证支付参数
-          if (!payRes.data.timeStamp || !payRes.data.nonceStr || !payRes.data.package || !payRes.data.paySign) {
+          if (
+            !payRes.data.timeStamp ||
+            !payRes.data.nonceStr ||
+            !payRes.data.package ||
+            !payRes.data.paySign
+          ) {
             uni.showToast({ title: '支付参数异常', icon: 'none' })
             return
           }
@@ -220,7 +225,6 @@ const selectPackage = async (pkg: MembershipItem) => {
                 console.error('Failed to refresh membership:', e)
               }
             }, 1000)
-
           } catch (paymentError: any) {
             if (paymentError.errMsg && paymentError.errMsg.includes('cancel')) {
               uni.showToast({ title: '已取消支付', icon: 'none' })
@@ -235,7 +239,7 @@ const selectPackage = async (pkg: MembershipItem) => {
           submitting.value = false
         }
       }
-    }
+    },
   })
 }
 </script>

@@ -42,8 +42,8 @@
         <text class="setting-label">公开个人资料</text>
         <switch
           :checked="settings.privacy_profile === 1"
-          @change="handlePrivacyProfileChange"
           color="#5470c6"
+          @change="handlePrivacyProfileChange"
         />
       </view>
 
@@ -51,8 +51,8 @@
         <text class="setting-label">允许陌生人通知</text>
         <switch
           :checked="settings.allow_stranger_notice === 1"
-          @change="handleStrangerNoticeChange"
           color="#5470c6"
+          @change="handleStrangerNoticeChange"
         />
       </view>
 
@@ -60,8 +60,8 @@
         <text class="setting-label">允许评论</text>
         <switch
           :checked="settings.allow_comment === 1"
-          @change="handleCommentChange"
           color="#5470c6"
+          @change="handleCommentChange"
         />
       </view>
     </view>
@@ -114,7 +114,7 @@
       <text class="warning-text">⚠️ 注销后30天内可通过登录恢复</text>
     </view>
 
-    <view class="loading" v-if="loading">
+    <view v-if="loading" class="loading">
       <text>加载中...</text>
     </view>
   </view>
@@ -132,7 +132,7 @@ const settings = ref<UserSettings>({
   theme_id: null,
   privacy_profile: 0,
   allow_stranger_notice: 1,
-  allow_comment: 1
+  allow_comment: 1,
 })
 const loading = ref(true)
 
@@ -260,7 +260,7 @@ const handleAbout = () => {
   uni.showModal({
     title: '关于薪日',
     content: '薪日 PayDay v1.0\n记录你的发薪日',
-    showCancel: false
+    showCancel: false,
   })
 }
 
@@ -269,7 +269,7 @@ const handleFeedback = () => {
     title: '意见反馈',
     editable: true,
     placeholderText: '请输入您的宝贵建议...',
-    success: async (res) => {
+    success: async res => {
       if (res.confirm && res.content) {
         try {
           uni.showLoading({ title: '提交中...' })
@@ -281,7 +281,7 @@ const handleFeedback = () => {
           uni.showToast({ title: e?.message || '提交失败', icon: 'none' })
         }
       }
-    }
+    },
   })
 }
 
@@ -340,7 +340,7 @@ async function handleDeactivate() {
       showCancel: false,
       success: () => {
         uni.reLaunch({ url: '/pages/index' })
-      }
+      },
     })
   } catch (e: any) {
     uni.showToast({ title: e?.message || '注销失败', icon: 'none' })

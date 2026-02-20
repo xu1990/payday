@@ -101,7 +101,7 @@ export function useRequest() {
 
   return {
     state,
-    request: executeRequest,  // 导出重命名后的函数
+    request: executeRequest, // 导出重命名后的函数
     cancel,
     reset,
   }

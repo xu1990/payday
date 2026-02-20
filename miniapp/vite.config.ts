@@ -8,19 +8,16 @@ import Uni from '@uni-helper/plugin-uni'
 export default defineConfig({
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
-    }
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
   },
   plugins: [
     // https://uni-helper.js.org/vite-plugin-uni-components
     Components({
       dts: true,
-      resolvers: [UniUIResolver()]
+      resolvers: [UniUIResolver()],
     }),
     // https://uni-helper.js.org/plugin-uni
     Uni(),
   ],
-  
 })
-
-

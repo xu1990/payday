@@ -12,11 +12,7 @@ export class PostService extends BaseService {
   /**
    * 获取帖子列表
    */
-  async getPosts(params: {
-    limit?: number
-    offset?: number
-    sort?: 'hot' | 'latest'
-  }) {
+  async getPosts(params: { limit?: number; offset?: number; sort?: 'hot' | 'latest' }) {
     return this.get<PostItem[]>('', params)
   }
 

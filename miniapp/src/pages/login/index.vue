@@ -10,11 +10,7 @@
 
       <!-- 登录按钮 -->
       <view class="login-section">
-        <button
-          class="login-btn"
-          :disabled="isLoading"
-          @tap="handleLogin"
-        >
+        <button class="login-btn" :disabled="isLoading" @tap="handleLogin">
           <text v-if="!isLoading">微信授权登录</text>
           <text v-else>登录中...</text>
         </button>
@@ -54,7 +50,7 @@ onMounted(async () => {
     if (authStore.isLoggedIn) {
       // 已登录，跳转到首页
       uni.reLaunch({
-        url: '/pages/index'
+        url: '/pages/index',
       })
     }
   } catch (e) {
@@ -77,7 +73,7 @@ async function handleLogin() {
 
     // 调用微信登录
     const loginRes: any = await uni.login({
-      provider: 'weixin'
+      provider: 'weixin',
     })
 
     console.log('[login] uni.login 结果:', loginRes)
@@ -133,7 +129,7 @@ async function handleLogin() {
       // 延迟跳转首页
       setTimeout(() => {
         uni.switchTab({
-          url: '/pages/index'
+          url: '/pages/index',
         })
       }, 500)
     } else {
@@ -154,7 +150,7 @@ async function handleLogin() {
  */
 function goToUserAgreement() {
   uni.navigateTo({
-    url: '/pages/user-agreement/index'
+    url: '/pages/user-agreement/index',
   })
 }
 
@@ -163,7 +159,7 @@ function goToUserAgreement() {
  */
 function goToPrivacyPolicy() {
   uni.navigateTo({
-    url: '/pages/privacy-policy/index'
+    url: '/pages/privacy-policy/index',
   })
 }
 </script>

@@ -8,7 +8,7 @@ import {
   type PostVisibility,
   INDUSTRY_OPTIONS,
   CITY_OPTIONS,
-  SALARY_RANGE_OPTIONS
+  SALARY_RANGE_OPTIONS,
 } from '@/constants/post'
 
 const typeOptions: { value: PostType; label: string }[] = [
@@ -47,11 +47,17 @@ onMounted(async () => {
 })
 
 // 计算当前选择的标签
-const salaryLabel = computed(() => salaryIndex.value >= 0 ? SALARY_RANGE_OPTIONS[salaryIndex.value] : '选填')
-const industryLabel = computed(() => industryIndex.value >= 0 ? INDUSTRY_OPTIONS[industryIndex.value] : '选填')
-const cityLabel = computed(() => cityIndex.value >= 0 ? CITY_OPTIONS[cityIndex.value] : '选填')
+const salaryLabel = computed(() =>
+  salaryIndex.value >= 0 ? SALARY_RANGE_OPTIONS[salaryIndex.value] : '选填'
+)
+const industryLabel = computed(() =>
+  industryIndex.value >= 0 ? INDUSTRY_OPTIONS[industryIndex.value] : '选填'
+)
+const cityLabel = computed(() => (cityIndex.value >= 0 ? CITY_OPTIONS[cityIndex.value] : '选填'))
 const visibilityLabel = computed(() => VISIBILITY_OPTIONS[visibilityIndex.value].label)
-const topicLabel = computed(() => topicIndex.value >= 0 ? topics.value[topicIndex.value].name : '选填')
+const topicLabel = computed(() =>
+  topicIndex.value >= 0 ? topics.value[topicIndex.value].name : '选填'
+)
 
 // 选择图片
 async function chooseImage() {
@@ -86,7 +92,7 @@ function removeImage(index: number) {
 function previewImage(index: number) {
   uni.previewImage({
     urls: images.value,
-    current: index
+    current: index,
   })
 }
 
@@ -194,23 +200,11 @@ async function submit() {
       <view class="row image-row">
         <text class="label">图片 ({{ images.length }}/9)</text>
         <view class="image-list">
-          <view
-            v-for="(img, i) in images"
-            :key="i"
-            class="image-item"
-          >
-            <image
-              :src="img"
-              mode="aspectFill"
-              @click="previewImage(i)"
-            />
+          <view v-for="(img, i) in images" :key="i" class="image-item">
+            <image :src="img" mode="aspectFill" @click="previewImage(i)" />
             <view class="delete-btn" @click="removeImage(i)">×</view>
           </view>
-          <view
-            v-if="images.length < 9"
-            class="add-image"
-            @click="chooseImage"
-          >
+          <view v-if="images.length < 9" class="add-image" @click="chooseImage">
             <text class="add-icon">+</text>
             <text class="add-text">添加图片</text>
           </view>
@@ -220,11 +214,7 @@ async function submit() {
       <!-- 薪资范围 -->
       <view class="row picker-row">
         <text class="label">薪资范围</text>
-        <picker
-          :value="salaryIndex"
-          :range="SALARY_RANGE_OPTIONS"
-          @change="onSalaryChange"
-        >
+        <picker :value="salaryIndex" :range="SALARY_RANGE_OPTIONS" @change="onSalaryChange">
           <view class="picker">
             {{ salaryLabel }}
             <text class="arrow">›</text>
@@ -235,11 +225,7 @@ async function submit() {
       <!-- 行业 -->
       <view class="row picker-row">
         <text class="label">行业</text>
-        <picker
-          :value="industryIndex"
-          :range="INDUSTRY_OPTIONS"
-          @change="onIndustryChange"
-        >
+        <picker :value="industryIndex" :range="INDUSTRY_OPTIONS" @change="onIndustryChange">
           <view class="picker">
             {{ industryLabel }}
             <text class="arrow">›</text>
@@ -250,11 +236,7 @@ async function submit() {
       <!-- 城市 -->
       <view class="row picker-row">
         <text class="label">城市</text>
-        <picker
-          :value="cityIndex"
-          :range="CITY_OPTIONS"
-          @change="onCityChange"
-        >
+        <picker :value="cityIndex" :range="CITY_OPTIONS" @change="onCityChange">
           <view class="picker">
             {{ cityLabel }}
             <text class="arrow">›</text>
@@ -265,12 +247,7 @@ async function submit() {
       <!-- 话题 -->
       <view v-if="topics.length > 0" class="row picker-row">
         <text class="label">关联话题</text>
-        <picker
-          :value="topicIndex"
-          :range="topics"
-          range-key="name"
-          @change="onTopicChange"
-        >
+        <picker :value="topicIndex" :range="topics" range-key="name" @change="onTopicChange">
           <view class="picker">
             {{ topicLabel }}
             <text class="arrow">›</text>
@@ -298,11 +275,7 @@ async function submit() {
       </view>
     </view>
 
-    <button
-      class="btn"
-      :disabled="submitting"
-      @click="submit"
-    >
+    <button class="btn" :disabled="submitting" @click="submit">
       {{ submitting ? '发布中…' : '发布' }}
     </button>
   </view>

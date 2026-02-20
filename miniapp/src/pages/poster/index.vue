@@ -20,7 +20,9 @@ const moodText: Record<MoodType, string> = {
   expect: '期待',
 }
 
-const jobName = computed(() => (configId: string) => paydayList.value.find((c) => c.id === configId)?.job_name || '工资')
+const jobName = computed(
+  () => (configId: string) => paydayList.value.find(c => c.id === configId)?.job_name || '工资'
+)
 
 onLoad((query: any) => {
   recordId.value = query?.recordId || ''
@@ -172,12 +174,12 @@ function drawPoster(): Promise<void> {
           destWidth: w * 2,
           destHeight: h * 2,
           fileType: 'png',
-          success: (res) => {
+          success: res => {
             console.log('[poster] Canvas to temp file success:', res.tempFilePath)
             posterUrl.value = res.tempFilePath
             resolve()
           },
-          fail: (e) => {
+          fail: e => {
             console.error('[poster] Canvas to temp file failed:', e)
             reject(e)
           },
@@ -209,7 +211,7 @@ async function saveToAlbum() {
         title: '提示',
         content: '需要相册权限才能保存，请在设置中开启',
         confirmText: '去设置',
-        success: (res) => res.confirm && uni.openSetting(),
+        success: res => res.confirm && uni.openSetting(),
       })
     } else {
       uni.showToast({ title: e?.message || '保存失败', icon: 'none' })
@@ -278,9 +280,7 @@ onMounted(() => {
 
       <!-- Actions -->
       <view class="actions">
-        <button class="btn primary" :loading="saving" @click="saveToAlbum">
-          保存到相册
-        </button>
+        <button class="btn primary" :loading="saving" @click="saveToAlbum">保存到相册</button>
         <button class="btn secondary" open-type="share">分享给好友</button>
       </view>
 
@@ -317,7 +317,9 @@ onMounted(() => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-text {

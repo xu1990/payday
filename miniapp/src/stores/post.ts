@@ -213,7 +213,7 @@ export const usePostStore = defineStore('post', () => {
         hotOffset: hotOffset.value,
         latestPosts: latestPosts.value.slice(0, 100),
         latestOffset: latestOffset.value,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       }
       uni.setStorageSync(STORAGE_KEY, JSON.stringify(data))
     } catch (error) {

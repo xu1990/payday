@@ -32,8 +32,8 @@ describe('escapeHtml', () => {
       },
       get textContent() {
         return this._textContent
-      }
-    }))
+      },
+    })),
   }
 
   beforeEach(() => {

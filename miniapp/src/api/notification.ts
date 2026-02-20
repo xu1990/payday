@@ -31,7 +31,8 @@ export function getNotificationList(params?: {
 }) {
   const { unread_only, type_filter, limit = 20, offset = 0 } = params ?? {}
   const queryParts: string[] = []
-  if (unread_only !== undefined) queryParts.push(`unread_only=${encodeURIComponent(String(unread_only))}`)
+  if (unread_only !== undefined)
+    queryParts.push(`unread_only=${encodeURIComponent(String(unread_only))}`)
   if (type_filter !== undefined) queryParts.push(`type_filter=${encodeURIComponent(type_filter)}`)
   queryParts.push(`limit=${encodeURIComponent(limit)}`)
   queryParts.push(`offset=${encodeURIComponent(offset)}`)

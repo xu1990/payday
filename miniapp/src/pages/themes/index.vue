@@ -20,13 +20,13 @@
           <text class="theme-name">{{ theme.display_name }}</text>
           <text class="theme-desc">{{ theme.is_dark ? '深色主题' : '浅色主题' }}</text>
         </view>
-        <view class="theme-check" v-if="theme.id === currentThemeId">
+        <view v-if="theme.id === currentThemeId" class="theme-check">
           <text>✓</text>
         </view>
       </view>
     </view>
 
-    <view class="loading" v-if="loading">
+    <view v-if="loading" class="loading">
       <text>加载中...</text>
     </view>
   </view>
@@ -42,10 +42,7 @@ const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const [themesRes, settings] = await Promise.all([
-      getThemes(),
-      getUserSettings()
-    ])
+    const [themesRes, settings] = await Promise.all([getThemes(), getUserSettings()])
     themes.value = themesRes.items
     currentThemeId.value = settings.theme_id
   } catch (error) {

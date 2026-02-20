@@ -16,7 +16,14 @@ global.uni = {
   hideLoading: mockHideLoading,
 } as any
 
-import { showSuccess, showError, showInfo, showLoading, hideLoading as hideLoadingFn, showToast } from '@/utils/toast'
+import {
+  showSuccess,
+  showError,
+  showInfo,
+  showLoading,
+  hideLoading as hideLoadingFn,
+  showToast,
+} from '@/utils/toast'
 
 describe('Toast 工具函数', () => {
   beforeEach(() => {

@@ -21,7 +21,7 @@ export interface Topic {
 export async function getActiveTopics(): Promise<Topic[]> {
   const res: any = await request({
     url: '/api/v1/topics/active',
-    method: 'GET'
+    method: 'GET',
   })
   return res.data || []
 }

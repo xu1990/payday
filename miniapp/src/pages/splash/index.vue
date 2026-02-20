@@ -17,7 +17,7 @@ onMounted(async () => {
     const res: any = await request({
       url: '/api/v1/config/public/splash',
       method: 'GET',
-      noAuth: true // 公开接口，无需鉴权
+      noAuth: true, // 公开接口，无需鉴权
     })
     if (res?.is_active) {
       splashConfig.value = res
@@ -45,9 +45,8 @@ onMounted(async () => {
     await authStore.init()
 
     // Wait for animation to complete before navigating
-    const delay = showSplash.value && splashConfig.value?.countdown
-      ? splashConfig.value.countdown * 1000
-      : 1800
+    const delay =
+      showSplash.value && splashConfig.value?.countdown ? splashConfig.value.countdown * 1000 : 1800
 
     setTimeout(() => {
       navigateToNext()
@@ -94,7 +93,12 @@ function navigateToNext() {
   <view class="splash-page">
     <!-- Custom splash screen from backend if available -->
     <view v-if="showSplash && splashConfig" class="custom-splash">
-      <image v-if="splashConfig.image_url" :src="splashConfig.image_url" mode="aspectFill" class="splash-image" />
+      <image
+        v-if="splashConfig.image_url"
+        :src="splashConfig.image_url"
+        mode="aspectFill"
+        class="splash-image"
+      />
       <view v-if="splashConfig.content" class="splash-content">
         <rich-text :nodes="splashConfig.content"></rich-text>
       </view>
@@ -290,7 +294,9 @@ function navigateToNext() {
 }
 
 @keyframes bounce {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     transform: scale(0.8);
     opacity: 0.6;
   }

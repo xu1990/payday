@@ -44,8 +44,8 @@ async function uploadAvatar(filePath: string) {
       filePath,
       name: 'file',
       header: {
-        'Authorization': `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     })
 
     const data = JSON.parse(uploadRes.data)
@@ -73,7 +73,7 @@ async function editNickname() {
       title: '修改昵称',
       editable: true,
       placeholderText: nickname.value || '请输入昵称',
-      maxLength: 20
+      maxLength: 20,
     })
 
     if (res.confirm && res.content) {

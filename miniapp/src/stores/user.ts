@@ -94,7 +94,7 @@ export const useUserStore = defineStore('user', () => {
         return currentUser.value !== null
       } finally {
         isLoading.value = false
-        fetchCurrentUserPromise = null  // 清除 promise 引用
+        fetchCurrentUserPromise = null // 清除 promise 引用
       }
     })()
 
@@ -178,7 +178,7 @@ export const useUserStore = defineStore('user', () => {
     error,
 
     // 计算属性
-    userInfo,  // 添加别名，向后兼容
+    userInfo, // 添加别名，向后兼容
     userId,
     nickname,
     anonymousName,

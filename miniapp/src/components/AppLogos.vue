@@ -1,22 +1,15 @@
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 
 <template>
   <view class="container">
     <view class="uni-helper-logo">
       <image class="uni-helper-logo__image" src="/static/logo.svg" />
-      <text class="uni-helper-logo__label green">
-        uni-helper
-      </text>
+      <text class="uni-helper-logo__label green"> uni-helper </text>
     </view>
-    <text class="link-bar">
-      +
-    </text>
+    <text class="link-bar"> + </text>
     <view class="uni-helper-logo">
       <image class="uni-helper-logo__image" src="/static/vite.png" />
-      <text class="uni-helper-logo__label purple">
-        Vite
-      </text>
+      <text class="uni-helper-logo__label purple"> Vite </text>
     </view>
   </view>
 </template>
@@ -46,7 +39,7 @@
   }
   .green {
     color: #22c55e;
-  };
+  }
   .purple {
     color: #a855f7;
   }

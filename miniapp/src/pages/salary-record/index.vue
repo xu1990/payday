@@ -80,7 +80,8 @@ async function loadPaydayList() {
   try {
     const res = await listPayday()
     paydayList.value = res || []
-    if (paydayList.value.length && !form.value.config_id) form.value.config_id = paydayList.value[0].id
+    if (paydayList.value.length && !form.value.config_id)
+      form.value.config_id = paydayList.value[0].id
   } catch {
     paydayList.value = []
   }
@@ -137,7 +138,12 @@ function openEdit(item: SalaryRecord) {
     delay_reason: item.delay_reason || '',
     note: item.note || '',
   }
-  showAdvanced.value = !!(item.before_tax || item.tax_amount || item.salary_source || item.delay_days)
+  showAdvanced.value = !!(
+    item.before_tax ||
+    item.tax_amount ||
+    item.salary_source ||
+    item.delay_days
+  )
   showForm.value = true
 }
 
@@ -216,7 +222,7 @@ function doDelete(item: SalaryRecord) {
   uni.showModal({
     title: '确认删除',
     content: `删除这条工资记录？`,
-    success: async (res) => {
+    success: async res => {
       if (!res.confirm) return
       try {
         await deleteSalary(item.id)
@@ -230,13 +236,13 @@ function doDelete(item: SalaryRecord) {
 }
 
 function salaryTypeLabel(v: string) {
-  return salaryTypeOptions.find((o) => o.value === v)?.label ?? v
+  return salaryTypeOptions.find(o => o.value === v)?.label ?? v
 }
 function moodLabel(v: string) {
-  return moodOptions.find((o) => o.value === v)?.label ?? v
+  return moodOptions.find(o => o.value === v)?.label ?? v
 }
 function jobName(configId: string) {
-  return paydayList.value.find((c) => c.id === configId)?.job_name ?? configId
+  return paydayList.value.find(c => c.id === configId)?.job_name ?? configId
 }
 
 onMounted(async () => {
@@ -263,11 +269,16 @@ onMounted(async () => {
             <text class="amount">{{ item.amount }} 元</text>
             <text v-if="item.delay_days" class="delay-badge">延迟{{ item.delay_days }}天</text>
           </view>
-          <text class="meta">{{ item.payday_date }} · {{ jobName(item.config_id) }} · {{ salaryTypeLabel(item.salary_type) }}</text>
+          <text class="meta"
+            >{{ item.payday_date }} · {{ jobName(item.config_id) }} ·
+            {{ salaryTypeLabel(item.salary_type) }}</text
+          >
           <view v-if="item.before_tax || item.salary_source" class="detail-row">
             <text v-if="item.before_tax" class="detail-item">税前: ¥{{ item.before_tax }}</text>
             <text v-if="item.tax_amount" class="detail-item">扣税: ¥{{ item.tax_amount }}</text>
-            <text v-if="item.salary_source" class="detail-item source">{{ item.salary_source }}</text>
+            <text v-if="item.salary_source" class="detail-item source">{{
+              item.salary_source
+            }}</text>
           </view>
           <text class="mood">{{ moodLabel(item.mood) }}</text>
         </view>
@@ -289,7 +300,7 @@ onMounted(async () => {
           <view class="form-item">
             <text class="label">关联发薪日</text>
             <picker
-              :value="paydayList.findIndex((c) => c.id === form.config_id)"
+              :value="paydayList.findIndex(c => c.id === form.config_id)"
               :range="paydayList"
               range-key="job_name"
               @change="(e: any) => (form.config_id = paydayList[e.detail.value]?.id || '')"
@@ -299,21 +310,33 @@ onMounted(async () => {
           </view>
           <view class="form-item">
             <text class="label required">实发金额（元）</text>
-            <input v-model="form.amount" type="digit" class="input" placeholder="必填，实际到账金额" />
+            <input
+              v-model="form.amount"
+              type="digit"
+              class="input"
+              placeholder="必填，实际到账金额"
+            />
           </view>
           <view class="form-item">
             <text class="label">发薪日期</text>
-            <picker mode="date" :value="form.payday_date" @change="(e: any) => (form.payday_date = e.detail.value)">
+            <picker
+              mode="date"
+              :value="form.payday_date"
+              @change="(e: any) => (form.payday_date = e.detail.value)"
+            >
               <view class="picker">{{ form.payday_date || '请选择' }}</view>
             </picker>
           </view>
           <view class="form-item">
             <text class="label">类型</text>
             <picker
-              :value="salaryTypeOptions.findIndex((o) => o.value === form.salary_type)"
+              :value="salaryTypeOptions.findIndex(o => o.value === form.salary_type)"
               :range="salaryTypeOptions"
               range-key="label"
-              @change="(e: any) => (form.salary_type = salaryTypeOptions[e.detail.value]?.value ?? 'normal')"
+              @change="
+                (e: any) =>
+                  (form.salary_type = salaryTypeOptions[e.detail.value]?.value ?? 'normal')
+              "
             >
               <view class="picker">{{ salaryTypeLabel(form.salary_type) }}</view>
             </picker>
@@ -321,7 +344,7 @@ onMounted(async () => {
           <view class="form-item">
             <text class="label">心情</text>
             <picker
-              :value="moodOptions.findIndex((o) => o.value === form.mood)"
+              :value="moodOptions.findIndex(o => o.value === form.mood)"
               :range="moodOptions"
               range-key="label"
               @change="(e: any) => (form.mood = moodOptions[e.detail.value]?.value ?? 'happy')"
@@ -362,7 +385,12 @@ onMounted(async () => {
             </view>
             <view class="form-item">
               <text class="label">延迟天数</text>
-              <input v-model="form.delay_days" type="number" class="input" placeholder="选填，如延迟到账" />
+              <input
+                v-model="form.delay_days"
+                type="number"
+                class="input"
+                placeholder="选填，如延迟到账"
+              />
             </view>
             <view v-if="form.delay_days && Number(form.delay_days) > 0" class="form-item">
               <text class="label required">延迟原因</text>
@@ -375,7 +403,12 @@ onMounted(async () => {
         <view class="form-section">
           <text class="section-title">备注</text>
           <view class="form-item">
-            <textarea v-model="form.note" class="textarea" placeholder="选填，记录心情或其他信息" maxlength="200" />
+            <textarea
+              v-model="form.note"
+              class="textarea"
+              placeholder="选填，记录心情或其他信息"
+              maxlength="200"
+            />
             <text class="char-count">{{ form.note.length }}/200</text>
           </view>
         </view>
@@ -390,49 +423,241 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.page { padding: 24rpx; min-height: 100vh; }
-.head { margin-bottom: 24rpx; }
-.title { font-size: 36rpx; font-weight: 600; display: block; }
-.tip { display: block; margin-top: 8rpx; color: #666; font-size: 26rpx; line-height: 1.5; }
-.btn-add { margin-top: 20rpx; background: #07c160; color: #fff; border: none; border-radius: 8rpx; }
-.loading, .err, .empty { padding: 40rpx; text-align: center; color: #666; }
-.list { display: flex; flex-direction: column; gap: 20rpx; }
-.card { background: #f8f8f8; border-radius: 12rpx; padding: 24rpx; display: flex; justify-content: space-between; align-items: center; }
-.card-main { flex: 1; }
-.amount-row { display: flex; align-items: center; gap: 16rpx; }
-.amount { font-weight: 600; font-size: 30rpx; display: block; }
-.delay-badge { background: #ff6b6b; color: #fff; font-size: 20rpx; padding: 4rpx 12rpx; border-radius: 8rpx; }
-.meta { display: block; margin-top: 8rpx; color: #666; font-size: 26rpx; }
-.detail-row { display: flex; flex-wrap: wrap; gap: 16rpx; margin-top: 8rpx; }
-.detail-item { font-size: 24rpx; color: #999; background: #fff; padding: 4rpx 12rpx; border-radius: 6rpx; }
-.detail-item.source { color: #07c160; }
-.mood { display: block; margin-top: 4rpx; font-size: 26rpx; color: #07c160; }
-.card-actions { display: flex; gap: 16rpx; }
-.btn-sm { padding: 8rpx 20rpx; font-size: 24rpx; border: 1rpx solid #ccc; border-radius: 8rpx; background: #fff; }
-.btn-sm.danger { border-color: #e0e0e0; color: #e64340; }
-.mask { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-end; z-index: 100; }
-.form-panel { width: 100%; background: #fff; border-radius: 24rpx 24rpx 0 0; padding: 32rpx; max-height: 80vh; overflow: auto; }
-.form-title { font-size: 32rpx; font-weight: 600; display: block; margin-bottom: 24rpx; }
-.form-section { margin-bottom: 24rpx; }
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
-.section-title { font-size: 28rpx; font-weight: 500; color: #333; }
-.expand-icon { font-size: 24rpx; color: #999; }
-.advanced-content { animation: slideDown 0.3s ease; }
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-10rpx); }
-  to { opacity: 1; transform: translateY(0); }
+.page {
+  padding: 24rpx;
+  min-height: 100vh;
 }
-.form-item { margin-bottom: 20rpx; position: relative; }
-.label { display: block; margin-bottom: 8rpx; color: #666; font-size: 26rpx; }
-.label.required::after { content: '*'; color: #e64340; margin-left: 4rpx; }
-.input, .picker, .textarea { border: 1rpx solid #e0e0e0; border-radius: 8rpx; padding: 20rpx; font-size: 28rpx; }
-.picker { background: #fff; display: flex; align-items: center; justify-content: space-between; }
-.textarea { min-height: 120rpx; resize: none; }
-.char-count { text-align: right; font-size: 22rpx; color: #999; margin-top: 8rpx; display: block; }
-.warning { display: flex; align-items: center; gap: 12rpx; padding: 16rpx; background: #fff3cd; border-radius: 8rpx; margin-top: 16rpx; }
-.warning-icon { font-size: 28rpx; }
-.warning-text { font-size: 24rpx; color: #856404; flex: 1; }
-.form-actions { display: flex; gap: 20rpx; margin-top: 32rpx; }
-.btn-cancel { flex: 1; border: 1rpx solid #ccc; border-radius: 8rpx; background: #fff; }
-.btn-ok { flex: 1; background: #07c160; color: #fff; border: none; border-radius: 8rpx; }
+.head {
+  margin-bottom: 24rpx;
+}
+.title {
+  font-size: 36rpx;
+  font-weight: 600;
+  display: block;
+}
+.tip {
+  display: block;
+  margin-top: 8rpx;
+  color: #666;
+  font-size: 26rpx;
+  line-height: 1.5;
+}
+.btn-add {
+  margin-top: 20rpx;
+  background: #07c160;
+  color: #fff;
+  border: none;
+  border-radius: 8rpx;
+}
+.loading,
+.err,
+.empty {
+  padding: 40rpx;
+  text-align: center;
+  color: #666;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+.card {
+  background: #f8f8f8;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.card-main {
+  flex: 1;
+}
+.amount-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+.amount {
+  font-weight: 600;
+  font-size: 30rpx;
+  display: block;
+}
+.delay-badge {
+  background: #ff6b6b;
+  color: #fff;
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+}
+.meta {
+  display: block;
+  margin-top: 8rpx;
+  color: #666;
+  font-size: 26rpx;
+}
+.detail-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 8rpx;
+}
+.detail-item {
+  font-size: 24rpx;
+  color: #999;
+  background: #fff;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+}
+.detail-item.source {
+  color: #07c160;
+}
+.mood {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 26rpx;
+  color: #07c160;
+}
+.card-actions {
+  display: flex;
+  gap: 16rpx;
+}
+.btn-sm {
+  padding: 8rpx 20rpx;
+  font-size: 24rpx;
+  border: 1rpx solid #ccc;
+  border-radius: 8rpx;
+  background: #fff;
+}
+.btn-sm.danger {
+  border-color: #e0e0e0;
+  color: #e64340;
+}
+.mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  z-index: 100;
+}
+.form-panel {
+  width: 100%;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  padding: 32rpx;
+  max-height: 80vh;
+  overflow: auto;
+}
+.form-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 24rpx;
+}
+.form-section {
+  margin-bottom: 24rpx;
+}
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+.section-title {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #333;
+}
+.expand-icon {
+  font-size: 24rpx;
+  color: #999;
+}
+.advanced-content {
+  animation: slideDown 0.3s ease;
+}
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.form-item {
+  margin-bottom: 20rpx;
+  position: relative;
+}
+.label {
+  display: block;
+  margin-bottom: 8rpx;
+  color: #666;
+  font-size: 26rpx;
+}
+.label.required::after {
+  content: '*';
+  color: #e64340;
+  margin-left: 4rpx;
+}
+.input,
+.picker,
+.textarea {
+  border: 1rpx solid #e0e0e0;
+  border-radius: 8rpx;
+  padding: 20rpx;
+  font-size: 28rpx;
+}
+.picker {
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.textarea {
+  min-height: 120rpx;
+  resize: none;
+}
+.char-count {
+  text-align: right;
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 8rpx;
+  display: block;
+}
+.warning {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 16rpx;
+  background: #fff3cd;
+  border-radius: 8rpx;
+  margin-top: 16rpx;
+}
+.warning-icon {
+  font-size: 28rpx;
+}
+.warning-text {
+  font-size: 24rpx;
+  color: #856404;
+  flex: 1;
+}
+.form-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 32rpx;
+}
+.btn-cancel {
+  flex: 1;
+  border: 1rpx solid #ccc;
+  border-radius: 8rpx;
+  background: #fff;
+}
+.btn-ok {
+  flex: 1;
+  background: #07c160;
+  color: #fff;
+  border: none;
+  border-radius: 8rpx;
+}
 </style>

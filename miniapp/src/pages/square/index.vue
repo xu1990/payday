@@ -82,30 +82,17 @@ function goCreate() {
 <template>
   <view class="page">
     <view class="tabs">
-      <view
-        class="tab"
-        :class="{ active: activeTab === 'hot' }"
-        @click="activeTab = 'hot'"
-      >
+      <view class="tab" :class="{ active: activeTab === 'hot' }" @click="activeTab = 'hot'">
         热门
       </view>
-      <view
-        class="tab"
-        :class="{ active: activeTab === 'latest' }"
-        @click="activeTab = 'latest'"
-      >
+      <view class="tab" :class="{ active: activeTab === 'latest' }" @click="activeTab = 'latest'">
         最新
       </view>
     </view>
     <view v-if="loading" class="tip">加载中...</view>
     <view v-else-if="list.length === 0" class="tip">暂无帖子</view>
     <scroll-view v-else class="list" scroll-y>
-      <view
-        v-for="item in list"
-        :key="item.id"
-        class="card"
-        @click="goDetail(item.id)"
-      >
+      <view v-for="item in list" :key="item.id" class="card" @click="goDetail(item.id)">
         <view class="row">
           <text class="name">{{ item.anonymous_name }}</text>
           <text class="time">{{ formatTime(item.created_at) }}</text>

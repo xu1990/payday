@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { getPostDetail, type PostItem } from '@/api/post'
-import {
-  getCommentList,
-  createComment,
-  type CommentItem,
-} from '@/api/comment'
+import { getCommentList, createComment, type CommentItem } from '@/api/comment'
 import { likePost, unlikePost } from '@/api/like'
 import { likeComment, unlikeComment } from '@/api/like'
 import { sanitizePost, isValidImageUrl } from '@/utils/sanitize'
@@ -25,14 +21,14 @@ const keyboardHeight = ref(0)
 
 // Computed property for v-model conditional binding
 const inputContent = computed({
-  get: () => replyingTo.value ? replyInput.value : commentContent.value,
+  get: () => (replyingTo.value ? replyInput.value : commentContent.value),
   set: (value: string) => {
     if (replyingTo.value) {
       replyInput.value = value
     } else {
       commentContent.value = value
     }
-  }
+  },
 })
 
 onMounted(() => {
@@ -47,7 +43,7 @@ onMounted(() => {
   }
 
   // 监听键盘高度变化，使用响应式变量
-  uni.onKeyboardHeightChange((res) => {
+  uni.onKeyboardHeightChange(res => {
     keyboardHeight.value = res.height
   })
 })
@@ -186,7 +182,7 @@ async function shareToWeChat() {
       withShareTicket: true,
       fail: (err: any) => {
         uni.showToast({ title: '分享失败', icon: 'none' })
-      }
+      },
     })
   } catch (error) {
     uni.showToast({ title: '分享失败', icon: 'none' })
@@ -205,7 +201,7 @@ async function shareToMoments() {
     url: `/pages/poster/index?postId=${post.value.id}`,
     fail: (err: any) => {
       uni.showToast({ title: '跳转失败', icon: 'none' })
-    }
+    },
   })
 }
 </script>
@@ -221,13 +217,7 @@ async function shareToMoments() {
       </view>
       <text class="content">{{ safeContent }}</text>
       <view v-if="safeImages.length" class="imgs">
-        <image
-          v-for="(img, i) in safeImages"
-          :key="i"
-          class="thumb"
-          :src="img"
-          mode="widthFix"
-        />
+        <image v-for="(img, i) in safeImages" :key="i" class="thumb" :src="img" mode="widthFix" />
       </view>
       <view class="meta">
         <text class="meta-item" @tap="onPostLike">
@@ -268,11 +258,7 @@ async function shareToMoments() {
               <text class="action" @tap="startReply(root)">回复</text>
             </view>
             <view v-if="root.replies?.length" class="replies">
-              <view
-                v-for="sub in root.replies"
-                :key="sub.id"
-                class="reply-item"
-              >
+              <view v-for="sub in root.replies" :key="sub.id" class="reply-item">
                 <view class="comment-row">
                   <text class="comment-name">{{ sub.anonymous_name }}</text>
                   <text class="comment-time">{{ commentTime(sub.created_at) }}</text>

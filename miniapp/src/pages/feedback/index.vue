@@ -18,11 +18,11 @@ function chooseImage() {
     count: 3 - images.value.length,
     sizeType: ['compressed'],
     sourceType: ['album', 'camera'],
-    success: (res) => {
+    success: res => {
       if (res.tempFilePaths) {
         images.value.push(...res.tempFilePaths)
       }
-    }
+    },
   })
 }
 
@@ -51,11 +51,11 @@ async function submit() {
         uni.showModal({
           title: '图片上传失败',
           content: '图片上传失败，是否只提交文字反馈？',
-          success: (res) => {
+          success: res => {
             if (res.confirm) {
               submitFeedbackWithImages([])
             }
-          }
+          },
         })
         return
       }
@@ -73,7 +73,7 @@ async function submitFeedbackWithImages(imgs: string[]) {
     await submitFeedback({
       content: content.value,
       images: imgs.length > 0 ? imgs : undefined,
-      contact: contact.value || undefined
+      contact: contact.value || undefined,
     })
 
     uni.hideLoading()
@@ -94,8 +94,8 @@ async function submitFeedbackWithImages(imgs: string[]) {
     <view class="section">
       <view class="section-title">反馈内容 *</view>
       <textarea
-        class="textarea"
         v-model="content"
+        class="textarea"
         placeholder="请详细描述您遇到的问题或建议..."
         maxlength="500"
       />
@@ -105,11 +105,11 @@ async function submitFeedbackWithImages(imgs: string[]) {
     <view class="section">
       <view class="section-title">添加图片（最多3张）</view>
       <view class="images">
-        <view class="image-item" v-for="(img, idx) in images" :key="idx">
+        <view v-for="(img, idx) in images" :key="idx" class="image-item">
           <image :src="img" mode="aspectFill" />
           <view class="remove-btn" @click="removeImage(idx)">×</view>
         </view>
-        <view class="add-image" v-if="images.length < 3" @click="chooseImage">
+        <view v-if="images.length < 3" class="add-image" @click="chooseImage">
           <text class="plus">+</text>
           <text class="hint">添加图片</text>
         </view>
@@ -118,12 +118,7 @@ async function submitFeedbackWithImages(imgs: string[]) {
 
     <view class="section">
       <view class="section-title">联系方式（选填）</view>
-      <input
-        class="input"
-        v-model="contact"
-        placeholder="微信号、QQ或邮箱"
-        maxlength="100"
-      />
+      <input v-model="contact" class="input" placeholder="微信号、QQ或邮箱" maxlength="100" />
     </view>
 
     <button class="submit-btn" @click="submit">提交反馈</button>
@@ -191,7 +186,7 @@ async function submitFeedbackWithImages(imgs: string[]) {
   right: -8rpx;
   width: 40rpx;
   height: 40rpx;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.6);
   color: #fff;
   border-radius: 20rpx;
   display: flex;

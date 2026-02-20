@@ -8,24 +8,14 @@
     <view class="section">
       <view class="section-title">行业工资分布</view>
       <view class="chart-container">
-        <qiun-ucharts
-          type="pie"
-          :opts="industryOpts"
-          :chartData="industryData"
-          :canvas2d="true"
-        />
+        <qiun-ucharts type="pie" :opts="industryOpts" :chart-data="industryData" :canvas2d="true" />
       </view>
     </view>
 
     <view class="section">
       <view class="section-title">城市工资对比</view>
       <view class="chart-container">
-        <qiun-ucharts
-          type="bar"
-          :opts="cityOpts"
-          :chartData="cityData"
-          :canvas2d="true"
-        />
+        <qiun-ucharts type="bar" :opts="cityOpts" :chart-data="cityData" :canvas2d="true" />
       </view>
     </view>
 
@@ -35,7 +25,7 @@
         <qiun-ucharts
           type="pie"
           :opts="salaryRangeOpts"
-          :chartData="salaryRangeData"
+          :chart-data="salaryRangeData"
           :canvas2d="true"
         />
       </view>
@@ -44,16 +34,11 @@
     <view class="section">
       <view class="section-title">发薪日分布</view>
       <view class="chart-container">
-        <qiun-ucharts
-          type="column"
-          :opts="paydayOpts"
-          :chartData="paydayData"
-          :canvas2d="true"
-        />
+        <qiun-ucharts type="column" :opts="paydayOpts" :chart-data="paydayData" :canvas2d="true" />
       </view>
     </view>
 
-    <view class="loading" v-if="loading">
+    <view v-if="loading" class="loading">
       <text>加载中...</text>
     </view>
   </view>
@@ -83,8 +68,8 @@ const industryOpts = ref({
       border: true,
       borderWidth: 2,
       borderColor: '#FFFFFF',
-    }
-  }
+    },
+  },
 })
 
 const cityOpts = ref({
@@ -93,10 +78,10 @@ const cityOpts = ref({
   enableScroll: false,
   legend: {},
   xAxis: {
-    disableGrid: true
+    disableGrid: true,
   },
   yAxis: {
-    data: [{ min: 0 }]
+    data: [{ min: 0 }],
   },
   extra: {
     bar: {
@@ -106,9 +91,9 @@ const cityOpts = ref({
       meterColor: '#FFFFFF',
       activeBgColor: '#000000',
       activeBgOpacity: 0.08,
-      categoryPadding: 10
-    }
-  }
+      categoryPadding: 10,
+    },
+  },
 })
 
 const salaryRangeOpts = ref({
@@ -125,8 +110,8 @@ const salaryRangeOpts = ref({
       border: true,
       borderWidth: 2,
       borderColor: '#FFFFFF',
-    }
-  }
+    },
+  },
 })
 
 const paydayOpts = ref({
@@ -134,19 +119,19 @@ const paydayOpts = ref({
   padding: [15, 15, 0, 5],
   enableScroll: false,
   xAxis: {
-    disableGrid: true
+    disableGrid: true,
   },
   yAxis: {
-    data: [{ min: 0 }]
+    data: [{ min: 0 }],
   },
   extra: {
     column: {
       type: 'group',
       width: 30,
       activeBgColor: '#000000',
-      activeBgOpacity: 0.08
-    }
-  }
+      activeBgOpacity: 0.08,
+    },
+  },
 })
 
 onMounted(async () => {
@@ -155,43 +140,53 @@ onMounted(async () => {
 
     if (res.industry_distribution) {
       industryData.value = {
-        series: [{
-          data: res.industry_distribution.distribution.map((item: DistributionItem) => ({
-            name: item.label,
-            value: item.count
-          }))
-        }]
+        series: [
+          {
+            data: res.industry_distribution.distribution.map((item: DistributionItem) => ({
+              name: item.label,
+              value: item.count,
+            })),
+          },
+        ],
       }
     }
 
     if (res.city_distribution) {
       cityData.value = {
         categories: res.city_distribution.distribution.map((item: DistributionItem) => item.label),
-        series: [{
-          name: '用户数',
-          data: res.city_distribution.distribution.map((item: DistributionItem) => item.count)
-        }]
+        series: [
+          {
+            name: '用户数',
+            data: res.city_distribution.distribution.map((item: DistributionItem) => item.count),
+          },
+        ],
       }
     }
 
     if (res.salary_range_distribution) {
       salaryRangeData.value = {
-        series: [{
-          data: res.salary_range_distribution.distribution.map((item: DistributionItem) => ({
-            name: item.label,
-            value: item.count
-          }))
-        }]
+        series: [
+          {
+            data: res.salary_range_distribution.distribution.map((item: DistributionItem) => ({
+              name: item.label,
+              value: item.count,
+            })),
+          },
+        ],
       }
     }
 
     if (res.payday_distribution) {
       paydayData.value = {
-        categories: res.payday_distribution.distribution.map((item: DistributionItem) => item.label),
-        series: [{
-          name: '人数',
-          data: res.payday_distribution.distribution.map((item: DistributionItem) => item.count)
-        }]
+        categories: res.payday_distribution.distribution.map(
+          (item: DistributionItem) => item.label
+        ),
+        series: [
+          {
+            name: '人数',
+            data: res.payday_distribution.distribution.map((item: DistributionItem) => item.count),
+          },
+        ],
       }
     }
   } catch (error) {

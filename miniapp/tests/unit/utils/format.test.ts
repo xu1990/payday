@@ -3,7 +3,13 @@
  * 测试日期、金额、数字等格式化功能
  */
 import { describe, it, expect } from 'vitest'
-import { formatNumber, formatRelativeTime, formatAmount, formatDate, formatDateTime } from '@/utils/format'
+import {
+  formatNumber,
+  formatRelativeTime,
+  formatAmount,
+  formatDate,
+  formatDateTime,
+} from '@/utils/format'
 
 describe('格式化工具函数', () => {
   describe('formatNumber', () => {

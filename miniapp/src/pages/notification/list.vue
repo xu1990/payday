@@ -101,7 +101,7 @@ async function markAllRead() {
   if (unreadCount.value === 0) return
   try {
     await markRead({ all: true })
-    list.value.forEach((i) => (i.is_read = true))
+    list.value.forEach(i => (i.is_read = true))
     unreadCount.value = 0
   } catch (_) {}
 }
@@ -135,7 +135,7 @@ async function deleteSelected() {
   try {
     const ids = Array.from(selectedIds.value)
     await deleteNotifications({ notification_ids: ids })
-    list.value = list.value.filter((item) => !selectedIds.value.has(item.id))
+    list.value = list.value.filter(item => !selectedIds.value.has(item.id))
     total.value -= selectedIds.value.size
     selectedIds.value.clear()
     isEditMode.value = false
@@ -149,7 +149,7 @@ async function deleteAll() {
   uni.showModal({
     title: '确认删除',
     content: '确定要清空所有通知吗？此操作不可恢复。',
-    success: async (res) => {
+    success: async res => {
       if (res.confirm) {
         try {
           await deleteNotifications({ delete_all: true })
@@ -201,16 +201,10 @@ onMounted(() => load())
     <view class="action-bar">
       <text class="title">消息 {{ unreadCount > 0 ? `(${unreadCount})` : '' }}</text>
       <view class="actions">
-        <text v-if="!isEditMode" class="action-btn" @click="toggleEditMode">
-          管理
-        </text>
+        <text v-if="!isEditMode" class="action-btn" @click="toggleEditMode"> 管理 </text>
         <template v-else>
           <text class="action-btn cancel" @click="toggleEditMode">取消</text>
-          <text
-            v-if="hasSelection"
-            class="action-btn delete"
-            @click="deleteSelected"
-          >
+          <text v-if="hasSelection" class="action-btn delete" @click="deleteSelected">
             删除({{ selectedIds.size }})
           </text>
         </template>
@@ -243,7 +237,9 @@ onMounted(() => load())
         </view>
         <view class="content-wrapper">
           <view class="row">
-            <text class="type-badge">{{ typeTabs.find(t => t.key === item.type)?.icon || '📬' }}</text>
+            <text class="type-badge">{{
+              typeTabs.find(t => t.key === item.type)?.icon || '📬'
+            }}</text>
             <text class="title">{{ item.title }}</text>
             <text class="time">{{ timeStr(item.created_at) }}</text>
           </view>
@@ -322,7 +318,9 @@ onMounted(() => load())
 .action-btn.danger {
   color: #e64340;
 }
-.loading, .err, .empty {
+.loading,
+.err,
+.empty {
   padding: 48rpx;
   text-align: center;
   color: #666;

@@ -18,7 +18,7 @@ export async function uploadImage(filePath: string): Promise<string> {
         // request 会自动添加 token，但 uploadFile 不会，所以需要手动获取
         Authorization: `Bearer ${uni.getStorageSync('payday_token')}`,
       },
-      success: (res) => {
+      success: res => {
         if (res.statusCode === 200) {
           try {
             const data = JSON.parse(res.data)
@@ -34,7 +34,7 @@ export async function uploadImage(filePath: string): Promise<string> {
           reject(new Error(`上传失败 (${res.statusCode})`))
         }
       },
-      fail: (err) => {
+      fail: err => {
         reject(new Error(err.errMsg || '上传失败'))
       },
     })
@@ -47,7 +47,7 @@ export async function uploadImage(filePath: string): Promise<string> {
  * @returns Promise<string[]> 返回图片 URL 数组
  */
 export async function uploadImages(filePaths: string[]): Promise<string[]> {
-  const uploadPromises = filePaths.map((path) => uploadImage(path))
+  const uploadPromises = filePaths.map(path => uploadImage(path))
   return Promise.all(uploadPromises)
 }
 

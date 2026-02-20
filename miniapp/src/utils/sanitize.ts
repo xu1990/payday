@@ -20,10 +20,10 @@ export function escapeHtml(text: string): string {
     '<': '&lt;',
     '>': '&gt;',
     '"': '&quot;',
-    "'": '&#39;'
+    "'": '&#39;',
   }
 
-  return text.replace(/[&<>"']/g, (char) => htmlEntities[char])
+  return text.replace(/[&<>"']/g, char => htmlEntities[char])
 }
 
 /**
@@ -45,12 +45,10 @@ export function sanitizeContent(
     allowLineBreaks?: boolean
   } = {}
 ): string {
-  let { maxLength = 10000, allowLineBreaks = true } = options
+  const { maxLength = 10000, allowLineBreaks = true } = options
 
   // 截断到最大长度
-  let sanitized = content.length > maxLength
-    ? content.substring(0, maxLength)
-    : content
+  let sanitized = content.length > maxLength ? content.substring(0, maxLength) : content
 
   // 移除 HTML 标签（基础实现）
   // 注意：小程序环境对 HTML 渲染有限制，主要是移除脚本标签
@@ -112,9 +110,7 @@ export function isValidImageUrl(url: string): boolean {
 
   // 允许的协议
   const allowedProtocols = ['http://', 'https://']
-  const hasAllowedProtocol = allowedProtocols.some(protocol =>
-    lowerUrl.startsWith(protocol)
-  )
+  const hasAllowedProtocol = allowedProtocols.some(protocol => lowerUrl.startsWith(protocol))
 
   if (!hasAllowedProtocol) {
     return false
@@ -122,9 +118,7 @@ export function isValidImageUrl(url: string): boolean {
 
   // 禁止的协议
   const blockedProtocols = ['javascript:', 'data:', 'vbscript:', 'file:']
-  const hasBlockedProtocol = blockedProtocols.some(protocol =>
-    lowerUrl.startsWith(protocol)
-  )
+  const hasBlockedProtocol = blockedProtocols.some(protocol => lowerUrl.startsWith(protocol))
 
   if (hasBlockedProtocol) {
     return false
@@ -142,7 +136,7 @@ export function isValidImageUrl(url: string): boolean {
 export function sanitizeComment(comment: string): string {
   return sanitizeContent(comment, {
     maxLength: 1000,
-    allowLineBreaks: true
+    allowLineBreaks: true,
   })
 }
 
@@ -155,7 +149,7 @@ export function sanitizeComment(comment: string): string {
 export function sanitizePost(postContent: string): string {
   return sanitizeContent(postContent, {
     maxLength: 10000,
-    allowLineBreaks: true
+    allowLineBreaks: true,
   })
 }
 

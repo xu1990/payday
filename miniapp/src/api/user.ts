@@ -122,7 +122,10 @@ export function unfollowUser(targetUserId: string): Promise<FollowActionRes> {
 /**
  * 获取我的粉丝列表
  */
-export function getMyFollowers(params?: { limit?: number; offset?: number }): Promise<FollowListRes> {
+export function getMyFollowers(params?: {
+  limit?: number
+  offset?: number
+}): Promise<FollowListRes> {
   const { limit = 20, offset = 0 } = params || {}
   return request<FollowListRes>({
     url: `${PREFIX}/me/followers?limit=${limit}&offset=${offset}`,
@@ -133,7 +136,10 @@ export function getMyFollowers(params?: { limit?: number; offset?: number }): Pr
 /**
  * 获取我的关注列表
  */
-export function getMyFollowing(params?: { limit?: number; offset?: number }): Promise<FollowListRes> {
+export function getMyFollowing(params?: {
+  limit?: number
+  offset?: number
+}): Promise<FollowListRes> {
   const { limit = 20, offset = 0 } = params || {}
   return request<FollowListRes>({
     url: `${PREFIX}/me/following?limit=${limit}&offset=${offset}`,
@@ -144,7 +150,10 @@ export function getMyFollowing(params?: { limit?: number; offset?: number }): Pr
 /**
  * 获取用户粉丝列表
  */
-export function getUserFollowers(targetUserId: string, params?: { limit?: number; offset?: number }): Promise<FollowListRes> {
+export function getUserFollowers(
+  targetUserId: string,
+  params?: { limit?: number; offset?: number }
+): Promise<FollowListRes> {
   const { limit = 20, offset = 0 } = params || {}
   return request<FollowListRes>({
     url: `${PREFIX}/${targetUserId}/followers?limit=${limit}&offset=${offset}`,
@@ -155,7 +164,10 @@ export function getUserFollowers(targetUserId: string, params?: { limit?: number
 /**
  * 获取用户关注列表
  */
-export function getUserFollowing(targetUserId: string, params?: { limit?: number; offset?: number }): Promise<FollowListRes> {
+export function getUserFollowing(
+  targetUserId: string,
+  params?: { limit?: number; offset?: number }
+): Promise<FollowListRes> {
   const { limit = 20, offset = 0 } = params || {}
   return request<FollowListRes>({
     url: `${PREFIX}/${targetUserId}/following?limit=${limit}&offset=${offset}`,
@@ -172,7 +184,7 @@ export function deactivateAccount(): Promise<{
 }> {
   return request({
     url: `${PREFIX}/me/deactivate`,
-    method: 'POST'
+    method: 'POST',
   })
 }
 
@@ -182,7 +194,7 @@ export function deactivateAccount(): Promise<{
 export function logout(): Promise<{ message: string }> {
   return request({
     url: '/api/v1/auth/logout',
-    method: 'POST'
+    method: 'POST',
   })
 }
 
@@ -197,7 +209,7 @@ export function submitFeedback(data: {
   return request({
     url: `${PREFIX}/feedback`,
     method: 'POST',
-    data
+    data,
   })
 }
 

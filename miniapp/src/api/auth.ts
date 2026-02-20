@@ -50,7 +50,10 @@ export function login(code: string): Promise<LoginResponse> {
  * @param refreshToken 刷新令牌
  * @param userId 用户ID
  */
-export function refreshAccessToken(refreshToken: string, userId: string): Promise<RefreshTokenResponse> {
+export function refreshAccessToken(
+  refreshToken: string,
+  userId: string
+): Promise<RefreshTokenResponse> {
   return request<RefreshTokenResponse>({
     url: `${PREFIX}/refresh`,
     method: 'POST',

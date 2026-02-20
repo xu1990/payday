@@ -8,7 +8,13 @@
  * - 后端通过其他机制（如速率限制）防止滥用
  */
 import { hideLoading, showLoading, showError } from './toast'
-import { getToken as getStoredToken, getRefreshToken, getUserId, saveToken, clearToken } from './tokenStorage'
+import {
+  getToken as getStoredToken,
+  getRefreshToken,
+  getUserId,
+  saveToken,
+  clearToken,
+} from './tokenStorage'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || ''
 
@@ -76,7 +82,7 @@ function isTokenExpired(token: string): boolean {
     // exp是秒级时间戳，转换为毫秒比较
     const now = Math.floor(Date.now() / 1000)
     // 提前 30 秒判定过期，避免临界点问题
-    return now >= (payload.exp - 30)
+    return now >= payload.exp - 30
   } catch {
     return true
   }
@@ -85,7 +91,10 @@ function isTokenExpired(token: string): boolean {
 /**
  * 刷新 access token（内部实现，避免循环依赖）
  */
-async function refreshAccessTokenInternal(refreshToken: string, userId: string): Promise<{
+async function refreshAccessTokenInternal(
+  refreshToken: string,
+  userId: string
+): Promise<{
   access_token: string
   refresh_token: string
 }> {
@@ -98,14 +107,14 @@ async function refreshAccessTokenInternal(refreshToken: string, userId: string):
       data: { refresh_token: refreshToken, user_id: userId },
       header: { 'Content-Type': 'application/json' },
       timeout: 10000,
-      success: (res) => {
+      success: res => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
           resolve(res.data as { access_token: string; refresh_token: string })
         } else {
           reject(new Error(`Token refresh failed with status ${res.statusCode}`))
         }
       },
-      fail: (err) => {
+      fail: err => {
         reject(new Error(err.errMsg || 'Token refresh request failed'))
       },
     })
@@ -306,8 +315,8 @@ export async function request<T = unknown>(options: RequestOptions): Promise<T> 
       ...rawOptions,
       url,
       header,
-      timeout: 30000,  // 30秒超时，防止请求长时间挂起
-      success: (res) => {
+      timeout: 30000, // 30秒超时，防止请求长时间挂起
+      success: res => {
         // 隐藏 loading
         if (shouldShowLoading) {
           manageLoading(false)
@@ -322,7 +331,12 @@ export async function request<T = unknown>(options: RequestOptions): Promise<T> 
         if (res.statusCode >= 200 && res.statusCode < 300) {
           // 自动解包统一响应格式 {code, message, details}
           let responseData = res.data as T
-          if (responseData && typeof responseData === 'object' && 'code' in responseData && 'details' in responseData) {
+          if (
+            responseData &&
+            typeof responseData === 'object' &&
+            'code' in responseData &&
+            'details' in responseData
+          ) {
             // 统一格式响应，直接提取 details
             responseData = (responseData as { details: T }).details
           }
@@ -343,7 +357,7 @@ export async function request<T = unknown>(options: RequestOptions): Promise<T> 
           reject(error)
         }
       },
-      fail: (err) => {
+      fail: err => {
         // 隐藏 loading
         if (shouldShowLoading) {
           manageLoading(false)

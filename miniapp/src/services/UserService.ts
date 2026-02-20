@@ -26,11 +26,7 @@ export class UserService extends BaseService {
   /**
    * 更新用户信息
    */
-  async updateProfile(data: {
-    anonymous_name?: string
-    avatar_url?: string
-    bio?: string
-  }) {
+  async updateProfile(data: { anonymous_name?: string; avatar_url?: string; bio?: string }) {
     return this.put<UserInfo>('/me', data)
   }
 

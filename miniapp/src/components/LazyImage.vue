@@ -1,8 +1,5 @@
 <template>
-  <view
-    class="lazy-image-container"
-    :style="{ width: props.width, height: props.height }"
-  >
+  <view class="lazy-image-container" :style="{ width: props.width, height: props.height }">
     <!-- 占位图/骨架屏 -->
     <view
       v-if="!isLoaded && !isError"
@@ -173,7 +170,8 @@ export function clearImageCache() {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

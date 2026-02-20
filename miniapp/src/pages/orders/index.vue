@@ -4,12 +4,8 @@
       <text class="title">我的订单</text>
     </view>
 
-    <view class="orders-list" v-if="orders.length > 0">
-      <view
-        v-for="order in orders"
-        :key="order.id"
-        class="order-card"
-      >
+    <view v-if="orders.length > 0" class="orders-list">
+      <view v-for="order in orders" :key="order.id" class="order-card">
         <view class="order-header">
           <text class="order-id">订单号：{{ order.id.slice(0, 8) }}...</text>
           <view class="order-status" :class="getStatusClass(order.status)">
@@ -30,7 +26,7 @@
             <text class="info-label">开始日期</text>
             <text class="info-value">{{ formatDate(order.start_date) }}</text>
           </view>
-          <view class="info-row" v-if="order.end_date">
+          <view v-if="order.end_date" class="info-row">
             <text class="info-label">结束日期</text>
             <text class="info-value">{{ formatDate(order.end_date) }}</text>
           </view>
@@ -38,13 +34,13 @@
             <text class="info-label">下单时间</text>
             <text class="info-value">{{ formatDateTime(order.created_at) }}</text>
           </view>
-          <view class="info-row" v-if="order.auto_renew">
+          <view v-if="order.auto_renew" class="info-row">
             <text class="info-label">自动续费</text>
             <text class="info-value">已开启</text>
           </view>
         </view>
 
-        <view class="order-actions" v-if="order.status === 'pending'">
+        <view v-if="order.status === 'pending'" class="order-actions">
           <button class="action-btn primary" @click="handlePay(order)">
             <text>去支付</text>
           </button>
@@ -55,12 +51,12 @@
       </view>
     </view>
 
-    <view class="empty" v-else-if="!loading">
+    <view v-else-if="!loading" class="empty">
       <text class="empty-icon">📋</text>
       <text class="empty-text">暂无订单</text>
     </view>
 
-    <view class="loading" v-if="loading">
+    <view v-if="loading" class="loading">
       <text>加载中...</text>
     </view>
   </view>
@@ -90,7 +86,7 @@ const getStatusText = (status: string) => {
     pending: '待支付',
     paid: '已支付',
     cancelled: '已取消',
-    refunded: '已退款'
+    refunded: '已退款',
   }
   return statusMap[status] || status
 }
@@ -100,7 +96,7 @@ const getStatusClass = (status: string) => {
     pending: 'status-pending',
     paid: 'status-paid',
     cancelled: 'status-cancelled',
-    refunded: 'status-refunded'
+    refunded: 'status-refunded',
   }
   return classMap[status] || ''
 }
@@ -134,7 +130,6 @@ const handlePay = async (order: MembershipOrderItem) => {
       const res = await getMyOrders()
       orders.value = res.items
     }, 1000)
-
   } catch (error: any) {
     if (error.errMsg && error.errMsg.includes('cancel')) {
       uni.showToast({ title: '已取消支付', icon: 'none' })
@@ -148,7 +143,7 @@ const handleCancel = async (order: MembershipOrderItem) => {
   uni.showModal({
     title: '取消订单',
     content: '确认取消该订单？',
-    success: async (res) => {
+    success: async res => {
       if (res.confirm) {
         try {
           await cancelOrder(order.id)
@@ -162,11 +157,11 @@ const handleCancel = async (order: MembershipOrderItem) => {
         } catch (error: any) {
           uni.showToast({
             title: error?.message || '取消失败',
-            icon: 'none'
+            icon: 'none',
           })
         }
       }
-    }
+    },
   })
 }
 </script>

@@ -2,12 +2,7 @@
   <view class="empty-state-container">
     <!-- 图标 -->
     <view class="empty-icon">
-      <image
-        v-if="icon"
-        :src="icon"
-        class="icon-image"
-        mode="aspectFit"
-      />
+      <image v-if="icon" :src="icon" class="icon-image" mode="aspectFit" />
       <text v-else class="icon-text">{{ defaultIcon }}</text>
     </view>
 
@@ -15,9 +10,7 @@
     <text v-if="text" class="empty-text">{{ text }}</text>
 
     <!-- 描述 -->
-    <text v-if="description" class="empty-description">{{
-      description
-    }}</text>
+    <text v-if="description" class="empty-description">{{ description }}</text>
 
     <!-- 操作按钮 -->
     <view v-if="actionText" class="empty-action">

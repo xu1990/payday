@@ -14,7 +14,7 @@ function handleClickGithub() {
         icon: 'none',
         title: '链接已复制，请在浏览器打开',
       })
-    }
+    },
   })
   // #endif
 }
@@ -27,7 +27,7 @@ function handleClickGithub() {
 </template>
 
 <style>
-.footer{
+.footer {
   position: absolute;
   bottom: 1rem;
   left: 50%;

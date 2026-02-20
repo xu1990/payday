@@ -34,7 +34,11 @@ function daysToNextPayday(payday: number): number {
     return Math.round((thisMonthPay.getTime() - today.getTime()) / (24 * 60 * 60 * 1000))
   }
   const nextMonth = new Date(y, m + 1, 1)
-  const nextPay = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), Math.min(payday, new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0).getDate()))
+  const nextPay = new Date(
+    nextMonth.getFullYear(),
+    nextMonth.getMonth(),
+    Math.min(payday, new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0).getDate())
+  )
   return Math.round((nextPay.getTime() - today.getTime()) / (24 * 60 * 60 * 1000))
 }
 
@@ -87,14 +91,14 @@ async function loadPaydayData() {
 
     // 加载发薪日配置
     const list = await listPayday()
-    const active = (list || []).filter((c) => c.is_active === 1)
+    const active = (list || []).filter(c => c.is_active === 1)
     hasPaydayConfig.value = active.length > 0
     if (active.length === 0) {
       daysToPayday.value = null
       return
     }
-    const solar = active.filter((c) => c.calendar_type === 'solar')
-    const daysList = solar.length ? solar.map((c) => daysToNextPayday(c.payday)) : [999]
+    const solar = active.filter(c => c.calendar_type === 'solar')
+    const daysList = solar.length ? solar.map(c => daysToNextPayday(c.payday)) : [999]
     daysToPayday.value = Math.min(...daysList)
   } catch (error) {
     hasPaydayConfig.value = false
@@ -110,7 +114,7 @@ async function loadPaydayData() {
 function loadSavedMood() {
   try {
     const saved = uni.getStorageSync(MOOD_STORAGE_KEY) as MoodType | undefined
-    if (saved && moodOptions.some((o) => o.value === saved)) {
+    if (saved && moodOptions.some(o => o.value === saved)) {
       selectedMood.value = saved
     }
   } catch (error) {
@@ -224,7 +228,6 @@ function goProfile() {
       </view>
       <text class="progress-desc">{{ progress.passed }} / {{ progress.total }} 天</text>
     </view>
-
   </view>
 </template>
 
