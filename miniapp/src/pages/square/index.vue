@@ -3,10 +3,13 @@ import { ref, watch } from 'vue'
 import { getPostList, type PostItem } from '@/api/post'
 import { useDebounceFn } from '@/composables/useDebounce'
 import { useAuthStore } from '@/stores/auth'
+import PostActionBar from '@/components/PostActionBar.vue'
 
 type Sort = 'hot' | 'latest'
 const activeTab = ref<Sort>('hot')
 const list = ref<PostItem[]>([])
+const likedSet = ref<Set<string>>(new Set())
+const likeLoading = ref<Set<string>>(new Set())
 const loading = ref(false)
 const authStore = useAuthStore()
 
@@ -40,6 +43,31 @@ async function load() {
 const { run: debouncedLoad } = useDebounceFn(load, 300)
 
 watch(activeTab, debouncedLoad, { immediate: true })
+
+async function handleLike(data: { postId: string; isLiked: boolean }) {
+  const { postId, isLiked } = data
+  if (likeLoading.value.has(postId)) return
+
+  const post = list.value.find(p => p.id === postId)
+  if (!post) return
+
+  // Optimistic update
+  if (isLiked) {
+    likedSet.value.add(postId)
+    post.like_count += 1
+  } else {
+    likedSet.value.delete(postId)
+    post.like_count = Math.max(0, post.like_count - 1)
+  }
+}
+
+function handleComment(data: { postId: string }) {
+  goDetail(data.postId)
+}
+
+function handleShare(data: { postId: string }) {
+  goDetail(data.postId)
+}
 
 function goDetail(id: string) {
   uni.navigateTo({ url: `/pages/post-detail/index?id=${id}` })
@@ -95,10 +123,17 @@ function goCreate() {
             mode="aspectFill"
           />
         </view>
-        <view class="stats">
-          <text>👍 {{ item.like_count }}</text>
-          <text>💬 {{ item.comment_count }}</text>
-        </view>
+        <PostActionBar
+          :post-id="item.id"
+          :like-count="item.like_count"
+          :comment-count="item.comment_count"
+          :is-liked="likedSet.has(item.id)"
+          :compact="true"
+          :show-view="false"
+          @like="handleLike"
+          @comment="handleComment"
+          @share="handleShare"
+        />
       </view>
     </scroll-view>
     <view class="fab" @click="goCreate">发帖</view>
@@ -172,14 +207,6 @@ function goCreate() {
   height: 160rpx;
   border-radius: 8rpx;
   background: #f0f0f0;
-}
-.stats {
-  margin-top: 16rpx;
-  font-size: 24rpx;
-  color: #999;
-}
-.stats text {
-  margin-right: 24rpx;
 }
 .fab {
   position: fixed;
