@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { likePost, unlikePost } from '@/api/like'
 
 interface Props {
   postId: string
@@ -28,9 +29,29 @@ const emit = defineEmits<Emits>()
 
 const likeLoading = ref(false)
 
-function handleLike() {
+async function handleLike() {
   if (likeLoading.value) return
-  emit('like', { postId: props.postId, isLiked: props.isLiked })
+
+  const currentlyLiked = props.isLiked || false
+  const newLikedState = !currentlyLiked
+
+  // Emit event with optimistic state
+  likeLoading.value = true
+  emit('like', { postId: props.postId, isLiked: newLikedState })
+
+  try {
+    if (newLikedState) {
+      await likePost(props.postId)
+    } else {
+      await unlikePost(props.postId)
+    }
+  } catch (error) {
+    // Emit rollback event on failure
+    emit('like', { postId: props.postId, isLiked: currentlyLiked })
+    uni.showToast({ title: '操作失败', icon: 'none' })
+  } finally {
+    likeLoading.value = false
+  }
 }
 
 function handleComment() {
