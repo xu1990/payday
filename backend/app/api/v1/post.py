@@ -97,4 +97,30 @@ async def post_get(
     )
     if not post:
         raise NotFoundException("资源不存在")
-    return success_response(data=PostResponse.model_validate(post).model_dump(mode='json'), message="获取帖子详情成功")
+    # Convert SQLAlchemy object to dict to avoid greenlet issues
+    # Need to convert datetime to ISO format string for JSON serialization
+    post_dict = {
+        'id': post.id,
+        'user_id': post.user_id,
+        'anonymous_name': post.anonymous_name,
+        'content': post.content,
+        'images': post.images,
+        'tags': post.tags,
+        'type': post.type,
+        'salary_range': post.salary_range,
+        'industry': post.industry,
+        'city': post.city,
+        'topic_id': post.topic_id,
+        'visibility': post.visibility,
+        'view_count': post.view_count,
+        'like_count': post.like_count,
+        'comment_count': post.comment_count,
+        'status': post.status,
+        'risk_status': post.risk_status,
+        'risk_score': post.risk_score,
+        'risk_reason': post.risk_reason,
+        'created_at': post.created_at.isoformat() if post.created_at else None,
+        'updated_at': post.updated_at.isoformat() if post.updated_at else None,
+        'is_liked': getattr(post, 'is_liked', False)
+    }
+    return success_response(data=post_dict, message="获取帖子详情成功")
