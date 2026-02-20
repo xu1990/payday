@@ -2,12 +2,16 @@
 关注接口 - 关注/取关、粉丝列表、关注列表；与技术方案 3.3.2 一致
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from typing import List
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.exceptions import NotFoundException, AuthorizationException, success_response
 from app.models.user import User
+from app.models.follow import Follow
 from app.schemas.follow import FollowActionResponse, FollowListResponse
 from app.schemas.user import UserResponse
 from app.schemas.post import PostResponse
@@ -23,6 +27,11 @@ from app.services.follow_service import (
 from app.services.user_service import get_user_by_id
 
 router = APIRouter(prefix="/user", tags=["follow"])
+
+
+class BatchFollowStatusRequest(BaseModel):
+    """批量获取关注状态请求体"""
+    user_ids: List[str]
 
 
 def _user_to_response(user: User) -> dict:
@@ -146,3 +155,30 @@ async def user_following(
         "total": total,
     }
     return success_response(data=data, message="获取关注列表成功")
+
+
+@router.post("/status")
+async def batch_follow_status(
+    body: BatchFollowStatusRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """批量获取关注状态 - 一次查询多个用户的关注状态"""
+    # 验证最大50个ID
+    if len(body.user_ids) > 50:
+        raise HTTPException(status_code=400, detail="Maximum 50 user IDs allowed")
+
+    # 查询所有关注关系（一次查询）
+    result = await db.execute(
+        select(Follow)
+        .where(
+            Follow.follower_id == current_user.id,
+            Follow.following_id.in_(body.user_ids)
+        )
+    )
+    following_ids = {str(f.following_id) for f in result.scalars().all()}
+
+    # 构建响应映射
+    status_map = {uid: uid in following_ids for uid in body.user_ids}
+
+    return success_response(data=status_map, message="获取关注状态成功")

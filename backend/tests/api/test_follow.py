@@ -885,3 +885,101 @@ class TestUserFollowingEndpoint:
         data = response.json()
         assert data["total"] == 0
         assert len(data["items"]) == 0
+
+
+@pytest.mark.asyncio
+class TestBatchFollowStatusEndpoint:
+    """测试 POST /api/v1/user/status 端点"""
+
+    async def test_batch_follow_status_returns_correct_mapping(
+        self,
+        async_client,
+        test_user,
+        user_token,
+        db_session,
+    ):
+        """测试批量获取关注状态成功"""
+        import asyncio
+        from tests.test_utils import TestDataFactory
+        from app.models.follow import Follow
+
+        # 创建目标用户
+        async def setup_users():
+            target_user_1 = await TestDataFactory.create_user(
+                db_session,
+                anonymous_name="目标用户1",
+            )
+            target_user_2 = await TestDataFactory.create_user(
+                db_session,
+                anonymous_name="目标用户2",
+            )
+            # 关注第一个用户
+            follow1 = Follow(
+                follower_id=test_user.id,
+                following_id=target_user_1.id,
+            )
+            db_session.add(follow1)
+            await db_session.commit()
+            return target_user_1, target_user_2
+
+        target_user_1, target_user_2 = await setup_users()
+
+        response = await async_client.post(
+            "/api/v1/user/status",
+            json={"user_ids": [target_user_1.id, target_user_2.id]},
+            headers={"Authorization": f"Bearer {user_token}"}
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["code"] == "SUCCESS"
+        assert data["details"][target_user_1.id] is True
+        assert data["details"][target_user_2.id] is False
+
+    async def test_batch_follow_status_empty_list(
+        self,
+        async_client,
+        user_token,
+    ):
+        """测试批量获取关注状态 - 空列表"""
+        response = await async_client.post(
+            "/api/v1/user/status",
+            json={"user_ids": []},
+            headers={"Authorization": f"Bearer {user_token}"}
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["code"] == "SUCCESS"
+        assert data["details"] == {}
+
+    async def test_batch_follow_status_too_many_ids(
+        self,
+        async_client,
+        user_token,
+    ):
+        """测试批量获取关注状态 - 超过最大限制"""
+        # 创建51个用户ID
+        user_ids = [f"user-{i}" for i in range(51)]
+
+        response = await async_client.post(
+            "/api/v1/user/status",
+            json={"user_ids": user_ids},
+            headers={"Authorization": f"Bearer {user_token}"}
+        )
+
+        assert response.status_code == 400
+        data = response.json()
+        assert "Maximum 50" in data["detail"]
+
+    async def test_batch_follow_status_unauthorized(
+        self,
+        async_client,
+    ):
+        """测试批量获取关注状态 - 未提供认证token"""
+        response = await async_client.post(
+            "/api/v1/user/status",
+            json={"user_ids": ["user-1", "user-2"]}
+        )
+
+        assert response.status_code == 401
