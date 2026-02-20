@@ -126,6 +126,7 @@ async def upload_avatar(
 
 class FeedbackCreate(BaseModel):
     content: str = Field(..., min_length=1, max_length=500, description="反馈内容")
+    images: Optional[list[str]] = Field(None, description="反馈图片列表")
     contact: Optional[str] = Field(None, max_length=100, description="联系方式")
 
 
@@ -136,6 +137,19 @@ async def submit_feedback(
     db: AsyncSession = Depends(get_db),
 ):
     """提交用户反馈"""
-    # TODO: 创建专门的 feedback 表来存储反馈
-    # 当前版本暂时返回成功消息，实际项目中应该保存到数据库或发送到管理员邮箱
+    from app.models.feedback import Feedback
+    import uuid
+
+    feedback = Feedback(
+        id=str(uuid.uuid4()),
+        user_id=current_user.id,
+        content=data.content,
+        images=data.images or [],
+        contact=data.contact,
+        status="pending"
+    )
+
+    db.add(feedback)
+    await db.commit()
+
     return success_response(message="反馈已提交，感谢您的建议")

@@ -87,8 +87,8 @@ export const useAuthStore = defineStore('auth', {
     csrfToken: safeGetItem(CSRF_KEY),
     // 记忆存储是否可用
     storageAvailable: isStorageAvailable(),
-    // 登录状态标志（由登录/登出操作控制）
-    _isLoggedIn: false,
+    // 如果有 token，设置为已登录状态（修复刷新跳转登录问题）
+    _isLoggedIn: !!safeGetItem('payday_admin_token'),
   }),
   getters: {
     isLoggedIn: (state) => state._isLoggedIn,

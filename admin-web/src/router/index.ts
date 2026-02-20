@@ -25,6 +25,7 @@ const router = createRouter({
         { path: 'miniprogram', name: 'Miniprogram', component: () => import('@/views/MiniprogramConfig.vue') },
         { path: 'agreements', name: 'Agreements', component: () => import('@/views/AgreementManagement.vue') },
         { path: 'splash', name: 'Splash', component: () => import('@/views/SplashSettings.vue') },
+        { path: 'feedback', name: 'Feedback', component: () => import('@/views/FeedbackList.vue') },
       ],
     },
   ],

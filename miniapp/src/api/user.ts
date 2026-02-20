@@ -191,6 +191,7 @@ export function logout(): Promise<{ message: string }> {
  */
 export function submitFeedback(data: {
   content: string
+  images?: string[]
   contact?: string
 }): Promise<{ message: string }> {
   return request({

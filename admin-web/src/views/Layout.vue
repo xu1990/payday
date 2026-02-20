@@ -63,6 +63,10 @@
           <el-icon><Document /></el-icon>
           <span>开屏设置</span>
         </el-menu-item>
+        <el-menu-item index="/feedback" aria-label="用户反馈页面">
+          <el-icon><ChatDotRound /></el-icon>
+          <span>用户反馈</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>
