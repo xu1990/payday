@@ -26,7 +26,11 @@ from app.services.follow_service import (
 )
 from app.services.user_service import get_user_by_id
 
+# User-scoped follow routes (follow/unfollow, followers, following lists)
 router = APIRouter(prefix="/user", tags=["follow"])
+
+# Follows collection routes (batch operations)
+follows_router = APIRouter(prefix="/follows", tags=["follows"])
 
 
 class BatchFollowStatusRequest(BaseModel):
@@ -157,7 +161,7 @@ async def user_following(
     return success_response(data=data, message="获取关注列表成功")
 
 
-@router.post("/status")
+@follows_router.post("/status")
 async def batch_follow_status(
     body: BatchFollowStatusRequest,
     current_user: User = Depends(get_current_user),

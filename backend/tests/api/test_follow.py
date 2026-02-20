@@ -925,7 +925,7 @@ class TestBatchFollowStatusEndpoint:
         target_user_1, target_user_2 = await setup_users()
 
         response = await async_client.post(
-            "/api/v1/user/status",
+            "/api/v1/follows/status",
             json={"user_ids": [target_user_1.id, target_user_2.id]},
             headers={"Authorization": f"Bearer {user_token}"}
         )
@@ -943,7 +943,7 @@ class TestBatchFollowStatusEndpoint:
     ):
         """测试批量获取关注状态 - 空列表"""
         response = await async_client.post(
-            "/api/v1/user/status",
+            "/api/v1/follows/status",
             json={"user_ids": []},
             headers={"Authorization": f"Bearer {user_token}"}
         )
@@ -963,7 +963,7 @@ class TestBatchFollowStatusEndpoint:
         user_ids = [f"user-{i}" for i in range(51)]
 
         response = await async_client.post(
-            "/api/v1/user/status",
+            "/api/v1/follows/status",
             json={"user_ids": user_ids},
             headers={"Authorization": f"Bearer {user_token}"}
         )
@@ -978,7 +978,7 @@ class TestBatchFollowStatusEndpoint:
     ):
         """测试批量获取关注状态 - 未提供认证token"""
         response = await async_client.post(
-            "/api/v1/user/status",
+            "/api/v1/follows/status",
             json={"user_ids": ["user-1", "user-2"]}
         )
 
