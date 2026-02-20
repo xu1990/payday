@@ -133,3 +133,16 @@ export function getUserFollowing(userId: string, params?: { limit?: number; offs
     method: 'GET',
   })
 }
+
+/** 检查关注状态响应 */
+export interface CheckFollowStatusRes {
+  is_following: boolean
+}
+
+/** 检查是否关注某用户 */
+export function checkFollowStatus(userId: string) {
+  return request<CheckFollowStatusRes>({
+    url: `${PREFIX}/${userId}/follow-status`,
+    method: 'GET',
+  })
+}
