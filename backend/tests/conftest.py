@@ -154,6 +154,28 @@ def admin_headers(admin_token: str) -> dict:
     return {"Authorization": f"Bearer {admin_token}"}
 
 
+@pytest.fixture
+async def async_client(db_session: AsyncSession):
+    """异步HTTP客户端用于集成测试，使用测试数据库会话"""
+    from httpx import AsyncClient, ASGITransport
+    from app.main import app
+    from unittest.mock import patch
+    from app.core.database import get_db
+
+    # Override the get_db dependency to use our test session
+    async def override_get_db():
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        yield client
+
+    # Clean up
+    app.dependency_overrides.clear()
+
+
 # External service mock fixtures
 @pytest.fixture
 def mock_wechat_auth():

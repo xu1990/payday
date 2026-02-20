@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.exceptions import NotFoundException, AuthenticationException, BusinessException, success_response
-from app.core.deps import get_current_user, rate_limit_post
+from app.core.deps import get_current_user, get_current_user_optional, rate_limit_post
 from app.models.user import User
 from app.schemas.post import PostCreate, PostResponse
 from app.services.post_service import create as create_post, get_by_id, list_posts, search_posts
@@ -68,8 +68,15 @@ async def post_list(
     limit: int = Query(20, ge=1, le=50),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    posts = await list_posts(db, sort=sort, limit=limit, offset=offset)
+    posts = await list_posts(
+        db,
+        sort=sort,
+        limit=limit,
+        offset=offset,
+        current_user_id=current_user.id if current_user else None
+    )
     data = [PostResponse.model_validate(p).model_dump(mode='json') for p in posts]
     return success_response(data=data, message="获取帖子列表成功")
 
@@ -78,9 +85,16 @@ async def post_list(
 async def post_get(
     post_id: str,
     db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ):
     # 获取帖子详情并增加浏览量（从缓存计数）
-    post = await get_by_id(db, post_id, only_approved=True, increment_view=True)
+    post = await get_by_id(
+        db,
+        post_id,
+        only_approved=True,
+        increment_view=True,
+        current_user_id=current_user.id if current_user else None
+    )
     if not post:
         raise NotFoundException("资源不存在")
     return success_response(data=PostResponse.model_validate(post).model_dump(mode='json'), message="获取帖子详情成功")

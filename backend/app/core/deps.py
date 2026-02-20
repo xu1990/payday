@@ -56,6 +56,28 @@ async def get_current_user(
     return user
 
 
+async def get_current_user_optional(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: AsyncSession = Depends(get_db),
+) -> Optional[User]:
+    """Optional authentication - returns None if no valid token"""
+    if not credentials or credentials.scheme.lower() != "bearer":
+        return None
+    try:
+        token = credentials.credentials
+        payload = decode_token(token)
+        if not payload or "sub" not in payload:
+            return None
+        user_id = payload["sub"]
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+        if not user or user.status != "normal":
+            return None
+        return user
+    except Exception:
+        return None
+
+
 async def get_current_admin(
     db: AsyncSession = Depends(get_db),
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
@@ -366,6 +388,7 @@ async def rate_limit_comment(request: Request) -> bool:
 __all__ = [
     "get_db",
     "get_current_user",
+    "get_current_user_optional",
     "get_current_admin",
     "get_current_admin_user",  # Alias for get_current_admin
     "verify_csrf_token",
