@@ -2,13 +2,13 @@
 import { ref, onMounted, computed } from 'vue'
 import { listSalary, type SalaryRecord } from '@/api/salary'
 import { listPayday, type PaydayConfig } from '@/api/payday'
-import { getUnreadCount } from '@/api/notification'
 import { useUserStore } from '@/stores/user'
+import { useNotificationUnread } from '@/composables/useNotificationUnread'
 
 const userStore = useUserStore()
 
 const loading = ref(true)
-const notificationUnread = ref(0)
+const { unreadCount: notificationUnread, startPolling } = useNotificationUnread()
 const errMsg = ref('')
 const recordList = ref<SalaryRecord[]>([])
 const paydayList = ref<PaydayConfig[]>([])
@@ -48,12 +48,9 @@ async function load() {
   } finally {
     loading.value = false
   }
-  try {
-    const res = await getUnreadCount()
-    notificationUnread.value = res?.unread_count ?? 0
-  } catch {
-    notificationUnread.value = 0
-  }
+
+  // Start polling for notification unread count
+  startPolling()
 }
 
 function jobName(configId: string) {
