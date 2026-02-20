@@ -9,7 +9,6 @@ type Sort = 'hot' | 'latest'
 const activeTab = ref<Sort>('hot')
 const list = ref<PostItem[]>([])
 const likedSet = ref<Set<string>>(new Set())
-const likeLoading = ref<Set<string>>(new Set())
 const loading = ref(false)
 const authStore = useAuthStore()
 
@@ -46,8 +45,6 @@ watch(activeTab, debouncedLoad, { immediate: true })
 
 async function handleLike(data: { postId: string; isLiked: boolean }) {
   const { postId, isLiked } = data
-  if (likeLoading.value.has(postId)) return
-
   const post = list.value.find(p => p.id === postId)
   if (!post) return
 
