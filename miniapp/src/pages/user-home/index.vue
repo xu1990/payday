@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getPostList, type PostItem } from '@/api/post'
 import { getCheckinList, type CheckinItem } from '@/api/checkin'
+import { useAuthStore } from '@/stores/auth'
+import FollowButton from '@/components/FollowButton.vue'
 
 const targetUserId = ref('')
+const authStore = useAuthStore()
 const loading = ref(true)
 const posts = ref<PostItem[]>([])
 const checkins = ref<CheckinItem[]>([])
@@ -15,6 +18,12 @@ const postPage = ref({ limit: 20, offset: 0 })
 const checkinPage = ref({ limit: 30, offset: 0 })
 const hasMore = ref(true)
 const loadingMore = ref(false)
+const isFollowing = ref(false)
+const followLoading = ref(false)
+
+const isOwnProfile = computed(() => {
+  return authStore.user?.id === targetUserId.value
+})
 
 onLoad((options: any) => {
   targetUserId.value = options?.userId || ''
@@ -24,6 +33,20 @@ onLoad((options: any) => {
     loading.value = false
   }
 })
+
+async function checkFollowStatus() {
+  if (isOwnProfile.value) return
+
+  try {
+    const result = await uni.request({
+      url: `/api/v1/user/${targetUserId.value}/follow-status`,
+      method: 'GET',
+    })
+    isFollowing.value = result.data?.is_following || false
+  } catch (e) {
+    // Ignore error, default to not following
+  }
+}
 
 async function loadProfileData() {
   loading.value = true
@@ -49,6 +72,9 @@ async function loadProfileData() {
       const checkinsResult = await getCheckinList({ limit: 30, offset: 0 })
       checkins.value = checkinsResult.items || []
     }
+
+    // Check follow status
+    await checkFollowStatus()
   } catch (e) {
     // Failed to load user profile
   } finally {
@@ -86,6 +112,44 @@ async function loadMore() {
   }
 }
 
+async function handleFollow() {
+  if (followLoading.value) return
+
+  followLoading.value = true
+  try {
+    await uni.request({
+      url: `/api/v1/user/${targetUserId.value}/follow`,
+      method: 'POST',
+    })
+    isFollowing.value = true
+    followerCount.value += 1
+    uni.showToast({ title: '关注成功', icon: 'success' })
+  } catch (e: any) {
+    uni.showToast({ title: e?.message || '操作失败', icon: 'none' })
+  } finally {
+    followLoading.value = false
+  }
+}
+
+async function handleUnfollow() {
+  if (followLoading.value) return
+
+  followLoading.value = true
+  try {
+    await uni.request({
+      url: `/api/v1/user/${targetUserId.value}/follow`,
+      method: 'DELETE',
+    })
+    isFollowing.value = false
+    followerCount.value = Math.max(0, followerCount.value - 1)
+    uni.showToast({ title: '已取消关注', icon: 'success' })
+  } catch (e: any) {
+    uni.showToast({ title: e?.message || '操作失败', icon: 'none' })
+  } finally {
+    followLoading.value = false
+  }
+}
+
 function switchTab(tab: 'posts' | 'checkins') {
   currentTab.value = tab
   hasMore.value = true
@@ -94,6 +158,18 @@ function switchTab(tab: 'posts' | 'checkins') {
 function formatDate(dateStr: string) {
   const d = new Date(dateStr)
   return d.toLocaleDateString()
+}
+
+function goToFollowerList() {
+  uni.navigateTo({
+    url: `/pages/followers/index?type=followers&userId=${targetUserId.value}`,
+  })
+}
+
+function goToFollowingList() {
+  uni.navigateTo({
+    url: `/pages/followers/index?type=following&userId=${targetUserId.value}`,
+  })
 }
 
 function goToPost(postId: string) {
@@ -109,11 +185,18 @@ function goToPost(postId: string) {
     <view v-else class="content">
       <!-- 用户统计 -->
       <view class="stats-card">
-        <view class="stat-item">
+        <FollowButton
+          v-if="!isOwnProfile && authStore.isLoggedIn"
+          :target-user-id="targetUserId"
+          :is-following="isFollowing"
+          @follow="handleFollow"
+          @unfollow="handleUnfollow"
+        />
+        <view class="stat-item" @tap="goToFollowerList">
           <text class="stat-value">{{ followerCount }}</text>
           <text class="stat-label">粉丝</text>
         </view>
-        <view class="stat-item">
+        <view class="stat-item" @tap="goToFollowingList">
           <text class="stat-value">{{ followingCount }}</text>
           <text class="stat-label">关注</text>
         </view>
@@ -204,6 +287,12 @@ function goToPost(postId: string) {
   flex-direction: column;
   align-items: center;
   gap: 8rpx;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.stat-item:active {
+  transform: scale(0.95);
 }
 .stat-value {
   font-size: 40rpx;
