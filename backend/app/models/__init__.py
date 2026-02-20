@@ -17,6 +17,7 @@ from .sensitive_word import SensitiveWord
 from .share import Share
 from .theme import Theme, UserSetting
 from .topic import Topic
+from .miniprogram_config import MiniprogramConfig
 
 __all__ = [
     "Base",
@@ -40,4 +41,5 @@ __all__ = [
     "Theme",
     "UserSetting",
     "Topic",
+    "MiniprogramConfig",
 ]

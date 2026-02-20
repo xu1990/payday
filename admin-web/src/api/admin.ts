@@ -67,8 +67,14 @@ adminApi.interceptors.response.use(
     const authStore = useAuthStore()
     const originalRequest = error.config
 
-    // 如果不是401错误或已经重试过，直接拒绝
-    if (error.response?.status !== 401 || originalRequest._retry) {
+    // 对于非401错误，直接返回（不触发token刷新）
+    if (error.response?.status !== 401) {
+      return Promise.reject(error)
+    }
+
+    // 以下是401错误的处理逻辑
+    // 如果已经重试过，直接拒绝
+    if (originalRequest._retry) {
       return Promise.reject(error)
     }
 

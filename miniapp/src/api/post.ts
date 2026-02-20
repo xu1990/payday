@@ -37,6 +37,7 @@ export interface PostCreateParams {
   salary_range?: string | null
   industry?: string | null
   city?: string | null
+  visibility?: 'public' | 'followers' | 'private'
 }
 
 function queryString(params: Record<string, string | number>): string {

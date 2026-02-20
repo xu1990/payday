@@ -35,6 +35,7 @@ async def create(
         salary_range=data.salary_range,
         industry=data.industry,
         city=data.city,
+        visibility=data.visibility,
         status="normal",
         risk_status="pending",
     )
@@ -80,8 +81,14 @@ async def list_posts(
     sort: Literal["hot", "latest"] = "latest",
     limit: int = 20,
     offset: int = 0,
+    user_id: Optional[str] = None,
 ) -> List[Post]:
-    """帖子列表，热门从缓存获取，最新从数据库查询"""
+    """
+    帖子列表，热门从缓存获取，最新从数据库查询
+
+    Args:
+        user_id: 用户ID，用于查询关注者的帖子（followers可见）
+    """
     if sort == "hot":
         # 尝试从 Redis 获取热门帖子 ID 列表
         try:
@@ -89,7 +96,7 @@ async def list_posts(
             hot_post_ids = await PostCacheService.get_hot_posts(date, 0, limit - 1)
             if hot_post_ids:
                 # 按 ID 列表查询完整数据
-                posts = await get_posts_by_ids(db, hot_post_ids)
+                posts = await get_posts_by_ids(db, hot_post_ids, user_id)
                 # 分页处理（offset 在缓存结果上处理）
                 return posts[offset:] if offset < len(posts) else []
         except Exception:
@@ -99,7 +106,11 @@ async def list_posts(
     # 最新或降级查询：从数据库获取
     q = (
         select(Post)
-        .where(Post.status == "normal", Post.risk_status == "approved")
+        .where(
+            Post.status == "normal",
+            Post.risk_status == "approved",
+            Post.visibility == "public"  # 广场只显示公开帖子
+        )
         .limit(limit)
         .offset(offset)
     )
@@ -111,16 +122,26 @@ async def list_posts(
     return list(result.scalars().all())
 
 
-async def get_posts_by_ids(db: AsyncSession, post_ids: List[str]) -> List[Post]:
-    """根据 ID 列表批量查询帖子（保持顺序）"""
+async def get_posts_by_ids(
+    db: AsyncSession,
+    post_ids: List[str],
+    user_id: Optional[str] = None
+) -> List[Post]:
+    """
+    根据 ID 列表批量查询帖子（保持顺序）
+
+    Args:
+        user_id: 用户ID，用于过滤可见性
+    """
     if not post_ids:
         return []
-    # 查询所有帖子
+    # 查询所有公开帖子
     result = await db.execute(
         select(Post).where(
             Post.id.in_(post_ids),
             Post.status == "normal",
-            Post.risk_status == "approved"
+            Post.risk_status == "approved",
+            Post.visibility == "public"  # 广场只显示公开帖子
         )
     )
     posts_by_id = {p.id: p for p in result.scalars().all()}

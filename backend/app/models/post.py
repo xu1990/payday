@@ -24,6 +24,12 @@ class Post(Base):
     salary_range = Column(String(20), nullable=True, comment="工资区间可选")
     industry = Column(String(50), nullable=True)
     city = Column(String(50), nullable=True)
+    visibility = Column(
+        Enum("public", "followers", "private", name="post_visibility_enum"),
+        default="public",
+        nullable=False,
+        comment="公开范围: public=公开, followers=关注者可见, private=仅自己可见"
+    )
 
     view_count = Column(Integer, default=0, nullable=False)
     like_count = Column(Integer, default=0, nullable=False)

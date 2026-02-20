@@ -118,13 +118,11 @@ async function submit() {
       content: text,
       type: type.value,
       images: images.value.length > 0 ? images.value : undefined,
+      visibility: visibility.value,
     }
     if (salary_range.value) data.salary_range = salary_range.value
     if (industry.value) data.industry = industry.value
     if (city.value) data.city = city.value
-
-    // TODO: 添加 visibility 字段到后端 API
-    // if (visibility.value !== 'public') data.visibility = visibility.value
 
     await createPost(data)
     uni.showToast({ title: '发布成功' })
