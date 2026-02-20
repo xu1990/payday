@@ -132,6 +132,10 @@ async def check_follow_status(
     db: AsyncSession = Depends(get_db),
 ):
     """Check if current user is following target user."""
+    # SECURITY: 验证user_id格式
+    from app.utils.validation import validate_uuid
+    validate_uuid(user_id, "user_id")
+
     if not await get_user_by_id(db, user_id):
         raise NotFoundException("资源不存在")
 
