@@ -34,6 +34,8 @@ class TestDataFactory:
             avatar=kwargs.get("avatar"),
             bio=kwargs.get("bio"),
             status=kwargs.get("status", "normal"),
+            phone_number=kwargs.get("phone_number"),
+            phone_verified=kwargs.get("phone_verified", 0),
         )
         db_session.add(user)
         await db_session.commit()
