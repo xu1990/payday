@@ -10,8 +10,20 @@
 
       <!-- 登录按钮 -->
       <view class="login-section">
-        <button class="login-btn" :disabled="isLoading" @tap="handleLogin">
-          <text v-if="!isLoading">微信授权登录</text>
+        <!-- 快捷登录（无需手机号） -->
+        <button class="login-btn login-btn-quick" :disabled="isLoading" @tap="handleQuickLogin">
+          <text v-if="!isLoading">快捷登录</text>
+          <text v-else>登录中...</text>
+        </button>
+
+        <!-- 手机号登录（需要授权） -->
+        <button
+          class="login-btn login-btn-phone"
+          open-type="getPhoneNumber"
+          :disabled="isLoading"
+          @getphonenumber="handlePhoneLogin"
+        >
+          <text v-if="!isLoading">手机号登录</text>
           <text v-else>登录中...</text>
         </button>
 
@@ -61,15 +73,15 @@ onMounted(async () => {
 })
 
 /**
- * 微信授权登录
+ * 快捷登录（不授权手机号）
  */
-async function handleLogin() {
+async function handleQuickLogin() {
   if (isLoading.value) return
 
   try {
     isLoading.value = true
 
-    console.log('[login] 开始微信授权登录...')
+    console.log('[login] 开始快捷登录...')
 
     // 调用微信登录
     const loginRes: any = await uni.login({
@@ -108,9 +120,117 @@ async function handleLogin() {
 
     console.log('[login] 获取到微信授权码')
 
-    // 调用后端登录接口
+    // 调用后端登录接口（不带手机号）
     console.log('[login] 开始调用后端登录接口...')
     const success = await authStore.login(loginRes.code)
+
+    console.log('[login] 后端登录结果:', success)
+
+    if (success) {
+      showSuccess('登录成功')
+
+      // 不在登录页获取用户信息，由首页的 onShow 处理
+      // 避免真机环境下 token 存储异步问题导致 401
+
+      // 延迟跳转首页，确保 token 完全写入存储
+      setTimeout(() => {
+        console.log('[login] 跳转到首页')
+        uni.switchTab({
+          url: '/pages/index',
+        })
+      }, 800)
+    } else {
+      console.error('[login] 后端登录接口返回失败')
+      showError('登录失败，请检查后端服务是否启动')
+    }
+  } catch (error: unknown) {
+    console.error('[login] 登录过程抛出异常:', error)
+    const message = error instanceof Error ? error.message : '登录失败，请重试'
+    showError(message)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+/**
+ * 手机号登录（需要用户授权手机号）
+ */
+async function handlePhoneLogin(e: any) {
+  if (isLoading.value) return
+
+  console.log('[login] 手机号授权回调:', e)
+
+  // 检查用户是否同意授权
+  if (e.detail.errMsg !== 'getPhoneNumber:ok') {
+    console.warn('[login] 用户拒绝授权手机号:', e.detail.errMsg)
+
+    // 用户拒绝授权
+    if (e.detail.errMsg.includes('cancel')) {
+      console.info('[login] 用户取消手机号授权')
+      showError('已取消手机号授权')
+      return
+    }
+
+    // 其他错误
+    showError('获取手机号失败：' + e.detail.errMsg)
+    return
+  }
+
+  // 获取手机号授权码
+  const phoneNumberCode = e.detail.code
+  if (!phoneNumberCode) {
+    console.error('[login] 未获取到手机号授权码')
+    showError('获取手机号授权码失败，请重试')
+    return
+  }
+
+  console.log('[login] 获取到手机号授权码')
+
+  try {
+    isLoading.value = true
+
+    console.log('[login] 开始手机号登录...')
+
+    // 调用微信登录获取登录授权码
+    const loginRes: any = await uni.login({
+      provider: 'weixin',
+    })
+
+    console.log('[login] uni.login 结果:', loginRes)
+
+    // 检查是否有错误
+    if (loginRes.errMsg && loginRes.errMsg !== 'login:ok') {
+      const errMsg = loginRes.errMsg || ''
+      console.error('[login] 微信登录失败:', loginRes)
+
+      // 用户取消授权
+      if (errMsg.includes('cancel') || errMsg.includes('auth deny')) {
+        console.info('[login] 用户取消授权')
+        return
+      }
+
+      // 网络错误
+      if (errMsg.includes('network') || errMsg.includes('timeout')) {
+        showError('网络连接失败，请检查网络后重试')
+        return
+      }
+
+      // 其他错误
+      showError('微信登录失败：' + (errMsg || '未知错误'))
+      return
+    }
+
+    if (!loginRes?.code) {
+      console.error('[login] 未获取到微信授权码')
+      showError('获取微信授权码失败，请重试')
+      return
+    }
+
+    console.log('[login] 获取到微信授权码')
+
+    // 调用后端登录接口（带手机号授权码）
+    console.log('[login] 开始调用后端登录接口（带手机号）...')
+    const success = await authStore.login(loginRes.code, phoneNumberCode)
 
     console.log('[login] 后端登录结果:', success)
 
@@ -223,6 +343,7 @@ function goToPrivacyPolicy() {
   border: none;
   box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.3);
   transition: all 0.3s;
+  margin-bottom: 24rpx;
 
   &:active {
     transform: scale(0.98);
@@ -231,6 +352,16 @@ function goToPrivacyPolicy() {
 
   &[disabled] {
     opacity: 0.7;
+  }
+
+  &.login-btn-phone {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #ffffff;
+    border: 2rpx solid rgba(255, 255, 255, 0.3);
+
+    &:active {
+      background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    }
   }
 }
 

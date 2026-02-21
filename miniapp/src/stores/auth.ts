@@ -30,11 +30,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   /**
    * 微信登录
+   * @param code 微信登录授权码
+   * @param phoneNumberCode 手机号授权码（可选）
    */
-  async function login(code: string): Promise<boolean> {
+  async function login(code: string, phoneNumberCode?: string): Promise<boolean> {
     try {
       isLoading.value = true
-      const response = await authApi.login(code)
+      const response = await authApi.login(code, phoneNumberCode)
 
       // 保存 token
       token.value = response.access_token
