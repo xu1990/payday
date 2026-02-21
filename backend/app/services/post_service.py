@@ -378,9 +378,9 @@ async def search_posts(
     if keyword:
         # 验证输入是字符串且长度合理
         if not isinstance(keyword, str):
-            raise ValidationException("Search keyword must be a string")
+            raise ValidationException("搜索关键词必须是字符串")
         if len(keyword) > 100:
-            raise ValidationException("Search keyword too long (max 100 characters)")
+            raise ValidationException("搜索关键词过长（最多100个字符）")
 
         # 更严格的输入清理：仅允许可打印字符，移除所有控制字符
         # 保留空格、标点符号、中文字符

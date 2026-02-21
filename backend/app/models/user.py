@@ -4,6 +4,7 @@
 import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, Enum, DateTime
+from sqlalchemy.orm import relationship
 
 from .base import Base
 
@@ -40,3 +41,6 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     deactivated_at = Column(DateTime, nullable=True, comment="注销时间（软删除）")
+
+    # 关系
+    phone_lookup = relationship("PhoneLookup", back_populates="user", uselist=False)

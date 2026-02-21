@@ -13,6 +13,7 @@ from sqlalchemy import select, exc as sqlalchemy_exc, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
+from app.models.phone_lookup import PhoneLookup, hash_phone_number
 from app.utils.wechat import code2session, get_phone_number_from_wechat
 from app.core.security import create_access_token, create_refresh_token
 from app.core.cache import get_redis_client
@@ -115,6 +116,9 @@ async def bind_phone_to_user(db: AsyncSession, user_id: str, phone_number: str) 
     # 存储格式: encrypted_phone:salt
     phone_with_salt = f"{encrypted_phone}:{salt}"
 
+    # 计算手机号哈希值
+    phone_hash = hash_phone_number(phone_number)
+
     # 更新用户手机号
     await db.execute(
         update(User)
@@ -124,6 +128,14 @@ async def bind_phone_to_user(db: AsyncSession, user_id: str, phone_number: str) 
             phone_verified=1
         )
     )
+
+    # 创建 phone_lookup 记录
+    phone_lookup = PhoneLookup(
+        phone_hash=phone_hash,
+        user_id=user_id
+    )
+    db.add(phone_lookup)
+
     await db.commit()
     await db.refresh(user)
 
@@ -133,7 +145,8 @@ async def bind_phone_to_user(db: AsyncSession, user_id: str, phone_number: str) 
 
 async def get_user_by_phone(db: AsyncSession, phone_number: str) -> Optional[User]:
     """
-    根据手机号查询用户
+    根据手机号查询用户（使用 phone_lookup 表，O(1) 复杂度）
+    如果 phone_lookup 中没有记录，则回退到旧方法（遍历解密）以保持向后兼容
 
     Args:
         db: 数据库会话
@@ -145,8 +158,24 @@ async def get_user_by_phone(db: AsyncSession, phone_number: str) -> Optional[Use
     from app.utils.logger import get_logger
     logger = get_logger(__name__)
 
-    # 查询所有用户（需要遍历解密手机号）
-    # 注意：这是临时方案，生产环境应该建立专门的索引表
+    # 计算手机号哈希值
+    phone_hash = hash_phone_number(phone_number)
+
+    # 首先尝试使用 phone_lookup 表查询（O(1) 查询）
+    result = await db.execute(
+        select(User)
+        .join(PhoneLookup, PhoneLookup.user_id == User.id)
+        .where(PhoneLookup.phone_hash == phone_hash)
+    )
+
+    user = result.scalar_one_or_none()
+
+    if user:
+        logger.info(f"Found user {user.id} by phone number (using phone_lookup)")
+        return user
+
+    # 回退到旧方法：遍历解密（用于没有 phone_lookup 记录的旧数据）
+    logger.info(f"No user found in phone_lookup, falling back to legacy method")
     result = await db.execute(
         select(User)
         .where(User.phone_number.isnot(None))
@@ -154,27 +183,33 @@ async def get_user_by_phone(db: AsyncSession, phone_number: str) -> Optional[Use
     )
     users = result.scalars().all()
 
-    logger.info(f"get_user_by_phone: looking for {phone_number}, found {len(users)} users with phone_verified=1")
-
     # 遍历用户，解密手机号进行匹配
-    for user in users:
-        if user.phone_number:
+    for old_user in users:
+        if old_user.phone_number:
             try:
                 # 存储格式: encrypted_phone:salt
-                parts = user.phone_number.split(':')
+                parts = old_user.phone_number.split(':')
                 if len(parts) == 2:
                     encrypted, salt_b64 = parts
                     decrypted_phone = decrypt_amount(encrypted, salt_b64)
                     # decrypt_amount returns float, convert to string for comparison
                     decrypted_phone_str = str(int(decrypted_phone)) if decrypted_phone == int(decrypted_phone) else str(decrypted_phone)
-                    logger.debug(f"Comparing {decrypted_phone_str} with {phone_number} for user {user.id}")
                     if decrypted_phone_str == phone_number:
-                        logger.info(f"Found user {user.id} by phone number")
-                        return user
-                else:
-                    logger.warning(f"Invalid phone_number format for user {user.id}: {user.phone_number[:50]}")
+                        # 找到了用户，创建 phone_lookup 记录以便下次快速查找
+                        logger.info(f"Found user {old_user.id} by phone number (legacy method), creating lookup record")
+                        new_lookup = PhoneLookup(
+                            phone_hash=phone_hash,
+                            user_id=str(old_user.id)
+                        )
+                        db.add(new_lookup)
+                        try:
+                            await db.commit()
+                        except Exception:
+                            # 如果创建 lookup 失败（例如并发），不影响返回结果
+                            await db.rollback()
+                        return old_user
             except Exception as e:
-                logger.warning(f"Failed to decrypt phone for user {user.id}: {e}")
+                logger.warning(f"Failed to decrypt phone for user {old_user.id}: {e}")
                 continue
 
     logger.info(f"No user found with phone number {phone_number}")

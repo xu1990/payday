@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import get_db, get_current_user
+from app.core.deps import get_db, get_current_user, rate_limit_general
 from app.models.user import User
 from app.schemas.salary_usage import (
     SalaryUsageCreate,
@@ -28,7 +28,7 @@ from app.core.exceptions import success_response
 router = APIRouter(prefix="/salary-usage", tags=["薪资使用记录"])
 
 
-@router.post("", response_model=dict, summary="创建薪资使用记录")
+@router.post("", dependencies=[Depends(rate_limit_general)], response_model=dict, summary="创建薪资使用记录")
 async def create_usage(
     usage_data: SalaryUsageCreate,
     current_user: User = Depends(get_current_user),
