@@ -312,11 +312,13 @@ export async function isLoggedIn(): Promise<boolean> {
   return !!token
 }
 
-export default {
-  saveToken,
-  getToken,
-  getRefreshToken,
-  getUserId,
-  clearToken,
-  isLoggedIn,
-}
+// 移除默认导出以避免小程序环境下的动态导入问题
+// 所有导出都使用命名导出 (named exports)
+// export default {
+//   saveToken,
+//   getToken,
+//   getRefreshToken,
+//   getUserId,
+//   clearToken,
+//   isLoggedIn,
+// }
