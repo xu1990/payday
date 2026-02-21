@@ -22,6 +22,8 @@ class User(Base):
     nickname = Column(String(50), nullable=True, comment="显示昵称")
     avatar = Column(String(255), nullable=True, comment="头像 URL")
     bio = Column(String(200), nullable=True, comment="个人简介")
+    phone_number = Column(String(20), nullable=True, index=True, comment="手机号（加密）")
+    phone_verified = Column(Integer, default=0, comment="手机号是否验证")
 
     follower_count = Column(Integer, default=0, comment="粉丝数")
     following_count = Column(Integer, default=0, comment="关注数")
