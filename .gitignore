@@ -127,3 +127,7 @@ dump.rdb
 *.key
 *.crt
 *.csr
+
+# Git worktrees
+.worktrees/
+worktrees/
