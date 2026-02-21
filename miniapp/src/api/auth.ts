@@ -9,6 +9,7 @@ const PREFIX = '/api/v1/auth'
 
 export interface LoginRequest {
   code: string
+  phoneNumberCode?: string // 手机号授权码（可选）
 }
 
 export interface LoginResponse {
@@ -19,6 +20,8 @@ export interface LoginResponse {
     id: string
     anonymous_name: string
     avatar: string | null
+    phone_number?: string // 手机号（脱敏）- 仅在授权手机号时返回
+    phone_verified?: boolean // 手机号是否已验证 - 仅在授权手机号时返回
   }
 }
 
@@ -35,12 +38,18 @@ export interface RefreshTokenResponse {
 /**
  * 微信小程序登录
  * @param code 微信 wx.login() 返回的 code
+ * @param phoneNumberCode 手机号授权码（可选）- 通过 button open-type="getPhoneNumber" 获取
  */
-export function login(code: string): Promise<LoginResponse> {
+export function login(code: string, phoneNumberCode?: string): Promise<LoginResponse> {
+  const data: LoginRequest = { code }
+  if (phoneNumberCode) {
+    data.phoneNumberCode = phoneNumberCode
+  }
+
   return request<LoginResponse>({
     url: `${PREFIX}/login`,
     method: 'POST',
-    data: { code },
+    data,
     noAuth: true,
   })
 }

@@ -188,6 +188,13 @@
         "navigationBarTitleText": "意见反馈",
         "navigationStyle": "default"
       }
+    },
+    {
+      "path": "pages/salary-usage/index",
+      "style": {
+        "navigationBarTitleText": "记账",
+        "navigationStyle": "default"
+      }
     }
   ],
   "globalStyle": {

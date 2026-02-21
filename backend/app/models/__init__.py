@@ -19,6 +19,7 @@ from .theme import Theme, UserSetting
 from .topic import Topic
 from .miniprogram_config import MiniprogramConfig
 from .feedback import Feedback
+from .salary_usage import SalaryUsageRecord
 
 __all__ = [
     "Base",
@@ -44,4 +45,5 @@ __all__ = [
     "Topic",
     "MiniprogramConfig",
     "Feedback",
+    "SalaryUsageRecord",
 ]

@@ -24,6 +24,7 @@ from .checkin import router as checkin_router
 from .share import router as share_router
 from .config import router as config_router
 from .feedback import router as feedback_router
+from .salary_usage import router as salary_usage_router
 
 api_router = APIRouter(prefix="/api/v1", tags=["v1"])
 
@@ -52,6 +53,7 @@ api_router.include_router(checkin_router)
 api_router.include_router(share_router)
 api_router.include_router(config_router)
 api_router.include_router(feedback_router)
+api_router.include_router(salary_usage_router)
 
 
 @api_router.get("/ping")

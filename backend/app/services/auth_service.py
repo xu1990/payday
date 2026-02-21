@@ -1,20 +1,23 @@
 """
 认证服务 - 微信 code2session、获取或创建用户
 支持 Refresh Token 机制
+支持手机号登录
 """
 import random
 import string
 import hmac
+import re
 from typing import Optional, Tuple
 
-from sqlalchemy import select, exc as sqlalchemy_exc
+from sqlalchemy import select, exc as sqlalchemy_exc, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
-from app.utils.wechat import code2session
+from app.utils.wechat import code2session, get_phone_number_from_wechat
 from app.core.security import create_access_token, create_refresh_token
 from app.core.cache import get_redis_client
-from app.core.exceptions import BusinessException
+from app.core.exceptions import BusinessException, NotFoundException, ValidationException
+from app.utils.encryption import encrypt_amount, decrypt_amount
 
 
 def _gen_anonymous_name() -> str:
@@ -70,10 +73,124 @@ async def get_or_create_user(db: AsyncSession, openid: str, unionid: Optional[st
         return user
 
 
-async def login_with_code(db: AsyncSession, code: str) -> Optional[Tuple[str, str, User]]:
+async def bind_phone_to_user(db: AsyncSession, user_id: str, phone_number: str) -> bool:
+    """
+    绑定手机号到现有用户
+
+    Args:
+        db: 数据库会话
+        user_id: 用户ID
+        phone_number: 手机号（明文）
+
+    Returns:
+        绑定成功返回 True
+
+    Raises:
+        NotFoundException: 用户不存在
+        ValidationException: 手机号格式无效
+        BusinessException: 手机号已验证且不允许更改
+    """
+    from app.utils.logger import get_logger
+    logger = get_logger(__name__)
+
+    # 验证手机号格式（中国大陆手机号）
+    phone_pattern = re.compile(r'^1[3-9]\d{9}$')
+    if not phone_pattern.match(phone_number):
+        raise ValidationException("手机号格式无效", details={"phone_number": phone_number})
+
+    # 查询用户
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise NotFoundException("用户不存在", details={"user_id": user_id})
+
+    # 检查是否已验证手机号
+    if user.phone_verified == 1:
+        logger.warning(f"User {user_id} already has verified phone number")
+        raise BusinessException("手机号已验证，不允许更改", code="PHONE_ALREADY_VERIFIED")
+
+    # 加密手机号
+    encrypted_phone, salt = encrypt_amount(phone_number)
+    # 存储格式: encrypted_phone:salt
+    phone_with_salt = f"{encrypted_phone}:{salt}"
+
+    # 更新用户手机号
+    await db.execute(
+        update(User)
+        .where(User.id == user_id)
+        .values(
+            phone_number=phone_with_salt,
+            phone_verified=1
+        )
+    )
+    await db.commit()
+    await db.refresh(user)
+
+    logger.info(f"Phone number bound to user {user_id}: {phone_number[:3]}****{phone_number[-4:]}")
+    return True
+
+
+async def get_user_by_phone(db: AsyncSession, phone_number: str) -> Optional[User]:
+    """
+    根据手机号查询用户
+
+    Args:
+        db: 数据库会话
+        phone_number: 手机号（明文）
+
+    Returns:
+        用户对象或 None
+    """
+    from app.utils.logger import get_logger
+    logger = get_logger(__name__)
+
+    # 查询所有用户（需要遍历解密手机号）
+    # 注意：这是临时方案，生产环境应该建立专门的索引表
+    result = await db.execute(
+        select(User)
+        .where(User.phone_number.isnot(None))
+        .where(User.phone_verified == 1)
+    )
+    users = result.scalars().all()
+
+    logger.info(f"get_user_by_phone: looking for {phone_number}, found {len(users)} users with phone_verified=1")
+
+    # 遍历用户，解密手机号进行匹配
+    for user in users:
+        if user.phone_number:
+            try:
+                # 存储格式: encrypted_phone:salt
+                parts = user.phone_number.split(':')
+                if len(parts) == 2:
+                    encrypted, salt_b64 = parts
+                    decrypted_phone = decrypt_amount(encrypted, salt_b64)
+                    # decrypt_amount returns float, convert to string for comparison
+                    decrypted_phone_str = str(int(decrypted_phone)) if decrypted_phone == int(decrypted_phone) else str(decrypted_phone)
+                    logger.debug(f"Comparing {decrypted_phone_str} with {phone_number} for user {user.id}")
+                    if decrypted_phone_str == phone_number:
+                        logger.info(f"Found user {user.id} by phone number")
+                        return user
+                else:
+                    logger.warning(f"Invalid phone_number format for user {user.id}: {user.phone_number[:50]}")
+            except Exception as e:
+                logger.warning(f"Failed to decrypt phone for user {user.id}: {e}")
+                continue
+
+    logger.info(f"No user found with phone number {phone_number}")
+    return None
+
+
+async def login_with_code(db: AsyncSession, code: str, phone_code: Optional[str] = None) -> Optional[Tuple[str, str, User]]:
     """
     微信 code 登录：code2session -> 获取或创建用户 -> 生成 JWT 对。
+    支持可选的手机号绑定（通过 phone_code）。
     失败返回 None（OK: 登录失败返回 None 是正常流程）。
+
+    Args:
+        db: 数据库会话
+        code: 微信登录 code
+        phone_code: 可选的手机号 code（用于获取和绑定手机号）
 
     Returns:
         (access_token, refresh_token, user) 或 None
@@ -95,6 +212,28 @@ async def login_with_code(db: AsyncSession, code: str) -> Optional[Tuple[str, st
         mock_openid = f"dev_openid_{code[:28]}"
 
         user = await get_or_create_user(db, openid=mock_openid, unionid=None)
+
+        # 处理手机号绑定（开发环境模拟）
+        if phone_code:
+            # 开发环境：直接使用 phone_code 作为模拟手机号（仅用于测试）
+            from app.utils.logger import get_logger
+            logger = get_logger(__name__)
+            mock_phone = f"1{phone_code[:10]}"  # 模拟11位手机号
+
+            # 检查是否已有该手机号的用户
+            existing_user_by_phone = await get_user_by_phone(db, mock_phone)
+            if existing_user_by_phone:
+                # 使用已有手机号的用户
+                user = existing_user_by_phone
+                logger.info(f"User {user.id} found by phone number in dev mode")
+            elif user.phone_verified == 0:
+                # 绑定手机号到当前用户
+                try:
+                    await bind_phone_to_user(db, str(user.id), mock_phone)
+                    logger.info(f"Phone bound to user {user.id} in dev mode")
+                except Exception as e:
+                    logger.warning(f"Failed to bind phone in dev mode: {e}")
+                    # 绑定失败不影响登录流程
 
         # 检查用户是否已注销
         if user.deactivated_at:
@@ -140,6 +279,43 @@ async def login_with_code(db: AsyncSession, code: str) -> Optional[Tuple[str, st
         return None  # OK: 微信登录失败返回 None 是正常流程
     unionid = data.get("unionid")
     user = await get_or_create_user(db, openid=openid, unionid=unionid)
+
+    # 处理手机号绑定（生产环境）
+    if phone_code:
+        from app.utils.logger import get_logger
+        logger = get_logger(__name__)
+
+        # 从微信获取手机号
+        phone_number = await get_phone_number_from_wechat(phone_code)
+
+        if phone_number:
+            # 检查是否已有该手机号的用户
+            existing_user_by_phone = await get_user_by_phone(db, phone_number)
+            if existing_user_by_phone and existing_user_by_phone.id != user.id:
+                # 使用已有手机号的用户（账号合并逻辑）
+                # 如果刚创建了新用户且 openid 不同，删除新用户
+                if user.openid != existing_user_by_phone.openid:
+                    logger.info(f"Merging accounts: keeping existing user {existing_user_by_phone.id}, deleting newly created {user.id}")
+                    # 删除刚创建的重复用户
+                    await db.delete(user)
+                    await db.commit()
+                    user = existing_user_by_phone
+                    await db.refresh(user)
+                else:
+                    # openid 相同，直接使用已有用户
+                    user = existing_user_by_phone
+                logger.info(f"User {user.id} found by phone number, using existing account")
+            elif user.phone_verified == 0:
+                # 绑定手机号到当前用户
+                try:
+                    await bind_phone_to_user(db, str(user.id), phone_number)
+                    logger.info(f"Phone bound to user {user.id}")
+                except Exception as e:
+                    logger.warning(f"Failed to bind phone: {e}")
+                    # 绑定失败不影响登录流程
+        else:
+            logger.warning(f"Failed to get phone number from WeChat with code {phone_code}")
+            # 获取手机号失败不影响登录流程
 
     # 检查用户是否已注销
     if user.deactivated_at:

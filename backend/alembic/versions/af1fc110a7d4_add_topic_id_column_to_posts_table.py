@@ -19,9 +19,20 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Only add topic_id column - SQLite has limited ALTER COLUMN support
-    op.add_column('posts', sa.Column('topic_id', sa.String(length=36), nullable=True, comment='关联话题ID'))
-    op.create_index(op.f('ix_posts_topic_id'), 'posts', ['topic_id'], unique=False)
+    # Only add topic_id column if it doesn't exist (may already exist from 19202799da72)
+    from sqlalchemy import inspect
+    conn = op.get_bind()
+    inspector = inspect(conn)
+
+    # Check if topic_id already exists
+    columns = [col['name'] for col in inspector.get_columns('posts')]
+    if 'topic_id' not in columns:
+        op.add_column('posts', sa.Column('topic_id', sa.String(length=36), nullable=True, comment='关联话题ID'))
+
+    # Check if index exists before creating
+    indexes = [idx['name'] for idx in inspector.get_indexes('posts')]
+    if 'ix_posts_topic_id' not in indexes:
+        op.create_index(op.f('ix_posts_topic_id'), 'posts', ['topic_id'], unique=False)
 
 
 def downgrade() -> None:

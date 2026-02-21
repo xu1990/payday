@@ -21,15 +21,27 @@ async def login(
     body: LoginRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    result = await login_with_code(db, body.code)
+    result = await login_with_code(db, body.code, body.phoneNumberCode)
     if not result:
         raise BusinessException("请求参数错误", code="VALIDATION_ERROR")
     access_token, refresh_token, user = result
+
+    # Prepare user info
     user_info = {
         "id": user.id,
         "anonymous_name": user.anonymous_name,
         "avatar": user.avatar,
     }
+
+    # Add phone info if exists (masked)
+    if user.phone_number:
+        from app.utils.phone import mask_phone_number
+        from app.utils.encryption import encryption_service
+
+        decrypted_phone = encryption_service.decrypt_amount(user.phone_number)
+        user_info["phoneNumber"] = mask_phone_number(decrypted_phone)
+        user_info["phoneVerified"] = bool(user.phone_verified)
+
     data = {
         "access_token": access_token,
         "refresh_token": refresh_token,
