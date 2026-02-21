@@ -10,7 +10,7 @@ from app.models.salary_usage import SalaryUsageRecord
 from app.models.salary import SalaryRecord
 from app.schemas.salary_usage import SalaryUsageCreate, SalaryUsageUpdate
 from app.utils.encryption import encrypt_amount, decrypt_amount
-from app.core.exceptions import NotFoundException, ValidationException, BusinessException
+from app.core.exceptions import NotFoundException, ValidationException, AuthorizationException
 
 
 def _encrypt_with_salt(amount: float) -> str:
@@ -64,7 +64,7 @@ async def create_salary_usage(
         raise NotFoundException("薪资记录不存在")
 
     if salary.user_id != user_id:
-        raise BusinessException("无权操作此薪资记录")
+        raise AuthorizationException("无权操作此薪资记录")
 
     # 2. 加密金额（将encrypted和salt组合存储）
     encrypted_amount = _encrypt_with_salt(usage_data.amount)
@@ -110,7 +110,7 @@ async def get_salary_usage(
         raise NotFoundException("使用记录不存在")
 
     if usage.user_id != user_id:
-        raise BusinessException("无权查看此记录")
+        raise AuthorizationException("无权查看此记录")
 
     return usage
 

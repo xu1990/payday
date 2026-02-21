@@ -12,7 +12,7 @@ from app.services.salary_usage_service import (
     get_usage_statistics_by_type,
 )
 from app.schemas.salary_usage import SalaryUsageCreate, SalaryUsageUpdate
-from app.core.exceptions import NotFoundException, BusinessException
+from app.core.exceptions import NotFoundException, AuthorizationException
 from tests.test_utils import TestDataFactory
 
 
@@ -153,7 +153,7 @@ class TestCreateSalaryUsage:
             usage_date=datetime(2024, 1, 20, 12, 0)
         )
 
-        with pytest.raises(BusinessException) as exc_info:
+        with pytest.raises(AuthorizationException) as exc_info:
             await create_salary_usage(db_session, user2.id, usage_data)
 
         assert "无权操作此薪资记录" in str(exc_info.value)
@@ -239,7 +239,7 @@ class TestGetSalaryUsage:
         usage = await create_salary_usage(db_session, user1.id, usage_data)
 
         # user2 尝试获取 user1 的记录
-        with pytest.raises(BusinessException) as exc_info:
+        with pytest.raises(AuthorizationException) as exc_info:
             await get_salary_usage(db_session, usage.id, user2.id)
 
         assert "无权查看此记录" in str(exc_info.value)
