@@ -125,8 +125,10 @@ import { ref, onMounted, computed } from 'vue'
 import { getUserSettings, updateUserSettings, type UserSettings } from '@/api/theme'
 import { updateCurrentUser, deactivateAccount, logout, submitFeedback } from '@/api/user'
 import { useUserStore } from '@/stores/user'
+import { useAuthStore } from '@/stores/auth'
 
 const userStore = useUserStore()
+const authStore = useAuthStore()
 
 const settings = ref<UserSettings>({
   theme_id: null,
@@ -288,18 +290,18 @@ const handleFeedback = () => {
 // 退出登录
 async function handleLogout() {
   try {
+    // 1. 调用后端 logout API
     await logout()
 
-    // 清除 authStore 和 userStore 状态
-    const { useAuthStore } = await import('@/stores/auth')
-    const authStore = useAuthStore()
+    // 2. 清除 authStore（token）
     await authStore.logout()
 
+    // 3. 清除 userStore（用户信息）
     userStore.logout()
 
     uni.showToast({ title: '已退出登录', icon: 'success' })
 
-    // 跳转到登录页
+    // 4. 跳转到登录页
     setTimeout(() => {
       uni.reLaunch({ url: '/pages/login/index' })
     }, 1000)
