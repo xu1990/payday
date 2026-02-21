@@ -1,9 +1,11 @@
 """认证相关 schema"""
+from typing import Optional
 from pydantic import BaseModel, Field
 
 
 class LoginRequest(BaseModel):
     code: str = Field(..., description="微信 wx.login 返回的 code")
+    phoneNumberCode: Optional[str] = Field(None, description="微信手机号授权返回的 code")
 
 
 class LoginResponse(BaseModel):
