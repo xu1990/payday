@@ -9,6 +9,7 @@ import {
   deleteNotifications,
   type NotificationItem,
 } from '@/api/notification'
+import { formatRelativeTime } from '@/utils/format'
 
 const loading = ref(true)
 const errMsg = ref('')
@@ -171,15 +172,7 @@ async function deleteAll() {
 }
 
 function timeStr(created_at: string) {
-  if (!created_at) return ''
-  const d = new Date(created_at)
-  const now = new Date()
-  const diff = now.getTime() - d.getTime()
-  if (diff < 60000) return '刚刚'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
-  if (diff < 604800000) return `${Math.floor(diff / 86400000)}天前`
-  return d.toLocaleDateString()
+  return formatRelativeTime(created_at)
 }
 
 onMounted(() => {

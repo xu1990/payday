@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { onLoad, onShareAppMessage } from '@dcloudio/uni-app'
 import { getPostDetail, type PostItem } from '@/api/post'
 import { getCommentList, createComment, type CommentItem } from '@/api/comment'
 import { likePost, unlikePost } from '@/api/like'
@@ -9,6 +10,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useUserStore } from '@/stores/user'
 import { checkBatchFollowStatus } from '@/api/follow'
 import FollowButton from '@/components/FollowButton.vue'
+import { formatDateTime } from '@/utils/format'
 
 const id = ref('')
 const post = ref<PostItem | null>(null)
@@ -40,10 +42,8 @@ const inputContent = computed({
   },
 })
 
-onMounted(() => {
-  const pages = getCurrentPages()
-  const page = pages[pages.length - 1] as any
-  id.value = page?.options?.id || ''
+onLoad((options: any) => {
+  id.value = options?.id || ''
   if (id.value) {
     load()
     loadComments()
@@ -60,6 +60,15 @@ onMounted(() => {
 onUnmounted(() => {
   // 移除键盘监听
   uni.offKeyboardHeightChange()
+})
+
+// WeChat share to friend config
+onShareAppMessage(() => {
+  return {
+    title: post.value?.content ? `${post.value.content.substring(0, 20)}...` : '薪日 PayDay',
+    path: `/pages/post-detail/index?id=${id.value}`,
+    imageUrl: safeImages.value[0] || '',
+  }
 })
 
 async function load() {
@@ -102,8 +111,7 @@ async function loadComments() {
 
 const timeStr = computed(() => {
   if (!post.value?.created_at) return ''
-  const d = new Date(post.value.created_at)
-  return d.toLocaleString()
+  return formatDateTime(post.value.created_at)
 })
 
 // SECURITY: 净化帖子内容，防止 XSS 攻击
@@ -119,8 +127,7 @@ const safeImages = computed(() => {
 })
 
 function commentTime(createdAt: string) {
-  const d = new Date(createdAt)
-  return d.toLocaleString()
+  return formatDateTime(createdAt)
 }
 
 async function onPostLike() {
@@ -189,25 +196,6 @@ async function submitComment() {
     uni.showToast({ title: '评论失败', icon: 'none' })
   } finally {
     submitLoading.value = false
-  }
-}
-
-/**
- * 分享给微信好友
- */
-async function shareToWeChat() {
-  if (!post.value) return
-
-  try {
-    // 使用微信小程序分享功能
-    uni.showShareMenu({
-      withShareTicket: true,
-      fail: (err: any) => {
-        uni.showToast({ title: '分享失败', icon: 'none' })
-      },
-    })
-  } catch (error) {
-    uni.showToast({ title: '分享失败', icon: 'none' })
   }
 }
 
@@ -282,8 +270,8 @@ function handleUnfollow(data: { targetUserId: string }) {
         </text>
         <text class="meta-item">💬 {{ post.comment_count }}</text>
         <text class="meta-item">👁 {{ post.view_count }}</text>
-        <view class="share-actions">
-          <button class="share-btn" @tap="shareToWeChat">
+        <!-- <view class="share-actions">
+          <button class="share-btn" open-type="share">
             <text class="share-icon">💬</text>
             <text>分享给好友</text>
           </button>
@@ -291,7 +279,7 @@ function handleUnfollow(data: { targetUserId: string }) {
             <text class="share-icon">⭭</text>
             <text>分享到朋友圈</text>
           </button>
-        </view>
+        </view> -->
       </view>
       <view class="comment-section">
         <view class="comment-title">评论</view>

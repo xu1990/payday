@@ -134,7 +134,7 @@ function navigateToNext() {
     </view>
 
     <!-- Copyright/Terms -->
-    <view class="footer" :class="{ show: showText }">
+    <view v-if="false" class="footer" :class="{ show: showText }">
       <text class="terms">登录即表示同意《用户协议》和《隐私政策》</text>
     </view>
   </view>
@@ -175,7 +175,7 @@ function navigateToNext() {
 
   .splash-controls {
     position: absolute;
-    top: 40rpx;
+    top: calc(40rpx + env(safe-area-inset-top));
     right: 40rpx;
     display: flex;
     align-items: center;

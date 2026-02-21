@@ -6,6 +6,7 @@ import { useDebounceFn } from '@/composables/useDebounce'
 import { useAuthStore } from '@/stores/auth'
 import PostActionBar from '@/components/PostActionBar.vue'
 import FollowButton from '@/components/FollowButton.vue'
+import { formatRelativeTime } from '@/utils/format'
 
 type Sort = 'hot' | 'latest'
 const activeTab = ref<Sort>('hot')
@@ -15,14 +16,7 @@ const loading = ref(false)
 const authStore = useAuthStore()
 
 function formatTime(created_at: string) {
-  const d = new Date(created_at)
-  const now = new Date()
-  const diff = (now.getTime() - d.getTime()) / 1000
-  if (diff < 60) return '刚刚'
-  if (diff < 3600) return `${Math.floor(diff / 60)}分钟前`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}小时前`
-  if (diff < 604800) return `${Math.floor(diff / 86400)}天前`
-  return d.toLocaleDateString()
+  return formatRelativeTime(created_at)
 }
 
 async function load() {
@@ -169,7 +163,7 @@ function handleUnfollow(data: { targetUserId: string }) {
 <style scoped>
 .page {
   min-height: 100vh;
-  padding-bottom: 120rpx;
+  padding: env(safe-area-inset-top) 0 120rpx;
   background: #f5f5f5;
 }
 .tabs {

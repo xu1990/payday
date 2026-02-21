@@ -4,6 +4,7 @@ import { getMyLikes } from '@/api/like'
 import { getMyFollowers, getMyFollowing, checkBatchFollowStatus, type UserItem } from '@/api/follow'
 import { useAuthStore } from '@/stores/auth'
 import FollowButton from '@/components/FollowButton.vue'
+import { formatRelativeTime } from '@/utils/format'
 
 const authStore = useAuthStore()
 
@@ -215,14 +216,7 @@ function goToProfile(userId: string) {
 
 // 格式化时间
 function formatTime(created_at: string): string {
-  const d = new Date(created_at)
-  const now = new Date()
-  const diff = (now.getTime() - d.getTime()) / 1000
-  if (diff < 60) return '刚刚'
-  if (diff < 3600) return `${Math.floor(diff / 60)}分钟前`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}小时前`
-  if (diff < 604800) return `${Math.floor(diff / 86400)}天前`
-  return d.toLocaleDateString()
+  return formatRelativeTime(created_at)
 }
 
 onMounted(() => {
@@ -377,7 +371,7 @@ onMounted(() => {
 .page {
   min-height: 100vh;
   background: #f5f5f5;
-  padding-bottom: 20rpx;
+  padding: env(safe-area-inset-top) 0 20rpx;
 }
 
 .header {

@@ -68,14 +68,14 @@ export function getCurrentUser(): Promise<UserInfo> {
     url: `${PREFIX}/me`,
     method: 'GET',
     // 自定义错误处理：401 时不显示错误提示，不跳转登录页
-    errorHandler: (error) => {
+    errorHandler: error => {
       // 401 错误静默处理，不触发自动登出
       if (error.message.includes('登录已过期')) {
         console.warn('[getCurrentUser] Token expired, will retry after init')
-        return true  // 标记为已处理，阻止默认错误处理
+        return true // 标记为已处理，阻止默认错误处理
       }
-      return false  // 其他错误继续使用默认处理
-    }
+      return false // 其他错误继续使用默认处理
+    },
   })
 }
 

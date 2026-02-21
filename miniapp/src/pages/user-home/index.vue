@@ -5,6 +5,7 @@ import { getPostList, type PostItem } from '@/api/post'
 import { getCheckinList, type CheckinItem } from '@/api/checkin'
 import { useAuthStore } from '@/stores/auth'
 import FollowButton from '@/components/FollowButton.vue'
+import { formatDate as format } from '@/utils/format'
 
 const targetUserId = ref('')
 const authStore = useAuthStore()
@@ -144,8 +145,7 @@ function switchTab(tab: 'posts' | 'checkins') {
 }
 
 function formatDate(dateStr: string) {
-  const d = new Date(dateStr)
-  return d.toLocaleDateString()
+  return format(dateStr)
 }
 
 function goToFollowerList() {

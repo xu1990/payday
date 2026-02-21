@@ -4,12 +4,24 @@
  */
 
 /**
+ * 解析后端返回的时间字符串
+ * 后端返回 UTC 时间但可能不带 'Z' 后缀，需要手动添加
+ */
+function parseBackendDate(dateStr: string): Date {
+  // 如果时间字符串不包含时区信息（没有 Z、+、-），添加 'Z' 表示 UTC 时间
+  if (!dateStr.match(/[Z+-]\d{2}:?\d{2}$/)) {
+    return new Date(dateStr + 'Z')
+  }
+  return new Date(dateStr)
+}
+
+/**
  * 格式化日期 - 返回日期部分
  */
 export function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return '-'
   try {
-    const date = new Date(dateStr)
+    const date = parseBackendDate(dateStr)
     return date.toLocaleDateString('zh-CN')
   } catch {
     return dateStr
@@ -22,7 +34,7 @@ export function formatDate(dateStr: string | null | undefined): string {
 export function formatDateTime(dateStr: string | null | undefined): string {
   if (!dateStr) return '-'
   try {
-    const date = new Date(dateStr)
+    const date = parseBackendDate(dateStr)
     return date.toLocaleString('zh-CN')
   } catch {
     return dateStr
@@ -35,7 +47,7 @@ export function formatDateTime(dateStr: string | null | undefined): string {
 export function formatTime(dateStr: string | null | undefined): string {
   if (!dateStr) return '-'
   try {
-    const date = new Date(dateStr)
+    const date = parseBackendDate(dateStr)
     return date.toLocaleTimeString('zh-CN')
   } catch {
     return dateStr
@@ -72,7 +84,7 @@ export function formatRelativeTime(dateStr: string | null | undefined): string {
   if (!dateStr) return '-'
 
   try {
-    const date = new Date(dateStr)
+    const date = parseBackendDate(dateStr)
     const now = new Date()
     const diff = now.getTime() - date.getTime()
 

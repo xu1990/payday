@@ -27,9 +27,9 @@
       <view class="form-item">
         <text class="label">金额</text>
         <input
+          v-model="formData.amount"
           class="amount-input"
           type="digit"
-          v-model="formData.amount"
           placeholder="请输入金额"
           placeholder-class="placeholder"
         />
@@ -59,8 +59,8 @@
       <view class="form-item">
         <text class="label">备注</text>
         <textarea
-          class="desc-input"
           v-model="formData.description"
+          class="desc-input"
           placeholder="添加备注（可选）"
           placeholder-class="placeholder"
           maxlength="500"
@@ -68,7 +68,7 @@
       </view>
 
       <!-- Submit Button -->
-      <button class="submit-btn" @tap="handleSubmit" :disabled="loading">
+      <button class="submit-btn" :disabled="loading" @tap="handleSubmit">
         {{ loading ? '保存中...' : '保存' }}
       </button>
     </view>
@@ -94,7 +94,7 @@ const formData = ref<FormData>({
   amount: '',
   usage_date: '',
   salary_record_id: '',
-  description: ''
+  description: '',
 })
 
 const loading = ref(false)
@@ -108,7 +108,7 @@ const usageTypes = [
   { value: 'entertainment' as UsageType, label: '娱乐', icon: '🎮' },
   { value: 'medical' as UsageType, label: '医疗', icon: '💊' },
   { value: 'education' as UsageType, label: '教育', icon: '📚' },
-  { value: 'other' as UsageType, label: '其他', icon: '📝' }
+  { value: 'other' as UsageType, label: '其他', icon: '📝' },
 ]
 
 const selectedSalaryLabel = computed(() => {
@@ -148,7 +148,7 @@ const loadSalaryRecords = async () => {
     // Format records for picker display
     salaryRecords.value = records.map(record => ({
       id: record.id,
-      label: `${record.payday_date} - ¥${record.amount}`
+      label: `${record.payday_date} - ¥${record.amount}`,
     }))
   } catch (error) {
     console.error('[salary-usage] Failed to load salary records:', error)
@@ -186,7 +186,7 @@ const handleSubmit = async () => {
       usage_type: formData.value.usage_type as UsageType,
       amount: amountNum,
       usage_date: formData.value.usage_date,
-      description: formData.value.description || undefined
+      description: formData.value.description || undefined,
     })
 
     showSuccess('保存成功')

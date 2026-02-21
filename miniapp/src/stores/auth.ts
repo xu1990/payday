@@ -38,13 +38,18 @@ export const useAuthStore = defineStore('auth', () => {
 
       if (savedToken) {
         token.value = savedToken
-        console.log(`[authStore] Token restored from storage (attempt ${attempt}/${maxRetries}), length:`, savedToken.length)
-        return  // 成功获取 token，退出
+        console.log(
+          `[authStore] Token restored from storage (attempt ${attempt}/${maxRetries}), length:`,
+          savedToken.length
+        )
+        return // 成功获取 token，退出
       }
 
       if (attempt < maxRetries) {
-        console.warn(`[authStore] Token not found in storage yet, retrying... (${attempt}/${maxRetries})`)
-        await new Promise(resolve => setTimeout(resolve, 200 * attempt))  // 递增延迟: 200ms, 400ms, 600ms, 800ms
+        console.warn(
+          `[authStore] Token not found in storage yet, retrying... (${attempt}/${maxRetries})`
+        )
+        await new Promise(resolve => setTimeout(resolve, 200 * attempt)) // 递增延迟: 200ms, 400ms, 600ms, 800ms
       }
     }
 

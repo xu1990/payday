@@ -315,7 +315,7 @@ function goToPrivacyPolicy() {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40rpx;
+  padding: calc(40rpx + env(safe-area-inset-top)) 40rpx calc(40rpx + env(safe-area-inset-bottom));
 }
 
 .login-container {

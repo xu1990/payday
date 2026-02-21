@@ -144,7 +144,7 @@ async function tryRefreshToken(): Promise<boolean | 'skipped'> {
     console.log(
       `[request] Token save was ${timeSinceLastSave}ms ago, within grace period (${TOKEN_REFRESH_GRACE_PERIOD}ms), skipping refresh`
     )
-    return 'skipped'  // 返回特殊值表示跳过刷新，而不是刷新失败
+    return 'skipped' // 返回特殊值表示跳过刷新，而不是刷新失败
   }
 
   // 如果正在刷新，等待现有刷新完成
@@ -228,11 +228,16 @@ async function getToken(): Promise<string> {
       // 使用 auth.ts 中的 getToken（会自动解密）
       let token = await getStoredToken()
 
-      console.log(`[request] getToken() attempt ${attempt}/${maxRetries}:`, token ? `GOT TOKEN (length: ${token.length})` : 'NO TOKEN')
+      console.log(
+        `[request] getToken() attempt ${attempt}/${maxRetries}:`,
+        token ? `GOT TOKEN (length: ${token.length})` : 'NO TOKEN'
+      )
 
       // 如果没获取到 token，且不是最后一次尝试，延迟后重试
       if (!token && attempt < maxRetries) {
-        console.warn(`[request] Token not available (attempt ${attempt}/${maxRetries}), retrying...`)
+        console.warn(
+          `[request] Token not available (attempt ${attempt}/${maxRetries}), retrying...`
+        )
         await new Promise(resolve => setTimeout(resolve, 100 * attempt))
         continue
       }
@@ -257,7 +262,11 @@ async function getToken(): Promise<string> {
       }
 
       const finalToken = token || ''
-      console.log('[request] ===== getToken() returning:', finalToken ? `TOKEN (length: ${finalToken.length})` : 'EMPTY', '=====')
+      console.log(
+        '[request] ===== getToken() returning:',
+        finalToken ? `TOKEN (length: ${finalToken.length})` : 'EMPTY',
+        '====='
+      )
       return finalToken
     } catch (error) {
       lastError = error as Error

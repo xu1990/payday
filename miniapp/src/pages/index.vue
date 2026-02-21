@@ -251,7 +251,7 @@ function goProfile() {
 
 <style scoped lang="scss">
 .root-container {
-  padding: 5rpx 2.5rem;
+  padding: calc(5rpx + env(safe-area-inset-top)) 2.5rem;
   text-align: center;
   min-height: 100vh;
 }

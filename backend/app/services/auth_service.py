@@ -306,12 +306,25 @@ async def login_with_code(db: AsyncSession, code: str, phone_code: Optional[str]
         return access_token, refresh_token, user
 
     # 生产环境：调用微信 code2session
+    from app.utils.logger import get_logger
+    logger = get_logger(__name__)
+
     data = await code2session(code)
     if not data:
+        logger.error(f"[login] WeChat code2session returned None/empty data")
         return None  # OK: 微信登录失败返回 None 是正常流程
+
+    # Check if WeChat returned an error
+    if "errcode" in data:
+        logger.error(f"[login] WeChat API returned error: errcode={data.get('errcode')}, errmsg={data.get('errmsg')}")
+        return None
+
     openid = data.get("openid")
     if not openid:
+        logger.error(f"[login] WeChat API response missing openid: {data}")
         return None  # OK: 微信登录失败返回 None 是正常流程
+
+    logger.info(f"[login] Successfully got openid from WeChat: {openid[:10]}...")
     unionid = data.get("unionid")
     user = await get_or_create_user(db, openid=openid, unionid=unionid)
 

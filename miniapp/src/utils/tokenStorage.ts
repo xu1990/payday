@@ -23,9 +23,9 @@ const TIMESTAMP_KEY = 'payday_token_timestamp'
 
 // 存储读写锁，防止并发操作导致数据损坏
 let isWriting = false
-let writeQueue: Array<() => void> = []
+const writeQueue: Array<() => void> = []
 let readCount = 0
-let readQueue: Array<() => void> = []
+const readQueue: Array<() => void> = []
 
 /**
  * 等待写入锁释放
@@ -108,17 +108,23 @@ function getStoragePromise(key: string, maxRetries: number = 3): Promise<string>
           const data = res.data as string
           // 验证数据非空
           if (data && typeof data === 'string' && data.length > 0) {
-            console.log(`[tokenStorage] getStorage success for ${key}, attempt ${attempt}, length: ${data.length}`)
+            console.log(
+              `[tokenStorage] getStorage success for ${key}, attempt ${attempt}, length: ${data.length}`
+            )
             resolve(data)
           } else {
             // 数据为空，当作失败处理
-            console.warn(`[tokenStorage] getStorage returned empty data for ${key}, attempt ${attempt}`)
+            console.warn(
+              `[tokenStorage] getStorage returned empty data for ${key}, attempt ${attempt}`
+            )
             if (attempt < maxRetries) {
               setTimeout(() => {
                 tryGet().then(resolve).catch(reject)
               }, 100 * attempt)
             } else {
-              console.warn(`[tokenStorage] getStorage returned empty data after ${maxRetries} attempts`)
+              console.warn(
+                `[tokenStorage] getStorage returned empty data after ${maxRetries} attempts`
+              )
               resolve('')
             }
           }
@@ -202,8 +208,10 @@ export async function saveToken(
       let verified = false
       for (let attempt = 1; attempt <= 3; attempt++) {
         const savedToken = uni.getStorageSync(TOKEN_KEY) as string
-        console.log(`[tokenStorage] Verification attempt ${attempt}:`,
-          savedToken ? `GOT TOKEN (length: ${savedToken.length})` : 'NO TOKEN')
+        console.log(
+          `[tokenStorage] Verification attempt ${attempt}:`,
+          savedToken ? `GOT TOKEN (length: ${savedToken.length})` : 'NO TOKEN'
+        )
 
         if (savedToken && savedToken === token) {
           console.log('[tokenStorage] Token verified successfully on attempt', attempt)
@@ -222,12 +230,10 @@ export async function saveToken(
       }
 
       console.log('[tokenStorage] All tokens saved, userId:', userId)
-
     } catch (e) {
       console.error('[tokenStorage] Storage operation failed:', e)
       throw e
     }
-
   } catch (e) {
     // 存储失败处理
     const errorMsg = e instanceof Error ? e.message : String(e)

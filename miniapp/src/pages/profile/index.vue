@@ -65,10 +65,6 @@ function goSalaryRecord() {
   uni.navigateTo({ url: '/pages/salary-record/index' })
 }
 
-function goPoster() {
-  uni.navigateTo({ url: '/pages/poster/index' })
-}
-
 function goNotification() {
   uni.navigateTo({ url: '/pages/notification/list' })
 }
@@ -83,6 +79,11 @@ function goCheckIn() {
 
 function goProfileEdit() {
   uni.navigateTo({ url: '/pages/profile-edit/index' })
+}
+
+// 生成海报
+function generatePoster(recordId: string) {
+  uni.navigateTo({ url: `/pages/poster/index?recordId=${recordId}` })
 }
 
 onMounted(load)
@@ -112,7 +113,6 @@ onMounted(load)
     <view class="entry-row">
       <button class="btn-primary" @click="goSalaryRecord">记工资</button>
       <button class="btn-outline" @click="goPaydaySetting">发薪日设置</button>
-      <button class="btn-outline" @click="goPoster">发薪海报</button>
     </view>
     <view class="entry-row entry-single">
       <view class="entry-item" @click="goNotification">
@@ -135,9 +135,15 @@ onMounted(load)
       <view v-else-if="errMsg" class="err">{{ errMsg }}</view>
       <view v-else-if="recordList.length === 0" class="empty">暂无记录</view>
       <view v-else class="list">
-        <view v-for="item in recordList" :key="item.id" class="card">
-          <text class="amount">{{ item.amount }} 元</text>
-          <text class="meta">{{ item.payday_date }} · {{ jobName(item.config_id) }}</text>
+        <view v-for="item in recordList" :key="item.id" class="card" @click="generatePoster(item.id)">
+          <view class="card-content">
+            <text class="amount">{{ item.amount }} 元</text>
+            <text class="meta">{{ item.payday_date }} · {{ jobName(item.config_id) }}</text>
+          </view>
+          <view class="poster-btn">
+            <text class="poster-icon">📄</text>
+            <text class="poster-text">海报</text>
+          </view>
         </view>
       </view>
     </view>
@@ -146,7 +152,7 @@ onMounted(load)
 
 <style scoped lang="scss">
 .page {
-  padding: 24rpx;
+  padding: calc(24rpx + env(safe-area-inset-top)) 24rpx calc(24rpx + env(safe-area-inset-bottom));
   min-height: 100vh;
   background: #f5f5f5;
 }
@@ -315,9 +321,24 @@ onMounted(load)
 }
 
 .card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 20rpx;
   background: #f8f8f8;
   border-radius: 8rpx;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.card:active {
+  background: #eee;
+}
+
+.card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .amount {
@@ -332,5 +353,28 @@ onMounted(load)
   color: #999;
   display: block;
   margin-top: 8rpx;
+}
+
+.poster-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12rpx 16rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8rpx;
+  margin-left: 16rpx;
+  min-width: 80rpx;
+}
+
+.poster-icon {
+  font-size: 28rpx;
+  margin-bottom: 4rpx;
+}
+
+.poster-text {
+  font-size: 22rpx;
+  color: #fff;
+  font-weight: 500;
 }
 </style>
