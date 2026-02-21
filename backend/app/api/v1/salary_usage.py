@@ -53,6 +53,30 @@ async def create_usage(
     )
 
 
+@router.get("/statistics/by-type", summary="按类型统计使用金额")
+async def get_statistics(
+    salary_record_id: Optional[str] = Query(None, description="薪资记录ID"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    按类型统计使用金额
+
+    Args:
+        salary_record_id: 筛选薪资记录ID
+        current_user: 当前用户
+        db: 数据库会话
+
+    Returns:
+        统计结果
+    """
+    stats = await get_usage_statistics_by_type(db, current_user.id, salary_record_id)
+    return success_response(
+        data={"statistics": stats},
+        message="获取统计信息成功"
+    )
+
+
 @router.get("/{usage_id}", response_model=dict, summary="获取薪资使用记录")
 async def get_usage(
     usage_id: str,
@@ -156,30 +180,6 @@ async def list_usages(
     return success_response(
         data={"total": total, "items": items},
         message="获取薪资使用记录列表成功"
-    )
-
-
-@router.get("/statistics/by-type", summary="按类型统计使用金额")
-async def get_statistics(
-    salary_record_id: Optional[str] = Query(None, description="薪资记录ID"),
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> dict:
-    """
-    按类型统计使用金额
-
-    Args:
-        salary_record_id: 筛选薪资记录ID
-        current_user: 当前用户
-        db: 数据库会话
-
-    Returns:
-        统计结果
-    """
-    stats = await get_usage_statistics_by_type(db, current_user.id, salary_record_id)
-    return success_response(
-        data={"statistics": stats},
-        message="获取统计信息成功"
     )
 
 
