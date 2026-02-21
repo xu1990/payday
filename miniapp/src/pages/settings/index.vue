@@ -290,21 +290,21 @@ async function handleLogout() {
   try {
     await logout()
 
-    // 清除本地存储
-    uni.removeStorageSync('token')
-    uni.removeStorageSync('refreshToken')
-    uni.removeStorageSync('userInfo')
+    // 清除 authStore 和 userStore 状态
+    const { useAuthStore } = await import('@/stores/auth')
+    const authStore = useAuthStore()
+    await authStore.logout()
 
-    // 清除 userStore
-    userStore.$reset()
+    userStore.logout()
 
     uni.showToast({ title: '已退出登录', icon: 'success' })
 
-    // 跳转到首页
+    // 跳转到登录页
     setTimeout(() => {
-      uni.reLaunch({ url: '/pages/index' })
+      uni.reLaunch({ url: '/pages/login/index' })
     }, 1000)
   } catch (e: any) {
+    console.error('[settings] Logout failed:', e)
     uni.showToast({ title: e?.message || '退出失败', icon: 'none' })
   }
 }
