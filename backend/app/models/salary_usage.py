@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 
 from app.models.base import Base
+from .user import gen_uuid
 
 
 class SalaryUsageRecord(Base):
@@ -13,7 +14,7 @@ class SalaryUsageRecord(Base):
 
     __tablename__ = "salary_usage_records"
 
-    id = Column(Integer, primary_key=True, index=True, comment="主键ID")
+    id = Column(String(36), primary_key=True, default=gen_uuid, comment="主键ID")
 
     # 用户关联
     user_id = Column(
