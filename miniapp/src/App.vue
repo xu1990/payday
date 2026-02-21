@@ -1,12 +1,23 @@
-<script setup lang="ts">
-import { onLaunch } from '@dcloudio/uni-app'
+<script lang="ts">
+import { defineComponent } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 
-onLaunch(async () => {
-  // 初始化认证状态 - 从本地存储恢复 token
-  const authStore = useAuthStore()
-  await authStore.init()
-  console.log('[App] Auth store initialized, isLoggedIn:', authStore.isLoggedIn)
+export default defineComponent({
+  globalData: {
+    tokenBackup: null as {
+      token: string
+      refreshToken?: string
+      userId?: string
+      timestamp?: number
+    } | null,
+  },
+  onLaunch() {
+    // 初始化认证状态 - 从本地存储恢复 token
+    const authStore = useAuthStore()
+    authStore.init().then(() => {
+      console.log('[App] Auth store initialized, isLoggedIn:', authStore.isLoggedIn)
+    })
+  },
 })
 </script>
 

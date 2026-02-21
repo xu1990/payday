@@ -286,9 +286,14 @@ async def get_db_pool_metrics():
     """获取数据库连接池指标"""
     try:
         from app.core.database import _get_async_engine
+        from sqlalchemy.pool import NullPool
         engine = _get_async_engine()
 
         pool = engine.pool
+
+        # SQLite 使用 NullPool，没有连接池概念，跳过收集
+        if isinstance(pool, NullPool):
+            return
 
         db_pool_size.set(pool.size())
         db_pool_overflow.set(pool.overflow())

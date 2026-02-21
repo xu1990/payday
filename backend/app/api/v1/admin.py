@@ -177,16 +177,40 @@ async def admin_user_list(
     users, total = await list_users_for_admin(
         db, limit=limit, offset=offset, keyword=keyword, status=status
     )
-    items = [
-        AdminUserListItem(
-            id=u.id,
-            openid=u.openid,
-            anonymous_name=u.anonymous_name,
-            status=u.status.value if hasattr(u.status, "value") else str(u.status),
-            created_at=u.created_at,
-        ).model_dump(mode='json')
-        for u in users
-    ]
+
+    # Import utilities for phone number handling
+    from app.utils.phone import mask_phone_number
+    from app.utils.encryption import decrypt_amount
+
+    items = []
+    for u in users:
+        # Handle status enum
+        status_value = u.status.value if hasattr(u.status, "value") else str(u.status)
+
+        user_data = {
+            "id": u.id,
+            "openid": u.openid,
+            "anonymous_name": u.anonymous_name,
+            "phone_number": None,
+            "phone_verified": bool(u.phone_verified or 0),
+            "status": status_value,
+            "created_at": u.created_at.isoformat() if u.created_at else None,
+        }
+
+        # Decrypt and mask phone number if exists
+        if u.phone_number:
+            try:
+                parts = u.phone_number.split(':')
+                if len(parts) == 2:
+                    encrypted, salt_b64 = parts
+                    decrypted_phone = str(decrypt_amount(encrypted, salt_b64))
+                    user_data["phone_number"] = mask_phone_number(decrypted_phone)
+            except Exception:
+                # If decryption fails, leave phone_number as None
+                pass
+
+        items.append(user_data)
+
     return success_response(data={"items": items, "total": total}, message="获取用户列表成功")
 
 

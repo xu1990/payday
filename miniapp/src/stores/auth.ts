@@ -19,13 +19,37 @@ export const useAuthStore = defineStore('auth', () => {
 
   /**
    * 初始化 - 从本地存储恢复 token
+   * 修复：移除 initialized 标志，每次页面显示都重新初始化
+   * 真机环境下每个页面实例需要独立初始化，不能跨页面共享状态
    */
   async function init() {
-    const savedToken = await tokenStorage.getToken()
-    if (savedToken) {
-      token.value = savedToken
-      // Token 存在，用户信息由 userStore 负责获取
+    console.log('[authStore] Initializing auth store...')
+
+    // 如果已经有 token，跳过（当前页面实例已初始化）
+    if (token.value) {
+      console.log('[authStore] Token already exists in memory, skipping init')
+      return
     }
+
+    // 重试机制：最多尝试 5 次，每次延迟递增
+    const maxRetries = 5
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      const savedToken = await tokenStorage.getToken()
+
+      if (savedToken) {
+        token.value = savedToken
+        console.log(`[authStore] Token restored from storage (attempt ${attempt}/${maxRetries}), length:`, savedToken.length)
+        return  // 成功获取 token，退出
+      }
+
+      if (attempt < maxRetries) {
+        console.warn(`[authStore] Token not found in storage yet, retrying... (${attempt}/${maxRetries})`)
+        await new Promise(resolve => setTimeout(resolve, 200 * attempt))  // 递增延迟: 200ms, 400ms, 600ms, 800ms
+      }
+    }
+
+    // 所有重试都失败
+    console.error('[authStore] Failed to restore token from storage after', maxRetries, 'attempts')
   }
 
   /**
@@ -76,6 +100,7 @@ export const useAuthStore = defineStore('auth', () => {
    * 退出登录
    */
   async function logout() {
+    console.log('[authStore] Logging out')
     token.value = ''
     await tokenStorage.clearToken()
     // 注意：不再清除 userInfo，由 userStore 负责

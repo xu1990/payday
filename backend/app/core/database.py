@@ -5,7 +5,7 @@
 """
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.pool import NullPool
@@ -20,8 +20,10 @@ def _get_connect_args():
     """根据数据库类型返回连接参数"""
     db_url = settings.effective_database_url
     if db_url.startswith("sqlite"):
-        # SQLite 不需要额外连接参数
-        return {}
+        # SQLite: 启用外键约束支持
+        return {
+            "check_same_thread": False,
+        }
     else:
         # MySQL 连接参数
         return {
@@ -59,6 +61,16 @@ sync_engine = create_engine(
     connect_args=_get_connect_args(),
 )
 
+
+# 为 SQLite 启用外键约束（同步引擎）
+@event.listens_for(sync_engine, "connect")
+def set_sqlite_pragma_sync(dbapi_conn, connection_record):
+    """为每个新的 SQLite 连接启用外键约束"""
+    if settings.effective_database_url.startswith("sqlite"):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
 # 同步会话（用于 Alembic）
 SyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
 
@@ -85,7 +97,8 @@ def _get_async_engine():
         if db_url.startswith("mysql+pymysql://"):
             async_database_url = db_url.replace("mysql+pymysql://", "mysql+aiomysql://")
         elif db_url.startswith("sqlite://"):
-            async_database_url = db_url.replace("sqlite://", "sqlite+aiosqlite://")
+            # SQLite: 启用外键支持
+            async_database_url = db_url.replace("sqlite://", "sqlite+aiosqlite://") + "?uri=true"
         else:
             async_database_url = db_url
 
@@ -98,6 +111,25 @@ def _get_async_engine():
             echo=settings.debug,
             connect_args=_get_connect_args(),
         )
+
+        # 为 SQLite 启用外键约束（异步引擎）
+        if db_url.startswith("sqlite://"):
+            # 异步引擎的底层同步引擎
+            from sqlalchemy import exc as sqla_exc
+
+            @event.listens_for(_async_engine.sync_engine, "connect")
+            def set_sqlite_pragma_async(dbapi_conn, connection_record):
+                """为每个新的 SQLite 连接启用外键约束"""
+                cursor = dbapi_conn.cursor()
+                try:
+                    cursor.execute("PRAGMA foreign_keys=ON")
+                except sqla_exc.DBAPIError as e:
+                    # 如果 PRAGMA 执行失败，记录警告但不中断连接
+                    if "syntax error" not in str(e):
+                        print(f"Warning: Failed to enable SQLite foreign keys: {e}")
+                finally:
+                    cursor.close()
+
         _AsyncSessionLocal = async_sessionmaker(
             bind=_async_engine,
             class_=AsyncSession,

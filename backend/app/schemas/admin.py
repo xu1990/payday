@@ -20,6 +20,8 @@ class AdminUserListItem(BaseModel):
     id: str
     openid: str
     anonymous_name: str
+    phone_number: Optional[str] = None  # Masked phone number (e.g., 138****8000)
+    phone_verified: bool = False
     status: str
     created_at: Optional[datetime] = None
 

@@ -17,16 +17,16 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # 创建 phone_lookup 表
+    # 创建 phone_lookup 表（兼容SQLite和MySQL）
     op.create_table(
         'phone_lookup',
         sa.Column('id', sa.String(36), primary_key=True, comment='主键ID'),
         sa.Column('phone_hash', sa.String(64), nullable=False, comment='手机号SHA-256哈希'),
         sa.Column('user_id', sa.String(36), nullable=False, comment='用户ID'),
-        sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False, comment='创建时间'),
-        sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'), nullable=False, comment='更新时间'),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False, comment='创建时间'),
+        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False, comment='更新时间'),
 
-        # 外键约束
+        # 外键约束（SQLite和MySQL都支持CASCADE）
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], name='fk_phone_lookup_user', ondelete='CASCADE'),
 
         # 唯一约束和索引

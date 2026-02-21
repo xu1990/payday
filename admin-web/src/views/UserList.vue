@@ -22,6 +22,11 @@
       @page-change="fetch"
     >
       <el-table-column prop="anonymous_name" label="匿名昵称" width="140" />
+      <el-table-column prop="phone_number" label="手机号" width="130">
+        <template #default="{ row }">
+          {{ row.phone_number || '-' }}
+        </template>
+      </el-table-column>
       <el-table-column prop="openid" label="OpenID" min-width="200" show-overflow-tooltip />
       <el-table-column prop="status" label="状态" width="100">
         <template #default="{ row }">
@@ -78,9 +83,9 @@ async function fetch() {
     }
     if (keyword.value) params.keyword = keyword.value
     if (statusFilter.value) params.status = statusFilter.value
-    const { items: users, total } = await getUsers(params)
+    const { items: users, total: totalCount } = await getUsers(params)
     items.value = users
-    total.value = total
+    total.value = totalCount
   } finally {
     loading.value = false
   }

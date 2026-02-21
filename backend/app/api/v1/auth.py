@@ -36,11 +36,15 @@ async def login(
     # Add phone info if exists (masked)
     if user.phone_number:
         from app.utils.phone import mask_phone_number
-        from app.utils.encryption import encryption_service
+        from app.utils.encryption import decrypt_amount
 
-        decrypted_phone = encryption_service.decrypt_amount(user.phone_number)
-        user_info["phoneNumber"] = mask_phone_number(decrypted_phone)
-        user_info["phoneVerified"] = bool(user.phone_verified)
+        # Phone number is stored in format: encrypted:salt
+        parts = user.phone_number.split(':')
+        if len(parts) == 2:
+            encrypted, salt_b64 = parts
+            decrypted_phone = str(decrypt_amount(encrypted, salt_b64))
+            user_info["phoneNumber"] = mask_phone_number(decrypted_phone)
+            user_info["phoneVerified"] = bool(user.phone_verified)
 
     data = {
         "access_token": access_token,

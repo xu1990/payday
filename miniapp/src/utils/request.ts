@@ -14,6 +14,7 @@ import {
   getUserId,
   saveToken,
   clearToken,
+  getLastTokenSaveTime,
 } from './tokenStorage'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || ''
@@ -23,6 +24,9 @@ let isRefreshing = false
 let refreshPromise: Promise<boolean> | null = null
 let refreshAttempts = 0
 const MAX_REFRESH_ATTEMPTS = 3
+
+// 登录后的 grace period，防止登录后立即刷新 token
+const TOKEN_REFRESH_GRACE_PERIOD = 5000 // 登录后5秒内不尝试刷新 token
 
 export type RequestOptions = Omit<UniApp.RequestOption, 'url'> & {
   url: string
@@ -124,8 +128,25 @@ async function refreshAccessTokenInternal(
 /**
  * 尝试刷新 access token
  * SECURITY: 改进队列机制和重试限制，防止竞态条件
+ * 修复：添加 grace period 检查，防止登录后立即刷新 token
+ *
+ * 返回值：
+ * - true: 刷新成功
+ * - false: 刷新失败（需要清除 token）
+ * - 'skipped': 在 grace period 内，跳过刷新（token 仍然有效）
  */
-async function tryRefreshToken(): Promise<boolean> {
+async function tryRefreshToken(): Promise<boolean | 'skipped'> {
+  // 检查是否在 grace period 内（刚登录不久，不需要刷新）
+  const lastTokenSaveTime = getLastTokenSaveTime()
+  const timeSinceLastSave = Date.now() - lastTokenSaveTime
+
+  if (lastTokenSaveTime > 0 && timeSinceLastSave < TOKEN_REFRESH_GRACE_PERIOD) {
+    console.log(
+      `[request] Token save was ${timeSinceLastSave}ms ago, within grace period (${TOKEN_REFRESH_GRACE_PERIOD}ms), skipping refresh`
+    )
+    return 'skipped'  // 返回特殊值表示跳过刷新，而不是刷新失败
+  }
+
   // 如果正在刷新，等待现有刷新完成
   if (refreshPromise) {
     try {
@@ -155,13 +176,23 @@ async function tryRefreshToken(): Promise<boolean> {
         return false
       }
 
+      console.log('[request] Attempting token refresh...')
       const result = await refreshAccessTokenInternal(refreshToken, userId)
 
-      // 保存新的 tokens
-      await saveToken(result.access_token, result.refresh_token, userId)
+      console.log('[request] Refresh result:', JSON.stringify(result))
+
+      // 验证响应数据 - 后端返回统一响应格式 {code, message, details}
+      if (!result || !result.details || !result.details.access_token) {
+        console.error('[request] Invalid refresh response - missing access_token in details')
+        return false
+      }
+
+      // 保存新的 tokens - 从 details 中提取
+      await saveToken(result.details.access_token, result.details.refresh_token, userId)
 
       // 重置重试计数
       refreshAttempts = 0
+      console.log('[request] Token refresh successful')
       return true
     } catch (error) {
       console.error('[request] Token refresh failed:', error)
@@ -184,29 +215,61 @@ async function tryRefreshToken(): Promise<boolean> {
 
 /**
  * 从本地取 token（带过期检查和自动刷新）
+ * 修复：添加重试逻辑，解决真机环境下存储延迟问题
  */
 async function getToken(): Promise<string> {
-  try {
-    // 使用 auth.ts 中的 getToken（会自动解密）
-    let token = await getStoredToken()
+  const maxRetries = 3
+  let lastError: Error | null = null
 
-    // 检查是否过期
-    if (token && isTokenExpired(token)) {
-      // 尝试刷新 token
-      const refreshed = await tryRefreshToken()
-      if (refreshed) {
-        // 刷新成功，获取新 token
-        token = await getStoredToken()
-      } else {
-        // 刷新失败，清除 token
-        token = ''
+  console.log('[request] ===== getToken() called =====')
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      // 使用 auth.ts 中的 getToken（会自动解密）
+      let token = await getStoredToken()
+
+      console.log(`[request] getToken() attempt ${attempt}/${maxRetries}:`, token ? `GOT TOKEN (length: ${token.length})` : 'NO TOKEN')
+
+      // 如果没获取到 token，且不是最后一次尝试，延迟后重试
+      if (!token && attempt < maxRetries) {
+        console.warn(`[request] Token not available (attempt ${attempt}/${maxRetries}), retrying...`)
+        await new Promise(resolve => setTimeout(resolve, 100 * attempt))
+        continue
+      }
+
+      // 检查是否过期
+      if (token && isTokenExpired(token)) {
+        console.log('[request] Token is expired, attempting refresh...')
+        // 尝试刷新 token
+        const refreshed = await tryRefreshToken()
+        if (refreshed === true) {
+          // 刷新成功，获取新 token
+          token = await getStoredToken()
+          console.log('[request] Token refreshed successfully, new token length:', token.length)
+        } else if (refreshed === 'skipped') {
+          // 在 grace period 内，跳过刷新，token 仍然有效
+          console.log('[request] Token refresh skipped (grace period), using existing token')
+        } else {
+          // 刷新失败，清除 token
+          console.error('[request] Token refresh failed, clearing token')
+          token = ''
+        }
+      }
+
+      const finalToken = token || ''
+      console.log('[request] ===== getToken() returning:', finalToken ? `TOKEN (length: ${finalToken.length})` : 'EMPTY', '=====')
+      return finalToken
+    } catch (error) {
+      lastError = error as Error
+      console.warn(`[request] Token retrieval error (attempt ${attempt}/${maxRetries}):`, error)
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 100 * attempt))
       }
     }
-
-    return token
-  } catch {
-    return ''
   }
+
+  console.error('[request] Token retrieval failed after all retries:', lastError)
+  return ''
 }
 
 /** 处理 HTTP 错误状态码 */
@@ -299,9 +362,13 @@ export async function request<T = unknown>(options: RequestOptions): Promise<T> 
   const url = resolveUrl(rawOptions.url)
   const token = rawOptions.noAuth ? '' : await getToken()
 
-  // DEBUG: Log token presence (helps diagnose real device issues)
-  if (!rawOptions.noAuth && !token) {
-    console.warn('[request] No token available for authenticated request:', url)
+  // DEBUG: 详细日志，帮助诊断真机问题
+  if (!rawOptions.noAuth) {
+    if (token) {
+      console.log('[request] Token available for', url, '- first 20 chars:', token.substring(0, 20))
+    } else {
+      console.error('[request] No token available for authenticated request:', url)
+    }
   }
 
   const header: Record<string, string> = {

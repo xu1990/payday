@@ -192,13 +192,11 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
 export interface AdminUserListItem {
   id: number
   openid: string
-  nickname: string
-  avatar_url: string
+  anonymous_name: string
+  phone_number?: string | null  // Masked phone number (e.g., 138****8000)
+  phone_verified: boolean
   status: string
   created_at: string
-  post_count: number
-  follower_count: number
-  following_count: number
 }
 
 export interface AdminUserDetail extends AdminUserListItem {
