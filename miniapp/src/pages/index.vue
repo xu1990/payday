@@ -64,18 +64,25 @@ const userName = computed(() => userStore.anonymousName || '打工者')
 const userAvatar = computed(() => userStore.avatar || '/static/default-avatar.png')
 
 onShow(async () => {
+  console.log('[index] onShow called')
+
   // 每次显示时更新进度
   progress.value = monthProgress()
 
   // 先初始化 auth store 以加载 token
+  console.log('[index] Initializing auth store...')
   await authStore.init()
+  console.log('[index] Auth store initialized, isLoggedIn:', isLoggedIn.value)
 
   // 然后检查登录状态
   if (isLoggedIn.value) {
+    console.log('[index] User is logged in, loading data...')
     // 已登录，延迟加载数据以确保 token 可用
     setTimeout(() => {
       loadPaydayData()
-    }, 200)
+    }, 300) // 增加延迟到 300ms
+  } else {
+    console.warn('[index] User not logged in')
   }
 })
 

@@ -121,12 +121,27 @@ async function handleLogin() {
       // 避免真机环境下 token 存储异步问题导致 401
 
       // 延迟跳转首页，确保 token 完全写入存储
-      setTimeout(() => {
-        console.log('[login] 跳转到首页')
-        uni.switchTab({
+      // 使用 reLaunch 而不是 switchTab，确保页面完全重新加载
+      setTimeout(async () => {
+        console.log('[login] 准备跳转到首页，先验证 token...')
+
+        // 验证 token 是否确实存储成功
+        const { getToken } = await import('@/utils/tokenStorage')
+        const tokenCheck = await getToken()
+
+        if (!tokenCheck) {
+          console.error('[login] 跳转前验证失败：token未找到')
+          showError('登录状态保存失败，请重试')
+          return
+        }
+
+        console.log('[login] Token验证成功，准备跳转，length:', tokenCheck.length)
+
+        // 使用 reLaunch 确保页面完全重新加载
+        uni.reLaunch({
           url: '/pages/index',
         })
-      }, 800)
+      }, 1000) // 增加延迟到 1000ms
     } else {
       console.error('[login] 后端登录接口返回失败')
       showError('登录失败，请检查后端服务是否启动')

@@ -65,7 +65,11 @@ function handleShare() {
 
 <template>
   <view class="action-bar" :class="{ compact }" @click.stop>
-    <view class="action-btn" :class="{ liked: isLiked, loading: likeLoading }" @tap.stop="handleLike">
+    <view
+      class="action-btn"
+      :class="{ liked: isLiked, loading: likeLoading }"
+      @tap.stop="handleLike"
+    >
       <text class="icon">{{ isLiked ? '❤️' : '🤍' }}</text>
       <text class="count">{{ likeCount }}</text>
     </view>

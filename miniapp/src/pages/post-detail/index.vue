@@ -260,7 +260,10 @@ function handleUnfollow(data: { targetUserId: string }) {
         <text class="time">{{ timeStr }}</text>
       </view>
       <!-- Author section with follow button -->
-      <view v-if="authStore.isLoggedIn && post.user_id && post.user_id !== userStore.userId" class="author-section">
+      <view
+        v-if="authStore.isLoggedIn && post.user_id && post.user_id !== userStore.userId"
+        class="author-section"
+      >
         <FollowButton
           :target-user-id="post.user_id"
           :is-following="isFollowingAuthor"

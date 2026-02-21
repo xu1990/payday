@@ -75,7 +75,7 @@ async function loadUsers(append = false) {
         } catch (e) {
           console.error('[Feed] Failed to fetch follow status:', e)
           // 失败时默认未关注
-          newUsers.forEach(u => u.is_following = false)
+          newUsers.forEach(u => (u.is_following = false))
         }
       }
 
@@ -274,12 +274,7 @@ onMounted(() => {
       <scroll-view v-else class="list" scroll-y @scrolltolower="loadMore">
         <view v-for="user in users" :key="user.id" class="user-card">
           <view class="user-info" @click="goToProfile(user.id)">
-            <image
-              v-if="user.avatar"
-              :src="user.avatar"
-              class="avatar"
-              mode="aspectFill"
-            />
+            <image v-if="user.avatar" :src="user.avatar" class="avatar" mode="aspectFill" />
             <view v-else class="avatar-placeholder">
               {{ user.anonymous_name?.substring(0, 1) || '?' }}
             </view>
