@@ -119,6 +119,12 @@ async def add_deposit(
     amount: float
 ) -> Optional[SavingsGoal]:
     """向目标存入金额"""
+    # 验证金额合理性
+    if amount <= 0:
+        raise ValidationException("存款金额必须大于0")
+    if amount > 1000000:  # 防止异常大额存款
+        raise ValidationException("存款金额超出合理范围")
+
     goal = await get_savings_goal_by_id(db, goal_id, user_id)
     if not goal:
         raise NotFoundException("存款目标不存在")

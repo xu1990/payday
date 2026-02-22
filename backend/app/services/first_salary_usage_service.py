@@ -57,14 +57,16 @@ async def create_first_salary_usage_records(
 
 async def get_first_salary_usage_by_salary(
     db: AsyncSession,
-    salary_record_id: str
+    salary_record_id: str,
+    user_id: str
 ) -> List[FirstSalaryUsage]:
     """
-    根据工资记录ID获取第一笔工资用途
+    根据工资记录ID获取第一笔工资用途（仅限当前用户）
 
     Args:
         db: 数据库会话
         salary_record_id: 工资记录ID
+        user_id: 用户ID（用于权限验证）
 
     Returns:
         用途记录列表
@@ -72,6 +74,7 @@ async def get_first_salary_usage_by_salary(
     stmt = (
         select(FirstSalaryUsage)
         .where(FirstSalaryUsage.salary_record_id == salary_record_id)
+        .where(FirstSalaryUsage.user_id == user_id)  # 添加用户ID过滤
         .order_by(FirstSalaryUsage.created_at)
     )
     result = await db.execute(stmt)

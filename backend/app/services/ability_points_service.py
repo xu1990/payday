@@ -12,24 +12,41 @@ from app.core.exceptions import NotFoundException, ValidationException, Business
 
 
 async def get_or_create_user_points(db: AsyncSession, user_id: str) -> AbilityPoint:
-    """获取或创建用户积分账户"""
+    """获取或创建用户积分账户（带并发处理）"""
+    from sqlalchemy.exc import IntegrityError
+
+    # 尝试获取现有积分账户
     result = await db.execute(
         select(AbilityPoint).where(AbilityPoint.user_id == user_id)
     )
     points = result.scalar_one_or_none()
 
     if not points:
-        points = AbilityPoint(
-            user_id=user_id,
-            total_points=0,
-            available_points=0,
-            level=1,
-            total_earned=0,
-            total_spent=0,
-        )
-        db.add(points)
-        await db.commit()
-        await db.refresh(points)
+        try:
+            # 使用行级锁防止并发创建
+            await db.execute(
+                select(AbilityPoint)
+                .where(AbilityPoint.user_id == user_id)
+                .with_for_update()
+            )
+            points = AbilityPoint(
+                user_id=user_id,
+                total_points=0,
+                available_points=0,
+                level=1,
+                total_earned=0,
+                total_spent=0,
+            )
+            db.add(points)
+            await db.commit()
+            await db.refresh(points)
+        except IntegrityError:
+            # 并发情况下，其他事务可能已经创建了该用户积分账户
+            await db.rollback()
+            result = await db.execute(
+                select(AbilityPoint).where(AbilityPoint.user_id == user_id)
+            )
+            points = result.scalar_one_or_none()
 
     return points
 
@@ -47,6 +64,11 @@ async def add_points(
     """增加积分（hooks系统核心）"""
     if amount <= 0:
         raise ValidationException("积分数量必须大于0")
+
+    # 验证 reference_id 和 reference_type 的组合合法性
+    if reference_id or reference_type:
+        if not reference_id or not reference_type:
+            raise ValidationException("reference_id 和 reference_type 必须同时提供或同时为空")
 
     points = await get_or_create_user_points(db, user_id)
 
@@ -68,7 +90,7 @@ async def add_points(
         reference_id=reference_id,
         reference_type=reference_type,
         description=description,
-        metadata=json.dumps(metadata) if metadata else None,
+        extra_metadata=json.dumps(metadata) if metadata else None,
     )
     db.add(transaction)
 
@@ -85,11 +107,25 @@ async def spend_points(
     reference_type: Optional[str] = None,
     description: Optional[str] = None,
 ) -> AbilityPoint:
-    """消费积分"""
+    """消费积分（带行级锁防止竞态条件）"""
     if amount <= 0:
         raise ValidationException("积分数量必须大于0")
 
-    points = await get_or_create_user_points(db, user_id)
+    # 验证 reference_id 和 reference_type 的组合合法性
+    if reference_id or reference_type:
+        if not reference_id or not reference_type:
+            raise ValidationException("reference_id 和 reference_type 必须同时提供或同时为空")
+
+    # 使用行级锁防止并发导致的双花问题
+    result = await db.execute(
+        select(AbilityPoint)
+        .where(AbilityPoint.user_id == user_id)
+        .with_for_update()  # 行级锁
+    )
+    points = result.scalar_one_or_none()
+
+    if not points:
+        raise BusinessException("积分账户不存在", code="POINTS_ACCOUNT_NOT_FOUND")
 
     if points.available_points < amount:
         raise BusinessException("积分不足", code="INSUFFICIENT_POINTS")

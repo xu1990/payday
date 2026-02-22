@@ -53,7 +53,7 @@ class AbilityPointTransaction(Base):
 
     # 描述
     description = Column(String(200), nullable=True, comment="交易描述")
-    metadata = Column(Text, nullable=True, comment="额外信息 JSON")
+    extra_metadata = Column(Text, nullable=True, comment="额外信息 JSON")
 
     # 时间戳
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, comment="创建时间")

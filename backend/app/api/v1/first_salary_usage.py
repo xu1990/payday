@@ -84,14 +84,10 @@ async def get_first_salary_usage(
     """
     获取第一笔工资用途记录
 
-    根据工资记录ID获取用途详情
+    根据工资记录ID获取用途详情（仅限自己的记录）
     """
-    records = await get_first_salary_usage_by_salary(db, recordId)
-
-    # 验证权限：只能查看自己的记录
-    if records and records[0].user_id != current_user.id:
-        from app.core.exceptions import NotFoundException
-        raise NotFoundException("无权访问此记录", code="PERMISSION_DENIED")
+    # 直接在服务层过滤用户数据，防止授权绕过
+    records = await get_first_salary_usage_by_salary(db, recordId, current_user.id)
 
     # 转换为响应格式
     response_records = []
