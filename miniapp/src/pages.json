@@ -36,6 +36,13 @@
       }
     },
     {
+      "path": "pages/first-salary-usage/index",
+      "style": {
+        "navigationBarTitleText": "第一笔工资用途",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/statistics/index",
       "style": {
         "navigationBarTitleText": "工资统计",
