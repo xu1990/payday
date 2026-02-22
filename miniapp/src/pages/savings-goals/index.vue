@@ -283,7 +283,7 @@ async function handleDelete(id, event) {
     }
 
     .goal-deadline {
-      margin-top: 15rpt;
+      margin-top: 15rpx;
       padding-top: 15rpx;
       border-top: 1rpx dashed #eee;
       font-size: 24rpx;

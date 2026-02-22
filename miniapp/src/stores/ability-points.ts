@@ -6,6 +6,9 @@ import { ref, computed } from 'vue'
 import * as pointsApi from '@/api/ability-points'
 import type { AbilityPointResponse, PointTransactionResponse, PointRedemptionResponse } from '@/api/ability-points'
 
+// 积分系统常量
+const POINTS_PER_LEVEL = 1000  // 每升1级所需的积分
+
 export const useAbilityPointsStore = defineStore('abilityPoints', () => {
   // 状态
   const points = ref<AbilityPointResponse | null>(null)
@@ -21,11 +24,11 @@ export const useAbilityPointsStore = defineStore('abilityPoints', () => {
   const totalPoints = computed(() => points.value?.totalPoints || 0)
   const levelProgress = computed(() => {
     if (!points.value) return 0
-    return (points.value.totalPoints % 1000 / 10).toFixed(1)
+    return ((points.value.totalPoints % POINTS_PER_LEVEL) / 10).toFixed(1)
   })
   const nextLevelPoints = computed(() => {
-    if (!points.value) return 1000
-    return Math.ceil(points.value.totalPoints / 1000) * 1000
+    if (!points.value) return POINTS_PER_LEVEL
+    return Math.ceil(points.value.totalPoints / POINTS_PER_LEVEL) * POINTS_PER_LEVEL
   })
 
   /**
@@ -145,7 +148,7 @@ export const useAbilityPointsStore = defineStore('abilityPoints', () => {
       points.value.availablePoints += points
       points.value.totalPoints += points
       points.value.totalEarned += points
-      points.value.level = 1 + Math.floor(points.value.totalPoints / 1000)
+      points.value.level = 1 + Math.floor(points.value.totalPoints / POINTS_PER_LEVEL)
 
       // 添加交易记录
       transactions.value.unshift({

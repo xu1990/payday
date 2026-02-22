@@ -45,7 +45,7 @@
           </view>
           <view class="level-info">
             <text>当前: {{ points.totalPoints }}分</text>
-            <text>下一级: {{ (Math.floor(points.totalPoints / 1000) + 1) * 1000 }}分</text>
+            <text>下一级: {{ nextLevelPoints }}分</text>
           </view>
         </view>
       </view>
@@ -74,14 +74,22 @@
 import { ref, computed, onMounted } from 'vue'
 import { getMyPoints } from '@/api/ability-points'
 
+// 积分系统常量
+const POINTS_PER_LEVEL = 1000  // 每升1级所需的积分
+
 const loading = ref(true)
 const points = ref(null)
 const error = ref(null)
 
 const levelProgress = computed(() => {
   if (!points.value) return 0
-  const currentLevelPoints = points.value.totalPoints % 1000
-  return (currentLevelPoints / 1000 * 100).toFixed(1)
+  const currentLevelPoints = points.value.totalPoints % POINTS_PER_LEVEL
+  return (currentLevelPoints / POINTS_PER_LEVEL * 100).toFixed(1)
+})
+
+const nextLevelPoints = computed(() => {
+  if (!points.value) return POINTS_PER_LEVEL
+  return (Math.floor(points.value.totalPoints / POINTS_PER_LEVEL) + 1) * POINTS_PER_LEVEL
 })
 
 onMounted(() => {

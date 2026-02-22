@@ -10,6 +10,10 @@ from app.models.ability_points import AbilityPoint, AbilityPointTransaction, Poi
 from app.schemas.ability_points import PointRedemptionCreate, PointRedemptionUpdate
 from app.core.exceptions import NotFoundException, ValidationException, BusinessException
 
+# ============== 常量配置 ==============
+# 积分系统常量，避免魔法数字
+POINTS_PER_LEVEL = 1000  # 每升1级所需的积分
+
 
 async def get_or_create_user_points(db: AsyncSession, user_id: str) -> AbilityPoint:
     """获取或创建用户积分账户（带并发处理）"""
@@ -77,8 +81,8 @@ async def add_points(
     points.available_points += amount
     points.total_earned += amount
 
-    # 计算等级（每1000分升1级）
-    points.level = 1 + points.total_points // 1000
+    # 计算等级（每POINTS_PER_LEVEL分升1级）
+    points.level = 1 + points.total_points // POINTS_PER_LEVEL
 
     # 创建交易记录
     transaction = AbilityPointTransaction(
