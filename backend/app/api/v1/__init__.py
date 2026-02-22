@@ -28,6 +28,7 @@ from .salary_usage import router as salary_usage_router
 from .first_salary_usage import router as first_salary_usage_router
 from .expense import router as expense_router
 from .savings_goal import router as savings_goal_router
+from .ability_points import router as ability_points_router
 
 api_router = APIRouter(prefix="/api/v1", tags=["v1"])
 
@@ -60,6 +61,7 @@ api_router.include_router(salary_usage_router)
 api_router.include_router(first_salary_usage_router)
 api_router.include_router(expense_router)
 api_router.include_router(savings_goal_router)
+api_router.include_router(ability_points_router)
 
 
 @api_router.get("/ping")
