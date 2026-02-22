@@ -66,8 +66,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import { createExpenses } from '@/api/expense'
 
 const salaryRecordId = ref('')
 const salaryAmount = ref(0)
@@ -142,39 +143,28 @@ async function handleSave() {
   const records = expenses.value.map(item => ({
     expenseDate: item.expenseDate,
     category: categories.value[item.categoryIndex],
-    subcategory: null,
+    subcategory: undefined,
     amount: parseFloat(item.amount),
-    note: item.note || null
+    note: item.note || undefined
   }))
 
   try {
     uni.showLoading({ title: '保存中...' })
 
-    const token = uni.getStorageSync('token')
-    const res = await uni.request({
-      url: 'https://api.example.com/api/v1/salary/' + salaryRecordId.value + '/expenses',
-      method: 'POST',
-      header: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      data: { expenses: records }
-    })
+    await createExpenses(salaryRecordId.value, { expenses: records })
 
     uni.hideLoading()
-
-    if (res.data.code === 0) {
-      uni.showToast({ title: '保存成功', icon: 'success' })
-      setTimeout(() => {
-        uni.navigateBack()
-      }, 1500)
-    } else {
-      uni.showToast({ title: res.data.message || '保存失败', icon: 'none' })
-    }
+    uni.showToast({ title: '保存成功', icon: 'success' })
+    setTimeout(() => {
+      uni.navigateBack()
+    }, 1500)
   } catch (error) {
     uni.hideLoading()
-    uni.showToast({ title: '网络错误', icon: 'none' })
-    console.error(error)
+    console.error('Failed to save expenses:', error)
+    uni.showToast({
+      title: error.message || '保存失败，请重试',
+      icon: 'none'
+    })
   }
 }
 </script>

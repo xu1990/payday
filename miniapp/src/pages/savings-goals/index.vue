@@ -25,17 +25,17 @@
 
         <view class="progress-section">
           <view class="progress-info">
-            <text class="current">¥{{ goal.current_amount }}</text>
-            <text class="target">目标 ¥{{ goal.target_amount }}</text>
+            <text class="current">¥{{ goal.currentAmount }}</text>
+            <text class="target">目标 ¥{{ goal.targetAmount }}</text>
           </view>
           <view class="progress-bar">
-            <view class="progress-fill" :style="{ width: goal.progress_percentage + '%' }"></view>
+            <view class="progress-fill" :style="{ width: goal.progressPercentage + '%' }"></view>
           </view>
-          <text class="progress-text">{{ goal.progress_percentage }}%</text>
+          <text class="progress-text">{{ goal.progressPercentage }}%</text>
         </view>
 
         <view class="goal-footer">
-          <text class="remaining">还差 ¥{{ goal.remaining_amount }}</text>
+          <text class="remaining">还差 ¥{{ goal.remainingAmount }}</text>
           <view class="actions">
             <button class="deposit-btn" size="mini" @tap.stop="depositToGoal(goal.id)">存入</button>
           </view>
@@ -63,6 +63,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { getSavingsGoals, deleteSavingsGoal } from '@/api/savings'
 
 const loading = ref(true)
 const goals = ref([])
@@ -74,21 +75,16 @@ onMounted(() => {
 async function fetchGoals() {
   try {
     loading.value = true
-    const token = uni.getStorageSync('token')
-
-    const res = await uni.request({
-      url: 'https://api.example.com/api/v1/savings-goals',
-      method: 'GET',
-      header: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-
-    if (res.data.code === 0) {
-      goals.value = res.data.data.goals || []
+    const res = await getSavingsGoals()
+    if (res.goals) {
+      goals.value = res.goals
     }
   } catch (error) {
-    console.error(error)
+    console.error('Failed to fetch savings goals:', error)
+    uni.showToast({
+      title: '加载失败，请重试',
+      icon: 'none'
+    })
   } finally {
     loading.value = false
   }
@@ -126,6 +122,30 @@ function createGoal() {
   uni.navigateTo({
     url: '/pages/savings-goal-create/index'
   })
+}
+
+async function handleDelete(id, event) {
+  event.stopPropagation()
+  try {
+    const res = await uni.showModal({
+      title: '确认删除',
+      content: '确定要删除这个存款目标吗？'
+    })
+    if (res.confirm) {
+      await deleteSavingsGoal(id)
+      uni.showToast({
+        title: '删除成功',
+        icon: 'success'
+      })
+      fetchGoals()
+    }
+  } catch (error) {
+    console.error('Failed to delete savings goal:', error)
+    uni.showToast({
+      title: '删除失败，请重试',
+      icon: 'none'
+    })
+  }
 }
 </script>
 

@@ -31,9 +31,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { getPointEvents } from '@/api/ability-points'
 
 const loading = ref(true)
 const events = ref([])
+const error = ref(null)
 
 const eventNames = {
   checkin_daily: '每日打卡',
@@ -87,21 +89,16 @@ onMounted(() => {
 async function fetchEvents() {
   try {
     loading.value = true
-    const token = uni.getStorageSync('token')
-
-    const res = await uni.request({
-      url: 'https://api.example.com/api/v1/ability-points/events',
-      method: 'GET',
-      header: {
-        'Authorization': `Bearer ${token}`
-      }
+    error.value = null
+    const response = await getPointEvents()
+    events.value = response.events || []
+  } catch (err) {
+    console.error('Failed to fetch events:', err)
+    error.value = err.message || '加载失败'
+    uni.showToast({
+      title: error.value,
+      icon: 'none'
     })
-
-    if (res.data.code === 0) {
-      events.value = res.data.data.events || []
-    }
-  } catch (error) {
-    console.error(error)
   } finally {
     loading.value = false
   }

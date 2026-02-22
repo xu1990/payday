@@ -133,6 +133,20 @@ export function unfollowUser(targetUserId: string): Promise<FollowActionRes> {
 }
 
 /**
+ * 检查是否关注目标用户
+ */
+export interface FollowStatusRes {
+  is_following: boolean
+}
+
+export function getFollowStatus(targetUserId: string): Promise<FollowStatusRes> {
+  return request<FollowStatusRes>({
+    url: `${PREFIX}/${targetUserId}/follow-status`,
+    method: 'GET',
+  })
+}
+
+/**
  * 获取我的粉丝列表
  */
 export function getMyFollowers(params?: {
@@ -233,6 +247,7 @@ export default {
   // 关注相关
   followUser,
   unfollowUser,
+  getFollowStatus,
   getMyFollowers,
   getMyFollowing,
   getUserFollowers,

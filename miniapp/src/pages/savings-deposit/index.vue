@@ -4,17 +4,21 @@
       <text class="title">💰 存入资金</text>
     </view>
 
-    <view v-if="goal" class="goal-info">
+    <view v-if="loading" class="loading">
+      <text>加载中...</text>
+    </view>
+
+    <view v-else-if="goal" class="goal-info">
       <view class="goal-title">{{ goal.title }}</view>
       <view class="goal-progress">
         <view class="progress-label">
-          <text>当前：¥{{ goal.current_amount }}</text>
-          <text>目标：¥{{ goal.target_amount }}</text>
+          <text>当前：¥{{ goal.currentAmount }}</text>
+          <text>目标：¥{{ goal.targetAmount }}</text>
         </view>
         <view class="progress-bar">
-          <view class="progress-fill" :style="{ width: goal.progress_percentage + '%' }"></view>
+          <view class="progress-fill" :style="{ width: goal.progressPercentage + '%' }"></view>
         </view>
-        <text class="progress-percent">{{ goal.progress_percentage }}%</text>
+        <text class="progress-percent">{{ goal.progressPercentage }}%</text>
       </view>
     </view>
 
@@ -66,24 +70,26 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import { getSavingsGoal, depositToGoal } from '@/api/savings'
 
 const goalId = ref('')
 const goal = ref(null)
 const amount = ref('')
 const note = ref('')
+const loading = ref(false)
 
 const quickValues = [100, 500, 1000, 2000, 5000]
 
 const projectedAmount = computed(() => {
   if (!goal.value || !amount.value) return '0.00'
-  return (parseFloat(goal.value.current_amount) + parseFloat(amount.value)).toFixed(2)
+  return (parseFloat(goal.value.currentAmount) + parseFloat(amount.value)).toFixed(2)
 })
 
 const projectedPercent = computed(() => {
   if (!goal.value) return 0
-  const percent = (parseFloat(projectedAmount.value) / parseFloat(goal.value.target_amount) * 100).toFixed(1)
+  const percent = (parseFloat(projectedAmount.value) / parseFloat(goal.value.targetAmount) * 100).toFixed(1)
   return Math.min(percent, 100)
 })
 
@@ -96,20 +102,16 @@ onLoad((options) => {
 
 async function fetchGoal() {
   try {
-    const token = uni.getStorageSync('token')
-    const res = await uni.request({
-      url: `https://api.example.com/api/v1/savings-goals/${goalId.value}`,
-      method: 'GET',
-      header: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-
-    if (res.data.code === 0) {
-      goal.value = res.data.data
-    }
+    loading.value = true
+    goal.value = await getSavingsGoal(goalId.value)
   } catch (error) {
-    console.error(error)
+    console.error('Failed to fetch savings goal:', error)
+    uni.showToast({
+      title: '加载失败，请重试',
+      icon: 'none'
+    })
+  } finally {
+    loading.value = false
   }
 }
 
@@ -125,35 +127,24 @@ async function handleDeposit() {
 
   try {
     uni.showLoading({ title: '处理中...' })
-    const token = uni.getStorageSync('token')
 
-    const res = await uni.request({
-      url: `https://api.example.com/api/v1/savings-goals/${goalId.value}/deposit`,
-      method: 'POST',
-      header: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      data: {
-        amount: parseFloat(amount.value),
-        note: note.value || null
-      }
+    await depositToGoal(goalId.value, {
+      amount: parseFloat(amount.value),
+      note: note.value || undefined
     })
 
     uni.hideLoading()
-
-    if (res.data.code === 0) {
-      uni.showToast({ title: '存款成功', icon: 'success' })
-      setTimeout(() => {
-        uni.navigateBack()
-      }, 1500)
-    } else {
-      uni.showToast({ title: res.data.message || '存款失败', icon: 'none' })
-    }
+    uni.showToast({ title: '存款成功', icon: 'success' })
+    setTimeout(() => {
+      uni.navigateBack()
+    }, 1500)
   } catch (error) {
     uni.hideLoading()
-    uni.showToast({ title: '网络错误', icon: 'none' })
-    console.error(error)
+    console.error('Failed to deposit:', error)
+    uni.showToast({
+      title: error.message || '存款失败，请重试',
+      icon: 'none'
+    })
   }
 }
 </script>
@@ -173,6 +164,12 @@ async function handleDeposit() {
     font-size: 36rpx;
     font-weight: bold;
   }
+}
+
+.loading {
+  text-align: center;
+  padding: 100rpx 0;
+  color: #999;
 }
 
 .goal-info {

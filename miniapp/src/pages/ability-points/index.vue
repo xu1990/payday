@@ -12,7 +12,7 @@
       <!-- 积分卡片 -->
       <view class="points-card">
         <view class="points-info">
-          <text class="points-value">{{ points.available_points }}</text>
+          <text class="points-value">{{ points.availablePoints }}</text>
           <text class="points-label">可用积分</text>
         </view>
         <view class="level-badge">
@@ -23,15 +23,15 @@
       <!-- 统计信息 -->
       <view class="stats-grid">
         <view class="stat-item">
-          <text class="stat-value">{{ points.total_earned }}</text>
+          <text class="stat-value">{{ points.totalEarned }}</text>
           <text class="stat-label">累计获得</text>
         </view>
         <view class="stat-item">
-          <text class="stat-value">{{ points.total_spent }}</text>
+          <text class="stat-value">{{ points.totalSpent }}</text>
           <text class="stat-label">累计消费</text>
         </view>
         <view class="stat-item">
-          <text class="stat-value">{{ points.total_points }}</text>
+          <text class="stat-value">{{ points.totalPoints }}</text>
           <text class="stat-label">总积分</text>
         </view>
       </view>
@@ -44,8 +44,8 @@
             <view class="progress-fill" :style="{ width: levelProgress + '%' }"></view>
           </view>
           <view class="level-info">
-            <text>当前: {{ points.total_points }}分</text>
-            <text>下一级: {{ (Math.floor(points.total_points / 1000) + 1) * 1000 }}分</text>
+            <text>当前: {{ points.totalPoints }}分</text>
+            <text>下一级: {{ (Math.floor(points.totalPoints / 1000) + 1) * 1000 }}分</text>
           </view>
         </view>
       </view>
@@ -72,13 +72,15 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { getMyPoints } from '@/api/ability-points'
 
 const loading = ref(true)
 const points = ref(null)
+const error = ref(null)
 
 const levelProgress = computed(() => {
   if (!points.value) return 0
-  const currentLevelPoints = points.value.total_points % 1000
+  const currentLevelPoints = points.value.totalPoints % 1000
   return (currentLevelPoints / 1000 * 100).toFixed(1)
 })
 
@@ -89,21 +91,15 @@ onMounted(() => {
 async function fetchPoints() {
   try {
     loading.value = true
-    const token = uni.getStorageSync('token')
-
-    const res = await uni.request({
-      url: 'https://api.example.com/api/v1/ability-points/my',
-      method: 'GET',
-      header: {
-        'Authorization': `Bearer ${token}`
-      }
+    error.value = null
+    points.value = await getMyPoints()
+  } catch (err) {
+    console.error('Failed to fetch points:', err)
+    error.value = err.message || '加载失败'
+    uni.showToast({
+      title: error.value,
+      icon: 'none'
     })
-
-    if (res.data.code === 0) {
-      points.value = res.data.data
-    }
-  } catch (error) {
-    console.error(error)
   } finally {
     loading.value = false
   }

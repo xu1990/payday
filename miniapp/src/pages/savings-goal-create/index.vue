@@ -12,12 +12,12 @@
 
       <view class="form-item">
         <text class="label">目标金额 (¥) *</text>
-        <input class="input" type="digit" v-model="form.target_amount" placeholder="输入目标金额" />
+        <input class="input" type="digit" v-model="form.targetAmount" placeholder="输入目标金额" />
       </view>
 
       <view class="form-item">
         <text class="label">初始金额 (¥)</text>
-        <input class="input" type="digit" v-model="form.current_amount" placeholder="已有金额（可选）" />
+        <input class="input" type="digit" v-model="form.currentAmount" placeholder="已有金额（可选）" />
       </view>
 
       <view class="form-item">
@@ -32,9 +32,9 @@
 
       <view class="form-item">
         <text class="label">开始日期</text>
-        <uni-datetime-picker type="date" v-model="form.start_date">
+        <uni-datetime-picker type="date" v-model="form.startDate">
           <view class="picker">
-            <text>{{ form.start_date || '选择日期' }}</text>
+            <text>{{ form.startDate || '选择日期' }}</text>
           </view>
         </uni-datetime-picker>
       </view>
@@ -62,13 +62,14 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { createSavingsGoal } from '@/api/savings'
 
 const form = ref({
   title: '',
-  target_amount: '',
-  current_amount: '0',
+  targetAmount: '',
+  currentAmount: '0',
   category: '',
-  start_date: '',
+  startDate: '',
   deadline: '',
   description: ''
 })
@@ -76,7 +77,7 @@ const form = ref({
 const categories = ['买房', '买车', '旅游', '教育', '应急', '数码产品', '其他']
 
 const isValid = computed(() => {
-  return form.value.title && form.value.target_amount && parseFloat(form.value.target_amount) > 0
+  return form.value.title && form.value.targetAmount && parseFloat(form.value.targetAmount) > 0
 })
 
 function onCategoryChange(e) {
@@ -91,42 +92,31 @@ async function handleSubmit() {
 
   try {
     uni.showLoading({ title: '创建中...' })
-    const token = uni.getStorageSync('token')
 
     const data = {
       title: form.value.title,
-      target_amount: parseFloat(form.value.target_amount),
-      current_amount: parseFloat(form.value.current_amount) || 0,
-      category: form.value.category || null,
-      start_date: form.value.start_date || null,
-      deadline: form.value.deadline || null,
-      description: form.value.description || null
+      targetAmount: parseFloat(form.value.targetAmount),
+      currentAmount: parseFloat(form.value.currentAmount) || 0,
+      category: form.value.category || undefined,
+      startDate: form.value.startDate || undefined,
+      deadline: form.value.deadline || undefined,
+      description: form.value.description || undefined
     }
 
-    const res = await uni.request({
-      url: 'https://api.example.com/api/v1/savings-goals',
-      method: 'POST',
-      header: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      data
-    })
+    await createSavingsGoal(data)
 
     uni.hideLoading()
-
-    if (res.data.code === 0) {
-      uni.showToast({ title: '创建成功', icon: 'success' })
-      setTimeout(() => {
-        uni.navigateBack()
-      }, 1500)
-    } else {
-      uni.showToast({ title: res.data.message || '创建失败', icon: 'none' })
-    }
+    uni.showToast({ title: '创建成功', icon: 'success' })
+    setTimeout(() => {
+      uni.navigateBack()
+    }, 1500)
   } catch (error) {
     uni.hideLoading()
-    uni.showToast({ title: '网络错误', icon: 'none' })
-    console.error(error)
+    console.error('Failed to create savings goal:', error)
+    uni.showToast({
+      title: error.message || '创建失败，请重试',
+      icon: 'none'
+    })
   }
 }
 </script>

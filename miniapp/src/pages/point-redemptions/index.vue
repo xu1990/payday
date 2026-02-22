@@ -32,7 +32,7 @@
           <text class="label">奖励类型</text>
           <picker :range="rewardTypes" @change="onRewardTypeChange">
             <view class="picker">
-              <text>{{ form.reward_type || '选择类型' }}</text>
+              <text>{{ form.rewardType || '选择类型' }}</text>
               <text class="arrow">▼</text>
             </view>
           </picker>
@@ -42,7 +42,7 @@
           <text class="label">奖励名称 *</text>
           <input
             class="input"
-            v-model="form.reward_name"
+            v-model="form.rewardName"
             placeholder="如：100元京东卡"
           />
         </view>
@@ -52,7 +52,7 @@
           <input
             class="input"
             type="digit"
-            v-model="form.points_cost"
+            v-model="form.pointsCost"
             placeholder="输入所需积分"
           />
         </view>
@@ -61,7 +61,7 @@
           <text class="label">配送信息</text>
           <textarea
             class="textarea"
-            v-model="form.delivery_info"
+            v-model="form.deliveryInfo"
             placeholder="收货人、联系电话、地址等（JSON格式）"
           />
         </view>
@@ -101,7 +101,7 @@
           :key="item.id"
         >
           <view class="redemption-header">
-            <text class="reward-name">{{ item.reward_name }}</text>
+            <text class="reward-name">{{ item.rewardName }}</text>
             <view class="status-badge" :class="'status-' + item.status">
               <text>{{ getStatusText(item.status) }}</text>
             </view>
@@ -110,11 +110,11 @@
           <view class="redemption-info">
             <view class="info-row">
               <text class="label">类型</text>
-              <text class="value">{{ getRewardTypeText(item.reward_type) }}</text>
+              <text class="value">{{ getRewardTypeText(item.rewardType) }}</text>
             </view>
             <view class="info-row">
               <text class="label">积分</text>
-              <text class="value points">-{{ item.points_cost }}</text>
+              <text class="value points">-{{ item.pointsCost }}</text>
             </view>
             <view class="info-row">
               <text class="label">时间</text>
@@ -122,8 +122,8 @@
             </view>
           </view>
 
-          <view v-if="item.rejection_reason" class="rejection-reason">
-            <text>拒绝原因: {{ item.rejection_reason }}</text>
+          <view v-if="item.rejectionReason" class="rejection-reason">
+            <text>拒绝原因: {{ item.rejectionReason }}</text>
           </view>
         </view>
       </view>
@@ -133,6 +133,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { getMyPoints, getMyRedemptions, createRedemption, type PointRedemptionCreate } from '@/api/ability-points'
 
 const balance = ref(0)
 const activeTab = ref('create')
@@ -140,17 +141,17 @@ const loading = ref(false)
 const redemptions = ref([])
 
 const form = ref({
-  reward_type: '',
-  reward_name: '',
-  points_cost: '',
-  delivery_info: '',
+  rewardType: '',
+  rewardName: '',
+  pointsCost: '',
+  deliveryInfo: '',
   notes: ''
 })
 
 const rewardTypes = ['优惠券', '实物礼品', '会员权益', '虚拟商品', '其他']
 
 const isFormValid = computed(() => {
-  return form.value.reward_name && form.value.points_cost && parseInt(form.value.points_cost) > 0
+  return form.value.rewardName && form.value.pointsCost && parseInt(form.value.pointsCost) > 0
 })
 
 onMounted(() => {
@@ -160,48 +161,35 @@ onMounted(() => {
 
 async function fetchBalance() {
   try {
-    const token = uni.getStorageSync('token')
-    const res = await uni.request({
-      url: 'https://api.example.com/api/v1/ability-points/my',
-      method: 'GET',
-      header: {
-        'Authorization': `Bearer ${token}`
-      }
+    const points = await getMyPoints()
+    balance.value = points.availablePoints
+  } catch (err) {
+    console.error('Failed to fetch balance:', err)
+    uni.showToast({
+      title: '加载积分失败',
+      icon: 'none'
     })
-
-    if (res.data.code === 0) {
-      balance.value = res.data.data.available_points
-    }
-  } catch (error) {
-    console.error(error)
   }
 }
 
 async function fetchRedemptions() {
   try {
     loading.value = true
-    const token = uni.getStorageSync('token')
-
-    const res = await uni.request({
-      url: 'https://api.example.com/api/v1/ability-points/redemptions',
-      method: 'GET',
-      header: {
-        'Authorization': `Bearer ${token}`
-      }
+    const response = await getMyRedemptions()
+    redemptions.value = response.redemptions || []
+  } catch (err) {
+    console.error('Failed to fetch redemptions:', err)
+    uni.showToast({
+      title: '加载失败',
+      icon: 'none'
     })
-
-    if (res.data.code === 0) {
-      redemptions.value = res.data.data.redemptions || []
-    }
-  } catch (error) {
-    console.error(error)
   } finally {
     loading.value = false
   }
 }
 
 function onRewardTypeChange(e) {
-  form.value.reward_type = rewardTypes[e.detail.value]
+  form.value.rewardType = rewardTypes[e.detail.value]
 }
 
 function getStatusText(status) {
@@ -230,54 +218,43 @@ async function handleSubmit() {
     return
   }
 
-  if (parseInt(form.value.points_cost) > balance.value) {
+  const pointsCost = parseInt(form.value.pointsCost)
+  if (pointsCost > balance.value) {
     uni.showToast({ title: '积分不足', icon: 'none' })
     return
   }
 
   try {
     uni.showLoading({ title: '提交中...' })
-    const token = uni.getStorageSync('token')
 
-    const data = {
-      reward_name: form.value.reward_name,
-      reward_type: form.value.reward_type || '其他',
-      points_cost: parseInt(form.value.points_cost),
-      delivery_info: form.value.delivery_info || null,
-      notes: form.value.notes || null
+    const data: PointRedemptionCreate = {
+      rewardName: form.value.rewardName,
+      rewardType: form.value.rewardType || '其他',
+      pointsCost,
+      deliveryInfo: form.value.deliveryInfo || undefined,
+      notes: form.value.notes || undefined
     }
 
-    const res = await uni.request({
-      url: 'https://api.example.com/api/v1/ability-points/redemptions',
-      method: 'POST',
-      header: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      data
+    await createRedemption(data)
+    uni.hideLoading()
+
+    uni.showToast({ title: '提交成功', icon: 'success' })
+    form.value = {
+      rewardType: '',
+      rewardName: '',
+      pointsCost: '',
+      deliveryInfo: '',
+      notes: ''
+    }
+    activeTab.value = 'history'
+    await Promise.all([fetchRedemptions(), fetchBalance()])
+  } catch (err) {
+    uni.hideLoading()
+    console.error('Failed to create redemption:', err)
+    uni.showToast({
+      title: err.message || '提交失败',
+      icon: 'none'
     })
-
-    uni.hideLoading()
-
-    if (res.data.code === 0) {
-      uni.showToast({ title: '提交成功', icon: 'success' })
-      form.value = {
-        reward_type: '',
-        reward_name: '',
-        points_cost: '',
-        delivery_info: '',
-        notes: ''
-      }
-      activeTab.value = 'history'
-      fetchRedemptions()
-      fetchBalance()
-    } else {
-      uni.showToast({ title: res.data.message || '提交失败', icon: 'none' })
-    }
-  } catch (error) {
-    uni.hideLoading()
-    uni.showToast({ title: '网络错误', icon: 'none' })
-    console.error(error)
   }
 }
 </script>

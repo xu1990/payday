@@ -26,8 +26,8 @@
 
         <view class="transaction-info">
           <view class="transaction-title">{{ getTransactionTitle(item) }}</view>
-          <view class="transaction-desc">{{ item.description || item.transaction_type }}</view>
-          <view class="transaction-time">{{ formatDateTime(item.created_at) }}</view>
+          <view class="transaction-desc">{{ item.description || item.transactionType }}</view>
+          <view class="transaction-time">{{ formatDateTime(item.createdAt) }}</view>
         </view>
 
         <view class="transaction-amount" :class="{ earn: item.amount > 0, spend: item.amount < 0 }">
@@ -40,9 +40,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { getMyTransactions } from '@/api/ability-points'
 
 const loading = ref(true)
 const transactions = ref([])
+const error = ref(null)
 
 const transactionTitles = {
   checkin: '打卡奖励',
@@ -64,31 +66,26 @@ onMounted(() => {
 async function fetchTransactions() {
   try {
     loading.value = true
-    const token = uni.getStorageSync('token')
-
-    const res = await uni.request({
-      url: 'https://api.example.com/api/v1/ability-points/my/transactions',
-      method: 'GET',
-      header: {
-        'Authorization': `Bearer ${token}`
-      }
+    error.value = null
+    const response = await getMyTransactions()
+    transactions.value = response.transactions || []
+  } catch (err) {
+    console.error('Failed to fetch transactions:', err)
+    error.value = err.message || '加载失败'
+    uni.showToast({
+      title: error.value,
+      icon: 'none'
     })
-
-    if (res.data.code === 0) {
-      transactions.value = res.data.data.transactions || []
-    }
-  } catch (error) {
-    console.error(error)
   } finally {
     loading.value = false
   }
 }
 
 function getTransactionTitle(item) {
-  if (item.transaction_type === 'earn' && item.event_type) {
-    return transactionTitles[item.event_type] || item.event_type
+  if (item.transactionType === 'earn' && item.eventType) {
+    return transactionTitles[item.eventType] || item.eventType
   }
-  return transactionTitles[item.transaction_type] || item.transaction_type
+  return transactionTitles[item.transactionType] || item.transactionType
 }
 
 function formatDateTime(dateStr) {

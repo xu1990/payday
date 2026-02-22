@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getPostList, type PostItem } from '@/api/post'
 import { getCheckinList, type CheckinItem } from '@/api/checkin'
+import { getUserProfile, getFollowStatus } from '@/api/user'
 import { useAuthStore } from '@/stores/auth'
 import FollowButton from '@/components/FollowButton.vue'
 import { formatDate as format } from '@/utils/format'
@@ -10,6 +11,7 @@ import { formatDate as format } from '@/utils/format'
 const targetUserId = ref('')
 const authStore = useAuthStore()
 const loading = ref(true)
+const error = ref<string | null>(null)
 const posts = ref<PostItem[]>([])
 const checkins = ref<CheckinItem[]>([])
 const followerCount = ref(0)
@@ -38,33 +40,23 @@ async function checkFollowStatus() {
   if (isOwnProfile.value) return
 
   try {
-    const result = await uni.request({
-      url: `/api/v1/user/${targetUserId.value}/follow-status`,
-      method: 'GET',
-    })
-    isFollowing.value = result.data?.is_following || false
+    const result = await getFollowStatus(targetUserId.value)
+    isFollowing.value = result.is_following || false
   } catch (e) {
     // Ignore error, default to not following
+    console.error('Failed to check follow status:', e)
   }
 }
 
 async function loadProfileData() {
   loading.value = true
+  error.value = null
   try {
     // 获取用户主页数据
-    const res = await uni.request({
-      url: `/api/v1/user/profile-data/${targetUserId.value}`,
-      method: 'GET',
-    })
-    const data = res.data as {
-      posts: string[]
-      checkins: string[]
-      follower_count: number
-      following_count: number
-    }
+    const data = await getUserProfile(targetUserId.value)
 
-    followerCount.value = data.follower_count
-    followingCount.value = data.following_count
+    followerCount.value = data.user.follower_count
+    followingCount.value = data.user.following_count
 
     // 加载帖子详情
     if (data.posts?.length) {
@@ -81,7 +73,12 @@ async function loadProfileData() {
     // Check follow status
     await checkFollowStatus()
   } catch (e) {
-    // Failed to load user profile
+    console.error('Failed to load user profile:', e)
+    error.value = '加载失败'
+    uni.showToast({
+      title: '加载失败',
+      icon: 'none'
+    })
   } finally {
     loading.value = false
   }

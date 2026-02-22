@@ -19,15 +19,15 @@
       <view class="overview-card">
         <view class="card-item">
           <text class="label">记录数</text>
-          <text class="value">{{ stats.total_count }}</text>
+          <text class="value">{{ stats.totalCount }}</text>
         </view>
         <view class="card-item highlight">
           <text class="label">平均年终奖</text>
-          <text class="value">¥{{ stats.average_amount }}</text>
+          <text class="value">¥{{ stats.averageAmount }}</text>
         </view>
         <view class="card-item">
           <text class="label">中位数</text>
-          <text class="value">¥{{ stats.median_amount }}</text>
+          <text class="value">¥{{ stats.medianAmount }}</text>
         </view>
       </view>
 
@@ -38,7 +38,7 @@
           <view class="range-item" v-for="(value, key) in stats.ranges" :key="key">
             <view class="range-label">{{ key }}</view>
             <view class="range-bar">
-              <view class="bar-fill" :style="{ width: getPercentage(value, stats.total_count) + '%' }"></view>
+              <view class="bar-fill" :style="{ width: getPercentage(value, stats.totalCount) + '%' }"></view>
             </view>
             <view class="range-value">{{ value }}人</view>
           </view>
@@ -50,15 +50,15 @@
         <view class="section-title">统计详情</view>
         <view class="detail-row">
           <text class="detail-label">最高金额</text>
-          <text class="detail-value">¥{{ stats.max_amount }}</text>
+          <text class="detail-value">¥{{ stats.maxAmount }}</text>
         </view>
         <view class="detail-row">
           <text class="detail-label">最低金额</text>
-          <text class="detail-value">¥{{ stats.min_amount }}</text>
+          <text class="detail-value">¥{{ stats.minAmount }}</text>
         </view>
         <view class="detail-row">
           <text class="detail-label">总金额</text>
-          <text class="detail-value">¥{{ stats.total_amount }}</text>
+          <text class="detail-value">¥{{ stats.totalAmount }}</text>
         </view>
       </view>
     </view>
@@ -70,8 +70,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import { getYearEndBonusStats } from '@/api/statistics'
 
 const loading = ref(true)
 const stats = ref(null)
@@ -92,30 +93,16 @@ function onYearChange(e) {
 async function fetchStats() {
   try {
     loading.value = true
-    const token = uni.getStorageSync('token')
-    const year = years.value[yearIndex.value] === '全部' ? '' : years.value[yearIndex.value]
+    const selectedYear = years.value[yearIndex.value]
+    const year = selectedYear === '全部' ? undefined : selectedYear
 
-    let url = 'https://api.example.com/api/v1/statistics/year-end-bonus'
-    if (year) {
-      url += `?year=${year}`
-    }
-
-    const res = await uni.request({
-      url,
-      method: 'GET',
-      header: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-
-    if (res.data.code === 0) {
-      stats.value = res.data.data
-    } else {
-      uni.showToast({ title: '加载失败', icon: 'none' })
-    }
+    stats.value = await getYearEndBonusStats(year)
   } catch (error) {
-    uni.showToast({ title: '网络错误', icon: 'none' })
-    console.error(error)
+    console.error('Failed to fetch year-end bonus stats:', error)
+    uni.showToast({
+      title: '加载失败，请重试',
+      icon: 'none'
+    })
   } finally {
     loading.value = false
   }
