@@ -193,3 +193,75 @@ async def get_insights_distributions(db: AsyncSession) -> dict:
         },
         "total_posts": total_posts.scalar() or 0,
     }
+
+
+async def get_year_end_bonus_stats(db: AsyncSession, year: int = None) -> dict:
+    """
+    年终奖统计（Sprint 4.2）
+    按年份统计年终奖数据
+    """
+    # 查询年终奖记录 (salary_type='bonus')
+    query = select(SalaryRecord).where(SalaryRecord.salary_type == "bonus")
+
+    # 如果指定年份，过滤该年份的记录
+    if year:
+        query = query.where(func.extract('year', SalaryRecord.payday_date) == year)
+
+    result = await db.execute(query)
+    bonus_records = result.scalars().all()
+
+    # 解密并统计数据
+    amounts = [
+        decrypt_amount(r.amount_encrypted, r.encryption_salt)
+        for r in bonus_records
+    ]
+
+    if not amounts:
+        return {
+            "year": year,
+            "total_count": 0,
+            "total_amount": 0,
+            "average_amount": 0,
+            "median_amount": 0,
+            "max_amount": 0,
+            "min_amount": 0,
+            "ranges": {
+                "0-5K": 0,
+                "5-10K": 0,
+                "10-20K": 0,
+                "20-50K": 0,
+                "50K+": 0,
+            },
+        }
+
+    total_count = len(amounts)
+    total_amount = sum(amounts)
+    average_amount = total_amount / total_count
+    max_amount = max(amounts)
+    min_amount = min(amounts)
+
+    # 计算中位数
+    sorted_amounts = sorted(amounts)
+    median_amount = sorted_amounts[total_count // 2] if total_count % 2 == 1 else (
+        sorted_amounts[total_count // 2 - 1] + sorted_amounts[total_count // 2]
+    ) / 2
+
+    # 区间分布
+    ranges = {
+        "0-5K": sum(1 for a in amounts if a < 5000),
+        "5-10K": sum(1 for a in amounts if 5000 <= a < 10000),
+        "10-20K": sum(1 for a in amounts if 10000 <= a < 20000),
+        "20-50K": sum(1 for a in amounts if 20000 <= a < 50000),
+        "50K+": sum(1 for a in amounts if a >= 50000),
+    }
+
+    return {
+        "year": year,
+        "total_count": total_count,
+        "total_amount": round(total_amount, 2),
+        "average_amount": round(average_amount, 2),
+        "median_amount": round(median_amount, 2),
+        "max_amount": round(max_amount, 2),
+        "min_amount": round(min_amount, 2),
+        "ranges": ranges,
+    }

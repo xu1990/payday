@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query
 from app.core.deps import get_current_user
 from app.core.database import get_db
 from app.models.user import User
-from app.services.statistics_service import get_month_summary, get_trend, get_insights_distributions
+from app.services.statistics_service import get_month_summary, get_trend, get_insights_distributions, get_year_end_bonus_stats
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/statistics", tags=["statistics"])
@@ -42,3 +42,16 @@ async def statistics_insights(
     与 PRD 数据洞察一致，Sprint 3.2
     """
     return await get_insights_distributions(db)
+
+
+@router.get("/year-end-bonus")
+async def year_end_bonus_statistics(
+    year: int = Query(None, ge=2020, le=2030, description="年份（可选，不传则统计所有年份）"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    年终奖统计（Sprint 4.2）
+    按年份统计年终奖数据，包括总数、平均数、中位数、区间分布等
+    """
+    return await get_year_end_bonus_stats(db, year)
