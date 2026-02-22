@@ -19,6 +19,11 @@ import {
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || ''
 
+/**
+ * 导出 baseURL 供其他模块使用（如 uni.uploadFile）
+ */
+export { baseURL }
+
 // 防止多个请求同时尝试刷新 token
 let isRefreshing = false
 let refreshPromise: Promise<boolean> | null = null

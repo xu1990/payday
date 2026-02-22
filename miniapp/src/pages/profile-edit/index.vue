@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { updateCurrentUser, type UserInfo } from '@/api/user'
 import { useUserStore } from '@/stores/user'
+import { baseURL } from '@/utils/request'
 
 const userStore = useUserStore()
 
@@ -40,7 +41,7 @@ async function uploadAvatar(filePath: string) {
 
     const token = uni.getStorageSync('token')
     const uploadRes: any = await uni.uploadFile({
-      url: 'http://127.0.0.1:8000/api/v1/user/me/upload-avatar',
+      url: `${baseURL}/api/v1/user/me/upload-avatar`,
       filePath,
       name: 'file',
       header: {
