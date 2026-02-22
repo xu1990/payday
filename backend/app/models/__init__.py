@@ -21,6 +21,8 @@ from .miniprogram_config import MiniprogramConfig
 from .feedback import Feedback
 from .salary_usage import SalaryUsageRecord
 from .phone_lookup import PhoneLookup, hash_phone_number
+from .first_salary_usage import FirstSalaryUsage
+from .expense_record import ExpenseRecord
 
 __all__ = [
     "Base",
@@ -49,4 +51,6 @@ __all__ = [
     "SalaryUsageRecord",
     "PhoneLookup",
     "hash_phone_number",
+    "FirstSalaryUsage",
+    "ExpenseRecord",
 ]
