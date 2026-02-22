@@ -29,6 +29,12 @@ class SalaryRecordBase(BaseModel):
     note: Optional[str] = Field(None, max_length=500)
     mood: str = Field(..., pattern="^(happy|relief|sad|angry|expect)$")
 
+    # Sprint 4.3 fields
+    is_arrears: Optional[int] = Field(0, ge=0, le=1, description="是否拖欠 (0=否, 1=是)")
+    arrears_amount: Optional[float] = Field(None, ge=0, description="拖欠金额")
+    mood_note: Optional[str] = Field(None, max_length=500, description="心情备注")
+    mood_tags: Optional[List[str]] = Field(None, description="心情标签")
+
     @field_validator('amount')
     @classmethod
     def validate_amount(cls, v: float) -> float:
@@ -82,6 +88,12 @@ class SalaryRecordUpdate(BaseModel):
     note: Optional[str] = None
     mood: Optional[str] = Field(None, pattern="^(happy|relief|sad|angry|expect)$")
 
+    # Sprint 4.3 fields
+    is_arrears: Optional[int] = Field(None, ge=0, le=1)
+    arrears_amount: Optional[float] = Field(None, ge=0)
+    mood_note: Optional[str] = None
+    mood_tags: Optional[List[str]] = None
+
 
 class SalaryRecordResponse(BaseModel):
     """
@@ -98,5 +110,12 @@ class SalaryRecordResponse(BaseModel):
     note: Optional[str] = None
     mood: str
     risk_status: str
+
+    # Sprint 4.3 fields
+    is_arrears: Optional[int] = None
+    arrears_amount: Optional[float] = None
+    mood_note: Optional[str] = None
+    mood_tags: Optional[List[str]] = None
+
     created_at: datetime
     updated_at: datetime

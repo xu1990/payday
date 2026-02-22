@@ -265,3 +265,53 @@ async def get_year_end_bonus_stats(db: AsyncSession, year: int = None) -> dict:
         "min_amount": round(min_amount, 2),
         "ranges": ranges,
     }
+
+
+async def get_ontime_payment_stats(db: AsyncSession, year: int = None) -> dict:
+    """
+    准时发薪统计（Sprint 4.3）
+    统计准时发薪、拖欠工资的情况
+    """
+    # 构建查询
+    query = select(SalaryRecord).where(SalaryRecord.salary_type == "normal")
+
+    if year:
+        query = query.where(func.extract('year', SalaryRecord.payday_date) == year)
+
+    result = await db.execute(query)
+    records = result.scalars().all()
+
+    if not records:
+        return {
+            "year": year,
+            "total_count": 0,
+            "ontime_count": 0,
+            "ontime_rate": 0,
+            "arrears_count": 0,
+            "arrears_rate": 0,
+            "avg_delayed_days": 0,
+        }
+
+    total_count = len(records)
+
+    # 准时发薪（is_arrears=0 或 is_arrears is null，且 delayed_days is null 或 = 0）
+    ontime_records = [r for r in records if (r.is_arrears or 0) == 0 and ((r.delayed_days or 0) == 0)]
+    ontime_count = len(ontime_records)
+
+    # 拖欠记录
+    arrears_records = [r for r in records if (r.is_arrears or 0) == 1 or ((r.delayed_days or 0) > 0)]
+    arrears_count = len(arrears_records)
+
+    # 平均延迟天数
+    delayed_days_list = [r.delayed_days for r in records if r.delayed_days and r.delayed_days > 0]
+    avg_delayed_days = sum(delayed_days_list) / len(delayed_days_list) if delayed_days_list else 0
+
+    return {
+        "year": year,
+        "total_count": total_count,
+        "ontime_count": ontime_count,
+        "ontime_rate": round(ontime_count / total_count * 100, 2) if total_count > 0 else 0,
+        "arrears_count": arrears_count,
+        "arrears_rate": round(arrears_count / total_count * 100, 2) if total_count > 0 else 0,
+        "avg_delayed_days": round(avg_delayed_days, 2),
+    }

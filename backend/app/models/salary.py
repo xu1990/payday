@@ -34,6 +34,12 @@ class SalaryRecord(Base):
         nullable=False,
     )
 
+    # Sprint 4.3 增强字段 - 发薪情绪与拖欠记录
+    is_arrears = Column(Integer, nullable=True, default=0, comment="是否拖欠 (0=否, 1=是)")
+    arrears_amount = Column(Numeric(10, 2), nullable=True, comment="拖欠金额")
+    mood_note = Column(Text, nullable=True, comment="心情备注")
+    mood_tags = Column(JSON, nullable=True, comment="心情标签 JSON")
+
     risk_status = Column(
         Enum("pending", "approved", "rejected", name="risk_status_enum"),
         default="pending",
