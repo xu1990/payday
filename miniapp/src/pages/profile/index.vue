@@ -3,9 +3,11 @@ import { ref, onMounted, computed } from 'vue'
 import { listSalary, type SalaryRecord } from '@/api/salary'
 import { listPayday, type PaydayConfig } from '@/api/payday'
 import { useUserStore } from '@/stores/user'
+import { useAbilityPointsStore } from '@/stores/ability-points'
 import { useNotificationUnread } from '@/composables/useNotificationUnread'
 
 const userStore = useUserStore()
+const pointsStore = useAbilityPointsStore()
 
 const loading = ref(true)
 const { unreadCount: notificationUnread, startPolling } = useNotificationUnread()
@@ -35,6 +37,13 @@ async function load() {
     await userStore.fetchCurrentUser()
   } catch (e) {
     console.warn('[profile] Failed to fetch user info:', e)
+  }
+
+  // 获取积分信息 (Sprint 4.6)
+  try {
+    await pointsStore.fetchMyPoints()
+  } catch (e) {
+    console.warn('[profile] Failed to fetch points:', e)
   }
 
   try {
@@ -79,6 +88,23 @@ function goCheckIn() {
 
 function goProfileEdit() {
   uni.navigateTo({ url: '/pages/profile-edit/index' })
+}
+
+// Sprint 4.2-4.6 新功能入口
+function goYearEndBonus() {
+  uni.navigateTo({ url: '/pages/year-end-bonus/index' })
+}
+
+function goSavingsGoals() {
+  uni.navigateTo({ url: '/pages/savings-goals/index' })
+}
+
+function goAbilityPoints() {
+  uni.navigateTo({ url: '/pages/ability-points/index' })
+}
+
+function goExpenseTracking() {
+  uni.navigateTo({ url: '/pages/expense-tracking/index' })
 }
 
 // 生成海报
@@ -127,6 +153,17 @@ onMounted(load)
     <view class="entry-row">
       <button class="btn-outline" @click="goCheckIn">每日签到</button>
       <button class="btn-outline" @click="goSettings">设置</button>
+    </view>
+
+    <!-- Sprint 4.2-4.6 新功能 -->
+    <view class="section-title-alt">我的资产</view>
+    <view class="entry-row">
+      <button class="btn-outline" @click="goAbilityPoints">⭐ 积分</button>
+      <button class="btn-outline" @click="goSavingsGoals">💰 存款目标</button>
+    </view>
+    <view class="entry-row">
+      <button class="btn-outline" @click="goYearEndBonus">🎊 年终奖</button>
+      <button class="btn-outline" @click="goExpenseTracking">📊 支出记录</button>
     </view>
 
     <view class="section">
