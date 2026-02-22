@@ -35,11 +35,13 @@ class TestAdminLoginEndpoint:
         # 验证HTTP响应
         assert response.status_code == 200
         data = response.json()
-        assert "access_token" in data
-        assert data["token_type"] == "bearer"
-        assert "csrf_token" in data
-        assert len(data["access_token"]) > 0
-        assert len(data["csrf_token"]) > 0
+        # 统一响应格式，数据在 details 中
+        assert "details" in data
+        assert "access_token" in data["details"]
+        assert data["details"]["token_type"] == "bearer"
+        assert "csrf_token" in data["details"]
+        assert len(data["details"]["access_token"]) > 0
+        assert len(data["details"]["csrf_token"]) > 0
 
     def test_admin_login_wrong_password(self, client, test_admin):
         """测试管理员登录失败 - 密码错误"""

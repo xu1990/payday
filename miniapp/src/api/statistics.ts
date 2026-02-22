@@ -75,3 +75,54 @@ export function getInsights() {
     method: 'GET',
   })
 }
+
+// ==================== Sprint 4.2: 年终奖统计 ====================
+
+/** 年终奖统计 */
+export interface YearEndBonusStats {
+  year?: number
+  total_count: number
+  total_amount: number
+  average_amount: number
+  median_amount: number
+  max_amount: number
+  min_amount: number
+  ranges: {
+    '0-5K': number
+    '5-10K': number
+    '10-20K': number
+    '20-50K': number
+    '50K+': number
+  }
+}
+
+/** 获取年终奖统计 */
+export function getYearEndBonusStats(year?: number) {
+  const url = year ? `${PREFIX}/year-end-bonus?year=${year}` : `${PREFIX}/year-end-bonus`
+  return request<YearEndBonusStats>({
+    url,
+    method: 'GET',
+  })
+}
+
+// ==================== Sprint 4.3: 准时发薪统计 ====================
+
+/** 准时发薪统计 */
+export interface OntimePaymentStats {
+  year?: number
+  total_count: number
+  ontime_count: number
+  ontime_rate: number
+  arrears_count: number
+  arrears_rate: number
+  avg_delayed_days: number
+}
+
+/** 获取准时发薪统计 */
+export function getOntimePaymentStats(year?: number) {
+  const url = year ? `${PREFIX}/ontime-payment?year=${year}` : `${PREFIX}/ontime-payment`
+  return request<OntimePaymentStats>({
+    url,
+    method: 'GET',
+  })
+}

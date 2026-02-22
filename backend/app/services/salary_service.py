@@ -37,6 +37,11 @@ def record_to_response(record: SalaryRecord) -> dict:
         "note": record.note,
         "mood": record.mood,
         "risk_status": record.risk_status,
+        # Sprint 4.3 fields
+        "is_arrears": record.is_arrears or 0,
+        "arrears_amount": float(record.arrears_amount) if record.arrears_amount else None,
+        "mood_note": record.mood_note,
+        "mood_tags": record.mood_tags,
         "created_at": record.created_at,
         "updated_at": record.updated_at,
     }
@@ -88,6 +93,11 @@ async def create(db: AsyncSession, user_id: str, data: SalaryRecordCreate) -> Sa
             images=data.images,
             note=data.note,
             mood=data.mood,
+            # Sprint 4.3 fields
+            is_arrears=data.is_arrears if hasattr(data, 'is_arrears') else 0,
+            arrears_amount=data.arrears_amount if hasattr(data, 'arrears_amount') else None,
+            mood_note=data.mood_note if hasattr(data, 'mood_note') else None,
+            mood_tags=data.mood_tags if hasattr(data, 'mood_tags') else None,
         )
 
         async with transactional(db) as session:

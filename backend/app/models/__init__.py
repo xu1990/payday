@@ -22,6 +22,10 @@ from .feedback import Feedback
 from .salary_usage import SalaryUsageRecord
 from .first_salary_usage import FirstSalaryUsage
 from .phone_lookup import PhoneLookup, hash_phone_number
+from .first_salary_usage import FirstSalaryUsage
+from .expense_record import ExpenseRecord
+from .savings_goal import SavingsGoal
+from .ability_points import AbilityPoint, AbilityPointTransaction, PointRedemption
 
 __all__ = [
     "Base",
@@ -51,4 +55,10 @@ __all__ = [
     "FirstSalaryUsage",
     "PhoneLookup",
     "hash_phone_number",
+    "FirstSalaryUsage",
+    "ExpenseRecord",
+    "SavingsGoal",
+    "AbilityPoint",
+    "AbilityPointTransaction",
+    "PointRedemption",
 ]
