@@ -1,0 +1,322 @@
+<template>
+  <view class="savings-deposit-page">
+    <view class="header">
+      <text class="title">💰 存入资金</text>
+    </view>
+
+    <view v-if="goal" class="goal-info">
+      <view class="goal-title">{{ goal.title }}</view>
+      <view class="goal-progress">
+        <view class="progress-label">
+          <text>当前：¥{{ goal.current_amount }}</text>
+          <text>目标：¥{{ goal.target_amount }}</text>
+        </view>
+        <view class="progress-bar">
+          <view class="progress-fill" :style="{ width: goal.progress_percentage + '%' }"></view>
+        </view>
+        <text class="progress-percent">{{ goal.progress_percentage }}%</text>
+      </view>
+    </view>
+
+    <view class="form">
+      <view class="form-item">
+        <text class="label">存款金额 (¥) *</text>
+        <input
+          class="amount-input"
+          type="digit"
+          v-model="amount"
+          placeholder="输入存入金额"
+          focus
+        />
+      </view>
+
+      <view class="quick-amounts">
+        <view
+          class="quick-btn"
+          v-for="val in quickValues"
+          :key="val"
+          @tap="setAmount(val)"
+        >
+          <text>¥{{ val }}</text>
+        </view>
+      </view>
+
+      <view class="form-item">
+        <text class="label">备注</text>
+        <textarea
+          class="textarea"
+          v-model="note"
+          placeholder="记录这次存款（可选）"
+        />
+      </view>
+    </view>
+
+    <view class="preview" v-if="amount && parseFloat(amount) > 0">
+      <text class="preview-label">存入后余额</text>
+      <text class="preview-value">¥{{ projectedAmount }}</text>
+      <text class="preview-percent">{{ projectedPercent }}%</text>
+    </view>
+
+    <view class="footer">
+      <button class="submit-btn" @tap="handleDeposit" :disabled="!amount || parseFloat(amount) <= 0">
+        确认存入
+      </button>
+    </view>
+  </view>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
+
+const goalId = ref('')
+const goal = ref(null)
+const amount = ref('')
+const note = ref('')
+
+const quickValues = [100, 500, 1000, 2000, 5000]
+
+const projectedAmount = computed(() => {
+  if (!goal.value || !amount.value) return '0.00'
+  return (parseFloat(goal.value.current_amount) + parseFloat(amount.value)).toFixed(2)
+})
+
+const projectedPercent = computed(() => {
+  if (!goal.value) return 0
+  const percent = (parseFloat(projectedAmount.value) / parseFloat(goal.value.target_amount) * 100).toFixed(1)
+  return Math.min(percent, 100)
+})
+
+onLoad((options) => {
+  if (options.id) {
+    goalId.value = options.id
+    fetchGoal()
+  }
+})
+
+async function fetchGoal() {
+  try {
+    const token = uni.getStorageSync('token')
+    const res = await uni.request({
+      url: `https://api.example.com/api/v1/savings-goals/${goalId.value}`,
+      method: 'GET',
+      header: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (res.data.code === 0) {
+      goal.value = res.data.data
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+function setAmount(val) {
+  amount.value = val.toString()
+}
+
+async function handleDeposit() {
+  if (!amount.value || parseFloat(amount.value) <= 0) {
+    uni.showToast({ title: '请输入有效金额', icon: 'none' })
+    return
+  }
+
+  try {
+    uni.showLoading({ title: '处理中...' })
+    const token = uni.getStorageSync('token')
+
+    const res = await uni.request({
+      url: `https://api.example.com/api/v1/savings-goals/${goalId.value}/deposit`,
+      method: 'POST',
+      header: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      data: {
+        amount: parseFloat(amount.value),
+        note: note.value || null
+      }
+    })
+
+    uni.hideLoading()
+
+    if (res.data.code === 0) {
+      uni.showToast({ title: '存款成功', icon: 'success' })
+      setTimeout(() => {
+        uni.navigateBack()
+      }, 1500)
+    } else {
+      uni.showToast({ title: res.data.message || '存款失败', icon: 'none' })
+    }
+  } catch (error) {
+    uni.hideLoading()
+    uni.showToast({ title: '网络错误', icon: 'none' })
+    console.error(error)
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+.savings-deposit-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding: 20rpx;
+}
+
+.header {
+  text-align: center;
+  padding: 30rpx 0;
+
+  .title {
+    font-size: 36rpx;
+    font-weight: bold;
+  }
+}
+
+.goal-info {
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+
+  .goal-title {
+    font-size: 32rpx;
+    font-weight: bold;
+    margin-bottom: 20rpx;
+  }
+
+  .goal-progress {
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10rpx;
+      font-size: 24rpx;
+      color: #666;
+    }
+
+    .progress-bar {
+      height: 16rpx;
+      background: #f0f0f0;
+      border-radius: 8rpx;
+      overflow: hidden;
+      margin-bottom: 10rpx;
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #1890ff 0%, #52c41a 100%);
+        border-radius: 8rpx;
+      }
+    }
+
+    .progress-percent {
+      font-size: 24rpx;
+      color: #1890ff;
+      font-weight: bold;
+    }
+  }
+}
+
+.form {
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+
+  .form-item {
+    margin-bottom: 30rpx;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .label {
+      display: block;
+      font-size: 28rpx;
+      color: #333;
+      margin-bottom: 15rpx;
+      font-weight: 500;
+    }
+
+    .amount-input {
+      width: 100%;
+      padding: 20rpx;
+      border: 2rpx solid #1890ff;
+      border-radius: 10rpx;
+      font-size: 36rpx;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .textarea {
+      width: 100%;
+      padding: 20rpx;
+      border: 1rpx solid #e0e0e0;
+      border-radius: 10rpx;
+      font-size: 28rpx;
+      background: #fafafa;
+      min-height: 120rpx;
+    }
+  }
+
+  .quick-amounts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15rpx;
+    margin-top: 15rpx;
+
+    .quick-btn {
+      padding: 15rpx 30rpx;
+      background: #f0f0f0;
+      border-radius: 50rpx;
+      font-size: 24rpx;
+    }
+  }
+}
+
+.preview {
+  background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+  border-radius: 20rpx;
+  padding: 30rpx;
+  text-align: center;
+  margin-bottom: 20rpx;
+
+  .preview-label {
+    display: block;
+    font-size: 24rpx;
+    opacity: 0.8;
+    margin-bottom: 10rpx;
+  }
+
+  .preview-value {
+    display: block;
+    font-size: 48rpx;
+    font-weight: bold;
+    margin-bottom: 5rpx;
+  }
+
+  .preview-percent {
+    font-size: 28rpx;
+    font-weight: bold;
+  }
+}
+
+.footer {
+  padding: 20rpx 0;
+
+  .submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
+    color: white;
+    border: none;
+    border-radius: 50rpx;
+    padding: 30rpx;
+    font-size: 32rpx;
+
+    &[disabled] {
+      background: #ccc;
+    }
+  }
+}
+</style>

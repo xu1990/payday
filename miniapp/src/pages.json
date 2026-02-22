@@ -195,6 +195,76 @@
         "navigationBarTitleText": "记账",
         "navigationStyle": "default"
       }
+    },
+    {
+      "path": "pages/first-salary-usage/index",
+      "style": {
+        "navigationBarTitleText": "第一笔工资",
+        "navigationStyle": "default"
+      }
+    },
+    {
+      "path": "pages/expense-tracking/index",
+      "style": {
+        "navigationBarTitleText": "每月支出",
+        "navigationStyle": "default"
+      }
+    },
+    {
+      "path": "pages/year-end-bonus/index",
+      "style": {
+        "navigationBarTitleText": "年终奖统计",
+        "navigationStyle": "default"
+      }
+    },
+    {
+      "path": "pages/savings-goals/index",
+      "style": {
+        "navigationBarTitleText": "存款目标",
+        "navigationStyle": "default"
+      }
+    },
+    {
+      "path": "pages/savings-goal-create/index",
+      "style": {
+        "navigationBarTitleText": "创建目标",
+        "navigationStyle": "default"
+      }
+    },
+    {
+      "path": "pages/savings-deposit/index",
+      "style": {
+        "navigationBarTitleText": "存入资金",
+        "navigationStyle": "default"
+      }
+    },
+    {
+      "path": "pages/ability-points/index",
+      "style": {
+        "navigationBarTitleText": "我的积分",
+        "navigationStyle": "default"
+      }
+    },
+    {
+      "path": "pages/point-events/index",
+      "style": {
+        "navigationBarTitleText": "赚积分",
+        "navigationStyle": "default"
+      }
+    },
+    {
+      "path": "pages/point-redemptions/index",
+      "style": {
+        "navigationBarTitleText": "兑换中心",
+        "navigationStyle": "default"
+      }
+    },
+    {
+      "path": "pages/point-history/index",
+      "style": {
+        "navigationBarTitleText": "积分明细",
+        "navigationStyle": "default"
+      }
     }
   ],
   "globalStyle": {
