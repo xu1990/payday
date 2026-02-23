@@ -10,6 +10,20 @@
     </view>
 
     <view v-else class="events-list">
+      <!-- 邀请好友特殊入口 -->
+      <view class="event-card special-card" @tap="goToInvite">
+        <view class="event-icon">✨</view>
+        <view class="event-info">
+          <view class="event-name">邀请好友</view>
+          <view class="event-desc">邀请好友注册，双方各得积分</view>
+        </view>
+        <view class="event-points">
+          <text class="points">+30</text>
+          <text class="label">积分/人</text>
+        </view>
+        <view class="arrow">›</view>
+      </view>
+
       <view
         class="event-card"
         v-for="event in events"
@@ -115,6 +129,12 @@ function getEventDesc(type) {
 function getEventIcon(type) {
   return eventIcons[type] || '🎁'
 }
+
+function goToInvite() {
+  uni.navigateTo({
+    url: '/pages/invite-code/index'
+  })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -155,6 +175,40 @@ function getEventIcon(type) {
     border-radius: 20rpx;
     padding: 25rpx;
     margin-bottom: 15rpx;
+    position: relative;
+
+    &.special-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+      .event-icon {
+        filter: drop-shadow(0 2rpx 4rpx rgba(0, 0, 0, 0.1));
+      }
+
+      .event-name {
+        color: white;
+      }
+
+      .event-desc {
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .event-points {
+        .points {
+          color: #fff;
+        }
+
+        .label {
+          color: rgba(255, 255, 255, 0.8);
+        }
+      }
+
+      .arrow {
+        font-size: 40rpx;
+        color: white;
+        font-weight: 300;
+        margin-left: 10rpx;
+      }
+    }
 
     .event-icon {
       font-size: 50rpx;

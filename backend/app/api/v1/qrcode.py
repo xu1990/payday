@@ -338,10 +338,12 @@ async def create_qrcode_with_mapping(
     try:
         # 生成包含完整URL的scene参数（用于普通二维码降级）
         # 小程序扫码后会通过短码查询获取原始参数
+        # check_path=False 允许开发环境使用未发布的页面路径
         qr_data = await get_unlimited_qrcode(
             scene=short_code,
             page=request.page,
             width=width,
+            check_path=False  # 不检查页面是否存在（开发环境友好）
         )
 
         # 转换为 base64

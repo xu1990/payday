@@ -216,16 +216,18 @@ async def get_user_by_phone(db: AsyncSession, phone_number: str) -> Optional[Use
     return None
 
 
-async def login_with_code(db: AsyncSession, code: str, phone_code: Optional[str] = None) -> Optional[Tuple[str, str, User]]:
+async def login_with_code(db: AsyncSession, code: str, phone_code: Optional[str] = None, invite_code: Optional[str] = None) -> Optional[Tuple[str, str, User]]:
     """
     微信 code 登录：code2session -> 获取或创建用户 -> 生成 JWT 对。
     支持可选的手机号绑定（通过 phone_code）。
+    支持邀请码注册（通过 invite_code）。
     失败返回 None（OK: 登录失败返回 None 是正常流程）。
 
     Args:
         db: 数据库会话
         code: 微信登录 code
         phone_code: 可选的手机号 code（用于获取和绑定手机号）
+        invite_code: 可选的邀请码（新用户注册时使用）
 
     Returns:
         (access_token, refresh_token, user) 或 None
@@ -247,6 +249,19 @@ async def login_with_code(db: AsyncSession, code: str, phone_code: Optional[str]
         mock_openid = f"dev_openid_{code[:28]}"
 
         user = await get_or_create_user(db, openid=mock_openid, unionid=None)
+
+        # 判断是否是新创建的用户（通过是否有 invited_by 字段判断）
+        is_new_user = user.invited_by is None and user.created_at == user.updated_at
+
+        # 处理邀请码（仅新用户）
+        if is_new_user and invite_code:
+            try:
+                from app.services.invitation_service import apply_invite_code
+                await apply_invite_code(db, str(user.id), invite_code)
+                logger.info(f"Invite code {invite_code} applied for new user {user.id}")
+            except Exception as e:
+                logger.warning(f"Failed to apply invite code: {e}")
+                # 邀请码处理失败不影响登录流程
 
         # 处理手机号绑定（开发环境模拟）
         if phone_code:
@@ -327,6 +342,19 @@ async def login_with_code(db: AsyncSession, code: str, phone_code: Optional[str]
     logger.info(f"[login] Successfully got openid from WeChat: {openid[:10]}...")
     unionid = data.get("unionid")
     user = await get_or_create_user(db, openid=openid, unionid=unionid)
+
+    # 判断是否是新创建的用户（通过是否有 invited_by 字段判断）
+    is_new_user = user.invited_by is None and user.created_at == user.updated_at
+
+    # 处理邀请码（仅新用户）
+    if is_new_user and invite_code:
+        try:
+            from app.services.invitation_service import apply_invite_code
+            await apply_invite_code(db, str(user.id), invite_code)
+            logger.info(f"Invite code {invite_code} applied for new user {user.id}")
+        except Exception as e:
+            logger.warning(f"Failed to apply invite code: {e}")
+            # 邀请码处理失败不影响登录流程
 
     # 处理手机号绑定（生产环境）
     if phone_code:

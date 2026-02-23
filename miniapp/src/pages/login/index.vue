@@ -10,6 +10,17 @@
 
       <!-- 登录按钮 -->
       <view class="login-section">
+        <!-- 邀请码输入（仅新用户显示） -->
+        <view v-if="showInviteCodeInput" class="invite-code-section">
+          <input
+            class="invite-code-input"
+            v-model="inviteCode"
+            placeholder="请输入邀请码（选填）"
+            maxlength="8"
+          />
+          <text class="invite-code-hint">填写邀请码，双方均可获得积分奖励</text>
+        </view>
+
         <!-- 快捷登录（无需手机号） -->
         <button class="login-btn login-btn-quick" :disabled="isLoading" @tap="handleQuickLogin">
           <text v-if="!isLoading">快捷登录</text>
@@ -47,14 +58,17 @@ import { useAuthStore } from '@/stores/auth'
 import { useUserStore } from '@/stores/user'
 import { showSuccess, showError } from '@/utils/toast'
 import { getToken } from '@/utils/tokenStorage'
+import { getQRCodeMapping } from '@/api/qrcode'
 
 const authStore = useAuthStore()
 const userStore = useUserStore()
 
 const isLoading = ref(false)
 const isChecking = ref(true)
+const inviteCode = ref('')
+const showInviteCodeInput = ref(false)
 
-// 初始化检查登录状态
+// 初始化检查登录状态和邀请码
 onMounted(async () => {
   try {
     isChecking.value = true
@@ -65,6 +79,55 @@ onMounted(async () => {
       uni.reLaunch({
         url: '/pages/index',
       })
+    } else {
+      // 未登录，尝试获取邀请码参数
+      const pages = getCurrentPages()
+      const currentPage = pages[pages.length - 1]
+      const pageOptions = (currentPage as any).options || {}
+
+      // 如果URL中有邀请码参数，显示邀请码输入框并填充
+      if (pageOptions.inviteCode) {
+        inviteCode.value = pageOptions.inviteCode
+        showInviteCodeInput.value = true
+      }
+
+      // 处理扫描二维码场景参数
+      // scene 参数格式：微信小程序码扫描后会传入 scene 参数（短码）
+      if (pageOptions.scene) {
+        try {
+          const shortCode = pageOptions.scene
+          console.log('[login] Found scene parameter:', shortCode)
+
+          // 调用后端 API 查询二维码映射
+          const mapping = await getQRCodeMapping(shortCode)
+
+          console.log('[login] QR code mapping response:', mapping)
+
+          // 检查是否过期
+          if (mapping.is_expired) {
+            showError('二维码已过期')
+          } else {
+            // 从参数中提取邀请码
+            if (mapping.params && mapping.params.inviteCode) {
+              inviteCode.value = mapping.params.inviteCode
+              showInviteCodeInput.value = true
+              console.log('[login] Extracted invite code from QR code:', inviteCode.value)
+            }
+          }
+        } catch (err) {
+          console.error('[login] Failed to fetch QR code mapping:', err)
+          // 即使获取映射失败，也不影响用户手动输入邀请码
+        }
+      }
+
+      // 从本地缓存读取邀请码（如果有）
+      const cachedInviteCode = uni.getStorageSync('pending_invite_code')
+      if (cachedInviteCode) {
+        inviteCode.value = cachedInviteCode
+        showInviteCodeInput.value = true
+        // 清除缓存，避免下次打开还显示
+        uni.removeStorageSync('pending_invite_code')
+      }
     }
   } catch (e) {
     console.error('[login] Init failed:', e)
@@ -121,9 +184,9 @@ async function handleQuickLogin() {
 
     console.log('[login] 获取到微信授权码')
 
-    // 调用后端登录接口（不带手机号）
+    // 调用后端登录接口（不带手机号，但带邀请码）
     console.log('[login] 开始调用后端登录接口...')
-    const success = await authStore.login(loginRes.code)
+    const success = await authStore.login(loginRes.code, undefined, inviteCode.value || undefined)
 
     console.log('[login] 后端登录结果:', success)
 
@@ -243,9 +306,9 @@ async function handlePhoneLogin(e: any) {
 
     console.log('[login] 获取到微信授权码')
 
-    // 调用后端登录接口（带手机号授权码）
+    // 调用后端登录接口（带手机号授权码和邀请码）
     console.log('[login] 开始调用后端登录接口（带手机号）...')
-    const success = await authStore.login(loginRes.code, phoneNumberCode)
+    const success = await authStore.login(loginRes.code, phoneNumberCode, inviteCode.value || undefined)
 
     console.log('[login] 后端登录结果:', success)
 
@@ -356,6 +419,42 @@ function goToPrivacyPolicy() {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+}
+
+/* 邀请码输入区域 */
+.invite-code-section {
+  width: 100%;
+  margin-bottom: 30rpx;
+  padding: 30rpx;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 20rpx;
+  backdrop-filter: blur(10rpx);
+}
+
+.invite-code-input {
+  width: 100%;
+  height: 80rpx;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 12rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.3);
+  box-sizing: border-box;
+
+  &::placeholder {
+    color: #999;
+  }
+}
+
+.invite-code-hint {
+  display: block;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  line-height: 1.4;
 }
 
 .login-btn {

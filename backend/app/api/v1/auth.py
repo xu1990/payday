@@ -21,7 +21,7 @@ async def login(
     body: LoginRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    result = await login_with_code(db, body.code, body.phoneNumberCode)
+    result = await login_with_code(db, body.code, body.phoneNumberCode, body.inviteCode)
     if not result:
         raise BusinessException("请求参数错误", code="VALIDATION_ERROR")
     access_token, refresh_token, user = result

@@ -10,6 +10,7 @@ const PREFIX = '/api/v1/auth'
 export interface LoginRequest {
   code: string
   phoneNumberCode?: string // 手机号授权码（可选）
+  inviteCode?: string // 邀请码（可选，新用户注册时使用）
 }
 
 export interface LoginResponse {
@@ -39,11 +40,15 @@ export interface RefreshTokenResponse {
  * 微信小程序登录
  * @param code 微信 wx.login() 返回的 code
  * @param phoneNumberCode 手机号授权码（可选）- 通过 button open-type="getPhoneNumber" 获取
+ * @param inviteCode 邀请码（可选）- 新用户注册时使用
  */
-export function login(code: string, phoneNumberCode?: string): Promise<LoginResponse> {
+export function login(code: string, phoneNumberCode?: string, inviteCode?: string): Promise<LoginResponse> {
   const data: LoginRequest = { code }
   if (phoneNumberCode) {
     data.phoneNumberCode = phoneNumberCode
+  }
+  if (inviteCode) {
+    data.inviteCode = inviteCode
   }
 
   return request<LoginResponse>({

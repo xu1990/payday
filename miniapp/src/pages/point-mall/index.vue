@@ -2,8 +2,14 @@
   <view class="point-mall-page">
     <!-- 积分余额显示 -->
     <view class="balance-bar">
-      <text class="label">可用积分</text>
-      <text class="balance">{{ availablePoints || 0 }}</text>
+      <view class="balance-info">
+        <text class="label">可用积分</text>
+        <text class="balance">{{ availablePoints || 0 }}</text>
+      </view>
+      <view class="order-btn" @tap="goToOrders">
+        <text class="order-icon">📦</text>
+        <text class="order-text">我的订单</text>
+      </view>
     </view>
 
     <!-- 分类筛选 -->
@@ -135,6 +141,12 @@ function goToDetail(product) {
     url: `/pages/point-mall/detail?id=${product.id}`
   })
 }
+
+function goToOrders() {
+  uni.navigateTo({
+    url: '/pages/point-mall/orders/index'
+  })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -151,6 +163,10 @@ function goToDetail(product) {
   align-items: center;
   color: white;
 
+  .balance-info {
+    flex: 1;
+  }
+
   .label {
     font-size: 26rpx;
     opacity: 0.9;
@@ -159,6 +175,25 @@ function goToDetail(product) {
   .balance {
     font-size: 40rpx;
     font-weight: bold;
+  }
+
+  .order-btn {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 12rpx 20rpx;
+    border-radius: 30rpx;
+    backdrop-filter: blur(10rpx);
+
+    .order-icon {
+      font-size: 28rpx;
+    }
+
+    .order-text {
+      font-size: 24rpx;
+      font-weight: 500;
+    }
   }
 }
 

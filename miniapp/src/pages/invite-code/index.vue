@@ -65,6 +65,38 @@
       </view>
     </view>
 
+    <!-- 二维码邀请区域 -->
+    <view class="qrcode-section" v-if="showQRCode">
+      <view class="section-title">
+        <text>二维码邀请</text>
+        <text class="subtitle">好友扫码即可注册</text>
+      </view>
+
+      <view class="qrcode-container">
+        <view v-if="generatingQRCode" class="qrcode-loading">
+          <text>生成中...</text>
+        </view>
+        <image
+          v-else-if="qrcodeDataUrl"
+          class="qrcode-image"
+          :src="qrcodeDataUrl"
+          mode="widthFix"
+        />
+        <view v-else class="qrcode-placeholder">
+          <text>二维码生成中...</text>
+        </view>
+        <view class="qrcode-tip">
+          <text>好友扫描二维码填写邀请码注册</text>
+        </view>
+      </view>
+
+      <view class="qrcode-actions">
+        <button class="action-btn" @tap="saveQRCode" :disabled="!qrcodeDataUrl || generatingQRCode">
+          <text>{{ generatingQRCode ? '生成中...' : '💾 保存二维码' }}</text>
+        </button>
+      </view>
+    </view>
+
     <!-- 分享按钮 -->
     <view class="share-section">
       <button class="share-btn" @tap="shareInvite">
@@ -75,17 +107,134 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { getMyInviteCode, getInvitationStats, getMyInvitations } from '@/api/invitation'
+import { request } from '@/utils/request'
 
 const inviteCode = ref('')
 const stats = ref({ total_invited: 0, total_points_earned: 0 })
 const invitations = ref([])
 const loading = ref(false)
+const qrcodeDataUrl = ref('')
+const showQRCode = ref(false)
+const generatingQRCode = ref(false)
 
 onMounted(() => {
   loadData()
 })
+
+// 监听邀请码变化，显示二维码区域
+watch(inviteCode, (newCode) => {
+  if (newCode) {
+    showQRCode.value = true
+    // 生成二维码
+    generateQRCode(newCode)
+  }
+})
+
+// 生成二维码（使用后端 API）
+async function generateQRCode(code) {
+  try {
+    generatingQRCode.value = true
+
+    // 调用后端 API 生成小程序码
+    const response = await request({
+      url: '/api/v1/qrcode/wxa/generate',
+      method: 'POST',
+      data: {
+        page: 'pages/login/index',
+        params: {
+          inviteCode: code
+        },
+        expires_days: 365  // 二维码有效期1年
+      }
+    })
+
+    if (response && response.base64) {
+      qrcodeDataUrl.value = response.base64
+    }
+  } catch (err) {
+    console.error('Failed to generate QR code:', err)
+    uni.showToast({
+      title: '二维码生成失败',
+      icon: 'none'
+    })
+  } finally {
+    generatingQRCode.value = false
+  }
+}
+
+// 保存二维码
+async function saveQRCode() {
+  if (!qrcodeDataUrl.value) {
+    uni.showToast({
+      title: '二维码未生成',
+      icon: 'none'
+    })
+    return
+  }
+
+  try {
+    uni.showLoading({
+      title: '保存中...'
+    })
+
+    // 将 base64 转换为临时文件
+    const base64Data = qrcodeDataUrl.value.replace(/^data:image\/\w+;base64,/, '')
+    const fileName = `qrcode_${Date.now()}.png`
+
+    // 使用 uni.env 获取临时目录路径（跨平台兼容）
+    const tempFilePath = `${uni.env?.USER_DATA_PATH || wx.env.USER_DATA_PATH}/${fileName}`
+
+    // 将 base64 转换为 ArrayBuffer
+    const binaryString = uni.base64ToArrayBuffer(base64Data)
+
+    // 写入临时文件
+    const fs = uni.getFileSystemManager()
+    fs.writeFileSync(tempFilePath, binaryString)
+
+    // 保存图片到相册
+    await uni.saveImageToPhotosAlbum({
+      filePath: tempFilePath
+    })
+
+    uni.hideLoading()
+    uni.showToast({
+      title: '已保存到相册',
+      icon: 'success'
+    })
+
+    // 清理临时文件
+    setTimeout(() => {
+      try {
+        fs.unlinkSync(tempFilePath)
+      } catch (e) {
+        console.warn('Failed to cleanup temp file:', e)
+      }
+    }, 1000)
+  } catch (err) {
+    uni.hideLoading()
+    console.error('Save failed:', err)
+
+    // 如果用户拒绝授权
+    if (err.errMsg && err.errMsg.includes('auth')) {
+      uni.showModal({
+        title: '提示',
+        content: '需要您授权保存相册权限',
+        success: (modalRes) => {
+          if (modalRes.confirm) {
+            uni.openSetting()
+          }
+        }
+      })
+    } else {
+      uni.showToast({
+        title: '保存失败',
+        icon: 'none'
+      })
+    }
+  }
+}
 
 async function loadData() {
   try {
@@ -327,6 +476,87 @@ function formatTime(timeStr) {
           font-size: 22rpx;
           color: #999;
         }
+      }
+    }
+  }
+}
+
+.qrcode-section {
+  margin: 20rpx;
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+
+  .section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 28rpx;
+    font-weight: bold;
+    margin-bottom: 20rpx;
+    padding-left: 0;
+
+    .subtitle {
+      font-size: 24rpx;
+      color: #999;
+      font-weight: normal;
+    }
+  }
+
+  .qrcode-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30rpx 0;
+    background: #f8f8f8;
+    border-radius: 15rpx;
+    margin-bottom: 20rpx;
+
+    .qrcode-loading,
+    .qrcode-placeholder {
+      width: 400rpx;
+      height: 400rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      border-radius: 10rpx;
+      color: #999;
+      font-size: 26rpx;
+    }
+
+    .qrcode-image {
+      width: 400rpx;
+      height: 400rpx;
+      border-radius: 10rpx;
+      background: white;
+      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+    }
+
+    .qrcode-tip {
+      margin-top: 20rpx;
+      font-size: 24rpx;
+      color: #666;
+      text-align: center;
+    }
+  }
+
+  .qrcode-actions {
+    display: flex;
+    gap: 15rpx;
+
+    .action-btn {
+      flex: 1;
+      background: white;
+      color: #667eea;
+      border: 1rpx solid #667eea;
+      border-radius: 12rpx;
+      padding: 20rpx;
+      font-size: 26rpx;
+      font-weight: 500;
+
+      &::after {
+        border: none;
       }
     }
   }

@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 class LoginRequest(BaseModel):
     code: str = Field(..., description="微信 wx.login 返回的 code")
     phoneNumberCode: Optional[str] = Field(None, description="微信手机号授权返回的 code")
+    inviteCode: Optional[str] = Field(None, description="邀请码（新用户注册时可填）")
 
 
 class LoginResponse(BaseModel):
