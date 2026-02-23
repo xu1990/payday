@@ -269,10 +269,11 @@ onMounted(() => {
       <scroll-view v-else class="list" scroll-y @scrolltolower="loadMore">
         <view v-for="user in users" :key="user.id" class="user-card">
           <view class="user-info" @click="goToProfile(user.id)">
-            <image v-if="user.avatar" :src="user.avatar" class="avatar" mode="aspectFill" />
-            <view v-else class="avatar-placeholder">
-              {{ user.anonymous_name?.substring(0, 1) || '?' }}
-            </view>
+            <UserAvatar
+              :avatar="user.avatar"
+              :anonymous-name="user.anonymous_name"
+              size="medium"
+            />
 
             <view class="user-details">
               <text class="username">{{ user.anonymous_name }}</text>
@@ -453,25 +454,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   flex: 1;
-}
-
-.avatar,
-.avatar-placeholder {
-  width: 100rpx;
-  height: 100rpx;
-  border-radius: 50%;
-  margin-right: 20rpx;
-  flex-shrink: 0;
-}
-
-.avatar-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #07c160;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 600;
 }
 
 .user-details {
