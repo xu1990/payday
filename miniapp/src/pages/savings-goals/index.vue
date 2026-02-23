@@ -7,12 +7,7 @@
 
     <!-- 目标列表 -->
     <view class="goals-list">
-      <view
-        class="goal-card"
-        v-for="goal in goals"
-        :key="goal.id"
-        @tap="viewGoal(goal.id)"
-      >
+      <view v-for="goal in goals" :key="goal.id" class="goal-card" @tap="viewGoal(goal.id)">
         <view class="goal-header">
           <view class="goal-title">
             <text v-if="goal.icon">{{ goal.icon }} </text>
@@ -41,7 +36,7 @@
           </view>
         </view>
 
-        <view class="goal-deadline" v-if="goal.deadline">
+        <view v-if="goal.deadline" class="goal-deadline">
           <text>截止：{{ formatDate(goal.deadline) }}</text>
         </view>
       </view>
@@ -94,7 +89,7 @@ async function fetchGoals() {
     console.error('Failed to fetch savings goals:', error)
     uni.showToast({
       title: '加载失败，请重试',
-      icon: 'none'
+      icon: 'none',
     })
   } finally {
     loading.value = false
@@ -106,7 +101,7 @@ function getStatusText(status) {
     active: '进行中',
     completed: '已完成',
     cancelled: '已取消',
-    paused: '已暂停'
+    paused: '已暂停',
   }
   return map[status] || status
 }
@@ -119,19 +114,19 @@ function formatDate(dateStr) {
 
 function viewGoal(id) {
   uni.navigateTo({
-    url: `/pages/savings-goal-detail/index?id=${id}`
+    url: `/pages/savings-goal-detail/index?id=${id}`,
   })
 }
 
 function depositToGoal(id) {
   uni.navigateTo({
-    url: `/pages/savings-deposit/index?id=${id}`
+    url: `/pages/savings-deposit/index?id=${id}`,
   })
 }
 
 function createGoal() {
   uni.navigateTo({
-    url: '/pages/savings-goal-create/index'
+    url: '/pages/savings-goal-create/index',
   })
 }
 
@@ -140,13 +135,13 @@ async function handleDelete(id, event) {
   try {
     const res = await uni.showModal({
       title: '确认删除',
-      content: '确定要删除这个存款目标吗？'
+      content: '确定要删除这个存款目标吗？',
     })
     if (res.confirm) {
       await deleteSavingsGoal(id)
       uni.showToast({
         title: '删除成功',
-        icon: 'success'
+        icon: 'success',
       })
       fetchGoals()
     }
@@ -154,7 +149,7 @@ async function handleDelete(id, event) {
     console.error('Failed to delete savings goal:', error)
     uni.showToast({
       title: '删除失败，请重试',
-      icon: 'none'
+      icon: 'none',
     })
   }
 }

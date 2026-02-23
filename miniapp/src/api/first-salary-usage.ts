@@ -7,14 +7,7 @@ import request from '@/utils/request'
 const PREFIX = '/api/v1/first-salary-usage'
 
 /** 用途分类类型 */
-export type UsageCategory =
-  | '存起来'
-  | '交家里'
-  | '买东西'
-  | '请客吃饭'
-  | '旅游'
-  | '学习'
-  | '其他'
+export type UsageCategory = '存起来' | '交家里' | '买东西' | '请客吃饭' | '旅游' | '学习' | '其他'
 
 /** 子分类（预设选项） */
 export type UsageSubcategory =
@@ -84,10 +77,8 @@ export function listFirstSalaryUsage(params?: FirstSalaryUsageListParams) {
       queryParts.push(`salary_record_id=${encodeURIComponent(params.salary_record_id)}`)
     if (params.usage_category)
       queryParts.push(`usage_category=${encodeURIComponent(params.usage_category)}`)
-    if (params.skip != null)
-      queryParts.push(`skip=${encodeURIComponent(String(params.skip))}`)
-    if (params.limit != null)
-      queryParts.push(`limit=${encodeURIComponent(String(params.limit))}`)
+    if (params.skip != null) queryParts.push(`skip=${encodeURIComponent(String(params.skip))}`)
+    if (params.limit != null) queryParts.push(`limit=${encodeURIComponent(String(params.limit))}`)
     const qs = queryParts.join('&')
     if (qs) url += `?${qs}`
   }

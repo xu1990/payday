@@ -25,7 +25,7 @@ export async function getQRCodeMapping(shortCode: string): Promise<QRCodeMapping
     url: `/api/v1/qrcode/wxa/mapping/${shortCode}`,
     method: 'GET',
     showLoading: true,
-    loadingText: '加载中...'
+    loadingText: '加载中...',
   })
 }
 
@@ -43,7 +43,7 @@ export async function getQRCodeMapping(shortCode: string): Promise<QRCodeMapping
 export async function parseQRCodeScene(
   scene: string,
   options: {
-    redirectTo?: boolean  // 是否自动跳转到目标页面
+    redirectTo?: boolean // 是否自动跳转到目标页面
   } = {}
 ): Promise<QRCodeMappingResult | null> {
   try {
@@ -53,7 +53,7 @@ export async function parseQRCodeScene(
     if (result.is_expired) {
       uni.showToast({
         title: '二维码已过期',
-        icon: 'none'
+        icon: 'none',
       })
       return null
     }
@@ -63,7 +63,7 @@ export async function parseQRCodeScene(
       // 检查是否有目标页面参数（用于绕过微信小程序码限制）
       const targetPage = result.params.targetPage || result.page
       const otherParams = { ...result.params }
-      delete otherParams.targetPage  // 移除 targetPage，不需要传递
+      delete otherParams.targetPage // 移除 targetPage，不需要传递
 
       // 构建页面参数
       const query = new URLSearchParams(otherParams as any).toString()
@@ -77,9 +77,9 @@ export async function parseQRCodeScene(
             url: `/${targetPage}`,
             fail: () => {
               console.error('[QRCode] Failed to navigate to:', targetPage)
-            }
+            },
           })
-        }
+        },
       })
     }
 
@@ -88,7 +88,7 @@ export async function parseQRCodeScene(
     console.error('[QRCode] Failed to parse scene:', e)
     uni.showToast({
       title: '二维码无效',
-      icon: 'none'
+      icon: 'none',
     })
     return null
   }

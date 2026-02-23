@@ -63,7 +63,11 @@ export const useAuthStore = defineStore('auth', () => {
    * @param phoneNumberCode 手机号授权码（可选）
    * @param inviteCode 邀请码（可选，新用户注册时使用）
    */
-  async function login(code: string, phoneNumberCode?: string, inviteCode?: string): Promise<boolean> {
+  async function login(
+    code: string,
+    phoneNumberCode?: string,
+    inviteCode?: string
+  ): Promise<boolean> {
     try {
       isLoading.value = true
       const response = await authApi.login(code, phoneNumberCode, inviteCode)

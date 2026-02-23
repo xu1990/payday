@@ -42,7 +42,11 @@ export interface RefreshTokenResponse {
  * @param phoneNumberCode 手机号授权码（可选）- 通过 button open-type="getPhoneNumber" 获取
  * @param inviteCode 邀请码（可选）- 新用户注册时使用
  */
-export function login(code: string, phoneNumberCode?: string, inviteCode?: string): Promise<LoginResponse> {
+export function login(
+  code: string,
+  phoneNumberCode?: string,
+  inviteCode?: string
+): Promise<LoginResponse> {
   const data: LoginRequest = { code }
   if (phoneNumberCode) {
     data.phoneNumberCode = phoneNumberCode

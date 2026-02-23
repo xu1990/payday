@@ -43,6 +43,15 @@ async def like_post(db: AsyncSession, user_id: str, post_id: str) -> tuple["Like
                     db, str(post.user_id), "like", "新点赞", "", post_id
                 )
 
+                # 发放帖子被赞积分（给帖子作者）
+                from app.services.ability_points_service import trigger_event
+                await trigger_event(
+                    db, str(post.user_id), "post_liked",
+                    reference_id=post_id,
+                    reference_type="post",
+                    description="帖子被赞"
+                )
+
         try:
             await db.commit()
             await db.refresh(like)

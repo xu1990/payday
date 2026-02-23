@@ -25,17 +25,19 @@
       <!-- 商品信息 -->
       <view class="product-info-section">
         <text class="product-name">{{ product.name }}</text>
-        <text class="product-desc" v-if="product.description">
+        <text v-if="product.description" class="product-desc">
           {{ product.description }}
         </text>
 
         <view class="product-meta">
           <view class="stock-info">
             <text v-if="product.stock_unlimited" class="stock-unlimited">库存无限</text>
-            <text v-else-if="product.stock > 0" class="stock-available">剩余{{ product.stock }}件</text>
+            <text v-else-if="product.stock > 0" class="stock-available"
+              >剩余{{ product.stock }}件</text
+            >
             <text v-else class="stock-empty">已售罄</text>
           </view>
-          <view class="category" v-if="product.category">
+          <view v-if="product.category" class="category">
             <text>{{ product.category }}</text>
           </view>
         </view>
@@ -108,7 +110,7 @@ async function loadData() {
     // 并行加载商品和积分
     const [productRes, pointsRes] = await Promise.all([
       getPointProduct(productId.value),
-      getMyPoints()
+      getMyPoints(),
     ])
 
     product.value = productRes
@@ -117,7 +119,7 @@ async function loadData() {
     console.error('Failed to load data:', err)
     uni.showToast({
       title: '加载失败',
-      icon: 'none'
+      icon: 'none',
     })
   } finally {
     loading.value = false
@@ -138,20 +140,20 @@ async function handleExchange() {
     uni.showLoading({ title: '兑换中...' })
 
     await createPointOrder({
-      product_id: productId.value
+      product_id: productId.value,
     })
 
     uni.hideLoading()
 
     uni.showToast({
       title: '兑换成功',
-      icon: 'success'
+      icon: 'success',
     })
 
     // 延迟跳转到订单列表
     setTimeout(() => {
       uni.redirectTo({
-        url: '/pages/point-mall/orders'
+        url: '/pages/point-mall/orders',
       })
     }, 1500)
   } catch (err) {
@@ -159,7 +161,7 @@ async function handleExchange() {
     console.error('Exchange failed:', err)
     uni.showToast({
       title: err.message || '兑换失败',
-      icon: 'none'
+      icon: 'none',
     })
   }
 }
@@ -250,7 +252,11 @@ async function handleExchange() {
     }
 
     .price-section {
-      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+      background: linear-gradient(
+        135deg,
+        rgba(102, 126, 234, 0.1) 0%,
+        rgba(118, 75, 162, 0.1) 100%
+      );
       border-radius: 20rpx;
       padding: 25rpx;
       display: flex;

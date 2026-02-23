@@ -17,7 +17,7 @@ export function transformSavingsGoal(goal: any): any {
     remainingAmount: goal.remaining_amount ?? 0,
     createdAt: goal.created_at,
     updatedAt: goal.updated_at,
-    completedAt: goal.completed_at
+    completedAt: goal.completed_at,
   }
 }
 

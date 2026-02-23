@@ -63,6 +63,16 @@ async def follow_user(db: AsyncSession, follower_id: str, following_id: str) -> 
         # Single commit for both follow and notification
         try:
             await db.commit()
+
+            # 发放关注积分
+            from app.services.ability_points_service import trigger_event
+            await trigger_event(
+                db, follower_id, "follow_someone",
+                reference_id=following_id,
+                reference_type="user",
+                description="关注他人"
+            )
+
             return True
         except SQLAlchemyError:
             await db.rollback()

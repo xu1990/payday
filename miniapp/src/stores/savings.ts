@@ -14,21 +14,13 @@ export const useSavingsStore = defineStore('savings', () => {
   const error = ref<string | null>(null)
 
   // 计算属性
-  const activeGoals = computed(() =>
-    goals.value.filter(g => g.status === 'active')
-  )
+  const activeGoals = computed(() => goals.value.filter(g => g.status === 'active'))
 
-  const completedGoals = computed(() =>
-    goals.value.filter(g => g.status === 'completed')
-  )
+  const completedGoals = computed(() => goals.value.filter(g => g.status === 'completed'))
 
-  const totalSaved = computed(() =>
-    goals.value.reduce((sum, g) => sum + g.currentAmount, 0)
-  )
+  const totalSaved = computed(() => goals.value.reduce((sum, g) => sum + g.currentAmount, 0))
 
-  const totalTarget = computed(() =>
-    goals.value.reduce((sum, g) => sum + g.targetAmount, 0)
-  )
+  const totalTarget = computed(() => goals.value.reduce((sum, g) => sum + g.targetAmount, 0))
 
   /**
    * 获取存款目标列表
@@ -93,10 +85,10 @@ export const useSavingsStore = defineStore('savings', () => {
       error.value = null
       const goal = await savingsApi.updateSavingsGoal(goalId, data)
 
-      // 更新列表中的目标
+      // 更新列表中的目标 - 使用 Object.assign 触发响应式
       const index = goals.value.findIndex(g => g.id === goalId)
       if (index !== -1) {
-        goals.value[index] = goal
+        Object.assign(goals.value[index], goal)
       }
 
       // 更新当前目标
@@ -148,10 +140,10 @@ export const useSavingsStore = defineStore('savings', () => {
       error.value = null
       const goal = await savingsApi.depositToGoal(goalId, { amount, note })
 
-      // 更新列表中的目标
+      // 更新列表中的目标 - 使用 Object.assign 触发响应式
       const index = goals.value.findIndex(g => g.id === goalId)
       if (index !== -1) {
-        goals.value[index] = goal
+        Object.assign(goals.value[index], goal)
       }
 
       // 更新当前目标

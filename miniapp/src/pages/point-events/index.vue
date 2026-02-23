@@ -25,9 +25,9 @@
       </view>
 
       <view
-        class="event-card"
         v-for="event in events"
         :key="event.event_type"
+        class="event-card"
         @tap="goToEvent(event.event_type)"
       >
         <view class="event-icon">{{ getEventIcon(event.event_type) }}</view>
@@ -65,7 +65,7 @@ const eventNames = {
   salary_record: '记录工资',
   first_salary: '第一笔工资',
   savings_goal_create: '创建存款目标',
-  savings_goal_complete: '完成存款目标'
+  savings_goal_complete: '完成存款目标',
 }
 
 const eventDescs = {
@@ -80,7 +80,7 @@ const eventDescs = {
   salary_record: '记录每月工资收入',
   first_salary: '记录第一笔工资',
   savings_goal_create: '设定存款目标',
-  savings_goal_complete: '达成存款目标'
+  savings_goal_complete: '达成存款目标',
 }
 
 const eventIcons = {
@@ -95,7 +95,7 @@ const eventIcons = {
   salary_record: '💰',
   first_salary: '🎉',
   savings_goal_create: '🎯',
-  savings_goal_complete: '🎊'
+  savings_goal_complete: '🎊',
 }
 
 onMounted(() => {
@@ -113,7 +113,7 @@ async function fetchEvents() {
     error.value = err.message || '加载失败'
     uni.showToast({
       title: error.value,
-      icon: 'none'
+      icon: 'none',
     })
   } finally {
     loading.value = false
@@ -134,7 +134,7 @@ function getEventIcon(type) {
 
 function goToInvite() {
   uni.navigateTo({
-    url: '/pages/invite-code/index'
+    url: '/pages/invite-code/index',
   })
 }
 
@@ -155,7 +155,7 @@ function goToEvent(eventType) {
   const route = routes[eventType]
   if (route) {
     uni.navigateTo({
-      url: route
+      url: route,
     })
   }
 }

@@ -49,7 +49,7 @@
       </view>
 
       <view v-else class="invitations-list">
-        <view class="invitation-item" v-for="item in invitations" :key="item.invitee_id">
+        <view v-for="item in invitations" :key="item.invitee_id" class="invitation-item">
           <view class="avatar">
             <text>{{ item.invitee_name.substring(0, 2) }}</text>
           </view>
@@ -66,7 +66,7 @@
     </view>
 
     <!-- 二维码邀请区域 -->
-    <view class="qrcode-section" v-if="showQRCode">
+    <view v-if="showQRCode" class="qrcode-section">
       <view class="section-title">
         <text>二维码邀请</text>
         <text class="subtitle">好友扫码即可注册</text>
@@ -94,7 +94,7 @@
       </view>
 
       <view class="qrcode-actions">
-        <button class="action-btn" @tap="saveQRCode" :disabled="!qrcodeDataUrl || generatingQRCode">
+        <button class="action-btn" :disabled="!qrcodeDataUrl || generatingQRCode" @tap="saveQRCode">
           <text>{{ generatingQRCode ? '生成中...' : '💡 如何保存' }}</text>
         </button>
       </view>
@@ -127,7 +127,7 @@ onMounted(() => {
 })
 
 // 监听邀请码变化，显示二维码区域
-watch(inviteCode, (newCode) => {
+watch(inviteCode, newCode => {
   if (newCode) {
     showQRCode.value = true
     // 生成二维码
@@ -147,10 +147,10 @@ async function generateQRCode(code) {
       data: {
         page: 'pages/login/index',
         params: {
-          inviteCode: code
+          inviteCode: code,
         },
-        expires_days: 365  // 二维码有效期1年
-      }
+        expires_days: 365, // 二维码有效期1年
+      },
     })
 
     if (response && response.base64) {
@@ -160,7 +160,7 @@ async function generateQRCode(code) {
     console.error('Failed to generate QR code:', err)
     uni.showToast({
       title: '二维码生成失败',
-      icon: 'none'
+      icon: 'none',
     })
   } finally {
     generatingQRCode.value = false
@@ -172,7 +172,7 @@ async function saveQRCode() {
   if (!qrcodeDataUrl.value) {
     uni.showToast({
       title: '二维码未生成',
-      icon: 'none'
+      icon: 'none',
     })
     return
   }
@@ -182,7 +182,7 @@ async function saveQRCode() {
     title: '保存二维码',
     content: '请长按二维码图片，选择"保存到相册"',
     showCancel: false,
-    confirmText: '我知道了'
+    confirmText: '我知道了',
   })
 }
 
@@ -210,7 +210,7 @@ async function loadData() {
     console.error('Failed to load data:', err)
     uni.showToast({
       title: '加载失败',
-      icon: 'none'
+      icon: 'none',
     })
   } finally {
     loading.value = false
@@ -225,20 +225,20 @@ function copyInviteCode() {
     success: () => {
       uni.showToast({
         title: '邀请码已复制',
-        icon: 'success'
+        icon: 'success',
       })
-    }
+    },
   })
 }
 
 function shareInvite() {
   // 这里可以调用小程序的分享功能
   uni.showShareMenu({
-    withShareTicket: true
+    withShareTicket: true,
   })
   uni.showToast({
     title: '点击右上角分享给好友',
-    icon: 'none'
+    icon: 'none',
   })
 }
 

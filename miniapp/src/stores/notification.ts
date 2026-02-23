@@ -101,10 +101,10 @@ export const useNotificationStore = defineStore('notification', () => {
     try {
       await notificationApi.markAsRead(notificationId)
 
-      // 更新本地状态
-      const notification = notifications.value.find(n => n.id === notificationId)
-      if (notification && notification.status === 'unread') {
-        notification.status = 'read'
+      // 更新本地状态 - 使用 Object.assign 触发响应式
+      const index = notifications.value.findIndex(n => n.id === notificationId)
+      if (index !== -1 && notifications.value[index].status === 'unread') {
+        Object.assign(notifications.value[index], { status: 'read' })
         unreadCount.value = Math.max(0, unreadCount.value - 1)
       }
       return true
@@ -120,12 +120,11 @@ export const useNotificationStore = defineStore('notification', () => {
     try {
       await notificationApi.markAllAsRead()
 
-      // 更新本地状态
-      notifications.value.forEach(n => {
-        if (n.status === 'unread') {
-          n.status = 'read'
-        }
-      })
+      // 更新本地状态 - 使用 map 创建新数组触发响应式
+      notifications.value = notifications.value.map(n => ({
+        ...n,
+        status: n.status === 'unread' ? 'read' : n.status,
+      }))
       unreadCount.value = 0
       return true
     } catch (e: unknown) {

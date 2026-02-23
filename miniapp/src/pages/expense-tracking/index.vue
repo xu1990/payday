@@ -20,14 +20,14 @@
       </view>
 
       <view class="expense-list-saved">
-        <view class="saved-item" v-for="item in savedExpenses" :key="item.id">
+        <view v-for="item in savedExpenses" :key="item.id" class="saved-item">
           <view class="item-header">
             <text class="category">{{ item.category }}</text>
             <text class="amount">-¥{{ item.amount }}</text>
           </view>
           <view class="item-meta">
             <text class="date">{{ formatDate(item.expenseDate) }}</text>
-            <text class="note" v-if="item.note">{{ item.note }}</text>
+            <text v-if="item.note" class="note">{{ item.note }}</text>
           </view>
         </view>
       </view>
@@ -38,35 +38,35 @@
       <view class="section-title">新增支出</view>
 
       <view class="expense-list">
-        <view class="expense-item" v-for="(item, index) in expenses" :key="index">
+        <view v-for="(item, index) in expenses" :key="index" class="expense-item">
           <view class="item-header">
-            <picker :range="categories" :value="item.categoryIndex" @change="onCategoryChange($event, index)">
+            <picker
+              :range="categories"
+              :value="item.categoryIndex"
+              @change="onCategoryChange($event, index)"
+            >
               <view class="category-picker">
                 <text>{{ categories[item.categoryIndex] }}</text>
                 <text class="arrow">▼</text>
               </view>
             </picker>
             <input
+              v-model="item.amount"
               class="amount-input"
               type="digit"
-              v-model="item.amount"
               placeholder="金额"
               @input="calculateTotal"
             />
           </view>
-          <input
-            class="note-input"
-            v-model="item.note"
-            placeholder="备注（可选）"
-          />
+          <input v-model="item.note" class="note-input" placeholder="备注（可选）" />
           <view class="date-picker">
-            <uni-datetime-picker type="date" v-model="item.expenseDate" @change="calculateTotal">
+            <uni-datetime-picker v-model="item.expenseDate" type="date" @change="calculateTotal">
               <view class="date-display">
                 <text>{{ formatDate(item.expenseDate) }}</text>
               </view>
             </uni-datetime-picker>
           </view>
-          <view class="delete-btn" v-if="expenses.length > 1" @tap="removeExpense(index)">
+          <view v-if="expenses.length > 1" class="delete-btn" @tap="removeExpense(index)">
             <text>删除</text>
           </view>
         </view>
@@ -91,7 +91,7 @@
 
       <!-- 保存按钮 -->
       <view class="footer">
-        <button class="save-btn" @tap="handleSave" :disabled="!isValid || expenses.length === 0">
+        <button class="save-btn" :disabled="!isValid || expenses.length === 0" @tap="handleSave">
           保存记录
         </button>
       </view>
@@ -111,8 +111,17 @@ const loading = ref(false)
 const savedExpenses = ref([])
 
 const categories = ref([
-  '🏠居住', '🍚饮食', '🚌交通', '🛍️购物', '🏥医疗',
-  '🎮娱乐', '📚学习', '📱通讯', '🎁礼物', '💳还贷', '📦其他'
+  '🏠居住',
+  '🍚饮食',
+  '🚌交通',
+  '🛍️购物',
+  '🏥医疗',
+  '🎮娱乐',
+  '📚学习',
+  '📱通讯',
+  '🎁礼物',
+  '💳还贷',
+  '📦其他',
 ])
 
 const expenses = ref([
@@ -120,22 +129,26 @@ const expenses = ref([
     categoryIndex: 0,
     amount: '',
     note: '',
-    expenseDate: new Date().toISOString().split('T')[0]
-  }
+    expenseDate: new Date().toISOString().split('T')[0],
+  },
 ])
 
 // 本次新增支出的总计
 const totalAmount = computed(() => {
-  return expenses.value.reduce((sum, item) => {
-    return sum + (parseFloat(item.amount) || 0)
-  }, 0).toFixed(2)
+  return expenses.value
+    .reduce((sum, item) => {
+      return sum + (parseFloat(item.amount) || 0)
+    }, 0)
+    .toFixed(2)
 })
 
 // 已保存支出的总计
 const totalSavedAmount = computed(() => {
-  return savedExpenses.value.reduce((sum, item) => {
-    return sum + parseFloat(item.amount || 0)
-  }, 0).toFixed(2)
+  return savedExpenses.value
+    .reduce((sum, item) => {
+      return sum + parseFloat(item.amount || 0)
+    }, 0)
+    .toFixed(2)
 })
 
 // 剩余金额
@@ -149,7 +162,7 @@ const isValid = computed(() => {
   return expenses.value.every(item => item.amount && parseFloat(item.amount) > 0)
 })
 
-onLoad(async (options) => {
+onLoad(async options => {
   console.log('[expense-tracking] onLoad options:', options)
 
   if (!options.recordId) {
@@ -159,7 +172,7 @@ onLoad(async (options) => {
       showCancel: false,
       success: () => {
         uni.navigateBack()
-      }
+      },
     })
     return
   }
@@ -175,7 +188,7 @@ onLoad(async (options) => {
     console.error('[expense-tracking] Failed to load salary record:', error)
     uni.showToast({
       title: '获取工资记录失败',
-      icon: 'none'
+      icon: 'none',
     })
   }
 
@@ -211,7 +224,7 @@ function addExpense() {
     categoryIndex: 0,
     amount: '',
     note: '',
-    expenseDate: new Date().toISOString().split('T')[0]
+    expenseDate: new Date().toISOString().split('T')[0],
   })
 }
 
@@ -221,7 +234,9 @@ function removeExpense(index) {
 }
 
 function onCategoryChange(e, index) {
-  expenses.value[index].categoryIndex = e.detail.value
+  // 使用 Object.assign 触发响应式更新
+  const updated = { ...expenses.value[index], categoryIndex: e.detail.value }
+  expenses.value[index] = updated
 }
 
 function formatDate(dateStr) {
@@ -250,7 +265,7 @@ async function handleSave() {
     category: categories.value[item.categoryIndex],
     subcategory: undefined,
     amount: parseFloat(item.amount),
-    note: item.note || undefined
+    note: item.note || undefined,
   }))
 
   console.log('[expense-tracking] Saving expenses for recordId:', salaryRecordId.value)
@@ -265,12 +280,14 @@ async function handleSave() {
     uni.showToast({ title: '保存成功', icon: 'success' })
 
     // 清空表单
-    expenses.value = [{
-      categoryIndex: 0,
-      amount: '',
-      note: '',
-      expenseDate: new Date().toISOString().split('T')[0]
-    }]
+    expenses.value = [
+      {
+        categoryIndex: 0,
+        amount: '',
+        note: '',
+        expenseDate: new Date().toISOString().split('T')[0],
+      },
+    ]
 
     // 重新加载已保存的支出
     await fetchSavedExpenses()
@@ -279,7 +296,7 @@ async function handleSave() {
     console.error('Failed to save expenses:', error)
     uni.showToast({
       title: error.message || '保存失败，请重试',
-      icon: 'none'
+      icon: 'none',
     })
   }
 }

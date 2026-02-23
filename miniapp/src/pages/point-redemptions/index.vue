@@ -9,18 +9,10 @@
 
     <!-- Tab切换 -->
     <view class="tabs">
-      <view
-        class="tab"
-        :class="{ active: activeTab === 'create' }"
-        @tap="activeTab = 'create'"
-      >
+      <view class="tab" :class="{ active: activeTab === 'create' }" @tap="activeTab = 'create'">
         <text>兑换奖励</text>
       </view>
-      <view
-        class="tab"
-        :class="{ active: activeTab === 'history' }"
-        @tap="activeTab = 'history'"
-      >
+      <view class="tab" :class="{ active: activeTab === 'history' }" @tap="activeTab = 'history'">
         <text>兑换记录</text>
       </view>
     </view>
@@ -40,46 +32,31 @@
 
         <view class="form-item">
           <text class="label">奖励名称 *</text>
-          <input
-            class="input"
-            v-model="form.rewardName"
-            placeholder="如：100元京东卡"
-          />
+          <input v-model="form.rewardName" class="input" placeholder="如：100元京东卡" />
         </view>
 
         <view class="form-item">
           <text class="label">消耗积分 *</text>
-          <input
-            class="input"
-            type="digit"
-            v-model="form.pointsCost"
-            placeholder="输入所需积分"
-          />
+          <input v-model="form.pointsCost" class="input" type="digit" placeholder="输入所需积分" />
         </view>
 
         <view class="form-item">
           <text class="label">配送信息</text>
           <textarea
-            class="textarea"
             v-model="form.deliveryInfo"
+            class="textarea"
             placeholder="收货人、联系电话、地址等（JSON格式）"
           />
         </view>
 
         <view class="form-item">
           <text class="label">备注</text>
-          <textarea
-            class="textarea"
-            v-model="form.notes"
-            placeholder="其他备注信息（可选）"
-          />
+          <textarea v-model="form.notes" class="textarea" placeholder="其他备注信息（可选）" />
         </view>
       </view>
 
       <view class="footer">
-        <button class="submit-btn" @tap="handleSubmit" :disabled="!isFormValid">
-          提交兑换
-        </button>
+        <button class="submit-btn" :disabled="!isFormValid" @tap="handleSubmit">提交兑换</button>
       </view>
     </view>
 
@@ -95,11 +72,7 @@
       </view>
 
       <view v-else class="redemption-list">
-        <view
-          class="redemption-card"
-          v-for="item in redemptions"
-          :key="item.id"
-        >
+        <view v-for="item in redemptions" :key="item.id" class="redemption-card">
           <view class="redemption-header">
             <text class="reward-name">{{ item.rewardName }}</text>
             <view class="status-badge" :class="'status-' + item.status">
@@ -146,7 +119,7 @@ const form = ref({
   rewardName: '',
   pointsCost: '',
   deliveryInfo: '',
-  notes: ''
+  notes: '',
 })
 
 const rewardTypes = ['优惠券', '实物礼品', '会员权益', '虚拟商品', '其他']
@@ -168,7 +141,7 @@ async function fetchBalance() {
     console.error('Failed to fetch balance:', err)
     uni.showToast({
       title: '加载积分失败',
-      icon: 'none'
+      icon: 'none',
     })
   }
 }
@@ -182,7 +155,7 @@ async function fetchRedemptions() {
     console.error('Failed to fetch redemptions:', err)
     uni.showToast({
       title: '加载失败',
-      icon: 'none'
+      icon: 'none',
     })
   } finally {
     loading.value = false
@@ -198,7 +171,7 @@ function getStatusText(status) {
     pending: '待审核',
     approved: '已通过',
     completed: '已完成',
-    rejected: '已拒绝'
+    rejected: '已拒绝',
   }
   return map[status] || status
 }
@@ -233,7 +206,7 @@ async function handleSubmit() {
       rewardType: form.value.rewardType || '其他',
       pointsCost,
       deliveryInfo: form.value.deliveryInfo || undefined,
-      notes: form.value.notes || undefined
+      notes: form.value.notes || undefined,
     }
 
     await createRedemption(data)
@@ -245,7 +218,7 @@ async function handleSubmit() {
       rewardName: '',
       pointsCost: '',
       deliveryInfo: '',
-      notes: ''
+      notes: '',
     }
     activeTab.value = 'history'
     await Promise.all([fetchRedemptions(), fetchBalance()])
@@ -254,7 +227,7 @@ async function handleSubmit() {
     console.error('Failed to create redemption:', err)
     uni.showToast({
       title: err.message || '提交失败',
-      icon: 'none'
+      icon: 'none',
     })
   }
 }
@@ -332,7 +305,9 @@ async function handleSubmit() {
         font-weight: 500;
       }
 
-      .input, .textarea, .picker {
+      .input,
+      .textarea,
+      .picker {
         width: 100%;
         padding: 20rpx;
         border: 1rpx solid #e0e0e0;

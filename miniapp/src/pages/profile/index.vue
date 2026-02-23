@@ -118,7 +118,7 @@ function goExpenseTracking() {
   // 跳转到工资记录列表，用户可以在那里选择记录后添加支出
   uni.showToast({
     title: '请选择工资记录',
-    icon: 'none'
+    icon: 'none',
   })
   uni.navigateTo({ url: '/pages/salary-record/index' })
 }
@@ -203,7 +203,12 @@ onMounted(load)
       <view v-else-if="errMsg" class="err">{{ errMsg }}</view>
       <view v-else-if="recordList.length === 0" class="empty">暂无记录</view>
       <view v-else class="list">
-        <view v-for="item in recordList" :key="item.id" class="card" @click="generatePoster(item.id)">
+        <view
+          v-for="item in recordList"
+          :key="item.id"
+          class="card"
+          @click="generatePoster(item.id)"
+        >
           <view class="card-content">
             <text class="amount">{{ item.amount }} 元</text>
             <text class="meta">{{ item.payday_date }} · {{ jobName(item.config_id) }}</text>

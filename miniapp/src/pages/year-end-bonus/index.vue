@@ -25,7 +25,10 @@
         <text class="amount-label">总计</text>
         <text class="amount-value">¥{{ stats.my_bonus.total_amount }}</text>
       </view>
-      <view v-if="stats.my_bonus.records && stats.my_bonus.records.length > 0" class="my-bonus-list">
+      <view
+        v-if="stats.my_bonus.records && stats.my_bonus.records.length > 0"
+        class="my-bonus-list"
+      >
         <view v-for="record in stats.my_bonus.records" :key="record.id" class="bonus-record-item">
           <text class="record-amount">¥{{ record.amount }}</text>
           <text class="record-date">{{ record.payday_date || '未知日期' }}</text>
@@ -66,10 +69,13 @@
       <view class="section">
         <view class="section-title">金额区间分布</view>
         <view class="range-bars">
-          <view class="range-item" v-for="(value, key) in stats.ranges" :key="key">
+          <view v-for="(value, key) in stats.ranges" :key="key" class="range-item">
             <view class="range-label">{{ key }}</view>
             <view class="range-bar">
-              <view class="bar-fill" :style="{ width: getPercentage(value, stats.total_count) + '%' }"></view>
+              <view
+                class="bar-fill"
+                :style="{ width: getPercentage(value, stats.total_count) + '%' }"
+              ></view>
             </view>
             <view class="range-value">{{ value }}人</view>
           </view>
@@ -132,7 +138,7 @@ async function fetchStats() {
     console.error('Failed to fetch year-end bonus stats:', error)
     uni.showToast({
       title: '加载失败，请重试',
-      icon: 'none'
+      icon: 'none',
     })
   } finally {
     loading.value = false
@@ -141,7 +147,7 @@ async function fetchStats() {
 
 function getPercentage(value, total) {
   if (total === 0) return 0
-  return (value / total * 100).toFixed(1)
+  return ((value / total) * 100).toFixed(1)
 }
 
 function goToAddBonus() {
@@ -304,7 +310,8 @@ function goToAddBonus() {
   }
 }
 
-.loading, .empty {
+.loading,
+.empty {
   text-align: center;
   padding: 100rpx 0;
   color: #999;

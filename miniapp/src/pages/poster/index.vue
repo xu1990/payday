@@ -165,9 +165,12 @@ async function generateQRCodeUrl(id: string, type: 'salary' | 'post' = 'salary')
       method: 'POST',
       data: {
         page: 'pages/index/index',
-        params: type === 'salary' ? { recordId: id, targetPage: 'pages/poster/index' } : { postId: id, targetPage: 'pages/poster/index' }
+        params:
+          type === 'salary'
+            ? { recordId: id, targetPage: 'pages/poster/index' }
+            : { postId: id, targetPage: 'pages/poster/index' },
       },
-      noAuth: true // 二维码生成不需要认证
+      noAuth: true, // 二维码生成不需要认证
     })
 
     console.log('[poster] QR code API response:', response)
@@ -224,9 +227,10 @@ function drawSalaryPosterWithQR(
     console.log('[poster] Creating selector query')
     // 不使用 .in()，在整个页面范围内查询
     const query = uni.createSelectorQuery()
-    query.select('#posterCanvas')
+    query
+      .select('#posterCanvas')
       .fields({ node: true, size: true })
-      .exec(async (res) => {
+      .exec(async res => {
         console.log('[poster] SelectorQuery result:', JSON.stringify(res))
         if (!res || !res[0]) {
           console.error('[poster] Query returned empty result')
@@ -259,7 +263,16 @@ function drawSalaryPosterWithQR(
         const gradientStart = isBonus ? '#fdcb6e' : '#667eea'
         const gradientEnd = isBonus ? '#f39c12' : '#764ba2'
 
-        console.log('[poster] Starting canvas draw with Canvas 2D API, size:', w, 'x', h, ', dpr:', dpr, ', type:', r.salary_type)
+        console.log(
+          '[poster] Starting canvas draw with Canvas 2D API, size:',
+          w,
+          'x',
+          h,
+          ', dpr:',
+          dpr,
+          ', type:',
+          r.salary_type
+        )
 
         // 清空画布
         ctx.clearRect(0, 0, w, h)
@@ -334,7 +347,7 @@ function drawSalaryPosterWithQR(
                 console.log('[poster] QR image loaded successfully')
                 imgResolve()
               }
-              qrImage.onerror = (err) => {
+              qrImage.onerror = err => {
                 console.error('[poster] QR image load error:', err)
                 imgReject(err)
               }
@@ -370,32 +383,35 @@ function drawSalaryPosterWithQR(
         console.log('[poster] Canvas draw completed, converting to temp file')
 
         // 转换为临时文件
-        uni.canvasToTempFilePath({
-          canvas: canvas,
-          x: 0,
-          y: 0,
-          width: w,
-          height: h,
-          destWidth: w * 2,
-          destHeight: h * 2,
-          fileType: 'png',
-          success: (res2: any) => {
-            console.log('[poster] Canvas to temp file success:', res2.tempFilePath)
-            posterUrl.value = res2.tempFilePath
-            console.log('[poster] posterUrl.value set to:', posterUrl.value)
-            console.log('[poster] posterUrl.value type:', typeof posterUrl.value)
-            console.log('[poster] posterUrl.value length:', posterUrl.value?.length)
-            resolve()
+        uni.canvasToTempFilePath(
+          {
+            canvas: canvas,
+            x: 0,
+            y: 0,
+            width: w,
+            height: h,
+            destWidth: w * 2,
+            destHeight: h * 2,
+            fileType: 'png',
+            success: (res2: any) => {
+              console.log('[poster] Canvas to temp file success:', res2.tempFilePath)
+              posterUrl.value = res2.tempFilePath
+              console.log('[poster] posterUrl.value set to:', posterUrl.value)
+              console.log('[poster] posterUrl.value type:', typeof posterUrl.value)
+              console.log('[poster] posterUrl.value length:', posterUrl.value?.length)
+              resolve()
+            },
+            fail: (e: any) => {
+              console.error('[poster] Canvas to temp file failed:', e)
+              console.error('[poster] Error details:', JSON.stringify(e))
+              posterUrl.value = ''
+              // 显示错误给用户
+              errMsg.value = '生成海报失败: ' + (e?.errMsg || '未知错误')
+              reject(new Error('Canvas to temp file failed: ' + JSON.stringify(e)))
+            },
           },
-          fail: (e: any) => {
-            console.error('[poster] Canvas to temp file failed:', e)
-            console.error('[poster] Error details:', JSON.stringify(e))
-            posterUrl.value = ''
-            // 显示错误给用户
-            errMsg.value = '生成海报失败: ' + (e?.errMsg || '未知错误')
-            reject(new Error('Canvas to temp file failed: ' + JSON.stringify(e)))
-          },
-        }, instance)
+          instance
+        )
       })
   } catch (e) {
     console.error('[poster] Draw error:', e)
@@ -439,9 +455,10 @@ function drawPostPosterWithQR(
     console.log('[poster] Creating selector query for post')
     // 不使用 .in()，在整个页面范围内查询
     const query = uni.createSelectorQuery()
-    query.select('#posterCanvas')
+    query
+      .select('#posterCanvas')
       .fields({ node: true, size: true })
-      .exec(async (res) => {
+      .exec(async res => {
         console.log('[poster] SelectorQuery result:', JSON.stringify(res))
         if (!res || !res[0]) {
           console.error('[poster] Query returned empty result')
@@ -468,7 +485,14 @@ function drawPostPosterWithQR(
 
         const padding = 24
 
-        console.log('[poster] Starting post canvas draw with Canvas 2D API, size:', w, 'x', h, ', dpr:', dpr)
+        console.log(
+          '[poster] Starting post canvas draw with Canvas 2D API, size:',
+          w,
+          'x',
+          h,
+          ', dpr:',
+          dpr
+        )
 
         // 清空画布
         ctx.clearRect(0, 0, w, h)
@@ -535,7 +559,11 @@ function drawPostPosterWithQR(
         ctx.fillStyle = 'rgba(255,255,255,0.8)'
         ctx.font = '13px sans-serif'
         ctx.textAlign = 'center'
-        ctx.fillText(`❤️ ${p.like_count}   💬 ${p.comment_count}   👁 ${p.view_count}`, w / 2, statsY)
+        ctx.fillText(
+          `❤️ ${p.like_count}   💬 ${p.comment_count}   👁 ${p.view_count}`,
+          w / 2,
+          statsY
+        )
 
         // 二维码
         if (qrDataUrl) {
@@ -570,32 +598,35 @@ function drawPostPosterWithQR(
         console.log('[poster] Post canvas draw completed, converting to temp file')
 
         // 转换为临时文件
-        uni.canvasToTempFilePath({
-          canvas: canvas,
-          x: 0,
-          y: 0,
-          width: w,
-          height: h,
-          destWidth: w * 2,
-          destHeight: h * 2,
-          fileType: 'png',
-          success: (res2: any) => {
-            console.log('[poster] Canvas to temp file success:', res2.tempFilePath)
-            posterUrl.value = res2.tempFilePath
-            console.log('[poster] posterUrl.value set to:', posterUrl.value)
-            console.log('[poster] posterUrl.value type:', typeof posterUrl.value)
-            console.log('[poster] posterUrl.value length:', posterUrl.value?.length)
-            resolve()
+        uni.canvasToTempFilePath(
+          {
+            canvas: canvas,
+            x: 0,
+            y: 0,
+            width: w,
+            height: h,
+            destWidth: w * 2,
+            destHeight: h * 2,
+            fileType: 'png',
+            success: (res2: any) => {
+              console.log('[poster] Canvas to temp file success:', res2.tempFilePath)
+              posterUrl.value = res2.tempFilePath
+              console.log('[poster] posterUrl.value set to:', posterUrl.value)
+              console.log('[poster] posterUrl.value type:', typeof posterUrl.value)
+              console.log('[poster] posterUrl.value length:', posterUrl.value?.length)
+              resolve()
+            },
+            fail: (e: any) => {
+              console.error('[poster] Canvas to temp file failed:', e)
+              console.error('[poster] Error details:', JSON.stringify(e))
+              posterUrl.value = ''
+              // 显示错误给用户
+              errMsg.value = '生成海报失败: ' + (e?.errMsg || '未知错误')
+              reject(new Error('Canvas to temp file failed: ' + JSON.stringify(e)))
+            },
           },
-          fail: (e: any) => {
-            console.error('[poster] Canvas to temp file failed:', e)
-            console.error('[poster] Error details:', JSON.stringify(e))
-            posterUrl.value = ''
-            // 显示错误给用户
-            errMsg.value = '生成海报失败: ' + (e?.errMsg || '未知错误')
-            reject(new Error('Canvas to temp file failed: ' + JSON.stringify(e)))
-          },
-        }, instance)
+          instance
+        )
       })
   } catch (e) {
     console.error('[poster] Post draw error:', e)
@@ -672,7 +703,14 @@ function previewImage() {
 }
 
 onMounted(() => {
-  console.log('[poster] Component mounted, posterType:', posterType.value, 'recordId:', recordId.value, 'postId:', postId.value)
+  console.log(
+    '[poster] Component mounted, posterType:',
+    posterType.value,
+    'recordId:',
+    recordId.value,
+    'postId:',
+    postId.value
+  )
   loadData()
 })
 </script>

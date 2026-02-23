@@ -14,11 +14,7 @@
     </view>
 
     <view v-else class="transactions-list">
-      <view
-        class="transaction-item"
-        v-for="item in transactions"
-        :key="item.id"
-      >
+      <view v-for="item in transactions" :key="item.id" class="transaction-item">
         <view class="transaction-icon" :class="{ earn: item.amount > 0, spend: item.amount < 0 }">
           <text v-if="item.amount > 0">+</text>
           <text v-else>-</text>
@@ -56,7 +52,7 @@ const transactionTitles = {
   first_salary: '第一笔工资',
   savings_goal: '存款目标',
   redeem: '积分兑换',
-  refund: '退还积分'
+  refund: '退还积分',
 }
 
 onMounted(() => {
@@ -74,7 +70,7 @@ async function fetchTransactions() {
     error.value = err.message || '加载失败'
     uni.showToast({
       title: error.value,
-      icon: 'none'
+      icon: 'none',
     })
   } finally {
     loading.value = false
@@ -116,7 +112,8 @@ function formatDateTime(dateStr) {
   }
 }
 
-.loading, .empty {
+.loading,
+.empty {
   text-align: center;
   padding: 100rpx 0;
   color: #999;

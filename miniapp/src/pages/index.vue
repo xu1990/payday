@@ -201,9 +201,7 @@ async function loadTopics() {
     topicsLoading.value = true
     const allTopics = await getActiveTopics()
     // 按帖子数量降序排序，取前5个
-    topics.value = allTopics
-      .sort((a, b) => b.post_count - a.post_count)
-      .slice(0, 5)
+    topics.value = allTopics.sort((a, b) => b.post_count - a.post_count).slice(0, 5)
   } catch (error) {
     console.error('[index] loadTopics error:', error)
     // 静默失败
@@ -426,18 +424,12 @@ function createPostWithTopic(topicId: string, topicName: string) {
       </view>
 
       <view v-else-if="topics.length > 0" class="topics-list">
-        <view
-          v-for="topic in topics"
-          :key="topic.id"
-          class="topic-item"
-        >
+        <view v-for="topic in topics" :key="topic.id" class="topic-item">
           <view class="topic-info" @click="goToTopic(topic.id)">
             <text class="topic-name"># {{ topic.name }}</text>
             <text class="topic-count">{{ topic.post_count }} 帖子</text>
           </view>
-          <button class="topic-btn" @click="createPostWithTopic(topic.id, topic.name)">
-            发帖
-          </button>
+          <button class="topic-btn" @click="createPostWithTopic(topic.id, topic.name)">发帖</button>
         </view>
       </view>
 
@@ -477,7 +469,11 @@ function createPostWithTopic(topicId: string, topicName: string) {
             <text class="product-name">{{ product.name }}</text>
             <view class="product-footer">
               <text class="product-points">{{ product.points_cost }} 积分</text>
-              <text v-if="!product.stock_unlimited && product.stock <= 0" class="product-out-of-stock">已售罄</text>
+              <text
+                v-if="!product.stock_unlimited && product.stock <= 0"
+                class="product-out-of-stock"
+                >已售罄</text
+              >
             </view>
           </view>
         </view>

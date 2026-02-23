@@ -55,6 +55,7 @@ async def check_in(
 ) -> CheckIn:
     """打卡"""
     from app.core.exceptions import BusinessException
+    from app.services.ability_points_service import trigger_event
 
     # 检查今天是否已经打卡
     existing = await db.execute(
@@ -74,6 +75,15 @@ async def check_in(
     db.add(checkin)
     await db.commit()
     await db.refresh(checkin)
+
+    # 发放每日打卡积分
+    await trigger_event(
+        db, user_id, "checkin_daily",
+        reference_id=str(checkin.id),
+        reference_type="checkin",
+        description="每日打卡"
+    )
+
     return checkin
 
 

@@ -39,9 +39,7 @@ const filteredTopics = computed(() => {
     return topics.value
   }
   const keyword = filterKeyword.value.toLowerCase()
-  return topics.value.filter(topic =>
-    topic.name.toLowerCase().includes(keyword)
-  )
+  return topics.value.filter(topic => topic.name.toLowerCase().includes(keyword))
 })
 
 // Picker 索引
@@ -108,7 +106,7 @@ function selectTopic(topic: Topic) {
   mentionTopics.value.push({
     id: topic.id,
     name: topic.name,
-    position: beforeAt.length
+    position: beforeAt.length,
   })
 
   // 关闭选择器并重置状态
@@ -118,7 +116,7 @@ function selectTopic(topic: Topic) {
   if (mentionTopics.value.length >= 3) {
     uni.showToast({
       title: '最多关联3个话题',
-      icon: 'none'
+      icon: 'none',
     })
   }
 }
@@ -292,11 +290,11 @@ async function submit() {
         <view class="content-wrapper">
           <textarea
             :value="content"
-            @input="onContentInput"
             class="input area"
             placeholder="说说你的想法… 输入@可关联话题"
             maxlength="5000"
             :show-confirm-bar="false"
+            @input="onContentInput"
           />
           <view class="char-count">{{ content.length }}/5000</view>
         </view>
@@ -309,7 +307,9 @@ async function submit() {
           <view class="topic-picker-header">
             <text class="topic-picker-title">
               @{{ filterKeyword }}
-              <text v-if="filteredTopics.length > 0" class="topic-picker-count">({{ filteredTopics.length }})</text>
+              <text v-if="filteredTopics.length > 0" class="topic-picker-count"
+                >({{ filteredTopics.length }})</text
+              >
             </text>
             <text class="topic-picker-close" @click="closeTopicPicker">✕</text>
           </view>
@@ -670,7 +670,6 @@ async function submit() {
   font-size: 24rpx;
   color: #999;
 }
-
 
 // 按钮
 .btn {

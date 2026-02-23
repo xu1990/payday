@@ -44,11 +44,7 @@
     </view>
 
     <view v-else class="orders-list">
-      <view
-        class="order-item"
-        v-for="order in orders"
-        :key="order.id"
-      >
+      <view v-for="order in orders" :key="order.id" class="order-item">
         <view class="order-header">
           <text class="order-number">订单号：{{ order.order_number }}</text>
           <view class="order-status" :class="'status-' + order.status">
@@ -78,7 +74,7 @@
           </view>
         </view>
 
-        <view class="order-actions" v-if="order.status === 'pending'">
+        <view v-if="order.status === 'pending'" class="order-actions">
           <button class="cancel-btn" @tap="handleCancel(order)">取消订单</button>
         </view>
       </view>
@@ -107,7 +103,7 @@ async function loadOrders() {
     console.error('Failed to load orders:', err)
     uni.showToast({
       title: '加载失败',
-      icon: 'none'
+      icon: 'none',
     })
   } finally {
     loading.value = false
@@ -136,7 +132,7 @@ async function handleCancel(order) {
 
     uni.showToast({
       title: '订单已取消',
-      icon: 'success'
+      icon: 'success',
     })
 
     // 重新加载列表
@@ -146,7 +142,7 @@ async function handleCancel(order) {
     console.error('Cancel failed:', err)
     uni.showToast({
       title: err.message || '取消失败',
-      icon: 'none'
+      icon: 'none',
     })
   }
 }
@@ -156,7 +152,7 @@ function getStatusText(status) {
     pending: '待处理',
     completed: '已完成',
     cancelled: '已取消',
-    refunded: '已退款'
+    refunded: '已退款',
   }
   return statusMap[status] || status
 }

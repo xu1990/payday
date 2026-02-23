@@ -19,5 +19,6 @@ declare module 'vue' {
     UniIcons: typeof import('@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue')['default']
     UniPopup: typeof import('@dcloudio/uni-ui/lib/uni-popup/uni-popup.vue')['default']
     UniTransition: typeof import('@dcloudio/uni-ui/lib/uni-transition/uni-transition.vue')['default']
+    UserAvatar: typeof import('./src/components/UserAvatar.vue')['default']
   }
 }

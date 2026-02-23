@@ -82,7 +82,7 @@ import { getMyPoints } from '@/api/ability-points'
 import { safeNumber } from '@/utils/transform'
 
 // 积分系统常量
-const POINTS_PER_LEVEL = 1000  // 每升1级所需的积分
+const POINTS_PER_LEVEL = 1000 // 每升1级所需的积分
 
 const loading = ref(true)
 const points = ref(null)
@@ -92,7 +92,7 @@ const levelProgress = computed(() => {
   if (!points.value) return 0
   const totalPoints = safeNumber(points.value.totalPoints, 0)
   const currentLevelPoints = totalPoints % POINTS_PER_LEVEL
-  return (currentLevelPoints / POINTS_PER_LEVEL * 100).toFixed(1)
+  return ((currentLevelPoints / POINTS_PER_LEVEL) * 100).toFixed(1)
 })
 
 const nextLevelPoints = computed(() => {
@@ -117,14 +117,14 @@ async function fetchPoints() {
       totalEarned: safeNumber(data.totalEarned, 0),
       totalSpent: safeNumber(data.totalSpent, 0),
       totalPoints: safeNumber(data.totalPoints, 0),
-      level: safeNumber(data.level, 1)
+      level: safeNumber(data.level, 1),
     }
   } catch (err) {
     console.error('Failed to fetch points:', err)
     error.value = err.message || '加载失败'
     uni.showToast({
       title: error.value,
-      icon: 'none'
+      icon: 'none',
     })
   } finally {
     loading.value = false
@@ -133,31 +133,31 @@ async function fetchPoints() {
 
 function goToEvents() {
   uni.navigateTo({
-    url: '/pages/point-events/index'
+    url: '/pages/point-events/index',
   })
 }
 
 function goToMall() {
   uni.navigateTo({
-    url: '/pages/point-mall/index'
+    url: '/pages/point-mall/index',
   })
 }
 
 function goToInvite() {
   uni.navigateTo({
-    url: '/pages/invite-code/index'
+    url: '/pages/invite-code/index',
   })
 }
 
 function goToRedemptions() {
   uni.navigateTo({
-    url: '/pages/point-redemptions/index'
+    url: '/pages/point-redemptions/index',
   })
 }
 
 function goToHistory() {
   uni.navigateTo({
-    url: '/pages/point-history/index'
+    url: '/pages/point-history/index',
   })
 }
 </script>
@@ -179,7 +179,8 @@ function goToHistory() {
   }
 }
 
-.loading, .empty {
+.loading,
+.empty {
   text-align: center;
   padding: 100rpx 0;
   color: #999;

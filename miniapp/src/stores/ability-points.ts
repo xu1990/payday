@@ -4,10 +4,14 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import * as pointsApi from '@/api/ability-points'
-import type { AbilityPointResponse, PointTransactionResponse, PointRedemptionResponse } from '@/api/ability-points'
+import type {
+  AbilityPointResponse,
+  PointTransactionResponse,
+  PointRedemptionResponse,
+} from '@/api/ability-points'
 
 // 积分系统常量
-const POINTS_PER_LEVEL = 1000  // 每升1级所需的积分
+const POINTS_PER_LEVEL = 1000 // 每升1级所需的积分
 
 export const useAbilityPointsStore = defineStore('abilityPoints', () => {
   // 状态

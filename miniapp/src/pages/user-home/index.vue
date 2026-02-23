@@ -77,7 +77,7 @@ async function loadProfileData() {
     error.value = '加载失败'
     uni.showToast({
       title: '加载失败',
-      icon: 'none'
+      icon: 'none',
     })
   } finally {
     loading.value = false

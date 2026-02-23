@@ -26,43 +26,38 @@
       <view class="form-item">
         <text class="label">存款金额 (¥) *</text>
         <input
+          v-model="amount"
           class="amount-input"
           type="digit"
-          v-model="amount"
           placeholder="输入存入金额"
           focus
         />
       </view>
 
       <view class="quick-amounts">
-        <view
-          class="quick-btn"
-          v-for="val in quickValues"
-          :key="val"
-          @tap="setAmount(val)"
-        >
+        <view v-for="val in quickValues" :key="val" class="quick-btn" @tap="setAmount(val)">
           <text>¥{{ val }}</text>
         </view>
       </view>
 
       <view class="form-item">
         <text class="label">备注</text>
-        <textarea
-          class="textarea"
-          v-model="note"
-          placeholder="记录这次存款（可选）"
-        />
+        <textarea v-model="note" class="textarea" placeholder="记录这次存款（可选）" />
       </view>
     </view>
 
-    <view class="preview" v-if="amount && parseFloat(amount) > 0">
+    <view v-if="amount && parseFloat(amount) > 0" class="preview">
       <text class="preview-label">存入后余额</text>
       <text class="preview-value">¥{{ projectedAmount }}</text>
       <text class="preview-percent">{{ projectedPercent }}%</text>
     </view>
 
     <view class="footer">
-      <button class="submit-btn" @tap="handleDeposit" :disabled="!amount || parseFloat(amount) <= 0">
+      <button
+        class="submit-btn"
+        :disabled="!amount || parseFloat(amount) <= 0"
+        @tap="handleDeposit"
+      >
         确认存入
       </button>
     </view>
@@ -92,11 +87,14 @@ const projectedAmount = computed(() => {
 
 const projectedPercent = computed(() => {
   if (!goal.value) return 0
-  const percent = (parseFloat(projectedAmount.value) / safeNumber(goal.value.targetAmount, 1) * 100).toFixed(1)
+  const percent = (
+    (parseFloat(projectedAmount.value) / safeNumber(goal.value.targetAmount, 1)) *
+    100
+  ).toFixed(1)
   return Math.min(percent, 100)
 })
 
-onLoad((options) => {
+onLoad(options => {
   if (options.id) {
     goalId.value = options.id
     fetchGoal()
@@ -112,7 +110,7 @@ async function fetchGoal() {
     console.error('Failed to fetch savings goal:', error)
     uni.showToast({
       title: '加载失败，请重试',
-      icon: 'none'
+      icon: 'none',
     })
   } finally {
     loading.value = false
@@ -134,7 +132,7 @@ async function handleDeposit() {
 
     await depositToGoal(goalId.value, {
       amount: parseFloat(amount.value),
-      note: note.value || undefined
+      note: note.value || undefined,
     })
 
     uni.hideLoading()
@@ -147,7 +145,7 @@ async function handleDeposit() {
     console.error('Failed to deposit:', error)
     uni.showToast({
       title: error.message || '存款失败，请重试',
-      icon: 'none'
+      icon: 'none',
     })
   }
 }

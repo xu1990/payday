@@ -23,10 +23,10 @@
           <text>全部</text>
         </view>
         <view
-          class="category-item"
-          :class="{ active: selectedCategory === category }"
           v-for="category in categories"
           :key="category"
+          class="category-item"
+          :class="{ active: selectedCategory === category }"
           @tap="selectCategory(category)"
         >
           <text>{{ category }}</text>
@@ -45,9 +45,9 @@
 
     <view v-else class="products-list">
       <view
-        class="product-item"
         v-for="product in products"
         :key="product.id"
+        class="product-item"
         @tap="goToDetail(product)"
       >
         <image
@@ -62,14 +62,16 @@
 
         <view class="product-info">
           <text class="product-name">{{ product.name }}</text>
-          <text class="product-desc" v-if="product.description">
+          <text v-if="product.description" class="product-desc">
             {{ product.description }}
           </text>
 
           <view class="product-footer">
             <view class="stock-info">
               <text v-if="product.stock_unlimited" class="stock-unlimited">库存无限</text>
-              <text v-else-if="product.stock > 0" class="stock-available">剩余{{ product.stock }}件</text>
+              <text v-else-if="product.stock > 0" class="stock-available"
+                >剩余{{ product.stock }}件</text
+              >
               <text v-else class="stock-empty">已售罄</text>
             </view>
             <view class="price-tag">
@@ -124,7 +126,7 @@ async function loadProducts(category = '') {
     console.error('Failed to load products:', err)
     uni.showToast({
       title: '加载失败',
-      icon: 'none'
+      icon: 'none',
     })
   } finally {
     loading.value = false
@@ -138,13 +140,13 @@ function selectCategory(category) {
 
 function goToDetail(product) {
   uni.navigateTo({
-    url: `/pages/point-mall/detail/index?id=${product.id}`
+    url: `/pages/point-mall/detail/index?id=${product.id}`,
   })
 }
 
 function goToOrders() {
   uni.navigateTo({
-    url: '/pages/point-mall/orders/index'
+    url: '/pages/point-mall/orders/index',
   })
 }
 </script>

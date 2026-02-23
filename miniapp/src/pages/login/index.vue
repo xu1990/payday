@@ -13,8 +13,8 @@
         <!-- 邀请码输入（仅新用户显示） -->
         <view v-if="showInviteCodeInput" class="invite-code-section">
           <input
-            class="invite-code-input"
             v-model="inviteCode"
+            class="invite-code-input"
             placeholder="请输入邀请码（选填）"
             maxlength="8"
           />
@@ -308,7 +308,11 @@ async function handlePhoneLogin(e: any) {
 
     // 调用后端登录接口（带手机号授权码和邀请码）
     console.log('[login] 开始调用后端登录接口（带手机号）...')
-    const success = await authStore.login(loginRes.code, phoneNumberCode, inviteCode.value || undefined)
+    const success = await authStore.login(
+      loginRes.code,
+      phoneNumberCode,
+      inviteCode.value || undefined
+    )
 
     console.log('[login] 后端登录结果:', success)
 

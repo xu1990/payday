@@ -85,7 +85,7 @@ export const useFirstSalaryUsageStore = defineStore('firstSalaryUsage', () => {
       const updatedRecord = await updateFirstSalaryUsage(recordId, data)
       const index = records.value.findIndex(r => r.id === recordId)
       if (index !== -1) {
-        records.value[index] = updatedRecord
+        Object.assign(records.value[index], updatedRecord)
       }
       return updatedRecord
     } catch (error) {

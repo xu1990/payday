@@ -35,7 +35,10 @@
         <view
           v-for="subcategory in currentSubcategories"
           :key="subcategory.value"
-          :class="['subcategory-item', { active: formData.usage_subcategory === subcategory.value }]"
+          :class="[
+            'subcategory-item',
+            { active: formData.usage_subcategory === subcategory.value },
+          ]"
           @tap="selectSubcategory(subcategory.value)"
         >
           <text class="subcategory-label">{{ subcategory.label }}</text>
@@ -236,9 +239,7 @@ const subcategoryMap: Record<UsageCategory, Array<{ value: UsageSubcategory; lab
     { value: '教育培训', label: '教育培训' },
     { value: '其他', label: '其他' },
   ],
-  其他: [
-    { value: '其他', label: '其他' },
-  ],
+  其他: [{ value: '其他', label: '其他' }],
 }
 
 const currentSubcategories = computed(() => {

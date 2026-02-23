@@ -81,7 +81,16 @@ async def get_by_id(db: AsyncSession, record_id: str, user_id: str) -> Optional[
 
 async def create(db: AsyncSession, user_id: str, data: SalaryRecordCreate) -> SalaryRecord:
     """创建工资记录（使用事务管理器）"""
+    from app.services.ability_points_service import trigger_event
+
     try:
+        # 先检查是否是用户的第一次工资记录
+        existing_result = await db.execute(
+            select(SalaryRecord).where(SalaryRecord.user_id == user_id)
+        )
+        existing_count = len(existing_result.scalars().all())
+        is_first = existing_count == 0
+
         amount_encrypted, salt_b64 = encrypt_amount(data.amount)
         record = SalaryRecord(
             user_id=user_id,
@@ -104,7 +113,24 @@ async def create(db: AsyncSession, user_id: str, data: SalaryRecordCreate) -> Sa
             session.add(record)
             # 自动提交或异常时回滚
             await session.flush()
-            return record
+
+        # 发放积分（事务提交后）
+        if is_first:  # 这是第一笔工资
+            await trigger_event(
+                db, user_id, "first_salary",
+                reference_id=str(record.id),
+                reference_type="salary",
+                description="第一笔工资"
+            )
+
+        await trigger_event(
+            db, user_id, "salary_record",
+            reference_id=str(record.id),
+            reference_type="salary",
+            description="记录工资"
+        )
+
+        return record
     except SQLAlchemyError:
         raise
 

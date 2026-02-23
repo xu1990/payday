@@ -16,6 +16,8 @@ async def create_savings_goal(
     data: SavingsGoalCreate
 ) -> SavingsGoal:
     """创建存款目标"""
+    from app.services.ability_points_service import trigger_event
+
     goal = SavingsGoal(
         user_id=user_id,
         title=data.title,
@@ -30,13 +32,33 @@ async def create_savings_goal(
     )
 
     # 如果当前金额已达到目标，标记为完成
-    if goal.current_amount >= goal.target_amount:
+    was_completed = goal.current_amount >= goal.target_amount
+    if was_completed:
         goal.status = "completed"
         goal.completed_at = datetime.utcnow()
 
     db.add(goal)
     await db.commit()
     await db.refresh(goal)
+
+    # 发放积分
+    if was_completed:
+        # 如果创建时就已完成，只发完成积分
+        await trigger_event(
+            db, user_id, "savings_goal_complete",
+            reference_id=str(goal.id),
+            reference_type="savings_goal",
+            description="完成存款目标"
+        )
+    else:
+        # 创建积分
+        await trigger_event(
+            db, user_id, "savings_goal_create",
+            reference_id=str(goal.id),
+            reference_type="savings_goal",
+            description="创建存款目标"
+        )
+
     return goal
 
 
@@ -79,9 +101,14 @@ async def update_savings_goal(
     data: SavingsGoalUpdate
 ) -> Optional[SavingsGoal]:
     """更新存款目标"""
+    from app.services.ability_points_service import trigger_event
+
     goal = await get_savings_goal_by_id(db, goal_id, user_id)
     if not goal:
         raise NotFoundException("存款目标不存在")
+
+    # 记录之前的状态
+    was_completed_before = goal.status == "completed"
 
     # 更新字段
     update_data = data.model_dump(exclude_unset=True)
@@ -89,12 +116,24 @@ async def update_savings_goal(
         setattr(goal, field, value)
 
     # 检查是否完成
+    just_completed = False
     if goal.current_amount >= goal.target_amount and goal.status != "completed":
         goal.status = "completed"
         goal.completed_at = datetime.utcnow()
+        just_completed = True
 
     await db.commit()
     await db.refresh(goal)
+
+    # 如果刚刚完成，发放完成积分（之前未完成，现在完成了）
+    if just_completed and not was_completed_before:
+        await trigger_event(
+            db, user_id, "savings_goal_complete",
+            reference_id=str(goal.id),
+            reference_type="savings_goal",
+            description="完成存款目标"
+        )
+
     return goal
 
 
@@ -120,6 +159,8 @@ async def add_deposit(
     amount: float
 ) -> Optional[SavingsGoal]:
     """向目标存入金额"""
+    from app.services.ability_points_service import trigger_event
+
     # 验证金额合理性
     if amount <= 0:
         raise ValidationException("存款金额必须大于0")
@@ -133,16 +174,31 @@ async def add_deposit(
     if goal.status not in ["active", "paused"]:
         raise ValidationException("只能向活跃或暂停的目标存款")
 
+    # 记录之前的状态
+    was_completed_before = goal.status == "completed"
+
     # 将 float 转换为 Decimal 以匹配数据库类型
     goal.current_amount += Decimal(str(amount))
 
     # 检查是否完成
+    just_completed = False
     if goal.current_amount >= goal.target_amount and goal.status != "completed":
         goal.status = "completed"
         goal.completed_at = datetime.utcnow()
+        just_completed = True
 
     await db.commit()
     await db.refresh(goal)
+
+    # 如果刚刚完成，发放完成积分（之前未完成，现在完成了）
+    if just_completed and not was_completed_before:
+        await trigger_event(
+            db, user_id, "savings_goal_complete",
+            reference_id=str(goal.id),
+            reference_type="savings_goal",
+            description="完成存款目标"
+        )
+
     return goal
 
 

@@ -124,6 +124,16 @@ async def create(
 
         # 刷新评论对象以获取数据库生成的值
         await db.refresh(comment)
+
+        # 发放评论积分
+        from app.services.ability_points_service import trigger_event
+        await trigger_event(
+            db, user_id, "comment_create",
+            reference_id=str(comment.id),
+            reference_type="comment",
+            description="发表评论"
+        )
+
         return comment
     except SQLAlchemyError as e:
         await db.rollback()

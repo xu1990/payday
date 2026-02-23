@@ -7,8 +7,8 @@ describe('UserAvatar', () => {
     const wrapper = mount(UserAvatar, {
       props: {
         avatar: 'https://example.com/avatar.jpg',
-        anonymousName: 'TestUser'
-      }
+        anonymousName: 'TestUser',
+      },
     })
 
     const image = wrapper.find('image')
@@ -20,8 +20,8 @@ describe('UserAvatar', () => {
     const wrapper = mount(UserAvatar, {
       props: {
         avatar: null,
-        anonymousName: 'TestUser'
-      }
+        anonymousName: 'TestUser',
+      },
     })
 
     const placeholder = wrapper.find('.avatar-placeholder')
@@ -33,8 +33,8 @@ describe('UserAvatar', () => {
     const wrapper = mount(UserAvatar, {
       props: {
         avatar: null,
-        anonymousName: ''
-      }
+        anonymousName: '',
+      },
     })
 
     const placeholder = wrapper.find('.avatar-placeholder')
@@ -46,8 +46,8 @@ describe('UserAvatar', () => {
       props: {
         avatar: null,
         anonymousName: 'Test',
-        size: 'small'
-      }
+        size: 'small',
+      },
     })
 
     expect(wrapper.find('.small').exists()).toBe(true)

@@ -16,6 +16,6 @@ export function getQRCodeMapping(shortCode: string) {
   }>({
     url: `/api/v1/qrcode/wxa/mapping/${shortCode}`,
     method: 'GET',
-    noAuth: true // 二维码扫描时用户可能还未登录
+    noAuth: true, // 二维码扫描时用户可能还未登录
   })
 }

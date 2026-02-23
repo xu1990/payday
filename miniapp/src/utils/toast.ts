@@ -73,7 +73,7 @@ export function showConfirm(
     content: options?.content || title,
     confirmText: options?.confirmText || '确定',
     cancelText: options?.cancelText || '取消',
-    success: (res) => {
+    success: res => {
       if (res.confirm) {
         onConfirm()
       }

@@ -7,17 +7,22 @@
     <view class="form">
       <view class="form-item">
         <text class="label">目标名称 *</text>
-        <input class="input" v-model="form.title" placeholder="如：买房基金、旅游基金" />
+        <input v-model="form.title" class="input" placeholder="如：买房基金、旅游基金" />
       </view>
 
       <view class="form-item">
         <text class="label">目标金额 (¥) *</text>
-        <input class="input" type="digit" v-model="form.targetAmount" placeholder="输入目标金额" />
+        <input v-model="form.targetAmount" class="input" type="digit" placeholder="输入目标金额" />
       </view>
 
       <view class="form-item">
         <text class="label">初始金额 (¥)</text>
-        <input class="input" type="digit" v-model="form.currentAmount" placeholder="已有金额（可选）" />
+        <input
+          v-model="form.currentAmount"
+          class="input"
+          type="digit"
+          placeholder="已有金额（可选）"
+        />
       </view>
 
       <view class="form-item">
@@ -32,7 +37,7 @@
 
       <view class="form-item">
         <text class="label">开始日期</text>
-        <uni-datetime-picker type="date" v-model="form.startDate">
+        <uni-datetime-picker v-model="form.startDate" type="date">
           <view class="picker">
             <text>{{ form.startDate || '选择日期' }}</text>
           </view>
@@ -41,7 +46,7 @@
 
       <view class="form-item">
         <text class="label">目标截止日期</text>
-        <uni-datetime-picker type="date" v-model="form.deadline">
+        <uni-datetime-picker v-model="form.deadline" type="date">
           <view class="picker">
             <text>{{ form.deadline || '选择日期' }}</text>
           </view>
@@ -50,12 +55,12 @@
 
       <view class="form-item">
         <text class="label">备注</text>
-        <textarea class="textarea" v-model="form.description" placeholder="描述你的目标（可选）" />
+        <textarea v-model="form.description" class="textarea" placeholder="描述你的目标（可选）" />
       </view>
     </view>
 
     <view class="footer">
-      <button class="submit-btn" @tap="handleSubmit" :disabled="!isValid">创建目标</button>
+      <button class="submit-btn" :disabled="!isValid" @tap="handleSubmit">创建目标</button>
     </view>
   </view>
 </template>
@@ -71,7 +76,7 @@ const form = ref({
   category: '',
   startDate: '',
   deadline: '',
-  description: ''
+  description: '',
 })
 
 const categories = ['买房', '买车', '旅游', '教育', '应急', '数码产品', '其他']
@@ -100,7 +105,7 @@ async function handleSubmit() {
       category: form.value.category || undefined,
       startDate: form.value.startDate || undefined,
       deadline: form.value.deadline || undefined,
-      description: form.value.description || undefined
+      description: form.value.description || undefined,
     }
 
     console.log('[createSavingsGoal] Sending data:', data)
@@ -116,7 +121,7 @@ async function handleSubmit() {
     console.error('Failed to create savings goal:', error)
     uni.showToast({
       title: error.message || '创建失败，请重试',
-      icon: 'none'
+      icon: 'none',
     })
   }
 }
@@ -160,7 +165,9 @@ async function handleSubmit() {
       font-weight: 500;
     }
 
-    .input, .textarea, .picker {
+    .input,
+    .textarea,
+    .picker {
       width: 100%;
       padding: 20rpx;
       border: 1rpx solid #e0e0e0;
