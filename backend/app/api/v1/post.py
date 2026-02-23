@@ -57,7 +57,7 @@ async def post_create(
 ):
     # 发帖使用当前用户匿名昵称（与 PRD/技术方案一致）
     # SECURITY: 速率限制已通过 _rate_limit 依赖应用
-    post = await create_post(db, current_user.id, body, anonymous_name=current_user.anonymous_name)
+    post = await create_post(db, current_user.id, body, anonymous_name=current_user.anonymous_name, user_avatar=current_user.avatar)
     background_tasks.add_task(run_risk_check_for_post, post.id)
     return success_response(data=PostResponse.model_validate(post).model_dump(mode='json'), message="发帖成功")
 
