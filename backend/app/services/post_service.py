@@ -141,6 +141,7 @@ async def get_by_id(
         'id': post.id,
         'user_id': post.user_id,
         'anonymous_name': post.anonymous_name,
+        'user_avatar': post.user_avatar,
         'content': post.content,
         'images': post.images,
         'tags': post.tags,
