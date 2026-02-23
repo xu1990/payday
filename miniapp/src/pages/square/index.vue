@@ -6,6 +6,7 @@ import { useDebounceFn } from '@/composables/useDebounce'
 import { useAuthStore } from '@/stores/auth'
 import PostActionBar from '@/components/PostActionBar.vue'
 import FollowButton from '@/components/FollowButton.vue'
+import UserAvatar from '@/components/UserAvatar.vue'
 import { formatRelativeTime } from '@/utils/format'
 
 type Sort = 'hot' | 'latest'
@@ -120,6 +121,11 @@ function handleUnfollow(data: { targetUserId: string }) {
       <view v-for="item in list" :key="item.id" class="card" @click="goDetail(item.id)">
         <view class="row">
           <view class="author-section">
+            <UserAvatar
+              :avatar="item.user_avatar"
+              :anonymous-name="item.anonymous_name"
+              size="small"
+            />
             <text class="name">{{ item.anonymous_name }}</text>
             <FollowButton
               v-if="authStore.isLoggedIn && item.user_id !== authStore.user?.id"
@@ -206,7 +212,7 @@ function handleUnfollow(data: { targetUserId: string }) {
 .author-section {
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  gap: 12rpx;
   flex: 1;
 }
 .name {
