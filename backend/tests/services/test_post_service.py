@@ -1250,3 +1250,50 @@ class TestDataIsolation:
 
         assert total == 2
         assert len(posts) == 2
+
+
+class TestUserAvatarField:
+    """测试 user_avatar 字段"""
+
+    @pytest.mark.asyncio
+    async def test_create_post_with_user_avatar(self, db_session: AsyncSession):
+        """Test creating a post includes user_avatar"""
+        from app.schemas.post import PostCreate
+        from app.services.post_service import create
+
+        post_data = PostCreate(content="Test post content")
+        user_avatar = "https://example.com/test_avatar.jpg"
+
+        post = await create(
+            db_session,
+            user_id="test_user_123",
+            data=post_data,
+            anonymous_name="TestUser",
+            user_avatar=user_avatar
+        )
+
+        assert post.user_avatar == user_avatar
+        assert post.content == "Test post content"
+
+    @pytest.mark.asyncio
+    async def test_get_post_detail_includes_user_avatar(self, db_session: AsyncSession):
+        """Test get_by_id returns user_avatar field"""
+        from app.services.post_service import create, get_by_id
+        from app.schemas.post import PostCreate
+
+        # First create a post
+        post_data = PostCreate(content="Test content")
+        post = await create(
+            db_session,
+            user_id="user_123",
+            data=post_data,
+            anonymous_name="AnonUser",
+            user_avatar="https://example.com/avatar.png"
+        )
+
+        # Then get it back
+        post_dict = await get_by_id(db_session, post.id, only_approved=False)
+
+        assert post_dict is not None
+        assert 'user_avatar' in post_dict
+        assert post_dict['user_avatar'] == "https://example.com/avatar.png"
