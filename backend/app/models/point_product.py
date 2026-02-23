@@ -16,7 +16,7 @@ class PointProduct(Base):
     # 基本信息
     name = Column(String(100), nullable=False, comment="商品名称")
     description = Column(Text, nullable=True, comment="商品描述")
-    image_url = Column(String(500), nullable=True, comment="商品图片URL")
+    image_urls = Column(Text, nullable=True, comment="商品图片URLs (JSON数组)")
 
     # 价格与库存
     points_cost = Column(Integer, nullable=False, comment="积分价格")

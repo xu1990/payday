@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
+import json
 
 from app.models.point_product import PointProduct
 from app.models.point_order import PointOrder
@@ -20,7 +21,7 @@ async def create_product(
     stock: int,
     stock_unlimited: bool = False,
     description: Optional[str] = None,
-    image_url: Optional[str] = None,
+    image_urls: Optional[List[str]] = None,
     category: Optional[str] = None,
     sort_order: int = 0,
 ) -> PointProduct:
@@ -31,13 +32,16 @@ async def create_product(
     if not stock_unlimited and stock < 0:
         raise ValidationException("库存不能为负数")
 
+    # 将图片列表转换为JSON字符串
+    image_urls_json = json.dumps(image_urls) if image_urls else None
+
     product = PointProduct(
         name=name,
         points_cost=points_cost,
         stock=stock,
         stock_unlimited=stock_unlimited,
         description=description,
-        image_url=image_url,
+        image_urls=image_urls_json,
         category=category,
         sort_order=sort_order,
         is_active=True,
@@ -65,6 +69,9 @@ async def update_product(
     # 更新字段
     for key, value in kwargs.items():
         if hasattr(product, key) and value is not None:
+            # 如果是image_urls参数，需要转换为JSON字符串
+            if key == "image_urls" and isinstance(value, list):
+                value = json.dumps(value)
             setattr(product, key, value)
 
     await db.commit()
@@ -187,13 +194,22 @@ async def create_order(
     else:
         raise BusinessException("生成订单号失败，请重试", code="ORDER_NUMBER_GENERATION_FAILED")
 
-    # 6. 创建订单
+    # 6. 创建订单（保存第一张图片作为快照）
+    first_image_url = None
+    if product.image_urls:
+        try:
+            urls = json.loads(product.image_urls)
+            if urls and len(urls) > 0:
+                first_image_url = urls[0]
+        except:
+            pass
+
     order = PointOrder(
         user_id=user_id,
         product_id=product_id,
         order_number=order_number,
         product_name=product.name,
-        product_image=product.image_url,
+        product_image=first_image_url,
         points_cost=product.points_cost,
         delivery_info=delivery_info,
         notes=notes,

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Close, Plus } from '@element-plus/icons-vue'
+import type { UploadRequestOptions } from 'element-plus'
 import {
   listPointProducts,
   createPointProduct,
@@ -10,6 +12,7 @@ import {
   type PointProductCreate,
 } from '@/api/pointShop'
 import { formatDate } from '@/utils/format'
+import adminApi from '@/api/admin'
 
 const list = ref<PointProduct[]>([])
 const loading = ref(false)
@@ -21,16 +24,83 @@ const pageSize = 20
 const showDialog = ref(false)
 const dialogMode = ref<'create' | 'edit'>('create')
 const editId = ref<string | null>(null)
+const uploading = ref(false)
 const form = ref<PointProductCreate>({
   name: '',
   description: '',
-  image_url: '',
+  image_urls: [],
   points_cost: 0,
   stock: 0,
   stock_unlimited: false,
   category: '',
   sort_order: 0,
 })
+
+// 图片上传处理
+const handleImageUpload = async (options: UploadRequestOptions) => {
+  const { file, onSuccess, onError } = options
+
+  // 检查图片数量限制
+  if (form.value.image_urls && form.value.image_urls.length >= 6) {
+    ElMessage.error('最多只能上传6张图片')
+    onError?.(new Error('超过图片数量限制'))
+    return
+  }
+
+  uploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const res = await adminApi.post('/admin/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+
+    const url = res.data?.details?.url || res.data?.url
+    if (url) {
+      if (!form.value.image_urls) {
+        form.value.image_urls = []
+      }
+      form.value.image_urls.push(url)
+      ElMessage.success('图片上传成功')
+      onSuccess?.(res.data)
+    } else {
+      throw new Error('上传失败：未返回URL')
+    }
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : '上传失败'
+    ElMessage.error(errorMessage)
+    onError?.(e as Error)
+  } finally {
+    uploading.value = false
+  }
+}
+
+const beforeImageUpload = (rawFile: File) => {
+  if (!rawFile.type.startsWith('image/')) {
+    ElMessage.error('只能上传图片文件')
+    return false
+  }
+  if (rawFile.size / 1024 / 1024 > 5) {
+    ElMessage.error('图片大小不能超过5MB')
+    return false
+  }
+
+  // 检查图片数量限制
+  if (form.value.image_urls && form.value.image_urls.length >= 6) {
+    ElMessage.error('最多只能上传6张图片')
+    return false
+  }
+  return true
+}
+
+const removeImage = (index: number) => {
+  if (form.value.image_urls) {
+    form.value.image_urls.splice(index, 1)
+  }
+}
 
 async function loadData() {
   loading.value = true
@@ -55,7 +125,7 @@ function openCreate() {
   form.value = {
     name: '',
     description: '',
-    image_url: '',
+    image_urls: [],
     points_cost: 0,
     stock: 0,
     stock_unlimited: false,
@@ -71,7 +141,7 @@ function openEdit(item: PointProduct) {
   form.value = {
     name: item.name,
     description: item.description || '',
-    image_url: item.image_url || '',
+    image_urls: item.image_urls || [],
     points_cost: item.points_cost,
     stock: item.stock,
     stock_unlimited: item.stock_unlimited,
@@ -228,8 +298,57 @@ onMounted(() => {
             placeholder="请输入商品描述"
           />
         </el-form-item>
-        <el-form-item label="图片URL">
-          <el-input v-model="form.image_url" placeholder="请输入图片URL" />
+        <el-form-item label="商品图片">
+          <div class="upload-tip">
+            已上传 {{ form.image_urls?.length || 0 }} / 6 张
+          </div>
+
+          <!-- 图片上传列表 -->
+          <div class="image-upload-list">
+            <!-- 已上传的图片 -->
+            <div
+              v-for="(url, index) in form.image_urls"
+              :key="index"
+              class="upload-item"
+            >
+              <el-image
+                :src="url"
+                fit="cover"
+                class="upload-image"
+                :preview-src-list="form.image_urls"
+                :initial-index="index"
+              />
+              <div class="upload-mask">
+                <span class="mask-actions">
+                  <el-icon @click="removeImage(index)" class="delete-icon">
+                    <Close />
+                  </el-icon>
+                </span>
+              </div>
+            </div>
+
+            <!-- 上传按钮（带+号） -->
+            <el-upload
+              v-if="(form.image_urls?.length || 0) < 6"
+              :http-request="handleImageUpload"
+              :before-upload="beforeImageUpload"
+              :disabled="uploading"
+              :show-file-list="false"
+              accept="image/*"
+              class="upload-btn-wrapper"
+            >
+              <div class="upload-placeholder" :class="{ 'is-uploading': uploading }">
+                <el-icon class="upload-icon">
+                  <Plus />
+                </el-icon>
+                <div class="upload-text">{{ uploading ? '上传中...' : '上传图片' }}</div>
+              </div>
+            </el-upload>
+          </div>
+
+          <div class="upload-hint">
+            支持 jpg/png/gif 格式，单个文件不超过 5MB，最多上传 6 张图片
+          </div>
         </el-form-item>
         <el-form-item label="积分价格" required>
           <el-input-number v-model="form.points_cost" :min="1" :max="999999" />
@@ -281,5 +400,120 @@ onMounted(() => {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+.upload-tip {
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #606266;
+  font-weight: 500;
+}
+
+.image-upload-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.upload-item {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.upload-image {
+  width: 100%;
+  height: 100%;
+}
+
+.upload-item:hover .upload-mask {
+  opacity: 1;
+}
+
+.upload-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mask-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.delete-icon {
+  font-size: 20px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.delete-icon:hover {
+  color: #f56c6c;
+}
+
+.upload-btn-wrapper {
+  display: inline-block;
+}
+
+.upload-placeholder {
+  width: 104px;
+  height: 104px;
+  border: 1px dashed #d9d9d9;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background-color: #fbfdff;
+}
+
+.upload-placeholder:hover {
+  border-color: #409eff;
+  background-color: #ecf5ff;
+}
+
+.upload-placeholder.is-uploading {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.upload-icon {
+  font-size: 24px;
+  color: #8c939d;
+  margin-bottom: 4px;
+}
+
+.upload-placeholder:hover .upload-icon {
+  color: #409eff;
+}
+
+.upload-text {
+  font-size: 12px;
+  color: #8c939d;
+}
+
+.upload-placeholder:hover .upload-text {
+  color: #409eff;
+}
+
+.upload-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #909399;
+  line-height: 1.5;
 }
 </style>

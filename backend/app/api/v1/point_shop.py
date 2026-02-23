@@ -1,12 +1,13 @@
 """积分商品API - Sprint 4.7 商品兑换系统"""
-from typing import Optional
+from typing import Optional, List
 from fastapi import APIRouter, Depends, Query, Body
 from pydantic import BaseModel, Field
 
 from sqlalchemy.ext.asyncio import AsyncSession
+import json
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, get_current_admin_user
 from app.core.exceptions import success_response
 from app.models.user import User
 from app.services.point_product_service import (
@@ -35,7 +36,7 @@ class ProductCreate(BaseModel):
     stock: int = Field(..., ge=0)
     stock_unlimited: bool = False
     description: Optional[str] = None
-    image_url: Optional[str] = None
+    image_urls: Optional[List[str]] = Field(None, max_length=6)
     category: Optional[str] = None
     sort_order: int = 0
 
@@ -46,7 +47,7 @@ class ProductUpdate(BaseModel):
     stock: Optional[int] = Field(None, ge=0)
     stock_unlimited: Optional[bool] = None
     description: Optional[str] = None
-    image_url: Optional[str] = None
+    image_urls: Optional[List[str]] = Field(None, max_length=6)
     category: Optional[str] = None
     sort_order: Optional[int] = None
     is_active: Optional[bool] = None
@@ -68,16 +69,27 @@ async def get_products(
     """获取商品列表"""
     products = await list_products(db, active_only=True, category=category)
 
-    data = [{
-        "id": p.id,
-        "name": p.name,
-        "description": p.description,
-        "image_url": p.image_url,
-        "points_cost": p.points_cost,
-        "stock": p.stock if not p.stock_unlimited else 999,
-        "stock_unlimited": p.stock_unlimited,
-        "category": p.category,
-    } for p in products]
+    data = []
+    for p in products:
+        # 解析图片URLs
+        image_urls = []
+        if p.image_urls:
+            try:
+                image_urls = json.loads(p.image_urls)
+            except:
+                pass
+
+        data.append({
+            "id": p.id,
+            "name": p.name,
+            "description": p.description,
+            "image_urls": image_urls,
+            "image_url": image_urls[0] if image_urls else None,  # 兼容旧版
+            "points_cost": p.points_cost,
+            "stock": p.stock if not p.stock_unlimited else 999,
+            "stock_unlimited": p.stock_unlimited,
+            "category": p.category,
+        })
 
     return success_response(data={"products": data, "total": len(data)})
 
@@ -91,11 +103,20 @@ async def get_product_detail(
     """获取商品详情"""
     product = await get_product(db, product_id)
 
+    # 解析图片URLs
+    image_urls = []
+    if product.image_urls:
+        try:
+            image_urls = json.loads(product.image_urls)
+        except:
+            pass
+
     data = {
         "id": product.id,
         "name": product.name,
         "description": product.description,
-        "image_url": product.image_url,
+        "image_urls": image_urls,
+        "image_url": image_urls[0] if image_urls else None,  # 兼容旧版
         "points_cost": product.points_cost,
         "stock": product.stock if not product.stock_unlimited else 999,
         "stock_unlimited": product.stock_unlimited,
@@ -195,25 +216,36 @@ async def cancel_user_order(
 @router.get("/admin/products")
 async def admin_list_products(
     active_only: bool = Query(False),
-    current_user: User = Depends(get_current_user),
+    current_admin: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     """获取所有商品（管理员）"""
     products = await list_products(db, active_only=active_only)
 
-    data = [{
-        "id": p.id,
-        "name": p.name,
-        "description": p.description,
-        "image_url": p.image_url,
-        "points_cost": p.points_cost,
-        "stock": p.stock,
-        "stock_unlimited": p.stock_unlimited,
-        "category": p.category,
-        "is_active": p.is_active,
-        "sort_order": p.sort_order,
-        "created_at": p.created_at.isoformat(),
-    } for p in products]
+    data = []
+    for p in products:
+        # 解析图片URLs
+        image_urls = []
+        if p.image_urls:
+            try:
+                image_urls = json.loads(p.image_urls)
+            except:
+                pass
+
+        data.append({
+            "id": p.id,
+            "name": p.name,
+            "description": p.description,
+            "image_urls": image_urls,
+            "image_url": image_urls[0] if image_urls else None,  # 兼容旧版
+            "points_cost": p.points_cost,
+            "stock": p.stock,
+            "stock_unlimited": p.stock_unlimited,
+            "category": p.category,
+            "is_active": p.is_active,
+            "sort_order": p.sort_order,
+            "created_at": p.created_at.isoformat(),
+        })
 
     return success_response(data={"products": data, "total": len(data)})
 
@@ -221,7 +253,7 @@ async def admin_list_products(
 @router.post("/admin/products")
 async def admin_create_product(
     body: ProductCreate,
-    current_user: User = Depends(get_current_user),
+    current_admin: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     """创建商品（管理员）"""
@@ -232,7 +264,7 @@ async def admin_create_product(
         body.stock,
         body.stock_unlimited,
         body.description,
-        body.image_url,
+        body.image_urls,
         body.category,
         body.sort_order,
     )
@@ -244,7 +276,7 @@ async def admin_create_product(
 async def admin_update_product(
     product_id: str,
     body: ProductUpdate,
-    current_user: User = Depends(get_current_user),
+    current_admin: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     """更新商品（管理员）"""
@@ -255,7 +287,7 @@ async def admin_update_product(
 @router.delete("/admin/products/{product_id}")
 async def admin_delete_product(
     product_id: str,
-    current_user: User = Depends(get_current_user),
+    current_admin: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     """删除商品（管理员，软删除）"""
@@ -268,7 +300,7 @@ async def admin_list_orders(
     status: Optional[str] = Query(None),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    current_user: User = Depends(get_current_user),
+    current_admin: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     """获取所有订单（管理员）"""
@@ -292,9 +324,9 @@ async def admin_process_order(
     order_id: str,
     action: str = Body(..., description="complete or cancel"),
     notes: Optional[str] = Body(None),
-    current_user: User = Depends(get_current_user),
+    current_admin: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     """处理订单（管理员）"""
-    order = await process_order(db, order_id, current_user.id, action, notes)
+    order = await process_order(db, order_id, current_admin.id, action, notes)
     return success_response(message=f"订单已{action}d")

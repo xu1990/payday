@@ -138,7 +138,7 @@ function selectCategory(category) {
 
 function goToDetail(product) {
   uni.navigateTo({
-    url: `/pages/point-mall/detail?id=${product.id}`
+    url: `/pages/point-mall/detail/index?id=${product.id}`
   })
 }
 

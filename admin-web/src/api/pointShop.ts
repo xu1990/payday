@@ -3,14 +3,15 @@
  */
 import { request } from '@/utils/request'
 
-const PREFIX = '/api/v1/point-shop/admin'
+const PREFIX = '/point-shop/admin'
 
 // ==================== 商品管理 ====================
 export interface PointProduct {
   id: string
   name: string
   description: string | null
-  image_url: string | null
+  image_urls: string[]
+  image_url: string | null  // 兼容旧版，第一张图片
   points_cost: number
   stock: number
   stock_unlimited: boolean
@@ -23,7 +24,7 @@ export interface PointProduct {
 export interface PointProductCreate {
   name: string
   description?: string | null
-  image_url?: string | null
+  image_urls?: string[]
   points_cost: number
   stock: number
   stock_unlimited?: boolean
@@ -34,7 +35,7 @@ export interface PointProductCreate {
 export interface PointProductUpdate {
   name?: string
   description?: string | null
-  image_url?: string | null
+  image_urls?: string[]
   points_cost?: number
   stock?: number
   stock_unlimited?: boolean
