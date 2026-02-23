@@ -150,6 +150,7 @@ async def get_by_id(
         'industry': post.industry,
         'city': post.city,
         'topic_id': post.topic_id,
+        'topic_ids': post.topic_ids,
         'visibility': post.visibility,
         'view_count': view_count,
         'like_count': post.like_count,
