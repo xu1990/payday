@@ -4,6 +4,7 @@ import { getMyLikes } from '@/api/like'
 import { getMyFollowers, getMyFollowing, checkBatchFollowStatus, type UserItem } from '@/api/follow'
 import { useAuthStore } from '@/stores/auth'
 import FollowButton from '@/components/FollowButton.vue'
+import UserAvatar from '@/components/UserAvatar.vue'
 import { formatRelativeTime } from '@/utils/format'
 
 const authStore = useAuthStore()
@@ -334,6 +335,11 @@ onMounted(() => {
         <view v-for="item in posts" :key="item.id" class="card" @click="goDetail(item.id)">
           <view class="row">
             <view class="author-section">
+              <UserAvatar
+                :avatar="item.user_avatar"
+                :anonymous-name="item.anonymous_name"
+                size="small"
+              />
               <text class="name">{{ item.anonymous_name }}</text>
             </view>
             <text class="time">{{ formatTime(item.created_at) }}</text>
@@ -519,7 +525,7 @@ onMounted(() => {
 .author-section {
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  gap: 12rpx;
   flex: 1;
 }
 
