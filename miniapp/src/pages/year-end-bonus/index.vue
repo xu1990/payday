@@ -10,6 +10,37 @@
       </picker>
     </view>
 
+    <!-- 添加年终奖按钮 -->
+    <view class="action-bar">
+      <button class="btn-add-bonus" @click="goToAddBonus">+ 记录年终奖</button>
+    </view>
+
+    <!-- 我的年终奖 -->
+    <view v-if="stats && stats.my_bonus" class="my-bonus-card">
+      <view class="my-bonus-header">
+        <text class="my-bonus-title">🎁 我的年终奖</text>
+        <text class="my-bonus-count">{{ stats.my_bonus.count }}条记录</text>
+      </view>
+      <view class="my-bonus-amount">
+        <text class="amount-label">总计</text>
+        <text class="amount-value">¥{{ stats.my_bonus.total_amount }}</text>
+      </view>
+      <view v-if="stats.my_bonus.records && stats.my_bonus.records.length > 0" class="my-bonus-list">
+        <view v-for="record in stats.my_bonus.records" :key="record.id" class="bonus-record-item">
+          <text class="record-amount">¥{{ record.amount }}</text>
+          <text class="record-date">{{ record.payday_date || '未知日期' }}</text>
+        </view>
+      </view>
+    </view>
+
+    <view v-else-if="!loading" class="my-bonus-card empty-bonus">
+      <view class="empty-bonus-content">
+        <text class="empty-icon">🎁</text>
+        <text class="empty-text">还没有年终奖记录</text>
+        <text class="empty-hint">点击上方按钮记录你的年终奖</text>
+      </view>
+    </view>
+
     <view v-if="loading" class="loading">
       <text>加载中...</text>
     </view>
@@ -19,15 +50,15 @@
       <view class="overview-card">
         <view class="card-item">
           <text class="label">记录数</text>
-          <text class="value">{{ stats.totalCount }}</text>
+          <text class="value">{{ stats.total_count }}</text>
         </view>
         <view class="card-item highlight">
           <text class="label">平均年终奖</text>
-          <text class="value">¥{{ stats.averageAmount }}</text>
+          <text class="value">¥{{ stats.average_amount }}</text>
         </view>
         <view class="card-item">
           <text class="label">中位数</text>
-          <text class="value">¥{{ stats.medianAmount }}</text>
+          <text class="value">¥{{ stats.median_amount }}</text>
         </view>
       </view>
 
@@ -38,7 +69,7 @@
           <view class="range-item" v-for="(value, key) in stats.ranges" :key="key">
             <view class="range-label">{{ key }}</view>
             <view class="range-bar">
-              <view class="bar-fill" :style="{ width: getPercentage(value, stats.totalCount) + '%' }"></view>
+              <view class="bar-fill" :style="{ width: getPercentage(value, stats.total_count) + '%' }"></view>
             </view>
             <view class="range-value">{{ value }}人</view>
           </view>
@@ -50,15 +81,15 @@
         <view class="section-title">统计详情</view>
         <view class="detail-row">
           <text class="detail-label">最高金额</text>
-          <text class="detail-value">¥{{ stats.maxAmount }}</text>
+          <text class="detail-value">¥{{ stats.max_amount }}</text>
         </view>
         <view class="detail-row">
           <text class="detail-label">最低金额</text>
-          <text class="detail-value">¥{{ stats.minAmount }}</text>
+          <text class="detail-value">¥{{ stats.min_amount }}</text>
         </view>
         <view class="detail-row">
           <text class="detail-label">总金额</text>
-          <text class="detail-value">¥{{ stats.totalAmount }}</text>
+          <text class="detail-value">¥{{ stats.total_amount }}</text>
         </view>
       </view>
     </view>
@@ -112,6 +143,10 @@ function getPercentage(value, total) {
   if (total === 0) return 0
   return (value / total * 100).toFixed(1)
 }
+
+function goToAddBonus() {
+  uni.navigateTo({ url: '/pages/salary-record/index?type=bonus' })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -147,6 +182,124 @@ function getPercentage(value, total) {
     .arrow {
       margin-left: 10rpx;
       font-size: 20rpx;
+    }
+  }
+}
+
+.action-bar {
+  margin-bottom: 20rpx;
+
+  .btn-add-bonus {
+    width: 100%;
+    background: linear-gradient(135deg, #fdcb6e 0%, #f39c12 100%);
+    color: white;
+    border: none;
+    border-radius: 50rpx;
+    padding: 28rpx;
+    font-size: 30rpx;
+    font-weight: bold;
+    box-shadow: 0 8rpx 24rpx rgba(253, 203, 110, 0.4);
+  }
+}
+
+.my-bonus-card {
+  background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(253, 203, 110, 0.3);
+
+  &.empty-bonus {
+    background: linear-gradient(135deg, #dfe6e9 0%, #b2bec3 100%);
+  }
+
+  .my-bonus-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20rpx;
+
+    .my-bonus-title {
+      font-size: 32rpx;
+      font-weight: bold;
+      color: #2d3436;
+    }
+
+    .my-bonus-count {
+      font-size: 24rpx;
+      color: #636e72;
+    }
+  }
+
+  .my-bonus-amount {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20rpx 0;
+    border-top: 1rpx solid rgba(255, 255, 255, 0.3);
+
+    .amount-label {
+      font-size: 28rpx;
+      color: #2d3436;
+    }
+
+    .amount-value {
+      font-size: 48rpx;
+      font-weight: bold;
+      color: #d63031;
+    }
+  }
+
+  .my-bonus-list {
+    margin-top: 20rpx;
+    border-top: 1rpx solid rgba(255, 255, 255, 0.3);
+    padding-top: 20rpx;
+
+    .bonus-record-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16rpx 0;
+      border-bottom: 1rpx solid rgba(255, 255, 255, 0.2);
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .record-amount {
+        font-size: 28rpx;
+        font-weight: bold;
+        color: #2d3436;
+      }
+
+      .record-date {
+        font-size: 24rpx;
+        color: #636e72;
+      }
+    }
+  }
+
+  .empty-bonus-content {
+    text-align: center;
+    padding: 40rpx 0;
+
+    .empty-icon {
+      font-size: 80rpx;
+      display: block;
+      margin-bottom: 16rpx;
+    }
+
+    .empty-text {
+      font-size: 28rpx;
+      color: #2d3436;
+      display: block;
+      margin-bottom: 8rpx;
+    }
+
+    .empty-hint {
+      font-size: 24rpx;
+      color: #636e72;
+      display: block;
     }
   }
 }

@@ -195,10 +195,10 @@ async def get_insights_distributions(db: AsyncSession) -> dict:
     }
 
 
-async def get_year_end_bonus_stats(db: AsyncSession, year: int = None) -> dict:
+async def get_year_end_bonus_stats(db: AsyncSession, user_id: str = None, year: int = None) -> dict:
     """
     年终奖统计（Sprint 4.2）
-    按年份统计年终奖数据
+    按年份统计年终奖数据，包括当前用户的年终奖
     """
     # 查询年终奖记录 (salary_type='bonus')
     query = select(SalaryRecord).where(SalaryRecord.salary_type == "bonus")
@@ -209,6 +209,37 @@ async def get_year_end_bonus_stats(db: AsyncSession, year: int = None) -> dict:
 
     result = await db.execute(query)
     bonus_records = result.scalars().all()
+
+    # 如果提供了 user_id，获取当前用户的年终奖记录
+    my_bonus_data = None
+    if user_id:
+        my_query = select(SalaryRecord).where(
+            SalaryRecord.salary_type == "bonus",
+            SalaryRecord.user_id == user_id
+        )
+        if year:
+            my_query = my_query.where(func.extract('year', SalaryRecord.payday_date) == year)
+
+        my_result = await db.execute(my_query)
+        my_bonus_records = my_result.scalars().all()
+
+        if my_bonus_records:
+            my_amounts = [
+                decrypt_amount(r.amount_encrypted, r.encryption_salt)
+                for r in my_bonus_records
+            ]
+            my_bonus_data = {
+                "count": len(my_amounts),
+                "total_amount": round(sum(my_amounts), 2),
+                "records": [
+                    {
+                        "id": str(r.id),
+                        "amount": round(decrypt_amount(r.amount_encrypted, r.encryption_salt), 2),
+                        "payday_date": r.payday_date.isoformat() if r.payday_date else None,
+                    }
+                    for r in my_bonus_records
+                ]
+            }
 
     # 解密并统计数据
     amounts = [
@@ -232,6 +263,7 @@ async def get_year_end_bonus_stats(db: AsyncSession, year: int = None) -> dict:
                 "20-50K": 0,
                 "50K+": 0,
             },
+            "my_bonus": my_bonus_data,
         }
 
     total_count = len(amounts)
@@ -264,6 +296,7 @@ async def get_year_end_bonus_stats(db: AsyncSession, year: int = None) -> dict:
         "max_amount": round(max_amount, 2),
         "min_amount": round(min_amount, 2),
         "ranges": ranges,
+        "my_bonus": my_bonus_data,
     }
 
 

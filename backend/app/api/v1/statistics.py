@@ -52,9 +52,9 @@ async def year_end_bonus_statistics(
 ):
     """
     年终奖统计（Sprint 4.2）
-    按年份统计年终奖数据，包括总数、平均数、中位数、区间分布等
+    按年份统计年终奖数据，包括总数、平均数、中位数、区间分布等，以及当前用户的年终奖
     """
-    return await get_year_end_bonus_stats(db, year)
+    return await get_year_end_bonus_stats(db, current_user.id, year)
 
 
 @router.get("/ontime-payment")

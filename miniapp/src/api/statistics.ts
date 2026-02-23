@@ -94,6 +94,15 @@ export interface YearEndBonusStats {
     '20-50K': number
     '50K+': number
   }
+  my_bonus?: {
+    count: number
+    total_amount: number
+    records: Array<{
+      id: string
+      amount: number
+      payday_date: string | null
+    }>
+  }
 }
 
 /** 获取年终奖统计 */

@@ -5,7 +5,7 @@ import { listPayday, type PaydayConfig } from '@/api/payday'
 import { getSalary, listSalary, type SalaryRecord, type MoodType } from '@/api/salary'
 import { getPostDetail, type PostItem } from '@/api/post'
 import { formatDate } from '@/utils/format'
-import { baseURL } from '@/utils/request'
+import { baseURL, request } from '@/utils/request'
 
 // 获取当前组件实例，用于 Canvas 查询
 const instance = getCurrentInstance()
@@ -157,22 +157,30 @@ function drawPoster(): Promise<void> {
  */
 async function generateQRCodeUrl(id: string, type: 'salary' | 'post' = 'salary'): Promise<string> {
   try {
+    console.log('[poster] Generating QR code for id:', id, 'type:', type)
     // 使用一体化接口：创建映射 + 生成二维码
     // 开发环境使用 pages/index/index（因为 poster 页面未在微信发布）
-    const response: any = await uni.request({
-      url: `${baseURL}/api/v1/qrcode/wxa/generate?width=200`,
+    const response: any = await request({
+      url: '/api/v1/qrcode/wxa/generate?width=200',
       method: 'POST',
       data: {
         page: 'pages/index/index',
         params: type === 'salary' ? { recordId: id, targetPage: 'pages/poster/index' } : { postId: id, targetPage: 'pages/poster/index' }
-      }
+      },
+      noAuth: true // 二维码生成不需要认证
     })
 
-    if (response.data?.code === 'SUCCESS' && response.data?.details?.base64) {
-      console.log('[poster] QR code generated successfully, type:', response.data.details.type)
-      return response.data.details.base64
+    console.log('[poster] QR code API response:', response)
+
+    // request 工具函数已经解析了响应数据，直接访问即可
+    if (response && response.base64) {
+      console.log('[poster] QR code generated successfully, type:', response.type)
+      const base64Data = response.base64
+      console.log('[poster] Base64 data length:', base64Data.length)
+      console.log('[poster] Base64 data prefix:', base64Data.substring(0, 50))
+      return base64Data
     } else {
-      console.error('[poster] QR code generation failed:', response.data)
+      console.error('[poster] QR code generation failed - invalid response:', response)
       throw new Error('Failed to generate QR code')
     }
   } catch (e) {
@@ -245,15 +253,21 @@ function drawSalaryPosterWithQR(
 
         const padding = 24
 
-        console.log('[poster] Starting canvas draw with Canvas 2D API, size:', w, 'x', h, ', dpr:', dpr)
+        // 判断工资类型
+        const isBonus = r.salary_type === 'bonus'
+        const titleText = isBonus ? '年终奖' : '发薪日'
+        const gradientStart = isBonus ? '#fdcb6e' : '#667eea'
+        const gradientEnd = isBonus ? '#f39c12' : '#764ba2'
+
+        console.log('[poster] Starting canvas draw with Canvas 2D API, size:', w, 'x', h, ', dpr:', dpr, ', type:', r.salary_type)
 
         // 清空画布
         ctx.clearRect(0, 0, w, h)
 
-        // 背景 - 渐变色
+        // 背景 - 渐变色（奖金用金色，工资用紫色）
         const gradient = ctx.createLinearGradient(0, 0, 0, h)
-        gradient.addColorStop(0, '#667eea')
-        gradient.addColorStop(1, '#764ba2')
+        gradient.addColorStop(0, gradientStart)
+        gradient.addColorStop(1, gradientEnd)
         ctx.fillStyle = gradient
         ctx.fillRect(0, 0, w, h)
 
@@ -265,7 +279,7 @@ function drawSalaryPosterWithQR(
         ctx.fillStyle = '#fff'
         ctx.font = '16px sans-serif'
         ctx.textAlign = 'center'
-        ctx.fillText('发薪日', w / 2, 50)
+        ctx.fillText(titleText, w / 2, 50)
 
         // 金额背景
         ctx.fillStyle = 'rgba(255,255,255,0.15)'
@@ -311,16 +325,27 @@ function drawSalaryPosterWithQR(
         // 二维码
         if (qrDataUrl) {
           try {
+            console.log('[poster] Drawing QR code, qrDataUrl length:', qrDataUrl.length)
+            console.log('[poster] QR code data prefix:', qrDataUrl.substring(0, 50))
             const qrImage = canvas.createImage()
             await new Promise((imgResolve, imgReject) => {
-              qrImage.onload = imgResolve
-              qrImage.onerror = imgReject
+              console.log('[poster] Setting QR image source...')
+              qrImage.onload = () => {
+                console.log('[poster] QR image loaded successfully')
+                imgResolve()
+              }
+              qrImage.onerror = (err) => {
+                console.error('[poster] QR image load error:', err)
+                imgReject(err)
+              }
               qrImage.src = qrDataUrl
             })
+            console.log('[poster] Drawing QR image to canvas...')
             const qrSize = 80
             const qrX = w / 2 - qrSize / 2
             const qrY = 310
             ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize)
+            console.log('[poster] QR code drawn successfully')
 
             // 二维码下方文字
             ctx.fillStyle = 'rgba(255,255,255,0.8)'
@@ -329,14 +354,18 @@ function drawSalaryPosterWithQR(
             ctx.fillText('扫码查看详情', w / 2, 405)
           } catch (e) {
             console.error('[poster] Failed to draw QR code:', e)
+            console.error('[poster] QR code error stack:', e?.stack)
           }
+        } else {
+          console.log('[poster] No QR code data to draw')
         }
 
-        // 底部文案
+        // 底部文案（根据类型区分）
         ctx.fillStyle = 'rgba(255,255,255,0.6)'
         ctx.font = '12px sans-serif'
         ctx.textAlign = 'center'
-        ctx.fillText('薪日 PayDay · 记录每一次到账', w / 2, h - 15)
+        const footerText = isBonus ? '薪日 PayDay · 记录年终奖时刻' : '薪日 PayDay · 记录每一次到账'
+        ctx.fillText(footerText, w / 2, h - 15)
 
         console.log('[poster] Canvas draw completed, converting to temp file')
 

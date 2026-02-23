@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import { listPayday, type PaydayConfig } from '@/api/payday'
 import {
   listSalary,
@@ -36,6 +37,7 @@ const formMode = ref<'add' | 'edit'>('add')
 const editId = ref<string | null>(null)
 const showForm = ref(false)
 const showAdvanced = ref(false)
+const initialSalaryType = ref<SalaryType>('normal')
 const form = ref<{
   config_id: string
   amount: string
@@ -101,6 +103,17 @@ async function loadRecordList() {
   }
 }
 
+// onLoad: 读取页面参数，支持 type 参数预选工资类型
+onLoad((options: any) => {
+  if (options?.type && ['normal', 'bonus', 'allowance', 'other'].includes(options.type)) {
+    initialSalaryType.value = options.type as SalaryType
+    // 如果指定了类型，自动打开添加表单
+    setTimeout(() => {
+      openAdd()
+    }, 300)
+  }
+})
+
 function openAdd() {
   formMode.value = 'add'
   editId.value = null
@@ -111,7 +124,7 @@ function openAdd() {
     before_tax: '',
     tax_amount: '',
     payday_date: today,
-    salary_type: 'normal',
+    salary_type: initialSalaryType.value,
     mood: 'happy',
     salary_source: '',
     delay_days: '',
