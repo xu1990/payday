@@ -25,6 +25,7 @@ class PostResponse(BaseModel):
     id: str
     user_id: str
     anonymous_name: str
+    user_avatar: Optional[str] = None
     content: str
     images: Optional[List[str]] = None
     tags: Optional[List[str]] = None
