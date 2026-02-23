@@ -26,10 +26,9 @@ def upgrade() -> None:
     # Backfill existing posts with user avatar from users table
     connection = op.get_bind()
     connection.execute(text("""
-        UPDATE posts p
-        LEFT JOIN users u ON p.user_id = u.id
-        SET p.user_avatar = u.avatar
-        WHERE p.user_avatar IS NULL
+        UPDATE posts
+        SET user_avatar = (SELECT avatar FROM users WHERE users.id = posts.user_id)
+        WHERE user_avatar IS NULL
     """))
 
 
