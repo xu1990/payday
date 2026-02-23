@@ -50,8 +50,9 @@ async function uploadAvatar(filePath: string) {
     })
 
     const data = JSON.parse(uploadRes.data)
-    if (data.code === 0) {
-      avatarUrl.value = data.data.url
+    // 后端返回格式：{ code: "SUCCESS", message: "...", details: { url: "..." } }
+    if (data.code === 'SUCCESS' && data.details?.url) {
+      avatarUrl.value = data.details.url
 
       // 更新 userStore
       await userStore.fetchCurrentUser()

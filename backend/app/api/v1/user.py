@@ -138,7 +138,18 @@ async def upload_avatar(
     import uuid
     ext = file.filename.split('.')[-1] if file.filename else 'jpg'
     key = f"avatars/{current_user.id}/{uuid.uuid4()}.{ext}"
-    url = storage_service.cos_client.upload_file(content, key)
+
+    # 获取文件扩展名对应的content-type
+    content_type_map = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+    }
+    content_type = content_type_map.get(ext.lower(), 'image/jpeg')
+
+    url = await storage_service.upload_bytes(content, key, content_type)
 
     # 更新用户头像
     user = await upload_user_avatar(db, current_user.id, url)

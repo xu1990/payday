@@ -22,10 +22,11 @@ export async function uploadImage(filePath: string): Promise<string> {
         if (res.statusCode === 200) {
           try {
             const data = JSON.parse(res.data)
-            if (data.details?.url) {
+            // 后端返回格式：{ code: "SUCCESS", message: "...", details: { url: "..." } }
+            if (data.code === 'SUCCESS' && data.details?.url) {
               resolve(data.details.url)
             } else {
-              reject(new Error('上传失败：响应格式错误'))
+              reject(new Error(data.message || '上传失败：响应格式错误'))
             }
           } catch (e) {
             reject(new Error('上传失败：解析响应失败'))

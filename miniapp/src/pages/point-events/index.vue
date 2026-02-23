@@ -28,6 +28,7 @@
         class="event-card"
         v-for="event in events"
         :key="event.event_type"
+        @tap="goToEvent(event.event_type)"
       >
         <view class="event-icon">{{ getEventIcon(event.event_type) }}</view>
         <view class="event-info">
@@ -38,6 +39,7 @@
           <text class="points">+{{ event.points }}</text>
           <text class="label">积分</text>
         </view>
+        <view class="arrow">›</view>
       </view>
     </view>
   </view>
@@ -134,6 +136,28 @@ function goToInvite() {
   uni.navigateTo({
     url: '/pages/invite-code/index'
   })
+}
+
+function goToEvent(eventType) {
+  const routes = {
+    checkin_daily: '/pages/checkin/index',
+    checkin_weekly: '/pages/checkin/index',
+    checkin_milestone: '/pages/checkin/index',
+    checkin_special: '/pages/checkin/index',
+    post_create: '/pages/post-create/index',
+    follow_someone: '/pages/user-list/index',
+    salary_record: '/pages/salary-record/index',
+    first_salary: '/pages/salary-record/index',
+    savings_goal_create: '/pages/savings-goals/index',
+    savings_goal_complete: '/pages/savings-goals/index',
+  }
+
+  const route = routes[eventType]
+  if (route) {
+    uni.navigateTo({
+      url: route
+    })
+  }
 }
 </script>
 
@@ -244,6 +268,13 @@ function goToInvite() {
         font-size: 22rpx;
         color: #999;
       }
+    }
+
+    .arrow {
+      font-size: 40rpx;
+      color: #ccc;
+      font-weight: 300;
+      margin-left: 10rpx;
     }
   }
 }
