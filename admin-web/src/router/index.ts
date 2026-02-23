@@ -26,6 +26,8 @@ const router = createRouter({
         { path: 'agreements', name: 'Agreements', component: () => import('@/views/AgreementManagement.vue') },
         { path: 'splash', name: 'Splash', component: () => import('@/views/SplashSettings.vue') },
         { path: 'feedback', name: 'Feedback', component: () => import('@/views/FeedbackList.vue') },
+        { path: 'point-shop', name: 'PointShop', component: () => import('@/views/PointShop.vue') },
+        { path: 'point-orders', name: 'PointOrders', component: () => import('@/views/PointOrders.vue') },
       ],
     },
   ],

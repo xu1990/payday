@@ -55,6 +55,12 @@
         <button class="action-btn primary" @tap="goToEvents">
           <text>📋 赚积分</text>
         </button>
+        <button class="action-btn mall" @tap="goToMall">
+          <text>🛒 积分商城</text>
+        </button>
+        <button class="action-btn invite" @tap="goToInvite">
+          <text>✨ 邀请好友</text>
+        </button>
         <button class="action-btn secondary" @tap="goToRedemptions">
           <text>🎁 兑换中心</text>
         </button>
@@ -128,6 +134,18 @@ async function fetchPoints() {
 function goToEvents() {
   uni.navigateTo({
     url: '/pages/point-events/index'
+  })
+}
+
+function goToMall() {
+  uni.navigateTo({
+    url: '/pages/point-mall/index'
+  })
+}
+
+function goToInvite() {
+  uni.navigateTo({
+    url: '/pages/invite-code/index'
   })
 }
 
@@ -307,6 +325,16 @@ function goToHistory() {
         background: white;
         color: #333;
         border: 1rpx solid #e0e0e0;
+      }
+
+      &.mall {
+        background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+        color: white;
+      }
+
+      &.invite {
+        background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+        color: white;
       }
     }
   }

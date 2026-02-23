@@ -296,6 +296,12 @@ POINT_EVENTS = {
     "first_salary": 50,          # 第一笔工资
     "savings_goal_create": 10,   # 创建存款目标
     "savings_goal_complete": 100,# 完成存款目标
+    # Sprint 4.7 邀请系统
+    "invite_success": 30,        # 邀请用户成功
+    "invited_by_someone": 10,    # 被邀请注册
+    # Sprint 4.7 商品订单系统
+    "order_cancelled": 0,        # 订单取消退款（动态金额）
+    "order_cancelled_by_admin": 0,  # 管理员取消订单退款（动态金额）
 }
 
 

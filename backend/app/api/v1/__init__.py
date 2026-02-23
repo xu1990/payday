@@ -30,6 +30,8 @@ from .savings_goal import router as savings_goal_router
 from .ability_points import router as ability_points_router
 from .expense import router as expense_router
 from .qrcode import router as qrcode_router
+from .invitation import router as invitation_router
+from .point_shop import router as point_shop_router
 
 api_router = APIRouter(prefix="/api/v1", tags=["v1"])
 
@@ -64,6 +66,8 @@ api_router.include_router(savings_goal_router)
 api_router.include_router(ability_points_router)
 api_router.include_router(expense_router)
 api_router.include_router(qrcode_router)
+api_router.include_router(invitation_router)
+api_router.include_router(point_shop_router)
 
 
 @api_router.get("/ping")

@@ -3,7 +3,7 @@
 """
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Enum, DateTime
+from sqlalchemy import Column, String, Integer, Enum, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 
 from .base import Base
@@ -32,6 +32,10 @@ class User(Base):
 
     allow_follow = Column(Integer, default=1, comment="允许被关注")
     allow_comment = Column(Integer, default=1, comment="允许评论")
+
+    # 邀请系统（Sprint 4.7）
+    invite_code = Column(String(12), unique=True, nullable=True, index=True, comment="唯一邀请码")
+    invited_by = Column(String(36), ForeignKey("users.id"), nullable=True, index=True, comment="邀请者ID")
 
     status = Column(
         Enum("normal", "disabled", name="user_status"),

@@ -67,6 +67,14 @@
           <el-icon><ChatDotRound /></el-icon>
           <span>用户反馈</span>
         </el-menu-item>
+        <el-menu-item index="/point-shop" aria-label="积分商品页面">
+          <el-icon><ShoppingCart /></el-icon>
+          <span>积分商品</span>
+        </el-menu-item>
+        <el-menu-item index="/point-orders" aria-label="积分订单页面">
+          <el-icon><Document /></el-icon>
+          <span>积分订单</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>
@@ -84,7 +92,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DataAnalysis, User, List, Document, ChatDotRound, DocumentChecked, PriceTag, UserFilled, Brush, Tickets, Setting } from '@element-plus/icons-vue'
+import { DataAnalysis, User, List, Document, ChatDotRound, DocumentChecked, PriceTag, UserFilled, Brush, Tickets, Setting, ShoppingCart } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()

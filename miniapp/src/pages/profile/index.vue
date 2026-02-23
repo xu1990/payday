@@ -103,6 +103,14 @@ function goAbilityPoints() {
   uni.navigateTo({ url: '/pages/ability-points/index' })
 }
 
+function goPointMall() {
+  uni.navigateTo({ url: '/pages/point-mall/index' })
+}
+
+function goInviteCode() {
+  uni.navigateTo({ url: '/pages/invite-code/index' })
+}
+
 function goExpenseTracking() {
   // 跳转到工资记录列表，用户可以在那里选择记录后添加支出
   uni.showToast({
@@ -164,6 +172,10 @@ onMounted(load)
     <view class="section-title-alt">我的资产</view>
     <view class="entry-row">
       <button class="btn-outline" @click="goAbilityPoints">⭐ 积分</button>
+      <button class="btn-outline" @click="goPointMall">🛒 积分商城</button>
+    </view>
+    <view class="entry-row">
+      <button class="btn-outline" @click="goInviteCode">✨ 邀请好友</button>
       <button class="btn-outline" @click="goSavingsGoals">💰 存款目标</button>
     </view>
     <view class="entry-row">

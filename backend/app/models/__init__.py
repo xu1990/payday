@@ -26,6 +26,9 @@ from .first_salary_usage import FirstSalaryUsage
 from .expense_record import ExpenseRecord
 from .savings_goal import SavingsGoal
 from .ability_points import AbilityPoint, AbilityPointTransaction, PointRedemption
+from .user_invitation import UserInvitation
+from .point_product import PointProduct
+from .point_order import PointOrder
 
 __all__ = [
     "Base",
@@ -61,4 +64,7 @@ __all__ = [
     "AbilityPoint",
     "AbilityPointTransaction",
     "PointRedemption",
+    "UserInvitation",
+    "PointProduct",
+    "PointOrder",
 ]

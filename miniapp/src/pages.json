@@ -265,6 +265,34 @@
         "navigationBarTitleText": "积分明细",
         "navigationStyle": "default"
       }
+    },
+    {
+      "path": "pages/invite-code/index",
+      "style": {
+        "navigationBarTitleText": "邀请好友",
+        "navigationStyle": "default"
+      }
+    },
+    {
+      "path": "pages/point-mall/index",
+      "style": {
+        "navigationBarTitleText": "积分商城",
+        "navigationStyle": "default"
+      }
+    },
+    {
+      "path": "pages/point-mall/detail/index",
+      "style": {
+        "navigationBarTitleText": "商品详情",
+        "navigationStyle": "default"
+      }
+    },
+    {
+      "path": "pages/point-mall/orders/index",
+      "style": {
+        "navigationBarTitleText": "兑换订单",
+        "navigationStyle": "default"
+      }
     }
   ],
   "globalStyle": {
