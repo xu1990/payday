@@ -14,6 +14,7 @@ class Post(Base):
     id = Column(String(36), primary_key=True, default=gen_uuid)
     user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     anonymous_name = Column(String(50), nullable=False, comment="发帖时用户匿名昵称冗余")
+    user_avatar = Column(String(255), nullable=True, comment="发帖时用户头像URL冗余")
     content = Column(Text, nullable=False)
     images = Column(JSON, nullable=True, comment="图片 URL 列表，最多9张")
     tags = Column(JSON, nullable=True, comment="标签列表")
