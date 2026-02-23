@@ -60,18 +60,23 @@ export async function parseQRCodeScene(
 
     // 自动跳转到目标页面（可选）
     if (options.redirectTo && result.page) {
+      // 检查是否有目标页面参数（用于绕过微信小程序码限制）
+      const targetPage = result.params.targetPage || result.page
+      const otherParams = { ...result.params }
+      delete otherParams.targetPage  // 移除 targetPage，不需要传递
+
       // 构建页面参数
-      const query = new URLSearchParams(result.params as any).toString()
-      const url = query ? `/${result.page}?${query}` : `/${result.page}`
+      const query = new URLSearchParams(otherParams as any).toString()
+      const url = query ? `/${targetPage}?${query}` : `/${targetPage}`
 
       uni.navigateTo({
         url,
         fail: () => {
           // 如果 navigateTo 失败，尝试 switchTab
           uni.switchTab({
-            url: `/${result.page}`,
+            url: `/${targetPage}`,
             fail: () => {
-              console.error('[QRCode] Failed to navigate to:', result.page)
+              console.error('[QRCode] Failed to navigate to:', targetPage)
             }
           })
         }

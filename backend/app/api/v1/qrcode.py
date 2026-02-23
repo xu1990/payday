@@ -300,3 +300,95 @@ async def generate_wxa_qrcode_by_mapping_base64(
         },
         message="生成小程序码成功"
     )
+
+
+@router.post("/wxa/generate")
+async def create_qrcode_with_mapping(
+    request: CreateMappingRequest,
+    width: int = Query(430, ge=80, le=4300, description="小程序码宽度"),
+    db=Depends(get_db)
+):
+    """
+    一体化二维码生成接口（创建映射 + 生成二维码）
+
+    1. 创建参数映射，获取短码
+    2. 尝试生成微信小程序码
+    3. 如果微信API失败（开发环境页面不存在），降级为普通二维码
+    4. 直接返回 base64 格式的二维码图片
+
+    前端只需调用一次此接口即可获得完整的二维码图片
+    """
+    # 步骤1: 创建映射
+    mapping = await create_qrcode_mapping(
+        db,
+        page=request.page,
+        params=request.params,
+        expires_days=request.expires_days
+    )
+
+    short_code = mapping.short_code
+
+    # 步骤2: 尝试生成微信小程序码
+    try:
+        # 生成包含完整URL的scene参数（用于普通二维码降级）
+        # 小程序扫码后会通过短码查询获取原始参数
+        qr_data = await get_unlimited_qrcode(
+            scene=short_code,
+            page=request.page,
+            width=width,
+        )
+
+        # 转换为 base64
+        img_base64 = base64.b64encode(qr_data).decode('utf-8')
+
+        return success_response(
+            data={
+                "base64": f"data:image/png;base64,{img_base64}",
+                "short_code": short_code,
+                "width": width,
+                "page": mapping.page,
+                "params": mapping.params,
+                "type": "wxa"  # 标识为小程序码
+            },
+            message="生成小程序码成功"
+        )
+    except Exception as e:
+        # 微信API失败（开发环境页面不存在），降级为普通二维码
+        import qrcode
+        import io
+
+        # 生成包含短码查询URL的普通二维码
+        # 扫码后可跳转到H5页面或显示提示
+        qr_url = f"https://yourdomain.com/qrcode/{short_code}"
+
+        # 创建 QR Code 实例
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=2,
+        )
+        qr.add_data(qr_url)
+        qr.make(fit=True)
+
+        # 生成图片
+        img = qr.make_image(fill_color="#333333", back_color="#FFFFFF")
+        img = img.resize((width, width))
+
+        # 转换为 base64
+        img_io = io.BytesIO()
+        img.save(img_io, format='PNG')
+        img_bytes = img_io.getvalue()
+        img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+
+        return success_response(
+            data={
+                "base64": f"data:image/png;base64,{img_base64}",
+                "short_code": short_code,
+                "width": width,
+                "page": mapping.page,
+                "params": mapping.params,
+                "type": "fallback"  # 标识为降级二维码
+            },
+            message="生成二维码成功（开发环境使用普通二维码）"
+        )

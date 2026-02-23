@@ -141,37 +141,22 @@ function drawPoster(): Promise<void> {
  */
 async function generateQRCodeUrl(id: string, type: 'salary' | 'post' = 'salary'): Promise<string> {
   try {
-    // 步骤1: 创建参数映射，获取短码
-    const mappingRes: any = await uni.request({
-      url: `${baseURL}/api/v1/qrcode/wxa/mapping`,
+    // 使用一体化接口：创建映射 + 生成二维码
+    // 开发环境使用 pages/index/index（因为 poster 页面未在微信发布）
+    const response: any = await uni.request({
+      url: `${baseURL}/api/v1/qrcode/wxa/generate?width=200`,
       method: 'POST',
       data: {
-        page: 'pages/poster/index',
-        params: type === 'salary' ? { recordId: id } : { postId: id }
+        page: 'pages/index/index',
+        params: type === 'salary' ? { recordId: id, targetPage: 'pages/poster/index' } : { postId: id, targetPage: 'pages/poster/index' }
       }
     })
 
-    if (mappingRes.data?.code !== 0 || !mappingRes.data?.data?.short_code) {
-      console.error('[poster] Create mapping failed:', mappingRes.data)
-      throw new Error('Failed to create QR code mapping')
-    }
-
-    const shortCode = mappingRes.data.data.short_code
-    console.log('[poster] Created mapping with short code:', shortCode)
-
-    // 步骤2: 使用短码生成小程序码
-    const qrRes: any = await uni.request({
-      url: `${baseURL}/api/v1/qrcode/wxa/mapping/${shortCode}/qrcode/base64`,
-      method: 'GET',
-      data: {
-        width: 200
-      }
-    })
-
-    if (qrRes.data?.code === 0 && qrRes.data?.data?.base64) {
-      return qrRes.data.data.base64
+    if (response.data?.code === 'SUCCESS' && response.data?.details?.base64) {
+      console.log('[poster] QR code generated successfully, type:', response.data.details.type)
+      return response.data.details.base64
     } else {
-      console.error('[poster] Generate QR code failed:', qrRes.data)
+      console.error('[poster] QR code generation failed:', response.data)
       throw new Error('Failed to generate QR code')
     }
   } catch (e) {

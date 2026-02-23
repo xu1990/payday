@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onShow, onLaunch } from '@dcloudio/uni-app'
 import AppFooter from '@/components/AppFooter.vue'
 import AppLogos from '@/components/AppLogos.vue'
 import InputEntry from '@/components/InputEntry.vue'
@@ -8,6 +8,7 @@ import { listPayday } from '@/api/payday'
 import type { MoodType } from '@/api/salary'
 import { useAuthStore } from '@/stores/auth'
 import { useUserStore } from '@/stores/user'
+import { handleQRCodeLaunch } from '@/utils/qrcode'
 
 const MOOD_STORAGE_KEY = 'payday_home_mood'
 const moodOptions: { value: MoodType; label: string }[] = [
@@ -21,6 +22,15 @@ const moodOptions: { value: MoodType; label: string }[] = [
 // Stores
 const authStore = useAuthStore()
 const userStore = useUserStore()
+
+// Handle QR code scan on launch
+onLaunch((options: any) => {
+  console.log('[index] onLaunch called with options:', options)
+  if (options?.scene) {
+    console.log('[index] Scene detected, handling QR code scan')
+    handleQRCodeLaunch(options.scene)
+  }
+})
 
 /** 根据公历「每月 payday 日」算距离今天的天数，0 表示今天发薪 */
 function daysToNextPayday(payday: number): number {
