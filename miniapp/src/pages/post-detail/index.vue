@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useUserStore } from '@/stores/user'
 import { checkBatchFollowStatus } from '@/api/follow'
 import FollowButton from '@/components/FollowButton.vue'
+import UserAvatar from '@/components/UserAvatar.vue'
 import { formatDateTime } from '@/utils/format'
 
 const id = ref('')
@@ -243,9 +244,16 @@ function handleUnfollow(data: { targetUserId: string }) {
     <view v-if="loading" class="tip">加载中...</view>
     <view v-else-if="!post" class="tip">帖子不存在</view>
     <view v-else class="card">
-      <view class="row">
-        <text class="name">{{ post.anonymous_name }}</text>
-        <text class="time">{{ timeStr }}</text>
+      <view class="author-header">
+        <UserAvatar
+          :avatar="post.user_avatar"
+          :anonymous-name="post.anonymous_name"
+          size="medium"
+        />
+        <view class="author-info">
+          <text class="name">{{ post.anonymous_name }}</text>
+          <text class="time">{{ timeStr }}</text>
+        </view>
       </view>
       <!-- Author section with follow button -->
       <view
@@ -357,6 +365,17 @@ function handleUnfollow(data: { targetUserId: string }) {
   background: #fff;
   border-radius: 16rpx;
   padding: 24rpx;
+}
+.author-header {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+}
+.author-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
 }
 .row {
   display: flex;
