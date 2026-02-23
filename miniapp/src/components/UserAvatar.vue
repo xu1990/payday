@@ -1,52 +1,23 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-
 interface Props {
   avatar: string | null | undefined
   anonymousName: string
   size?: 'small' | 'medium' | 'large'
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  size: 'medium',
-})
-
-// Validate avatar URL is from trusted source
-function isValidAvatarUrl(url: string | null | undefined): boolean {
-  if (!url) return false
-
-  // Allow HTTPS URLs from trusted domains
-  try {
-    const u = new URL(url)
-
-    // Must be HTTPS
-    if (u.protocol !== 'https:') return false
-
-    // Trusted domains (Tencent COS, QQ, etc.)
-    const trustedDomains = [
-      'cloud.tencent.com',
-      'qq.com',
-      'myqcloud.com',
-      'qpic.cn', // QQ图片域名
-      'wechat.com',
-      // Add your CDN domain here if different
-    ]
-
-    return trustedDomains.some(
-      domain => u.hostname === domain || u.hostname.endsWith('.' + domain),
-    )
-  } catch {
-    return false
-  }
-}
-
-const safeAvatar = computed(() => {
-  return isValidAvatarUrl(props.avatar) ? props.avatar : null
+withDefaults(defineProps<Props>(), {
+  size: 'medium'
 })
 </script>
 
 <template>
-  <image v-if="safeAvatar" :src="safeAvatar" class="avatar" :class="size" mode="aspectFill" />
+  <image
+    v-if="avatar"
+    :src="avatar"
+    class="avatar"
+    :class="size"
+    mode="aspectFill"
+  />
   <view v-else class="avatar-placeholder" :class="size">
     {{ anonymousName?.substring(0, 1) || '?' }}
   </view>
