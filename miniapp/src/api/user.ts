@@ -11,6 +11,8 @@ export interface UserInfo {
   nickname: string | null
   avatar: string | null
   bio: string | null
+  phone_number: string | null
+  phone_verified: boolean
   follower_count: number
   following_count: number
   post_count: number

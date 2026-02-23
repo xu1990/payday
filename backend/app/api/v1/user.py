@@ -19,12 +19,20 @@ router = APIRouter(prefix="/user", tags=["user"])
 
 
 def _user_to_response(user: User) -> dict:
+    # 脱敏显示手机号
+    phone_number = None
+    phone_verified = user.phone_verified == 1
+    if user.phone_number:
+        phone_number = user.phone_number[:3] + "****" + user.phone_number[-4:]
+
     return {
         "id": user.id,
         "anonymous_name": user.anonymous_name,
         "nickname": user.nickname,
         "avatar": user.avatar,
         "bio": user.bio,
+        "phone_number": phone_number,
+        "phone_verified": phone_verified,
         "follower_count": user.follower_count,
         "following_count": user.following_count,
         "post_count": user.post_count,

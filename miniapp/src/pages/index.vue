@@ -5,6 +5,8 @@ import AppFooter from '@/components/AppFooter.vue'
 import AppLogos from '@/components/AppLogos.vue'
 import InputEntry from '@/components/InputEntry.vue'
 import { listPayday } from '@/api/payday'
+import { getPointProducts } from '@/api/pointShop'
+import { getMyPoints } from '@/api/ability-points'
 import type { MoodType } from '@/api/salary'
 import { useAuthStore } from '@/stores/auth'
 import { useUserStore } from '@/stores/user'
@@ -68,6 +70,13 @@ const hasPaydayConfig = ref(false)
 const selectedMood = ref<MoodType>('happy')
 const progress = ref(monthProgress())
 
+// 积分商品相关
+const products = ref<any[]>([])
+const productsLoading = ref(false)
+
+// 用户剩余积分
+const availablePoints = ref(0)
+
 // 计算属性：用户信息
 const isLoggedIn = computed(() => authStore.isLoggedIn)
 const userName = computed(() => userStore.anonymousName || '打工者')
@@ -90,6 +99,8 @@ onShow(async () => {
     // 已登录，延迟加载数据以确保 token 可用
     setTimeout(() => {
       loadPaydayData()
+      loadPointProducts()
+      loadUserPoints()
     }, 300) // 增加延迟到 300ms
   } else {
     console.warn('[index] User not logged in')
@@ -133,6 +144,36 @@ async function loadPaydayData() {
     daysToPayday.value = null
   } finally {
     loading.value = false
+  }
+}
+
+/**
+ * 加载积分商品列表（首页推荐，显示前3个）
+ */
+async function loadPointProducts() {
+  try {
+    productsLoading.value = true
+    const res = await getPointProducts()
+    // 只取前3个商品作为推荐
+    products.value = (res.products || []).slice(0, 3)
+  } catch (error) {
+    console.error('[index] loadPointProducts error:', error)
+    // 静默失败，不影响用户体验
+  } finally {
+    productsLoading.value = false
+  }
+}
+
+/**
+ * 加载用户剩余积分
+ */
+async function loadUserPoints() {
+  try {
+    const res = await getMyPoints()
+    availablePoints.value = res.availablePoints || 0
+  } catch (error) {
+    console.error('[index] loadUserPoints error:', error)
+    // 静默失败
   }
 }
 
@@ -212,6 +253,16 @@ function goProfile() {
   if (!checkLogin()) return
   uni.navigateTo({ url: '/pages/profile/index' })
 }
+
+function goPointMall() {
+  if (!checkLogin()) return
+  uni.navigateTo({ url: '/pages/point-mall/index' })
+}
+
+function goToProductDetail(productId: string) {
+  if (!checkLogin()) return
+  uni.navigateTo({ url: `/pages/point-mall/detail/index?id=${productId}` })
+}
 </script>
 
 <template>
@@ -219,7 +270,10 @@ function goProfile() {
     <!-- 用户信息栏 (登录后显示) -->
     <view v-if="isLoggedIn" class="user-bar" @click="goProfile">
       <image class="user-avatar" :src="userAvatar" mode="aspectFill" />
-      <text class="user-name">{{ userName }}</text>
+      <view class="user-info">
+        <text class="user-name">{{ userName }}</text>
+        <text class="user-points">{{ availablePoints }} 积分</text>
+      </view>
       <text class="user-arrow">›</text>
     </view>
 
@@ -256,6 +310,48 @@ function goProfile() {
       </view>
       <text class="progress-desc">{{ progress.passed }} / {{ progress.total }} 天</text>
     </view>
+
+    <!-- 积分商品推荐 -->
+    <view v-if="isLoggedIn" class="products-section">
+      <view class="section-header">
+        <text class="section-title">积分兑换</text>
+        <text class="more-link" @click="goPointMall">更多 ›</text>
+      </view>
+
+      <view v-if="productsLoading" class="products-loading">
+        <text>加载中...</text>
+      </view>
+
+      <view v-else-if="products.length > 0" class="products-list">
+        <view
+          v-for="product in products"
+          :key="product.id"
+          class="product-item"
+          @click="goToProductDetail(product.id)"
+        >
+          <image
+            v-if="product.image_url"
+            class="product-image"
+            :src="product.image_url"
+            mode="aspectFill"
+          />
+          <view v-else class="product-image placeholder">
+            <text>🎁</text>
+          </view>
+          <view class="product-info">
+            <text class="product-name">{{ product.name }}</text>
+            <view class="product-footer">
+              <text class="product-points">{{ product.points_cost }} 积分</text>
+              <text v-if="!product.stock_unlimited && product.stock <= 0" class="product-out-of-stock">已售罄</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view v-else class="products-empty">
+        <text>暂无可兑换商品</text>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -284,11 +380,24 @@ function goProfile() {
   margin-right: 16rpx;
 }
 
-.user-name {
+.user-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.user-name {
   font-size: 28rpx;
   font-weight: 500;
   color: #333;
+  text-align: left;
+}
+
+.user-points {
+  font-size: 24rpx;
+  color: #ff6b6b;
+  font-weight: 600;
   text-align: left;
 }
 
@@ -407,5 +516,93 @@ function goProfile() {
   color: #666;
   margin-top: 0.25rem;
   display: block;
+}
+
+/* 积分商品区域 */
+.products-section {
+  margin: 2rem 0;
+  text-align: left;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.more-link {
+  font-size: 0.9rem;
+  color: #07c160;
+  cursor: pointer;
+}
+
+.products-loading,
+.products-empty {
+  text-align: center;
+  padding: 2rem;
+  color: #999;
+  font-size: 0.9rem;
+}
+
+.products-list {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.product-item {
+  flex-shrink: 0;
+  width: 200rpx;
+  background: #fff;
+  border-radius: 12rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.product-image {
+  width: 200rpx;
+  height: 200rpx;
+  background: #f5f5f5;
+
+  &.placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60rpx;
+  }
+}
+
+.product-info {
+  padding: 0.75rem;
+}
+
+.product-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #333;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.product-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.product-points {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ff6b6b;
+}
+
+.product-out-of-stock {
+  font-size: 0.75rem;
+  color: #999;
 }
 </style>

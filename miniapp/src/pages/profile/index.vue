@@ -18,6 +18,9 @@ const paydayList = ref<PaydayConfig[]>([])
 // 用户信息
 const userInfo = computed(() => userStore.userInfo)
 
+// 用户剩余积分
+const availablePoints = computed(() => pointsStore.availablePoints || 0)
+
 // 显示名称：优先显示昵称，没有则显示匿名昵称
 const displayName = computed(() => {
   return userInfo.value?.nickname || userInfo.value?.anonymous_name || '打工者'
@@ -111,6 +114,10 @@ function goInviteCode() {
   uni.navigateTo({ url: '/pages/invite-code/index' })
 }
 
+function goFirstSalaryUsage() {
+  uni.navigateTo({ url: '/pages/first-salary-usage/index' })
+}
+
 function goExpenseTracking() {
   // 跳转到工资记录列表，用户可以在那里选择记录后添加支出
   uni.showToast({
@@ -134,6 +141,17 @@ onMounted(load)
     <view class="user-header" @click="goProfileEdit">
       <image class="user-avatar" :src="avatarUrl" mode="aspectFill" />
       <text class="user-name">{{ displayName }}</text>
+      <view class="user-info-row">
+        <view class="user-points-badge">
+          <text class="points-value">{{ availablePoints }}</text>
+          <text class="points-label">积分</text>
+        </view>
+        <view v-if="userInfo?.phone_number" class="user-phone-badge">
+          <text class="phone-icon">📱</text>
+          <text class="phone-number">{{ userInfo.phone_number }}</text>
+          <text v-if="userInfo.phone_verified" class="verified-badge">✓</text>
+        </view>
+      </view>
     </view>
 
     <!-- 统计摘要 -->
@@ -179,7 +197,10 @@ onMounted(load)
       <button class="btn-outline" @click="goSavingsGoals">💰 存款目标</button>
     </view>
     <view class="entry-row">
+      <button class="btn-outline" @click="goFirstSalaryUsage">💡 第一笔工资</button>
       <button class="btn-outline" @click="goYearEndBonus">🎊 年终奖</button>
+    </view>
+    <view class="entry-row">
       <button class="btn-outline" @click="goExpenseTracking">📊 支出记录</button>
     </view>
 
@@ -235,6 +256,63 @@ onMounted(load)
   font-size: 32rpx;
   font-weight: 600;
   color: #fff;
+  margin-bottom: 12rpx;
+}
+
+.user-info-row {
+  display: flex;
+  gap: 12rpx;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.user-points-badge {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1rpx solid rgba(255, 255, 255, 0.3);
+  border-radius: 30rpx;
+  padding: 8rpx 20rpx;
+  backdrop-filter: blur(10rpx);
+}
+
+.points-value {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #ffd700;
+}
+
+.points-label {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.user-phone-badge {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1rpx solid rgba(255, 255, 255, 0.3);
+  border-radius: 30rpx;
+  padding: 8rpx 16rpx;
+  backdrop-filter: blur(10rpx);
+}
+
+.phone-icon {
+  font-size: 22rpx;
+}
+
+.phone-number {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.verified-badge {
+  font-size: 20rpx;
+  color: #52c41a;
+  font-weight: bold;
 }
 
 .head {

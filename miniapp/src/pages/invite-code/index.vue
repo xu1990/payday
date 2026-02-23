@@ -81,18 +81,21 @@
           class="qrcode-image"
           :src="qrcodeDataUrl"
           mode="widthFix"
+          show-menu-by-longpress
+          @longpress="handleImageLongPress"
         />
         <view v-else class="qrcode-placeholder">
           <text>二维码生成中...</text>
         </view>
         <view class="qrcode-tip">
           <text>好友扫描二维码填写邀请码注册</text>
+          <text class="longpress-tip">💡 长按二维码图片可保存到相册</text>
         </view>
       </view>
 
       <view class="qrcode-actions">
         <button class="action-btn" @tap="saveQRCode" :disabled="!qrcodeDataUrl || generatingQRCode">
-          <text>{{ generatingQRCode ? '生成中...' : '💾 保存二维码' }}</text>
+          <text>{{ generatingQRCode ? '生成中...' : '💡 如何保存' }}</text>
         </button>
       </view>
     </view>
@@ -164,7 +167,7 @@ async function generateQRCode(code) {
   }
 }
 
-// 保存二维码
+// 保存二维码 - 改为提示用户长按保存
 async function saveQRCode() {
   if (!qrcodeDataUrl.value) {
     uni.showToast({
@@ -174,66 +177,19 @@ async function saveQRCode() {
     return
   }
 
-  try {
-    uni.showLoading({
-      title: '保存中...'
-    })
+  // 提示用户长按二维码保存
+  uni.showModal({
+    title: '保存二维码',
+    content: '请长按二维码图片，选择"保存到相册"',
+    showCancel: false,
+    confirmText: '我知道了'
+  })
+}
 
-    // 将 base64 转换为临时文件
-    const base64Data = qrcodeDataUrl.value.replace(/^data:image\/\w+;base64,/, '')
-    const fileName = `qrcode_${Date.now()}.png`
-
-    // 使用 uni.env 获取临时目录路径（跨平台兼容）
-    const tempFilePath = `${uni.env?.USER_DATA_PATH || wx.env.USER_DATA_PATH}/${fileName}`
-
-    // 将 base64 转换为 ArrayBuffer
-    const binaryString = uni.base64ToArrayBuffer(base64Data)
-
-    // 写入临时文件
-    const fs = uni.getFileSystemManager()
-    fs.writeFileSync(tempFilePath, binaryString)
-
-    // 保存图片到相册
-    await uni.saveImageToPhotosAlbum({
-      filePath: tempFilePath
-    })
-
-    uni.hideLoading()
-    uni.showToast({
-      title: '已保存到相册',
-      icon: 'success'
-    })
-
-    // 清理临时文件
-    setTimeout(() => {
-      try {
-        fs.unlinkSync(tempFilePath)
-      } catch (e) {
-        console.warn('Failed to cleanup temp file:', e)
-      }
-    }, 1000)
-  } catch (err) {
-    uni.hideLoading()
-    console.error('Save failed:', err)
-
-    // 如果用户拒绝授权
-    if (err.errMsg && err.errMsg.includes('auth')) {
-      uni.showModal({
-        title: '提示',
-        content: '需要您授权保存相册权限',
-        success: (modalRes) => {
-          if (modalRes.confirm) {
-            uni.openSetting()
-          }
-        }
-      })
-    } else {
-      uni.showToast({
-        title: '保存失败',
-        icon: 'none'
-      })
-    }
-  }
+// 处理图片长按事件
+function handleImageLongPress() {
+  // 长按图片会触发微信的默认菜单，这里可以添加额外的提示
+  uni.vibrateShort() // 轻微震动反馈
 }
 
 async function loadData() {
@@ -538,6 +494,17 @@ function formatTime(timeStr) {
       font-size: 24rpx;
       color: #666;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 8rpx;
+    }
+
+    .longpress-tip {
+      font-size: 22rpx;
+      color: #ff6b6b;
+      background: #fff5f5;
+      padding: 8rpx 16rpx;
+      border-radius: 8rpx;
     }
   }
 
