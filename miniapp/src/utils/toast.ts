@@ -60,6 +60,27 @@ export function showInfo(title: string, duration = 2000): void {
   showToast({ title, icon: 'none', duration })
 }
 
+/**
+ * 显示确认对话框
+ */
+export function showConfirm(
+  title: string,
+  onConfirm: () => void,
+  options?: { content?: string; confirmText?: string; cancelText?: string }
+): void {
+  uni.showModal({
+    title: options?.content ? '' : title,
+    content: options?.content || title,
+    confirmText: options?.confirmText || '确定',
+    cancelText: options?.cancelText || '取消',
+    success: (res) => {
+      if (res.confirm) {
+        onConfirm()
+      }
+    },
+  })
+}
+
 export default {
   showToast,
   showSuccess,
@@ -67,4 +88,5 @@ export default {
   showLoading,
   hideLoading,
   showInfo,
+  showConfirm,
 }

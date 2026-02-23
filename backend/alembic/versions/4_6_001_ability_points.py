@@ -28,7 +28,7 @@ def upgrade():
         sa.Column('total_earned', sa.Integer(), nullable=False, server_default='0', comment='累计获得积分'),
         sa.Column('total_spent', sa.Integer(), nullable=False, server_default='0', comment='累计消费积分'),
         sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
-        sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'), nullable=False),
+        sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
 
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE', name='ap_user_fk'),
 
@@ -70,7 +70,7 @@ def upgrade():
         sa.Column('processed_at', sa.TIMESTAMP(), nullable=True, comment='处理时间'),
         sa.Column('rejection_reason', sa.String(200), nullable=True, comment='拒绝原因'),
         sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
-        sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'), nullable=False),
+        sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
 
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE', name='pr_user_fk'),
         sa.ForeignKeyConstraint(['admin_id'], ['admin_users.id'], name='pr_admin_fk'),

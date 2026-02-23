@@ -131,9 +131,10 @@
   </view>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { getMyPoints, getMyRedemptions, createRedemption, type PointRedemptionCreate } from '@/api/ability-points'
+import type { PointRedemptionCreate } from '@/api/ability-points'
+import { getMyPoints, getMyRedemptions, createRedemption } from '@/api/ability-points'
 
 const balance = ref(0)
 const activeTab = ref('create')

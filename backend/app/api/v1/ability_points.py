@@ -38,7 +38,7 @@ async def get_my_points(
     """获取我的积分信息"""
     points = await get_or_create_user_points(db, current_user.id)
     response = AbilityPointResponse(**points.__dict__)
-    return success_response(data=response)
+    return success_response(data=response.model_dump(mode='json'))
 
 
 @router.get("/my/transactions")
@@ -50,7 +50,7 @@ async def get_my_transactions(
 ):
     """获取我的积分流水"""
     transactions = await get_user_transactions(db, current_user.id, limit, offset)
-    response = [AbilityPointTransactionResponse(**t.__dict__) for t in transactions]
+    response = [AbilityPointTransactionResponse(**t.__dict__).model_dump(mode='json') for t in transactions]
     return success_response(data={"transactions": response, "total": len(response)})
 
 
@@ -63,7 +63,7 @@ async def create_redeem(
     """创建积分兑换"""
     redemption = await create_redemption(db, current_user.id, body)
     response = PointRedemptionResponse(**redemption.__dict__)
-    return success_response(data=response, message="兑换申请已提交，等待审核")
+    return success_response(data=response.model_dump(mode='json'), message="兑换申请已提交，等待审核")
 
 
 @router.get("/redemptions")
@@ -74,7 +74,7 @@ async def get_my_redemptions(
 ):
     """获取我的兑换记录"""
     redemptions = await get_user_redemptions(db, current_user.id, status)
-    response = [PointRedemptionResponse(**r.__dict__) for r in redemptions]
+    response = [PointRedemptionResponse(**r.__dict__).model_dump(mode='json') for r in redemptions]
     return success_response(data={"redemptions": response, "total": len(response)})
 
 
@@ -98,13 +98,13 @@ async def admin_get_redemptions(
     redemptions = await get_all_redemptions(db, status, limit, offset)
     pending = await get_all_redemptions(db, "pending", 1000, 0)  # 获取待处理数量
 
-    response_list = [PointRedemptionResponse(**r.__dict__) for r in redemptions]
+    response_list = [PointRedemptionResponse(**r.__dict__).model_dump(mode='json') for r in redemptions]
     response = AdminRedemptionListResponse(
         redemptions=response_list,
         total=len(response_list),
         pending_count=len([r for r in pending if r.status == "pending"]),
     )
-    return success_response(data=response)
+    return success_response(data=response.model_dump(mode='json'))
 
 
 @router.put("/admin/redemptions/{redemption_id}")
@@ -117,4 +117,4 @@ async def admin_update_redemption(
     """处理兑换申请（管理员）"""
     redemption = await update_redemption_status(db, redemption_id, current_admin.id, body)
     response = PointRedemptionResponse(**redemption.__dict__)
-    return success_response(data=response, message=f"兑换已{body.status}")
+    return success_response(data=response.model_dump(mode='json'), message=f"兑换已{body.status}")

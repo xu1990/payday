@@ -5,7 +5,7 @@ import { listPayday, type PaydayConfig } from '@/api/payday'
 import { getSalary, listSalary, type SalaryRecord, type MoodType } from '@/api/salary'
 import { getPostDetail, type PostItem } from '@/api/post'
 import { formatDate } from '@/utils/format'
-import QRCode from 'qrcode'
+import { baseURL } from '@/utils/request'
 
 // 获取当前组件实例，用于 Canvas 查询
 const instance = getCurrentInstance()
@@ -135,19 +135,49 @@ function drawPoster(): Promise<void> {
 
 /**
  * Generate QR code data URL for sharing
+ * 使用后端新方案：参数映射系统
+ * 1. 创建映射获取短码
+ * 2. 使用短码生成小程序码
  */
-function generateQRCodeUrl(recordId: string): Promise<string> {
-  // TODO: 替换为实际的 H5 落地页 URL
-  // 临时使用页面路径，等后端提供 H5 落地页后替换
-  const shareUrl = `https://your-domain.com/poster/share?recordId=${recordId}`
-  return QRCode.toDataURL(shareUrl, {
-    width: 200,
-    margin: 1,
-    color: {
-      dark: '#333333',
-      light: '#FFFFFF'
+async function generateQRCodeUrl(id: string, type: 'salary' | 'post' = 'salary'): Promise<string> {
+  try {
+    // 步骤1: 创建参数映射，获取短码
+    const mappingRes: any = await uni.request({
+      url: `${baseURL}/api/v1/qrcode/wxa/mapping`,
+      method: 'POST',
+      data: {
+        page: 'pages/poster/index',
+        params: type === 'salary' ? { recordId: id } : { postId: id }
+      }
+    })
+
+    if (mappingRes.data?.code !== 0 || !mappingRes.data?.data?.short_code) {
+      console.error('[poster] Create mapping failed:', mappingRes.data)
+      throw new Error('Failed to create QR code mapping')
     }
-  })
+
+    const shortCode = mappingRes.data.data.short_code
+    console.log('[poster] Created mapping with short code:', shortCode)
+
+    // 步骤2: 使用短码生成小程序码
+    const qrRes: any = await uni.request({
+      url: `${baseURL}/api/v1/qrcode/wxa/mapping/${shortCode}/qrcode/base64`,
+      method: 'GET',
+      data: {
+        width: 200
+      }
+    })
+
+    if (qrRes.data?.code === 0 && qrRes.data?.data?.base64) {
+      return qrRes.data.data.base64
+    } else {
+      console.error('[poster] Generate QR code failed:', qrRes.data)
+      throw new Error('Failed to generate QR code')
+    }
+  } catch (e) {
+    console.error('[poster] QR code generation error:', e)
+    throw e
+  }
 }
 
 /**
@@ -159,7 +189,7 @@ function drawSalaryPoster(): Promise<void> {
 
   return new Promise((resolve, reject) => {
     // 先生成二维码
-    generateQRCodeUrl(r.id)
+    generateQRCodeUrl(r.id, 'salary')
       .then(qrDataUrl => {
         console.log('[poster] QR code generated')
         drawSalaryPosterWithQR(r, qrDataUrl, resolve, reject)
@@ -347,7 +377,7 @@ function drawPostPoster(): Promise<void> {
 
   return new Promise((resolve, reject) => {
     // 先生成二维码
-    generateQRCodeUrl(p.id)
+    generateQRCodeUrl(p.id, 'post')
       .then(qrDataUrl => {
         console.log('[poster] QR code generated for post')
         drawPostPosterWithQR(p, qrDataUrl, resolve, reject)

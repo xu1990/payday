@@ -15,6 +15,8 @@ declare module 'vue' {
     LazyImage: typeof import('./src/components/LazyImage.vue')['default']
     Loading: typeof import('./src/components/Loading.vue')['default']
     PostActionBar: typeof import('./src/components/PostActionBar.vue')['default']
+    UniDatetimePicker: typeof import('@dcloudio/uni-ui/lib/uni-datetime-picker/uni-datetime-picker.vue')['default']
+    UniIcons: typeof import('@dcloudio/uni-ui/lib/uni-icons/uni-icons.vue')['default']
     UniPopup: typeof import('@dcloudio/uni-ui/lib/uni-popup/uni-popup.vue')['default']
     UniTransition: typeof import('@dcloudio/uni-ui/lib/uni-transition/uni-transition.vue')['default']
   }

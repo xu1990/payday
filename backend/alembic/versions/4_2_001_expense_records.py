@@ -29,7 +29,7 @@ def upgrade():
         sa.Column('amount', sa.Numeric(10, 2), nullable=False, comment='支出金额（加密）'),
         sa.Column('note', sa.Text(), nullable=True, comment='备注'),
         sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False, comment='创建时间'),
-        sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'), nullable=False, comment='更新时间'),
+        sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False, comment='更新时间'),
         
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE', name='exp_user_fk'),
         sa.ForeignKeyConstraint(['salary_record_id'], ['salary_records.id'], ondelete='CASCADE', name='exp_salary_fk'),

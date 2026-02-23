@@ -204,13 +204,6 @@
       }
     },
     {
-      "path": "pages/first-salary-usage/index",
-      "style": {
-        "navigationBarTitleText": "第一笔工资",
-        "navigationStyle": "default"
-      }
-    },
-    {
       "path": "pages/expense-tracking/index",
       "style": {
         "navigationBarTitleText": "每月支出",

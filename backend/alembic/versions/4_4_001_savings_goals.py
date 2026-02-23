@@ -32,7 +32,7 @@ def upgrade():
         sa.Column('category', sa.String(50), nullable=True, comment='目标分类'),
         sa.Column('icon', sa.String(50), nullable=True, comment='图标'),
         sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False, comment='创建时间'),
-        sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'), nullable=False, comment='更新时间'),
+        sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False, comment='更新时间'),
         sa.Column('completed_at', sa.TIMESTAMP(), nullable=True, comment='完成时间'),
 
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE', name='sg_user_fk'),
