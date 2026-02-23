@@ -51,10 +51,15 @@
       <view class="posts-list">
         <view v-for="post in results" :key="post.id" class="post-card" @click="viewPost(post.id)">
           <view class="post-header">
-            <view class="user-info">
-              <text class="user-name">{{ post.anonymous_name }}</text>
-              <text class="post-time">{{ formatTime(post.created_at) }}</text>
+            <view class="author-section">
+              <UserAvatar
+                :avatar="post.user_avatar"
+                :anonymous-name="post.anonymous_name"
+                size="small"
+              />
+              <text class="name">{{ post.anonymous_name }}</text>
             </view>
+            <text class="post-time">{{ formatTime(post.created_at) }}</text>
             <view v-if="post.type" class="post-tag">
               <text>{{ getTypeText(post.type) }}</text>
             </view>
@@ -109,7 +114,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { searchPosts, type PostItem } from '@/api/post'
+import { searchPosts, type PostItem } from '@/api/search'
+import UserAvatar from '@/components/UserAvatar.vue'
 
 const keyword = ref('')
 const selectedTags = ref<string[]>([])
@@ -341,13 +347,13 @@ const getTypeText = (type: string) => {
   margin-bottom: 16rpx;
 }
 
-.user-info {
+.author-section {
   display: flex;
-  flex-direction: column;
-  gap: 8rpx;
+  align-items: center;
+  gap: 12rpx;
 }
 
-.user-name {
+.name {
   font-size: 28rpx;
   font-weight: bold;
   color: #333;
