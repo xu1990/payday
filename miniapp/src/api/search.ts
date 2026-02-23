@@ -10,6 +10,7 @@ export interface PostItem {
   id: string
   user_id: string
   anonymous_name: string
+  user_avatar: string | null
   content: string
   images?: string[] | null
   type: string
