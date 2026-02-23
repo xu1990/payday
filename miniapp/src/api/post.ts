@@ -39,6 +39,7 @@ export interface PostCreateParams {
   industry?: string | null
   city?: string | null
   topic_id?: string | null
+  topic_ids?: string[] | null
   visibility?: 'public' | 'followers' | 'private'
 }
 

@@ -35,7 +35,7 @@ async function load() {
   loading.value = true
   errMsg.value = ''
 
-  // 获取用户信息
+  // 获取用户信息（强制刷新，不使用缓存）
   try {
     await userStore.fetchCurrentUser()
   } catch (e) {
@@ -112,10 +112,6 @@ function goPointMall() {
 
 function goInviteCode() {
   uni.navigateTo({ url: '/pages/invite-code/index' })
-}
-
-function goFirstSalaryUsage() {
-  uni.navigateTo({ url: '/pages/first-salary-usage/index' })
 }
 
 function goExpenseTracking() {
@@ -197,10 +193,7 @@ onMounted(load)
       <button class="btn-outline" @click="goSavingsGoals">💰 存款目标</button>
     </view>
     <view class="entry-row">
-      <button class="btn-outline" @click="goFirstSalaryUsage">💡 第一笔工资</button>
       <button class="btn-outline" @click="goYearEndBonus">🎊 年终奖</button>
-    </view>
-    <view class="entry-row">
       <button class="btn-outline" @click="goExpenseTracking">📊 支出记录</button>
     </view>
 

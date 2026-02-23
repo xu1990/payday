@@ -26,10 +26,23 @@ const city = ref('')
 const visibility = ref<PostVisibility>('public')
 const submitting = ref(false)
 
-// 话题相关
+// 话题相关（@提及）
 const topics = ref<Topic[]>([])
-const topicId = ref('')
-const topicIndex = ref(-1)
+const showTopicPicker = ref(false)
+const mentionTopics = ref<{ id: string; name: string; position: number }[]>([])
+const atPosition = ref(-1) // @ 符号的位置
+const filterKeyword = ref('') // 过滤关键词
+
+// 过滤后的话题列表
+const filteredTopics = computed(() => {
+  if (!filterKeyword.value) {
+    return topics.value
+  }
+  const keyword = filterKeyword.value.toLowerCase()
+  return topics.value.filter(topic =>
+    topic.name.toLowerCase().includes(keyword)
+  )
+})
 
 // Picker 索引
 const salaryIndex = ref(-1)
@@ -40,11 +53,104 @@ const visibilityIndex = ref(0)
 // 加载话题列表
 onMounted(async () => {
   try {
-    topics.value = await getActiveTopics()
+    const result = await getActiveTopics()
+    topics.value = Array.isArray(result) ? result : []
+    console.log('[post-create] Loaded topics:', topics.value.length)
   } catch (e) {
-    console.warn('Failed to load topics:', e)
+    console.warn('[post-create] Failed to load topics:', e)
+    topics.value = []
   }
 })
+
+// 内容输入处理：检测 @ 符号和关键词
+function onContentInput(e: any) {
+  const value = e.detail.value
+  content.value = value
+
+  // 查找最后一个 @ 符号的位置
+  const lastAtIndex = value.lastIndexOf('@')
+
+  if (lastAtIndex === -1) {
+    // 没有 @ 符号，隐藏选择器
+    showTopicPicker.value = false
+    atPosition.value = -1
+    filterKeyword.value = ''
+    return
+  }
+
+  // 检查 @ 后面的内容
+  const textAfterAt = value.slice(lastAtIndex + 1)
+
+  // 如果 @ 后面有空格或者是换行，说明用户不想输入话题
+  if (textAfterAt === '' || /\s/.test(textAfterAt)) {
+    showTopicPicker.value = false
+    filterKeyword.value = ''
+    return
+  }
+
+  // @ 后面有关键词，显示选择器并过滤
+  atPosition.value = lastAtIndex
+  filterKeyword.value = textAfterAt
+  showTopicPicker.value = true
+}
+
+// 选择话题
+function selectTopic(topic: Topic) {
+  if (atPosition.value === -1) return
+
+  // 获取 @ 之前的内容
+  const beforeAt = content.value.slice(0, atPosition.value)
+
+  // 构建新内容：@之前的内容 + @话题名 + 空格
+  content.value = beforeAt + `@${topic.name} `
+
+  // 记录提及的话题
+  mentionTopics.value.push({
+    id: topic.id,
+    name: topic.name,
+    position: beforeAt.length
+  })
+
+  // 关闭选择器并重置状态
+  closeTopicPicker()
+
+  // 限制最多提及3个话题
+  if (mentionTopics.value.length >= 3) {
+    uni.showToast({
+      title: '最多关联3个话题',
+      icon: 'none'
+    })
+  }
+}
+
+// 关闭话题选择器
+function closeTopicPicker() {
+  showTopicPicker.value = false
+  atPosition.value = -1
+  filterKeyword.value = ''
+}
+
+// 从内容中解析话题 ID
+function extractTopicIds(): string[] {
+  const topicIds: string[] = []
+  const contentText = content.value
+
+  // 使用正则匹配所有 @话题名
+  const mentionRegex = /@([^\s@]+)/g
+  let match
+
+  while ((match = mentionRegex.exec(contentText)) !== null) {
+    const topicName = match[1]
+    // 查找对应的话题 ID
+    const topic = topics.value.find(t => t.name === topicName)
+    if (topic && !topicIds.includes(topic.id)) {
+      topicIds.push(topic.id)
+      if (topicIds.length >= 3) break
+    }
+  }
+
+  return topicIds
+}
 
 // 计算当前选择的标签
 const salaryLabel = computed(() =>
@@ -55,9 +161,6 @@ const industryLabel = computed(() =>
 )
 const cityLabel = computed(() => (cityIndex.value >= 0 ? CITY_OPTIONS[cityIndex.value] : '选填'))
 const visibilityLabel = computed(() => VISIBILITY_OPTIONS[visibilityIndex.value].label)
-const topicLabel = computed(() =>
-  topicIndex.value >= 0 ? topics.value[topicIndex.value].name : '选填'
-)
 
 // 选择图片
 async function chooseImage() {
@@ -120,12 +223,6 @@ function onVisibilityChange(e: any) {
   visibility.value = VISIBILITY_OPTIONS[visibilityIndex.value].value
 }
 
-// 选择话题
-function onTopicChange(e: any) {
-  topicIndex.value = e.detail.value
-  topicId.value = topics.value[topicIndex.value].id
-}
-
 async function submit() {
   const text = content.value.trim()
 
@@ -142,6 +239,9 @@ async function submit() {
 
   submitting.value = true
   try {
+    // 从内容中提取话题 ID
+    const topicIds = extractTopicIds()
+
     const data: PostCreateParams = {
       content: text,
       type: type.value,
@@ -151,7 +251,10 @@ async function submit() {
     if (salary_range.value) data.salary_range = salary_range.value
     if (industry.value) data.industry = industry.value
     if (city.value) data.city = city.value
-    if (topicId.value) data.topic_id = topicId.value
+    // 添加关联的话题
+    if (topicIds.length > 0) {
+      data.topic_ids = topicIds
+    }
 
     await createPost(data)
     uni.showToast({ title: '发布成功' })
@@ -186,14 +289,48 @@ async function submit() {
       <!-- 内容输入 -->
       <view class="row content-row">
         <text class="label">内容</text>
-        <textarea
-          v-model="content"
-          class="input area"
-          placeholder="说说你的想法…"
-          maxlength="5000"
-          :show-confirm-bar="false"
-        />
-        <view class="char-count">{{ content.length }}/5000</view>
+        <view class="content-wrapper">
+          <textarea
+            :value="content"
+            @input="onContentInput"
+            class="input area"
+            placeholder="说说你的想法… 输入@可关联话题"
+            maxlength="5000"
+            :show-confirm-bar="false"
+          />
+          <view class="char-count">{{ content.length }}/5000</view>
+        </view>
+      </view>
+
+      <!-- 话题选择器（输入@时弹出） -->
+      <view v-if="showTopicPicker" class="topic-picker-modal">
+        <view class="topic-picker-overlay" @click="closeTopicPicker"></view>
+        <view class="topic-picker-content">
+          <view class="topic-picker-header">
+            <text class="topic-picker-title">
+              @{{ filterKeyword }}
+              <text v-if="filteredTopics.length > 0" class="topic-picker-count">({{ filteredTopics.length }})</text>
+            </text>
+            <text class="topic-picker-close" @click="closeTopicPicker">✕</text>
+          </view>
+          <scroll-view class="topic-picker-list" scroll-y>
+            <view
+              v-for="topic in filteredTopics"
+              :key="topic.id"
+              class="topic-picker-item"
+              @click="selectTopic(topic)"
+            >
+              <text class="topic-picker-name">@{{ topic.name }}</text>
+              <text class="topic-picker-check">✓</text>
+            </view>
+            <view v-if="filteredTopics.length === 0 && filterKeyword" class="topic-picker-empty">
+              未找到匹配的话题
+            </view>
+            <view v-if="topics.length === 0 && !filterKeyword" class="topic-picker-empty">
+              暂无可用话题
+            </view>
+          </scroll-view>
+        </view>
       </view>
 
       <!-- 图片上传 -->
@@ -239,17 +376,6 @@ async function submit() {
         <picker :value="cityIndex" :range="CITY_OPTIONS" @change="onCityChange">
           <view class="picker">
             {{ cityLabel }}
-            <text class="arrow">›</text>
-          </view>
-        </picker>
-      </view>
-
-      <!-- 话题 -->
-      <view v-if="topics.length > 0" class="row picker-row">
-        <text class="label">关联话题</text>
-        <picker :value="topicIndex" :range="topics" range-key="name" @change="onTopicChange">
-          <view class="picker">
-            {{ topicLabel }}
             <text class="arrow">›</text>
           </view>
         </picker>
@@ -341,6 +467,10 @@ async function submit() {
 .content-row {
   position: relative;
 
+  .content-wrapper {
+    position: relative;
+  }
+
   .area {
     min-height: 200rpx;
     padding-bottom: 60rpx;
@@ -353,6 +483,102 @@ async function submit() {
     font-size: 24rpx;
     color: #999;
   }
+}
+
+// 话题选择器弹窗
+.topic-picker-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+}
+
+.topic-picker-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.topic-picker-content {
+  position: relative;
+  width: 100%;
+  max-height: 70vh;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topic-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid #e5e5e5;
+}
+
+.topic-picker-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.topic-picker-count {
+  font-size: 24rpx;
+  color: #999;
+  font-weight: 400;
+}
+
+.topic-picker-close {
+  font-size: 36rpx;
+  color: #999;
+  padding: 8rpx;
+}
+
+.topic-picker-list {
+  flex: 1;
+  padding: 16rpx 0;
+}
+
+.topic-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 32rpx;
+  transition: background 0.2s;
+
+  &:active {
+    background: #f5f5f5;
+  }
+}
+
+.topic-picker-name {
+  font-size: 28rpx;
+  color: #333;
+  flex: 1;
+}
+
+.topic-picker-check {
+  font-size: 24rpx;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.topic-picker-empty {
+  padding: 80rpx 0;
+  text-align: center;
+  font-size: 26rpx;
+  color: #999;
 }
 
 // 图片上传
@@ -444,6 +670,7 @@ async function submit() {
   font-size: 24rpx;
   color: #999;
 }
+
 
 // 按钮
 .btn {

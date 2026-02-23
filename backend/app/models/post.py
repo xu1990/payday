@@ -1,6 +1,7 @@
 """
 帖子表 - 与迭代规划 2.2 数据模型一致，技术方案 2.2.1 分表策略（当前先单表，后续可按 created_at 按月分表）
 """
+from datetime import datetime
 from sqlalchemy import Column, String, Text, Integer, DateTime, Enum, ForeignKey, JSON, func
 
 from .base import Base
@@ -24,7 +25,8 @@ class Post(Base):
     salary_range = Column(String(20), nullable=True, comment="工资区间可选")
     industry = Column(String(50), nullable=True)
     city = Column(String(50), nullable=True)
-    topic_id = Column(String(36), ForeignKey("topics.id"), nullable=True, index=True, comment="关联话题ID")
+    topic_id = Column(String(36), ForeignKey("topics.id"), nullable=True, index=True, comment="关联话题ID（主话题，已废弃）")
+    topic_ids = Column(JSON, nullable=True, comment="关联话题ID列表，最多3个")
     visibility = Column(
         Enum("public", "followers", "private", name="post_visibility_enum"),
         default="public",
@@ -49,5 +51,5 @@ class Post(Base):
     risk_score = Column(Integer, nullable=True)
     risk_reason = Column(String(255), nullable=True)
 
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=lambda: datetime.utcnow(), nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow(), nullable=False)

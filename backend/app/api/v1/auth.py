@@ -42,7 +42,8 @@ async def login(
         parts = user.phone_number.split(':')
         if len(parts) == 2:
             encrypted, salt_b64 = parts
-            decrypted_phone = str(decrypt_amount(encrypted, salt_b64))
+            # decrypt_amount returns float, convert to int then to string to remove decimal
+            decrypted_phone = str(int(decrypt_amount(encrypted, salt_b64)))
             user_info["phoneNumber"] = mask_phone_number(decrypted_phone)
             user_info["phoneVerified"] = bool(user.phone_verified)
 

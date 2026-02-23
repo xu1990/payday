@@ -23,7 +23,20 @@ def _user_to_response(user: User) -> dict:
     phone_number = None
     phone_verified = user.phone_verified == 1
     if user.phone_number:
-        phone_number = user.phone_number[:3] + "****" + user.phone_number[-4:]
+        from app.utils.phone import mask_phone_number
+        from app.utils.encryption import decrypt_amount
+
+        # Phone number is stored in format: encrypted:salt
+        parts = user.phone_number.split(':')
+        if len(parts) == 2:
+            encrypted, salt_b64 = parts
+            try:
+                # decrypt_amount returns float, convert to int then to string to remove decimal
+                decrypted_phone = str(int(decrypt_amount(encrypted, salt_b64)))
+                phone_number = mask_phone_number(decrypted_phone)
+            except Exception:
+                # If decryption fails, leave phone_number as None
+                pass
 
     return {
         "id": user.id,

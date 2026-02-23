@@ -23,5 +23,7 @@ export async function getActiveTopics(): Promise<Topic[]> {
     url: '/api/v1/topics/active',
     method: 'GET',
   })
-  return res.data || []
+  // request 工具会自动展开响应，直接返回 data
+  // 所以这里需要检查 res 是否是数组
+  return Array.isArray(res) ? res : []
 }

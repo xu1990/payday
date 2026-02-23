@@ -7,6 +7,7 @@ import InputEntry from '@/components/InputEntry.vue'
 import { listPayday } from '@/api/payday'
 import { getPointProducts } from '@/api/pointShop'
 import { getMyPoints } from '@/api/ability-points'
+import { getActiveTopics, type Topic } from '@/api/topic'
 import type { MoodType } from '@/api/salary'
 import { useAuthStore } from '@/stores/auth'
 import { useUserStore } from '@/stores/user'
@@ -77,6 +78,18 @@ const productsLoading = ref(false)
 // 用户剩余积分
 const availablePoints = ref(0)
 
+// 热门话题
+const topics = ref<Topic[]>([])
+const topicsLoading = ref(false)
+
+// 快捷入口
+const quickEntries = ref([
+  { icon: '💰', label: '工资', action: 'goSalaryRecord' },
+  { icon: '🎯', label: '存钱目标', action: 'goSavingGoal' },
+  { icon: '💸', label: '支出记录', action: 'goExpenseRecord' },
+  { icon: '🎁', label: '积分', action: 'goPointMall' },
+])
+
 // 计算属性：用户信息
 const isLoggedIn = computed(() => authStore.isLoggedIn)
 const userName = computed(() => userStore.anonymousName || '打工者')
@@ -105,6 +118,9 @@ onShow(async () => {
   } else {
     console.warn('[index] User not logged in')
   }
+
+  // 加载热门话题（无需登录）
+  loadTopics()
 })
 
 /**
@@ -174,6 +190,25 @@ async function loadUserPoints() {
   } catch (error) {
     console.error('[index] loadUserPoints error:', error)
     // 静默失败
+  }
+}
+
+/**
+ * 加载热门话题（取前5个）
+ */
+async function loadTopics() {
+  try {
+    topicsLoading.value = true
+    const allTopics = await getActiveTopics()
+    // 按帖子数量降序排序，取前5个
+    topics.value = allTopics
+      .sort((a, b) => b.post_count - a.post_count)
+      .slice(0, 5)
+  } catch (error) {
+    console.error('[index] loadTopics error:', error)
+    // 静默失败
+  } finally {
+    topicsLoading.value = false
   }
 }
 
@@ -259,9 +294,63 @@ function goPointMall() {
   uni.navigateTo({ url: '/pages/point-mall/index' })
 }
 
+function goSavingGoal() {
+  if (!checkLogin()) return
+  uni.navigateTo({ url: '/pages/savings-goals/index' })
+}
+
+function goExpenseRecord() {
+  if (!checkLogin()) return
+  // 支出记录功能：跳转到工资记录页面，用户可以选择记录后添加支出
+  uni.navigateTo({ url: '/pages/salary-record/index' })
+}
+
 function goToProductDetail(productId: string) {
   if (!checkLogin()) return
   uni.navigateTo({ url: `/pages/point-mall/detail/index?id=${productId}` })
+}
+
+/**
+ * 处理快捷入口点击
+ */
+function handleQuickEntry(action: string) {
+  if (!checkLogin()) return
+
+  switch (action) {
+    case 'goSalaryRecord':
+      goSalaryRecord()
+      break
+    case 'goSavingGoal':
+      goSavingGoal()
+      break
+    case 'goExpenseRecord':
+      goExpenseRecord()
+      break
+    case 'goPointMall':
+      goPointMall()
+      break
+    default:
+      console.warn('[index] Unknown quick entry action:', action)
+  }
+}
+
+/**
+ * 点击话题 - 跳转到话题详情页
+ */
+function goToTopic(topicId: string) {
+  if (!checkLogin()) return
+  uni.navigateTo({ url: `/pages/topic-detail/index?id=${topicId}` })
+}
+
+/**
+ * 发帖（带话题）
+ */
+function createPostWithTopic(topicId: string, topicName: string) {
+  if (!checkLogin()) return
+  // 跳转到发帖页面，并传递话题ID
+  uni.navigateTo({
+    url: `/pages/post-create/index?topicId=${topicId}&topicName=${encodeURIComponent(topicName)}`,
+  })
 }
 </script>
 
@@ -303,12 +392,58 @@ function goToProductDetail(productId: string) {
       </view>
     </view>
 
+    <!-- 快捷入口 -->
+    <view class="quick-entry-section">
+      <view class="quick-entry-grid">
+        <view
+          v-for="entry in quickEntries"
+          :key="entry.action"
+          class="quick-entry-item"
+          @click="handleQuickEntry(entry.action)"
+        >
+          <view class="quick-entry-icon">{{ entry.icon }}</view>
+          <text class="quick-entry-label">{{ entry.label }}</text>
+        </view>
+      </view>
+    </view>
+
     <view class="progress-section">
       <text class="section-title">本月进度</text>
       <view class="progress-bar">
         <view class="progress-inner" :style="{ width: progress.ratio + '%' }" />
       </view>
       <text class="progress-desc">{{ progress.passed }} / {{ progress.total }} 天</text>
+    </view>
+
+    <!-- 热门话题 -->
+    <view class="topics-section">
+      <view class="section-header">
+        <text class="section-title">热门话题</text>
+      </view>
+
+      <view v-if="topicsLoading" class="topics-loading">
+        <text>加载中...</text>
+      </view>
+
+      <view v-else-if="topics.length > 0" class="topics-list">
+        <view
+          v-for="topic in topics"
+          :key="topic.id"
+          class="topic-item"
+        >
+          <view class="topic-info" @click="goToTopic(topic.id)">
+            <text class="topic-name"># {{ topic.name }}</text>
+            <text class="topic-count">{{ topic.post_count }} 帖子</text>
+          </view>
+          <button class="topic-btn" @click="createPostWithTopic(topic.id, topic.name)">
+            发帖
+          </button>
+        </view>
+      </view>
+
+      <view v-else class="topics-empty">
+        <text>暂无话题</text>
+      </view>
     </view>
 
     <!-- 积分商品推荐 -->
@@ -604,5 +739,109 @@ function goToProductDetail(productId: string) {
 .product-out-of-stock {
   font-size: 0.75rem;
   color: #999;
+}
+
+/* 快捷入口区域 */
+.quick-entry-section {
+  margin: 1.5rem 0;
+}
+
+.quick-entry-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.quick-entry-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.quick-entry-icon {
+  width: 88rpx;
+  height: 88rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s;
+}
+
+.quick-entry-item:active .quick-entry-icon {
+  transform: scale(0.95);
+}
+
+.quick-entry-label {
+  font-size: 24rpx;
+  color: #666;
+}
+
+/* 热门话题区域 */
+.topics-section {
+  margin: 2rem 0;
+  text-align: left;
+}
+
+.topics-loading,
+.topics-empty {
+  text-align: center;
+  padding: 2rem;
+  color: #999;
+  font-size: 0.9rem;
+}
+
+.topics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.topic-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 12rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.topic-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+.topic-name {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #333;
+}
+
+.topic-count {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.topic-btn {
+  padding: 0.4rem 1rem;
+  background: #07c160;
+  color: #fff;
+  border: none;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  margin: 0;
+}
+
+.topic-btn::after {
+  border: none;
 }
 </style>

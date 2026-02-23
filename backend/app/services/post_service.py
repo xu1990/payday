@@ -1,6 +1,7 @@
 """
 帖子服务 - 发帖、列表（热门/最新）、详情；管理端列表/状态/删除；与技术方案 2.2、3.3.1 一致
 """
+import json
 from typing import List, Literal, Optional, Tuple
 from datetime import datetime
 
@@ -25,6 +26,17 @@ async def create(
     # 净化用户输入的内容，防止 XSS 攻击
     sanitized_content = sanitize_html(data.content)
 
+    # 处理话题ID：支持多个话题
+    topic_ids_to_use = None
+    topic_id_to_use = None
+    if data.topic_ids and len(data.topic_ids) > 0:
+        topic_ids_to_use = data.topic_ids[:3]  # 最多3个
+        topic_id_to_use = topic_ids_to_use[0]  # 第一个作为主话题
+    elif data.topic_id:
+        topic_id_to_use = data.topic_id
+
+    now = datetime.utcnow()
+
     post = Post(
         user_id=user_id,
         anonymous_name=anonymous_name,
@@ -35,15 +47,29 @@ async def create(
         salary_range=data.salary_range,
         industry=data.industry,
         city=data.city,
-        topic_id=data.topic_id,
+        topic_id=topic_id_to_use,
+        topic_ids=topic_ids_to_use,
         visibility=data.visibility,
         status="normal",
         risk_status="pending",
+        created_at=now,
+        updated_at=now,
     )
     try:
         db.add(post)
         await db.commit()
         await db.refresh(post)
+
+        # 更新话题的帖子计数
+        if topic_ids_to_use:
+            from app.services import topic_service
+            for tid in topic_ids_to_use:
+                try:
+                    await topic_service.increment_post_count(db, tid)
+                except Exception:
+                    # 话题计数更新失败不影响发帖成功
+                    pass
+
         return post
     except SQLAlchemyError:
         await db.rollback()
@@ -325,6 +351,10 @@ async def update_post_status_for_admin(
     post = await get_by_id_for_admin(db, post_id)
     if not post:
         raise NotFoundException("帖子不存在")
+
+    # 记录旧状态，用于判断是否需要更新话题计数
+    old_status = post.status
+
     if status is not None:
         post.status = status
     if risk_status is not None:
@@ -334,6 +364,26 @@ async def update_post_status_for_admin(
     try:
         await db.commit()
         await db.refresh(post)
+
+        # 更新话题的帖子计数（仅当 status 发生变化时）
+        if status is not None and old_status != status:
+            from app.services import topic_service
+            if post.topic_ids:
+                # 从 deleted 改为 normal：增加计数
+                if old_status == "deleted" and status == "normal":
+                    for tid in post.topic_ids:
+                        try:
+                            await topic_service.increment_post_count(db, tid)
+                        except Exception:
+                            pass
+                # 从 normal 改为 deleted：减少计数
+                elif old_status == "normal" and status == "deleted":
+                    for tid in post.topic_ids:
+                        try:
+                            await topic_service.decrement_post_count(db, tid)
+                        except Exception:
+                            pass
+
         return post
     except SQLAlchemyError:
         await db.rollback()
@@ -348,6 +398,17 @@ async def delete_post_for_admin(db: AsyncSession, post_id: str) -> bool:
     post.status = "deleted"
     try:
         await db.commit()
+
+        # 更新话题的帖子计数
+        if post.topic_ids:
+            from app.services import topic_service
+            for tid in post.topic_ids:
+                try:
+                    await topic_service.decrement_post_count(db, tid)
+                except Exception:
+                    # 话题计数更新失败不影响删除成功
+                    pass
+
         return True
     except SQLAlchemyError:
         await db.rollback()
