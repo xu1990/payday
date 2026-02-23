@@ -46,12 +46,15 @@ onShareAppMessage(() => ({
 }))
 
 async function loadData() {
+  console.log('[poster] loadData called, posterType:', posterType.value)
   loading.value = true
   errMsg.value = ''
   try {
     if (posterType.value === 'post') {
       // Load post data
+      console.log('[poster] Loading post data, postId:', postId.value)
       await fetchPost()
+      console.log('[poster] Post loaded:', post.value)
       if (post.value) {
         // 先关闭 loading，让 DOM 渲染
         loading.value = false
@@ -59,25 +62,38 @@ async function loadData() {
         await nextTick()
         // 再等待 canvas 元素渲染完成（type="2d" 需要更长时间）
         await new Promise(resolve => setTimeout(resolve, 1500))
+        console.log('[poster] About to draw poster')
         await drawPoster()
+      } else {
+        console.log('[poster] No post data found')
+        loading.value = false
       }
     } else {
       // Load salary record data
+      console.log('[poster] Loading salary record data')
       const [paydayRes, recordData] = await Promise.all([listPayday(), fetchRecord()])
+      console.log('[poster] Payday configs:', paydayRes, 'Record:', recordData)
       paydayList.value = paydayRes || []
       record.value = recordData
       if (record.value) {
+        console.log('[poster] Record data loaded, about to draw poster')
         // 先关闭 loading，让 DOM 渲染
         loading.value = false
         // 等待 Vue nextTick 确保 DOM 更新
         await nextTick()
         // 再等待 canvas 元素渲染完成（type="2d" 需要更长时间）
         await new Promise(resolve => setTimeout(resolve, 1500))
+        console.log('[poster] About to draw poster')
         await drawPoster()
+        console.log('[poster] Draw poster completed')
+      } else {
+        console.log('[poster] No record data found')
+        loading.value = false
       }
     }
   } catch (e: any) {
     console.error('[poster] Load failed:', e)
+    console.error('[poster] Error stack:', e?.stack)
     errMsg.value = e?.message || '加载失败'
     loading.value = false
   }
@@ -337,18 +353,24 @@ function drawSalaryPosterWithQR(
           success: (res2: any) => {
             console.log('[poster] Canvas to temp file success:', res2.tempFilePath)
             posterUrl.value = res2.tempFilePath
+            console.log('[poster] posterUrl.value set to:', posterUrl.value)
+            console.log('[poster] posterUrl.value type:', typeof posterUrl.value)
+            console.log('[poster] posterUrl.value length:', posterUrl.value?.length)
             resolve()
           },
           fail: (e: any) => {
             console.error('[poster] Canvas to temp file failed:', e)
             console.error('[poster] Error details:', JSON.stringify(e))
             posterUrl.value = ''
+            // 显示错误给用户
+            errMsg.value = '生成海报失败: ' + (e?.errMsg || '未知错误')
             reject(new Error('Canvas to temp file failed: ' + JSON.stringify(e)))
           },
-        })
+        }, instance)
       })
   } catch (e) {
     console.error('[poster] Draw error:', e)
+    errMsg.value = '绘制海报失败: ' + (e?.message || '未知错误')
     reject(e)
   }
 }
@@ -531,18 +553,24 @@ function drawPostPosterWithQR(
           success: (res2: any) => {
             console.log('[poster] Canvas to temp file success:', res2.tempFilePath)
             posterUrl.value = res2.tempFilePath
+            console.log('[poster] posterUrl.value set to:', posterUrl.value)
+            console.log('[poster] posterUrl.value type:', typeof posterUrl.value)
+            console.log('[poster] posterUrl.value length:', posterUrl.value?.length)
             resolve()
           },
           fail: (e: any) => {
             console.error('[poster] Canvas to temp file failed:', e)
             console.error('[poster] Error details:', JSON.stringify(e))
             posterUrl.value = ''
+            // 显示错误给用户
+            errMsg.value = '生成海报失败: ' + (e?.errMsg || '未知错误')
             reject(new Error('Canvas to temp file failed: ' + JSON.stringify(e)))
           },
-        })
+        }, instance)
       })
   } catch (e) {
     console.error('[poster] Post draw error:', e)
+    errMsg.value = '绘制海报失败: ' + (e?.message || '未知错误')
     reject(e)
   }
 }
@@ -615,6 +643,7 @@ function previewImage() {
 }
 
 onMounted(() => {
+  console.log('[poster] Component mounted, posterType:', posterType.value, 'recordId:', recordId.value, 'postId:', postId.value)
   loadData()
 })
 </script>
@@ -656,7 +685,10 @@ onMounted(() => {
         v-if="posterUrl"
         class="poster-image"
         :src="posterUrl"
+        mode="aspectFill"
         @click="previewImage"
+        @load="() => console.log('[poster] Image loaded successfully')"
+        @error="(e) => console.error('[poster] Image load failed:', e)"
       />
 
       <!-- Actions -->
@@ -774,17 +806,18 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   padding: 20rpx 0 40rpx;
+  overflow: visible;
 }
 
 .poster-canvas {
-  position: fixed;
-  left: 0;
-  top: 0;
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
   width: 375px;
   height: 500px;
   opacity: 0;
   pointer-events: none;
-  z-index: -999;
+  visibility: hidden;
 }
 
 .poster-image {
@@ -792,25 +825,24 @@ onMounted(() => {
   z-index: 1;
   width: 100%;
   max-width: 600rpx;
-  height: 400rpx;
+  height: 800rpx; /* 固定高度，基于 375:500 比例 */
   border-radius: 24rpx;
   box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.2);
-  margin-bottom: 32rpx;
+  margin-bottom: 40rpx;
   background: #fff;
   display: block;
-  object-fit: contain;
 }
 
 .actions {
   position: relative;
-  z-index: 10;
+  z-index: 999;
   display: flex;
   flex-direction: row;
   gap: 20rpx;
   width: 100%;
   max-width: 600rpx;
   justify-content: center;
-  margin-bottom: 16rpx;
+  margin-bottom: 24rpx;
 }
 
 .btn {
@@ -822,7 +854,7 @@ onMounted(() => {
   border: none;
   text-align: center;
   position: relative;
-  z-index: 10;
+  z-index: 999;
 }
 
 .btn.primary {
@@ -839,17 +871,24 @@ onMounted(() => {
 .actions-wrapper {
   width: 100%;
   max-width: 600rpx;
+  position: relative;
+  z-index: 999;
+  flex-shrink: 0;
+  padding: 24rpx 0;
 }
 
 .hint-wrapper {
   width: 100%;
   max-width: 600rpx;
+  position: relative;
+  z-index: 999;
+  flex-shrink: 0;
+  padding: 8rpx 0 24rpx;
 }
 
 .hint {
   position: relative;
-  z-index: 10;
-  margin-top: 16rpx;
+  z-index: 999;
   font-size: 24rpx;
   color: rgba(255, 255, 255, 0.6);
   text-align: center;

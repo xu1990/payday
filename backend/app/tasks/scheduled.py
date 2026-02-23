@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from app.core.database import SessionLocal
 from app.models.user import User
 from app.models.notification import Notification
+from app.models.payday import PaydayConfig
 from sqlalchemy import select
 
 
@@ -22,26 +23,29 @@ def send_payday_reminders() -> int:
         today = datetime.now().date()
         tomorrow = today + timedelta(days=1)
 
-        # 查询今天或明天发薪的用户
+        # 查询今天或明天发薪的用户（通过 PaydayConfig）
         result = db.execute(
-            select(User).where(
-                (User.payday_date == today.day) | (User.payday_date == tomorrow.day)
+            select(User, PaydayConfig)
+            .join(PaydayConfig, User.id == PaydayConfig.user_id)
+            .where(
+                PaydayConfig.is_active == 1,
+                (PaydayConfig.payday == today.day) | (PaydayConfig.payday == tomorrow.day)
             )
         )
-        users = result.scalars().all()
+        rows = result.all()
 
         count = 0
-        for user in users:
+        for user, payday_config in rows:
             if not user.allow_stranger_notice:
                 continue
 
-            payday_day = user.payday_date
+            payday_day = payday_config.payday
             if payday_day == today.day:
                 title = "今天是发薪日！"
-                content = "发薪日快乐！记得记录今天的工资情况~"
+                content = f"发薪日快乐！记得记录今天的工资情况~ ({payday_config.job_name})"
             else:
                 title = "明天是发薪日"
-                content = "明天就是发薪日了，记得记录工资情况哦~"
+                content = f"明天就是发薪日了，记得记录工资情况哦~ ({payday_config.job_name})"
 
             notification = Notification(
                 user_id=user.id,
@@ -69,7 +73,9 @@ def calculate_daily_statistics() -> dict:
     try:
         # 统计今日新增用户数
         today = datetime.now().date()
-        from app.models.post import Post, Comment, SalaryRecord
+        from app.models.post import Post
+        from app.models.comment import Comment
+        from app.models.salary import SalaryRecord
         from sqlalchemy import func
 
         new_users_count = db.execute(
