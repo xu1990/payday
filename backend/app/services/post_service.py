@@ -22,6 +22,7 @@ async def create(
     data: PostCreate,
     *,
     anonymous_name: str,
+    user_avatar: Optional[str] = None,
 ) -> Post:
     # 净化用户输入的内容，防止 XSS 攻击
     sanitized_content = sanitize_html(data.content)
@@ -40,6 +41,7 @@ async def create(
     post = Post(
         user_id=user_id,
         anonymous_name=anonymous_name,
+        user_avatar=user_avatar,
         content=sanitized_content,
         images=data.images,
         tags=data.tags,
@@ -69,6 +71,15 @@ async def create(
                 except Exception:
                     # 话题计数更新失败不影响发帖成功
                     pass
+
+        # 发放发帖积分
+        from app.services.ability_points_service import trigger_event
+        await trigger_event(
+            db, user_id, "post_create",
+            reference_id=str(post.id),
+            reference_type="post",
+            description="发布帖子"
+        )
 
         return post
     except SQLAlchemyError:
