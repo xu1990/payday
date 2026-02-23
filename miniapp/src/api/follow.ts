@@ -39,6 +39,7 @@ export interface FeedPost {
   id: string
   user_id: string
   anonymous_name: string
+  user_avatar: string | null
   content: string
   images: string[] | null
   tags: string[] | null
