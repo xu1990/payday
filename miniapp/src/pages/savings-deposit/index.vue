@@ -73,6 +73,7 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getSavingsGoal, depositToGoal } from '@/api/savings'
+import { transformSavingsGoal, safeNumber } from '@/utils/transform'
 
 const goalId = ref('')
 const goal = ref(null)
@@ -84,12 +85,14 @@ const quickValues = [100, 500, 1000, 2000, 5000]
 
 const projectedAmount = computed(() => {
   if (!goal.value || !amount.value) return '0.00'
-  return (parseFloat(goal.value.currentAmount) + parseFloat(amount.value)).toFixed(2)
+  const current = safeNumber(goal.value.currentAmount, 0)
+  const deposit = safeNumber(amount.value, 0)
+  return (current + deposit).toFixed(2)
 })
 
 const projectedPercent = computed(() => {
   if (!goal.value) return 0
-  const percent = (parseFloat(projectedAmount.value) / parseFloat(goal.value.targetAmount) * 100).toFixed(1)
+  const percent = (parseFloat(projectedAmount.value) / safeNumber(goal.value.targetAmount, 1) * 100).toFixed(1)
   return Math.min(percent, 100)
 })
 
@@ -103,7 +106,8 @@ onLoad((options) => {
 async function fetchGoal() {
   try {
     loading.value = true
-    goal.value = await getSavingsGoal(goalId.value)
+    const data = await getSavingsGoal(goalId.value)
+    goal.value = transformSavingsGoal(data)
   } catch (error) {
     console.error('Failed to fetch savings goal:', error)
     uni.showToast({

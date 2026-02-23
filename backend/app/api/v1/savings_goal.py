@@ -34,7 +34,7 @@ async def create_goal(
     """创建存款目标"""
     goal = await create_savings_goal(db, current_user.id, body)
     response = SavingsGoalResponse(**goal_to_response(goal))
-    return success_response(data=response, message="存款目标创建成功")
+    return success_response(data=response.model_dump(mode='json'), message="存款目标创建成功")
 
 
 @router.get("")
@@ -45,7 +45,7 @@ async def get_goals(
 ):
     """获取用户的存款目标列表"""
     goals = await list_savings_goals(db, current_user.id, status)
-    response = [SavingsGoalResponse(**goal_to_response(g)) for g in goals]
+    response = [SavingsGoalResponse(**goal_to_response(g)).model_dump(mode='json') for g in goals]
     return success_response(data={"goals": response, "total": len(response)})
 
 
@@ -60,7 +60,7 @@ async def get_goal(
     if not goal:
         return success_response(data=None, message="目标不存在", code="NOT_FOUND")
     response = SavingsGoalResponse(**goal_to_response(goal))
-    return success_response(data=response)
+    return success_response(data=response.model_dump(mode='json'))
 
 
 @router.put("/{goal_id}")
@@ -73,7 +73,7 @@ async def update_goal(
     """更新存款目标"""
     goal = await update_savings_goal(db, goal_id, current_user.id, body)
     response = SavingsGoalResponse(**goal_to_response(goal))
-    return success_response(data=response, message="存款目标更新成功")
+    return success_response(data=response.model_dump(mode='json'), message="存款目标更新成功")
 
 
 @router.delete("/{goal_id}")
@@ -99,4 +99,4 @@ async def deposit_to_goal(
     """向目标存入金额"""
     goal = await add_deposit(db, goal_id, current_user.id, body.amount)
     response = SavingsGoalResponse(**goal_to_response(goal))
-    return success_response(data=response, message="存款成功")
+    return success_response(data=response.model_dump(mode='json'), message="存款成功")

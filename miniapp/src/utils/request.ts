@@ -290,11 +290,17 @@ async function getToken(): Promise<string> {
 function handleHttpError(statusCode: number, data?: unknown): Error {
   const detail = (data as { detail?: string })?.detail
 
+  // Log full response for 422 errors to help debug validation issues
+  if (statusCode === 422) {
+    console.error('[request] 422 Validation Error - Full response:', JSON.stringify(data))
+  }
+
   const statusMessages: Record<number, string> = {
     400: detail || '请求参数错误',
     401: '登录已过期，请重新登录',
     403: '没有权限访问',
     404: '请求的资源不存在',
+    422: detail || '请求参数格式错误',
     429: '操作太频繁，请稍后再试',
     500: '服务器错误，请稍后重试',
     502: '网关错误，请稍后重试',

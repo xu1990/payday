@@ -1,77 +1,114 @@
 <template>
   <view class="expense-tracking-page">
     <view class="header">
-      <text class="title">每月支出记录</text>
-      <text class="subtitle">记录你的每一笔花销</text>
+      <text class="title">支出明细</text>
+      <text class="subtitle">工资: ¥{{ salaryAmount }}</text>
     </view>
 
-    <!-- 支出列表 -->
-    <view class="expense-list">
-      <view class="expense-item" v-for="(item, index) in expenses" :key="index">
-        <view class="item-header">
-          <picker :range="categories" :value="item.categoryIndex" @change="onCategoryChange($event, index)">
-            <view class="category-picker">
-              <text>{{ categories[item.categoryIndex] }}</text>
-              <text class="arrow">▼</text>
-            </view>
-          </picker>
+    <!-- 已保存的支出列表 -->
+    <view v-if="savedExpenses.length > 0" class="saved-expenses">
+      <view class="section-title">已保存的支出</view>
+      <view class="summary-card">
+        <view class="summary-item">
+          <text class="label">已支出</text>
+          <text class="value highlight">¥{{ totalSavedAmount }}</text>
+        </view>
+        <view class="summary-item">
+          <text class="label">剩余</text>
+          <text class="value">¥{{ remainingAmount }}</text>
+        </view>
+      </view>
+
+      <view class="expense-list-saved">
+        <view class="saved-item" v-for="item in savedExpenses" :key="item.id">
+          <view class="item-header">
+            <text class="category">{{ item.category }}</text>
+            <text class="amount">-¥{{ item.amount }}</text>
+          </view>
+          <view class="item-meta">
+            <text class="date">{{ formatDate(item.expenseDate) }}</text>
+            <text class="note" v-if="item.note">{{ item.note }}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 新增支出表单 -->
+    <view class="new-expense-section">
+      <view class="section-title">新增支出</view>
+
+      <view class="expense-list">
+        <view class="expense-item" v-for="(item, index) in expenses" :key="index">
+          <view class="item-header">
+            <picker :range="categories" :value="item.categoryIndex" @change="onCategoryChange($event, index)">
+              <view class="category-picker">
+                <text>{{ categories[item.categoryIndex] }}</text>
+                <text class="arrow">▼</text>
+              </view>
+            </picker>
+            <input
+              class="amount-input"
+              type="digit"
+              v-model="item.amount"
+              placeholder="金额"
+              @input="calculateTotal"
+            />
+          </view>
           <input
-            class="amount-input"
-            type="digit"
-            v-model="item.amount"
-            placeholder="金额"
-            @input="calculateTotal"
+            class="note-input"
+            v-model="item.note"
+            placeholder="备注（可选）"
           />
-        </view>
-        <input
-          class="note-input"
-          v-model="item.note"
-          placeholder="备注（可选）"
-        />
-        <view class="date-picker">
-          <uni-datetime-picker type="date" v-model="item.expenseDate" @change="calculateTotal">
-            <view class="date-display">
-              <text>{{ formatDate(item.expenseDate) }}</text>
-            </view>
-          </uni-datetime-picker>
-        </view>
-        <view class="delete-btn" v-if="expenses.length > 1" @tap="removeExpense(index)">
-          <text>删除</text>
+          <view class="date-picker">
+            <uni-datetime-picker type="date" v-model="item.expenseDate" @change="calculateTotal">
+              <view class="date-display">
+                <text>{{ formatDate(item.expenseDate) }}</text>
+              </view>
+            </uni-datetime-picker>
+          </view>
+          <view class="delete-btn" v-if="expenses.length > 1" @tap="removeExpense(index)">
+            <text>删除</text>
+          </view>
         </view>
       </view>
-    </view>
 
-    <!-- 添加按钮 -->
-    <view class="add-btn" @tap="addExpense">
-      <text>+ 添加支出</text>
-    </view>
-
-    <!-- 统计信息 -->
-    <view class="summary">
-      <view class="summary-item">
-        <text class="label">总计</text>
-        <text class="value">¥{{ totalAmount }}</text>
+      <!-- 添加按钮 -->
+      <view class="add-btn" @tap="addExpense">
+        <text>+ 添加支出</text>
       </view>
-      <view class="summary-item">
-        <text class="label">笔数</text>
-        <text class="value">{{ expenses.length }}笔</text>
-      </view>
-    </view>
 
-    <!-- 保存按钮 -->
-    <view class="footer">
-      <button class="save-btn" @tap="handleSave" :disabled="!isValid">保存记录</button>
+      <!-- 本次统计信息 -->
+      <view class="summary">
+        <view class="summary-item">
+          <text class="label">本次总计</text>
+          <text class="value">¥{{ totalAmount }}</text>
+        </view>
+        <view class="summary-item">
+          <text class="label">笔数</text>
+          <text class="value">{{ expenses.length }}笔</text>
+        </view>
+      </view>
+
+      <!-- 保存按钮 -->
+      <view class="footer">
+        <button class="save-btn" @tap="handleSave" :disabled="!isValid || expenses.length === 0">
+          保存记录
+        </button>
+      </view>
     </view>
   </view>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
-import { createExpenses } from '@/api/expense'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import { createExpenses, getExpenses } from '@/api/expense'
+import { getSalary } from '@/api/salary'
 
 const salaryRecordId = ref('')
 const salaryAmount = ref(0)
+const loading = ref(false)
+const savedExpenses = ref([])
 
 const categories = ref([
   '🏠居住', '🍚饮食', '🚌交通', '🛍️购物', '🏥医疗',
@@ -87,24 +124,87 @@ const expenses = ref([
   }
 ])
 
+// 本次新增支出的总计
 const totalAmount = computed(() => {
   return expenses.value.reduce((sum, item) => {
     return sum + (parseFloat(item.amount) || 0)
   }, 0).toFixed(2)
 })
 
+// 已保存支出的总计
+const totalSavedAmount = computed(() => {
+  return savedExpenses.value.reduce((sum, item) => {
+    return sum + parseFloat(item.amount || 0)
+  }, 0).toFixed(2)
+})
+
+// 剩余金额
+const remainingAmount = computed(() => {
+  const total = parseFloat(totalSavedAmount.value) || 0
+  const remaining = salaryAmount.value - total
+  return Math.max(0, remaining).toFixed(2)
+})
+
 const isValid = computed(() => {
   return expenses.value.every(item => item.amount && parseFloat(item.amount) > 0)
 })
 
-onLoad((options) => {
-  if (options.recordId) {
-    salaryRecordId.value = options.recordId
+onLoad(async (options) => {
+  console.log('[expense-tracking] onLoad options:', options)
+
+  if (!options.recordId) {
+    uni.showModal({
+      title: '提示',
+      content: '缺少工资记录ID，请重新操作',
+      showCancel: false,
+      success: () => {
+        uni.navigateBack()
+      }
+    })
+    return
   }
-  if (options.amount) {
-    salaryAmount.value = parseFloat(options.amount)
+
+  salaryRecordId.value = options.recordId
+
+  // 从后端API获取工资记录详情
+  try {
+    const record = await getSalary(options.recordId)
+    salaryAmount.value = record.amount || 0
+    console.log('[expense-tracking] salaryAmount:', salaryAmount.value)
+  } catch (error) {
+    console.error('[expense-tracking] Failed to load salary record:', error)
+    uni.showToast({
+      title: '获取工资记录失败',
+      icon: 'none'
+    })
+  }
+
+  console.log('[expense-tracking] recordId:', salaryRecordId.value)
+})
+
+// 每次显示页面时加载已保存的支出
+onShow(() => {
+  if (salaryRecordId.value) {
+    fetchSavedExpenses()
   }
 })
+
+// 加载已保存的支出记录
+async function fetchSavedExpenses() {
+  if (!salaryRecordId.value) return
+
+  try {
+    loading.value = true
+    const res = await getExpenses(salaryRecordId.value)
+    if (res.records) {
+      savedExpenses.value = res.records
+    }
+  } catch (error) {
+    console.error('Failed to fetch expenses:', error)
+  } finally {
+    loading.value = false
+  }
+}
 
 function addExpense() {
   expenses.value.push({
@@ -140,6 +240,11 @@ async function handleSave() {
     return
   }
 
+  if (!salaryRecordId.value) {
+    uni.showToast({ title: '缺少工资记录ID', icon: 'none' })
+    return
+  }
+
   const records = expenses.value.map(item => ({
     expenseDate: item.expenseDate,
     category: categories.value[item.categoryIndex],
@@ -148,6 +253,9 @@ async function handleSave() {
     note: item.note || undefined
   }))
 
+  console.log('[expense-tracking] Saving expenses for recordId:', salaryRecordId.value)
+  console.log('[expense-tracking] Records:', records)
+
   try {
     uni.showLoading({ title: '保存中...' })
 
@@ -155,9 +263,17 @@ async function handleSave() {
 
     uni.hideLoading()
     uni.showToast({ title: '保存成功', icon: 'success' })
-    setTimeout(() => {
-      uni.navigateBack()
-    }, 1500)
+
+    // 清空表单
+    expenses.value = [{
+      categoryIndex: 0,
+      amount: '',
+      note: '',
+      expenseDate: new Date().toISOString().split('T')[0]
+    }]
+
+    // 重新加载已保存的支出
+    await fetchSavedExpenses()
   } catch (error) {
     uni.hideLoading()
     console.error('Failed to save expenses:', error)
@@ -174,13 +290,12 @@ async function handleSave() {
   min-height: 100vh;
   background: #f5f5f5;
   padding: 20rpx;
+  padding-bottom: 150rpx;
 }
 
 .header {
   text-align: center;
-  padding: 40rpx 0;
-  background: white;
-  border-radius: 20rpx;
+  padding: 30rpx 0;
   margin-bottom: 20rpx;
 
   .title {
@@ -192,15 +307,113 @@ async function handleSave() {
 
   .subtitle {
     font-size: 24rpx;
-    color: #999;
+    color: #666;
   }
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin: 30rpx 0 20rpx;
+  padding-left: 10rpx;
+  border-left: 6rpx solid #1890ff;
+}
+
+.saved-expenses {
+  margin-bottom: 40rpx;
+}
+
+.summary-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  display: flex;
+  justify-content: space-around;
+
+  .summary-item {
+    text-align: center;
+
+    .label {
+      display: block;
+      font-size: 24rpx;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 10rpx;
+    }
+
+    .value {
+      display: block;
+      font-size: 36rpx;
+      font-weight: bold;
+      color: white;
+
+      &.highlight {
+        font-size: 44rpx;
+      }
+    }
+  }
+}
+
+.expense-list-saved {
+  .saved-item {
+    background: white;
+    border-radius: 16rpx;
+    padding: 25rpx;
+    margin-bottom: 15rpx;
+    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10rpx;
+
+      .category {
+        font-size: 28rpx;
+        font-weight: bold;
+        color: #333;
+      }
+
+      .amount {
+        font-size: 32rpx;
+        font-weight: bold;
+        color: #ff4d4f;
+      }
+    }
+
+    .item-meta {
+      display: flex;
+      gap: 20rpx;
+      font-size: 24rpx;
+      color: #999;
+
+      .date {
+        color: #666;
+      }
+
+      .note {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+}
+
+.new-expense-section {
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
 }
 
 .expense-list {
   .expense-item {
-    background: white;
-    border-radius: 20rpx;
-    padding: 20rpx;
+    background: #f9f9f9;
+    border-radius: 16rpx;
+    padding: 25rpx;
     margin-bottom: 20rpx;
 
     .item-header {
@@ -212,72 +425,74 @@ async function handleSave() {
       .category-picker {
         display: flex;
         align-items: center;
+        gap: 10rpx;
         padding: 10rpx 20rpx;
-        background: #f0f0f0;
-        border-radius: 10rpx;
+        background: white;
+        border-radius: 30rpx;
+        font-size: 28rpx;
 
         .arrow {
-          margin-left: 10rpx;
           font-size: 20rpx;
-          color: #666;
+          color: #999;
         }
       }
 
       .amount-input {
-        width: 200rpx;
+        flex: 1;
         text-align: right;
         font-size: 32rpx;
         font-weight: bold;
+        color: #1890ff;
       }
     }
 
     .note-input {
       width: 100%;
-      padding: 10rpx;
-      border: 1rpx solid #e0e0e0;
+      padding: 15rpx;
+      background: white;
       border-radius: 10rpx;
+      font-size: 28rpx;
       margin-bottom: 15rpx;
     }
 
     .date-picker {
       .date-display {
         padding: 10rpx;
-        background: #f0f0f0;
+        background: white;
         border-radius: 10rpx;
         text-align: center;
+        font-size: 26rpx;
+        color: #666;
       }
     }
 
     .delete-btn {
-      margin-top: 15rpx;
       text-align: center;
-      padding: 10rpx;
+      padding: 15rpx;
+      margin-top: 10rpx;
+      font-size: 26rpx;
       color: #ff4d4f;
-      border: 1rpx solid #ff4d4f;
-      border-radius: 10rpx;
     }
   }
 }
 
 .add-btn {
-  background: white;
-  border-radius: 20rpx;
-  padding: 30rpx;
   text-align: center;
-  margin-bottom: 20rpx;
+  padding: 25rpx;
+  background: white;
+  border-radius: 16rpx;
+  margin: 20rpx 0;
+  font-size: 28rpx;
   color: #1890ff;
-  font-weight: bold;
 }
 
 .summary {
   display: flex;
-  background: white;
-  border-radius: 20rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
+  justify-content: space-around;
+  padding: 20rpx 0;
+  border-top: 1rpx solid #eee;
 
   .summary-item {
-    flex: 1;
     text-align: center;
 
     .label {
@@ -288,6 +503,7 @@ async function handleSave() {
     }
 
     .value {
+      display: block;
       font-size: 32rpx;
       font-weight: bold;
       color: #1890ff;

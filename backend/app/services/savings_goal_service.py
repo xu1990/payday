@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List, Optional
 from datetime import datetime, date
+from decimal import Decimal
 
 from app.models.savings_goal import SavingsGoal
 from app.schemas.savings_goal import SavingsGoalCreate, SavingsGoalUpdate
@@ -132,7 +133,8 @@ async def add_deposit(
     if goal.status not in ["active", "paused"]:
         raise ValidationException("只能向活跃或暂停的目标存款")
 
-    goal.current_amount += amount
+    # 将 float 转换为 Decimal 以匹配数据库类型
+    goal.current_amount += Decimal(str(amount))
 
     # 检查是否完成
     if goal.current_amount >= goal.target_amount and goal.status != "completed":

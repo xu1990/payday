@@ -103,6 +103,7 @@ async function handleSubmit() {
       description: form.value.description || undefined
     }
 
+    console.log('[createSavingsGoal] Sending data:', data)
     await createSavingsGoal(data)
 
     uni.hideLoading()

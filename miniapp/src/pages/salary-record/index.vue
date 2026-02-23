@@ -218,6 +218,10 @@ function goPoster(id: string) {
   uni.navigateTo({ url: `/pages/poster/index?recordId=${id}` })
 }
 
+function goExpenseTracking(id: string) {
+  uni.navigateTo({ url: `/pages/expense-tracking/index?recordId=${id}` })
+}
+
 function doDelete(item: SalaryRecord) {
   uni.showModal({
     title: '确认删除',
@@ -284,6 +288,7 @@ onMounted(async () => {
         </view>
         <view class="card-actions">
           <button class="btn-sm" @click="openEdit(item)">编辑</button>
+          <button class="btn-sm" @click="goExpenseTracking(item.id)">支出</button>
           <button class="btn-sm" @click="goPoster(item.id)">海报</button>
           <button class="btn-sm danger" @click="doDelete(item)">删除</button>
         </view>

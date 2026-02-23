@@ -63,13 +63,24 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { getSavingsGoals, deleteSavingsGoal } from '@/api/savings'
+import { transformSavingsGoals } from '@/utils/transform'
 
 const loading = ref(true)
 const goals = ref([])
+const isInitialized = ref(false)
 
 onMounted(() => {
   fetchGoals()
+  isInitialized.value = true
+})
+
+// 每次页面显示时刷新列表（从创建/存款页返回时自动刷新）
+onShow(() => {
+  if (isInitialized.value) {
+    fetchGoals()
+  }
 })
 
 async function fetchGoals() {
@@ -77,7 +88,7 @@ async function fetchGoals() {
     loading.value = true
     const res = await getSavingsGoals()
     if (res.goals) {
-      goals.value = res.goals
+      goals.value = transformSavingsGoals(res.goals)
     }
   } catch (error) {
     console.error('Failed to fetch savings goals:', error)

@@ -31,7 +31,7 @@ async def create_expenses(recordId: str, body: ExpenseListCreate, current_user: 
     # 验证工资记录所有权
     await verify_salary_record_ownership(db, recordId, current_user.id)
     records = await create_expense_records(db, current_user.id, recordId, [exp.model_dump() for exp in body.expenses])
-    response = [ExpenseRecordResponse(id=r.id, salaryRecordId=r.salary_record_id, expenseDate=r.expense_date, category=r.category, subcategory=r.subcategory, amount=float(r.amount), note=r.note, createdAt=r.created_at) for r in records]
+    response = [ExpenseRecordResponse(id=r.id, salaryRecordId=r.salary_record_id, expenseDate=r.expense_date, category=r.category, subcategory=r.subcategory, amount=float(r.amount), note=r.note, createdAt=r.created_at).model_dump(mode='json') for r in records]
     return success_response(data={"records": response, "total": len(response)}, message="支出记录创建成功")
 
 @router.get("/{recordId}/expenses")
@@ -39,5 +39,5 @@ async def get_expenses(recordId: str, current_user: User = Depends(get_current_u
     # 验证工资记录所有权
     await verify_salary_record_ownership(db, recordId, current_user.id)
     records = await get_expenses_by_salary(db, recordId)
-    response = [ExpenseRecordResponse(id=r.id, salaryRecordId=r.salary_record_id, expenseDate=r.expense_date, category=r.category, subcategory=r.subcategory, amount=float(r.amount), note=r.note, createdAt=r.created_at) for r in records]
+    response = [ExpenseRecordResponse(**r).model_dump(mode='json') for r in records]
     return success_response(data={"records": response, "total": len(response)})

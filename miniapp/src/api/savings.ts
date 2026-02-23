@@ -46,10 +46,22 @@ export interface SavingsGoalsListResponse {
 
 /** 创建存款目标 */
 export function createSavingsGoal(data: SavingsGoalCreate) {
+  // Transform camelCase to snake_case for backend
+  const snakeCaseData = {
+    title: data.title,
+    description: data.description,
+    target_amount: data.targetAmount,
+    current_amount: data.currentAmount ?? 0,
+    deadline: data.deadline,
+    start_date: data.startDate,
+    category: data.category,
+    icon: data.icon,
+  }
+  console.log('[savings.ts] Transformed data:', snakeCaseData)
   return request<SavingsGoalResponse>({
     url: `${PREFIX}`,
     method: 'POST',
-    data,
+    data: snakeCaseData,
   })
 }
 
@@ -84,10 +96,22 @@ export interface SavingsGoalUpdate {
 }
 
 export function updateSavingsGoal(goalId: string, data: SavingsGoalUpdate) {
+  // Transform camelCase to snake_case for backend
+  const snakeCaseData: Record<string, unknown> = {}
+  if (data.title !== undefined) snakeCaseData.title = data.title
+  if (data.description !== undefined) snakeCaseData.description = data.description
+  if (data.targetAmount !== undefined) snakeCaseData.target_amount = data.targetAmount
+  if (data.currentAmount !== undefined) snakeCaseData.current_amount = data.currentAmount
+  if (data.deadline !== undefined) snakeCaseData.deadline = data.deadline
+  if (data.startDate !== undefined) snakeCaseData.start_date = data.startDate
+  if (data.status !== undefined) snakeCaseData.status = data.status
+  if (data.category !== undefined) snakeCaseData.category = data.category
+  if (data.icon !== undefined) snakeCaseData.icon = data.icon
+
   return request<SavingsGoalResponse>({
     url: `${PREFIX}/${goalId}`,
     method: 'PUT',
-    data,
+    data: snakeCaseData,
   })
 }
 

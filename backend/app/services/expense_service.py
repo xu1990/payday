@@ -3,10 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List
 from datetime import date
+from decimal import Decimal
 
 from app.models.expense_record import ExpenseRecord
 from app.schemas.expense_record import ExpenseRecordCreate
-from app.utils.encryption import encrypt_amount, decrypt_amount
 
 
 async def create_expense_records(
@@ -18,17 +18,13 @@ async def create_expense_records(
     """创建支出记录"""
     created_records = []
     for exp in expenses:
-        # 加密金额
-        encrypted_amount, salt = encrypt_amount(exp["amount"])
-
         record = ExpenseRecord(
             user_id=user_id,
             salary_record_id=salary_record_id,
             expense_date=exp["expenseDate"],
             category=exp["category"],
             subcategory=exp.get("subcategory"),
-            amount=encrypted_amount,
-            amount_salt=salt,
+            amount=Decimal(str(exp["amount"])),
             note=exp.get("note")
         )
         db.add(record)
@@ -44,7 +40,7 @@ async def get_expenses_by_salary(
     db: AsyncSession,
     salary_record_id: str
 ) -> List[dict]:
-    """获取工资记录的支出（解密金额）"""
+    """获取工资记录的支出"""
     stmt = (
         select(ExpenseRecord)
         .where(ExpenseRecord.salary_record_id == salary_record_id)
@@ -53,22 +49,21 @@ async def get_expenses_by_salary(
     result = await db.execute(stmt)
     records = result.scalars().all()
 
-    # 解密金额
-    decrypted_records = []
+    # 转换为字典
+    expense_list = []
     for record in records:
-        decrypted_amount = decrypt_amount(str(record.amount), record.amount_salt)
-        decrypted_records.append({
+        expense_list.append({
             "id": record.id,
             "salaryRecordId": record.salary_record_id,
             "expenseDate": record.expense_date.isoformat() if record.expense_date else None,
             "category": record.category,
             "subcategory": record.subcategory,
-            "amount": decrypted_amount,
+            "amount": float(record.amount),
             "note": record.note,
             "createdAt": record.created_at.isoformat() if record.created_at else None,
         })
 
-    return decrypted_records
+    return expense_list
 
 
 async def get_monthly_expense_summary(
@@ -77,7 +72,7 @@ async def get_monthly_expense_summary(
     year: int,
     month: int
 ) -> dict:
-    """获取月度支出汇总（解密金额）"""
+    """获取月度支出汇总"""
     from sqlalchemy import func
     from app.models.expense_record import ExpenseRecord
 
@@ -90,11 +85,10 @@ async def get_monthly_expense_summary(
     result = await db.execute(stmt)
     records = result.scalars().all()
 
-    # 解密并按分类汇总
+    # 按分类汇总
     summary = {}
     for record in records:
-        decrypted_amount = decrypt_amount(str(record.amount), record.amount_salt)
         category = record.category
-        summary[category] = summary.get(category, 0) + float(decrypted_amount)
+        summary[category] = summary.get(category, 0) + float(record.amount)
 
     return summary

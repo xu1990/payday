@@ -23,8 +23,7 @@ class ExpenseRecord(Base):
     expense_date = Column(Date, nullable=False, index=True, comment="支出日期")
     category = Column(String(50), nullable=False, index=True, comment="支出分类")
     subcategory = Column(String(50), nullable=True, comment="子分类")
-    amount = Column(Numeric(10, 2), nullable=False, comment="支出金额（加密）")
-    amount_salt = Column(String(88), nullable=False, comment="金额加密盐值")
+    amount = Column(Numeric(10, 2), nullable=False, comment="支出金额")
     note = Column(Text, nullable=True, comment="备注")
 
     # 时间戳

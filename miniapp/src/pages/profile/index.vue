@@ -104,7 +104,12 @@ function goAbilityPoints() {
 }
 
 function goExpenseTracking() {
-  uni.navigateTo({ url: '/pages/expense-tracking/index' })
+  // 跳转到工资记录列表，用户可以在那里选择记录后添加支出
+  uni.showToast({
+    title: '请选择工资记录',
+    icon: 'none'
+  })
+  uni.navigateTo({ url: '/pages/salary-record/index' })
 }
 
 // 生成海报

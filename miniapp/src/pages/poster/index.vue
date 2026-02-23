@@ -687,8 +687,6 @@ onMounted(() => {
         :src="posterUrl"
         mode="aspectFill"
         @click="previewImage"
-        @load="() => console.log('[poster] Image loaded successfully')"
-        @error="(e) => console.error('[poster] Image load failed:', e)"
       />
 
       <!-- Actions -->

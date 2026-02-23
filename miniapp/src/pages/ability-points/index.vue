@@ -73,6 +73,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { getMyPoints } from '@/api/ability-points'
+import { safeNumber } from '@/utils/transform'
 
 // 积分系统常量
 const POINTS_PER_LEVEL = 1000  // 每升1级所需的积分
@@ -83,13 +84,15 @@ const error = ref(null)
 
 const levelProgress = computed(() => {
   if (!points.value) return 0
-  const currentLevelPoints = points.value.totalPoints % POINTS_PER_LEVEL
+  const totalPoints = safeNumber(points.value.totalPoints, 0)
+  const currentLevelPoints = totalPoints % POINTS_PER_LEVEL
   return (currentLevelPoints / POINTS_PER_LEVEL * 100).toFixed(1)
 })
 
 const nextLevelPoints = computed(() => {
   if (!points.value) return POINTS_PER_LEVEL
-  return (Math.floor(points.value.totalPoints / POINTS_PER_LEVEL) + 1) * POINTS_PER_LEVEL
+  const totalPoints = safeNumber(points.value.totalPoints, 0)
+  return (Math.floor(totalPoints / POINTS_PER_LEVEL) + 1) * POINTS_PER_LEVEL
 })
 
 onMounted(() => {
@@ -100,7 +103,16 @@ async function fetchPoints() {
   try {
     loading.value = true
     error.value = null
-    points.value = await getMyPoints()
+    const data = await getMyPoints()
+    // 确保 NaN 值被转换为 0
+    points.value = {
+      ...data,
+      availablePoints: safeNumber(data.availablePoints, 0),
+      totalEarned: safeNumber(data.totalEarned, 0),
+      totalSpent: safeNumber(data.totalSpent, 0),
+      totalPoints: safeNumber(data.totalPoints, 0),
+      level: safeNumber(data.level, 1)
+    }
   } catch (err) {
     console.error('Failed to fetch points:', err)
     error.value = err.message || '加载失败'
