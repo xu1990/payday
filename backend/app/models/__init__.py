@@ -31,6 +31,8 @@ from .point_product import PointProduct
 from .point_order import PointOrder
 from .work_record import WorkRecord
 from .product import ProductCategory, Product
+from .address import AdminRegion, UserAddress
+from .shipping import ShippingTemplate, ShippingTemplateRegion, CourierCompany
 
 __all__ = [
     "Base",
@@ -72,4 +74,9 @@ __all__ = [
     "WorkRecord",
     "ProductCategory",
     "Product",
+    "AdminRegion",
+    "UserAddress",
+    "ShippingTemplate",
+    "ShippingTemplateRegion",
+    "CourierCompany",
 ]
