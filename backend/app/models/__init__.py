@@ -33,6 +33,7 @@ from .work_record import WorkRecord
 from .product import ProductCategory, Product
 from .address import AdminRegion, UserAddress
 from .shipping import ShippingTemplate, ShippingTemplateRegion, CourierCompany
+from .order import Order, OrderItem
 
 __all__ = [
     "Base",
@@ -79,4 +80,6 @@ __all__ = [
     "ShippingTemplate",
     "ShippingTemplateRegion",
     "CourierCompany",
+    "Order",
+    "OrderItem",
 ]
