@@ -33,6 +33,7 @@ from .qrcode import router as qrcode_router
 from .invitation import router as invitation_router
 from .point_shop import router as point_shop_router
 from .work_record import router as work_record_router
+from .cart import router as cart_router
 
 api_router = APIRouter(prefix="/api/v1", tags=["v1"])
 
@@ -70,6 +71,7 @@ api_router.include_router(qrcode_router)
 api_router.include_router(invitation_router)
 api_router.include_router(point_shop_router)
 api_router.include_router(work_record_router)
+api_router.include_router(cart_router)
 
 
 @api_router.get("/ping")
