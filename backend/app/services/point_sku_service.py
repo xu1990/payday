@@ -156,6 +156,28 @@ async def create_spec_value(
     return spec_value
 
 
+async def list_specification_values(
+    db: AsyncSession,
+    specification_id: str,
+) -> List[PointSpecificationValue]:
+    """
+    获取规格的值列表
+
+    Args:
+        db: 数据库会话
+        specification_id: 规格ID
+
+    Returns:
+        规格值列表（按sort_order排序）
+    """
+    result = await db.execute(
+        select(PointSpecificationValue)
+        .where(PointSpecificationValue.specification_id == specification_id)
+        .order_by(PointSpecificationValue.sort_order.asc())
+    )
+    return list(result.scalars().all())
+
+
 async def delete_spec_value(
     db: AsyncSession,
     value_id: str,
@@ -177,6 +199,72 @@ async def delete_spec_value(
     )
     await db.commit()
     return True
+
+
+async def update_specification(
+    db: AsyncSession,
+    spec_id: str,
+    **kwargs
+) -> PointSpecification:
+    """
+    更新规格
+
+    Args:
+        db: 数据库会话
+        spec_id: 规格ID
+        **kwargs: 要更新的字段
+
+    Returns:
+        更新后的规格对象
+    """
+    result = await db.execute(
+        select(PointSpecification).where(PointSpecification.id == spec_id)
+    )
+    spec = result.scalar_one_or_none()
+
+    if not spec:
+        raise NotFoundException("规格不存在")
+
+    for key, value in kwargs.items():
+        if hasattr(spec, key) and value is not None:
+            setattr(spec, key, value)
+
+    await db.commit()
+    await db.refresh(spec)
+    return spec
+
+
+async def update_specification_value(
+    db: AsyncSession,
+    value_id: str,
+    **kwargs
+) -> PointSpecificationValue:
+    """
+    更新规格值
+
+    Args:
+        db: 数据库会话
+        value_id: 规格值ID
+        **kwargs: 要更新的字段
+
+    Returns:
+        更新后的规格值对象
+    """
+    result = await db.execute(
+        select(PointSpecificationValue).where(PointSpecificationValue.id == value_id)
+    )
+    spec_value = result.scalar_one_or_none()
+
+    if not spec_value:
+        raise NotFoundException("规格值不存在")
+
+    for key, value in kwargs.items():
+        if hasattr(spec_value, key) and value is not None:
+            setattr(spec_value, key, value)
+
+    await db.commit()
+    await db.refresh(spec_value)
+    return spec_value
 
 
 # ============== SKU管理 ==============
