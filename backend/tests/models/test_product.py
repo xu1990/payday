@@ -74,3 +74,54 @@ async def test_create_product_with_sku(db_session):
 
     assert sku.attributes["color"] == "red"
     assert sku.stock == 100
+
+
+@pytest.mark.asyncio
+async def test_create_product_bundle(db_session):
+    """Test creating pre-configured bundle"""
+    from app.models.product import ProductBundle
+
+    # Create bundle product
+    bundle = Product(
+        id="bundle-1",
+        name="数码套装",
+        item_type="bundle",
+        bundle_type="pre_configured"
+    )
+    db_session.add(bundle)
+    await db_session.flush()
+
+    # Create component products
+    component1 = Product(
+        id="comp-1",
+        name="手机壳",
+        item_type="physical"
+    )
+    db_session.add(component1)
+
+    component2 = Product(
+        id="comp-2",
+        name="贴膜",
+        item_type="physical"
+    )
+    db_session.add(component2)
+    await db_session.flush()
+
+    # Create bundle components
+    bundle_item1 = ProductBundle(
+        bundle_product_id="bundle-1",
+        component_product_id="comp-1",
+        quantity=1
+    )
+    db_session.add(bundle_item1)
+
+    bundle_item2 = ProductBundle(
+        bundle_product_id="bundle-1",
+        component_product_id="comp-2",
+        quantity=2
+    )
+    db_session.add(bundle_item2)
+    await db_session.commit()
+
+    assert bundle_item1.quantity == 1
+    assert bundle_item2.quantity == 2

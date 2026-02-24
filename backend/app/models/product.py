@@ -126,3 +126,19 @@ class ProductPrice(Base):
 
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class ProductBundle(Base):
+    """商品套餐（组合商品）表"""
+    __tablename__ = "product_bundles"
+
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    bundle_product_id = Column(String(36), ForeignKey("products.id"), nullable=False, index=True)
+    component_product_id = Column(String(36), ForeignKey("products.id"), nullable=False, index=True)
+    component_sku_id = Column(String(36), ForeignKey("product_skus.id"), nullable=True)
+    quantity = Column(Integer, default=1, nullable=False, comment="数量")
+    is_required = Column(Boolean, default=True, nullable=False, comment="是否必选")
+
+    # Relationships
+    # bundle_product = relationship("Product", foreign_keys=[bundle_product_id])
+    # component_product = relationship("Product", foreign_keys=[component_product_id])
