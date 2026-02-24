@@ -116,3 +116,44 @@ class RefundProcess(BaseModel):
         if v <= 0:
             raise ValueError("退款金额必须大于0")
         return v
+
+
+# ==================== Courier Schemas ====================
+
+class CourierCreate(BaseModel):
+    """创建物流公司请求"""
+    name: str = Field(..., min_length=1, max_length=100, description="物流公司名称")
+    code: str = Field(..., min_length=1, max_length=50, description="物流公司代码")
+    website: Optional[str] = Field(None, max_length=200, description="官网地址")
+    tracking_url: Optional[str] = Field(None, max_length=200, description="物流查询URL")
+    supports_cod: bool = Field(False, description="是否支持货到付款")
+    supports_cold_chain: bool = Field(False, description="是否支持冷链")
+    sort_order: int = Field(0, description="排序顺序")
+    is_active: bool = Field(True, description="是否启用")
+
+
+class CourierUpdate(BaseModel):
+    """更新物流公司请求"""
+    name: Optional[str] = Field(None, min_length=1, max_length=100, description="物流公司名称")
+    website: Optional[str] = Field(None, max_length=200, description="官网地址")
+    tracking_url: Optional[str] = Field(None, max_length=200, description="物流查询URL")
+    supports_cod: Optional[bool] = Field(None, description="是否支持货到付款")
+    supports_cold_chain: Optional[bool] = Field(None, description="是否支持冷链")
+    sort_order: Optional[int] = Field(None, description="排序顺序")
+    is_active: Optional[bool] = Field(None, description="是否启用")
+
+
+class CourierResponse(BaseModel):
+    """物流公司响应"""
+    id: str
+    name: str
+    code: str
+    website: Optional[str] = None
+    tracking_url: Optional[str] = None
+    supports_cod: bool
+    supports_cold_chain: bool
+    sort_order: int
+    is_active: bool
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
