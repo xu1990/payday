@@ -23,6 +23,12 @@ class PointOrder(Base):
 
     # 收货信息
     delivery_info = Column(Text, nullable=True, comment="收货信息 JSON")
+    sku_id = Column(String(36), ForeignKey("point_product_skus.id"),
+                   nullable=True, comment="SKU ID")
+    address_id = Column(String(36), ForeignKey("user_addresses.id"),
+                       nullable=True, comment="收货地址ID")
+    shipment_id = Column(String(36), ForeignKey("order_shipments.id"),
+                        nullable=True, comment="发货ID")
     notes = Column(Text, nullable=True, comment="备注")
 
     # 状态
