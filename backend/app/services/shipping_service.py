@@ -18,16 +18,47 @@ Shipping Service - 物流服务
 - 物流状态同步（自动更新订单状态）
 - 业务规则验证（未签收不能退货、状态不正确不能操作）
 """
+
+"""
+ShippingTemplateService - 运费模板服务
+
+管理运费模板和区域配置：
+1. create_template - 创建运费模板
+2. list_templates - 列出运费模板
+3. get_template - 获取运费模板
+4. update_template - 更新运费模板
+5. delete_template - 删除运费模板
+6. create_region - 创建运费模板区域
+7. list_regions - 列出运费模板区域
+8. get_region - 获取运费模板区域
+9. update_region - 更新运费模板区域
+10. delete_region - 删除运费模板区域
+
+关键特性：
+- 支持重量、数量、固定三种计费方式
+- 支持区域差异化定价
+- 支持包邮门槛设置
+- 支持预计送达时间设置
+- 软删除机制保护数据完整性
+"""
 import logging
 from datetime import datetime
 from typing import Optional, List
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.order import Order, OrderItem
-from app.models.shipping import OrderShipment, OrderReturn, CourierCompany
+from app.models.shipping import OrderShipment, OrderReturn, CourierCompany, ShippingTemplate, ShippingTemplateRegion
+from app.schemas.shipping import (
+    ShippingTemplateCreate,
+    ShippingTemplateUpdate,
+    ShippingTemplateRegionCreate,
+    ShippingTemplateRegionUpdate,
+    ShippingTemplateResponse,
+    ShippingTemplateRegionResponse
+)
 from app.core.exceptions import NotFoundException, BusinessException, ValidationException
 
 logger = logging.getLogger(__name__)
@@ -769,3 +800,297 @@ class ShippingService:
         except Exception as e:
             logger.error(f"Error getting shipment by order {order_id}: {e}")
             raise
+
+
+# ==================== ShippingTemplateService ====================
+
+
+class ShippingTemplateService:
+    """运费模板服务"""
+
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def create_template(self, template_data: ShippingTemplateCreate) -> ShippingTemplate:
+        """创建运费模板"""
+        # 验证charge_type
+        valid_charge_types = ["weight", "quantity", "fixed"]
+        if template_data.charge_type not in valid_charge_types:
+            raise ValidationException(
+                f"计费方式必须是: {', '.join(valid_charge_types)}",
+                code="INVALID_CHARGE_TYPE"
+            )
+
+        template = ShippingTemplate(
+            name=template_data.name,
+            description=template_data.description,
+            charge_type=template_data.charge_type,
+            default_first_unit=template_data.default_first_unit,
+            default_first_cost=template_data.default_first_cost,
+            default_continue_unit=template_data.default_continue_unit,
+            default_continue_cost=template_data.default_continue_cost,
+            free_threshold=template_data.free_threshold,
+            estimate_days_min=template_data.estimate_days_min,
+            estimate_days_max=template_data.estimate_days_max,
+            is_active=template_data.is_active if hasattr(template_data, 'is_active') else True
+        )
+
+        self.db.add(template)
+        try:
+            await self.db.commit()
+            await self.db.refresh(template)
+            return template
+        except SQLAlchemyError:
+            await self.db.rollback()
+            raise
+
+    async def list_templates(self, skip: int = 0, limit: int = 100) -> List[ShippingTemplate]:
+        """列出运费模板"""
+        result = await self.db.execute(
+            select(ShippingTemplate)
+            .where(ShippingTemplate.is_active == True)
+            .order_by(ShippingTemplate.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        return list(result.scalars().all())
+
+    async def get_template(self, template_id: str) -> ShippingTemplate:
+        """获取运费模板"""
+        result = await self.db.execute(
+            select(ShippingTemplate).where(ShippingTemplate.id == template_id)
+        )
+        template = result.scalar_one_or_none()
+        if not template:
+            raise NotFoundException("运费模板不存在")
+        return template
+
+    async def update_template(self, template_id: str, update_data: ShippingTemplateUpdate) -> ShippingTemplate:
+        """更新运费模板"""
+        template = await self.get_template(template_id)
+
+        # 验证charge_type
+        if update_data.charge_type:
+            valid_charge_types = ["weight", "quantity", "fixed"]
+            if update_data.charge_type not in valid_charge_types:
+                raise ValidationException(
+                    f"计费方式必须是: {', '.join(valid_charge_types)}",
+                    code="INVALID_CHARGE_TYPE"
+                )
+
+        # 更新字段
+        update_dict = update_data.model_dump(exclude_unset=True)
+        for k, v in update_dict.items():
+            setattr(template, k, v)
+
+        await self.db.commit()
+        await self.db.refresh(template)
+        return template
+
+    async def delete_template(self, template_id: str) -> None:
+        """删除运费模板"""
+        template = await self.get_template(template_id)
+
+        # 检查是否有关联的区域配置
+        region_result = await self.db.execute(
+            select(func.count(ShippingTemplateRegion.id))
+            .where(ShippingTemplateRegion.template_id == template_id)
+        )
+        region_count = region_result.scalar()
+
+        if region_count > 0:
+            # 软删除：设置为非活跃状态
+            template.is_active = False
+            await self.db.commit()
+            raise BusinessException(
+                f"模板下有{region_count}个区域配置，已将模板设置为停用状态",
+                code="TEMPLATE_HAS_REGIONS"
+            )
+
+        # 硬删除
+        await self.db.delete(template)
+        await self.db.commit()
+
+    async def create_region(self, template_id: str, region_data: ShippingTemplateRegionCreate) -> ShippingTemplateRegion:
+        """创建运费模板区域配置"""
+        # 验证模板是否存在
+        template = await self.get_template(template_id)
+
+        # 验证区域格式
+        if not region_data.region_codes.strip():
+            raise ValidationException("区域代码不能为空")
+        if not region_data.region_names.strip():
+            raise ValidationException("区域名称不能为空")
+
+        region = ShippingTemplateRegion(
+            template_id=template_id,
+            region_codes=region_data.region_codes.strip(),
+            region_names=region_data.region_names.strip(),
+            first_unit=region_data.first_unit,
+            first_cost=region_data.first_cost,
+            continue_unit=region_data.continue_unit,
+            continue_cost=region_data.continue_cost,
+            free_threshold=region_data.free_threshold,
+            is_active=region_data.is_active if hasattr(region_data, 'is_active') else True
+        )
+
+        self.db.add(region)
+        try:
+            await self.db.commit()
+            await self.db.refresh(region)
+            return region
+        except SQLAlchemyError:
+            await self.db.rollback()
+            raise
+
+    async def list_regions(self, template_id: str, skip: int = 0, limit: int = 100) -> List[ShippingTemplateRegion]:
+        """列出运费模板区域配置"""
+        # 验证模板是否存在
+        await self.get_template(template_id)
+
+        result = await self.db.execute(
+            select(ShippingTemplateRegion)
+            .where(
+                ShippingTemplateRegion.template_id == template_id,
+                ShippingTemplateRegion.is_active == True
+            )
+            .order_by(ShippingTemplateRegion.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        return list(result.scalars().all())
+
+    async def get_region(self, region_id: str) -> ShippingTemplateRegion:
+        """获取运费模板区域配置"""
+        result = await self.db.execute(
+            select(ShippingTemplateRegion).where(ShippingTemplateRegion.id == region_id)
+        )
+        region = result.scalar_one_or_none()
+        if not region:
+            raise NotFoundException("运费模板区域配置不存在")
+        return region
+
+    async def update_region(self, region_id: str, update_data: ShippingTemplateRegionUpdate) -> ShippingTemplateRegion:
+        """更新运费模板区域配置"""
+        region = await self.get_region(region_id)
+
+        # 验证区域格式
+        if update_data.region_codes is not None and not update_data.region_codes.strip():
+            raise ValidationException("区域代码不能为空")
+        if update_data.region_names is not None and not update_data.region_names.strip():
+            raise ValidationException("区域名称不能为空")
+
+        # 更新字段
+        update_dict = update_data.model_dump(exclude_unset=True)
+        for k, v in update_dict.items():
+            setattr(region, k, v)
+
+        await self.db.commit()
+        await self.db.refresh(region)
+        return region
+
+    async def delete_region(self, region_id: str) -> None:
+        """删除运费模板区域配置"""
+        region = await self.get_region(region_id)
+
+        await self.db.delete(region)
+        await self.db.commit()
+
+    async def get_template_with_regions(self, template_id: str) -> dict:
+        """获取运费模板及其区域配置"""
+        template = await self.get_template(template_id)
+
+        result = await self.db.execute(
+            select(ShippingTemplateRegion)
+            .where(
+                ShippingTemplateRegion.template_id == template_id,
+                ShippingTemplateRegion.is_active == True
+            )
+            .order_by(ShippingTemplateRegion.created_at.asc())
+        )
+        regions = list(result.scalars().all())
+
+        return {
+            "template": template,
+            "regions": regions
+        }
+
+    async def calculate_shipping_cost(
+        self,
+        template_id: str,
+        region_code: Optional[str] = None,
+        weight: Optional[int] = None,
+        quantity: Optional[int] = None,
+        total_amount: Optional[int] = None
+    ) -> dict:
+        """计算运费"""
+        template = await self.get_template(template_id)
+
+        # 查找匹配的区域配置
+        region = None
+        if region_code:
+            result = await self.db.execute(
+                select(ShippingTemplateRegion)
+                .where(
+                    ShippingTemplateRegion.template_id == template_id,
+                    ShippingTemplateRegion.is_active == True
+                )
+                .where(ShippingTemplateRegion.region_codes.like(f"%{region_code}%"))
+            )
+            region = result.scalar_one_or_none()
+
+        # 使用默认配置
+        if not region:
+            first_unit = template.default_first_unit
+            first_cost = template.default_first_cost
+            continue_unit = template.default_continue_unit
+            continue_cost = template.default_continue_cost
+            free_threshold = template.free_threshold
+        else:
+            first_unit = region.first_unit
+            first_cost = region.first_cost
+            continue_unit = region.continue_unit
+            continue_cost = region.continue_cost
+            free_threshold = region.free_threshold
+
+        # 检查包邮
+        if free_threshold and total_amount and total_amount >= free_threshold:
+            return {
+                "shipping_cost": 0,
+                "free_shipping": True,
+                "region_name": region.region_names if region else "默认区域",
+                "region_code": region_code
+            }
+
+        # 根据计费方式计算运费
+        shipping_cost = 0
+        if template.charge_type == "weight" and weight:
+            if weight <= first_unit:
+                shipping_cost = first_cost
+            else:
+                extra_units = (weight - first_unit) // continue_unit
+                if (weight - first_unit) % continue_unit > 0:
+                    extra_units += 1
+                shipping_cost = first_cost + extra_units * continue_cost
+        elif template.charge_type == "quantity" and quantity:
+            if quantity <= first_unit:
+                shipping_cost = first_cost
+            else:
+                extra_units = (quantity - first_unit) // continue_unit
+                if (quantity - first_unit) % continue_unit > 0:
+                    extra_units += 1
+                shipping_cost = first_cost + extra_units * continue_cost
+        elif template.charge_type == "fixed":
+            shipping_cost = first_cost
+
+        return {
+            "shipping_cost": shipping_cost,
+            "free_shipping": False,
+            "region_name": region.region_names if region else "默认区域",
+            "region_code": region_code,
+            "charge_type": template.charge_type,
+            "first_unit": first_unit,
+            "first_cost": first_cost,
+            "continue_unit": continue_unit,
+            "continue_cost": continue_cost
+        }

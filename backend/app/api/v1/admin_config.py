@@ -559,7 +559,8 @@ async def get_splash_config(
     )
     config = result.scalar_one_or_none()
 
-    if not config or not config.value:
+    # 检查配置是否存在
+    if not config:
         return success_response(
             data={
                 "image_url": "",
@@ -570,24 +571,40 @@ async def get_splash_config(
             message="获取开屏配置成功"
         )
 
-    try:
-        splash_data = json.loads(config.value)
-        return success_response(
-            data={
-                "image_url": splash_data.get("image_url", ""),
-                "content": splash_data.get("content", ""),
-                "countdown": splash_data.get("countdown", 3),
-                "is_active": config.is_active
-            },
-            message="获取开屏配置成功"
-        )
-    except (json.JSONDecodeError, TypeError):
+    # 获取配置值
+    config_value = getattr(config, 'value', None)
+    if not config_value:
         return success_response(
             data={
                 "image_url": "",
                 "content": "",
                 "countdown": 3,
-                "is_active": False
+                "is_active": getattr(config, 'is_active', False)
+            },
+            message="获取开屏配置成功"
+        )
+
+    try:
+        splash_data = json.loads(config_value)
+        return success_response(
+            data={
+                "image_url": splash_data.get("image_url", ""),
+                "content": splash_data.get("content", ""),
+                "countdown": splash_data.get("countdown", 3),
+                "is_active": getattr(config, 'is_active', False)
+            },
+            message="获取开屏配置成功"
+        )
+    except (json.JSONDecodeError, TypeError) as e:
+        from app.utils.logger import get_logger
+        logger = get_logger(__name__)
+        logger.warning(f"Invalid splash config JSON: {e}", extra={"config_value": config_value})
+        return success_response(
+            data={
+                "image_url": "",
+                "content": "",
+                "countdown": 3,
+                "is_active": getattr(config, 'is_active', False)
             },
             message="开屏配置格式错误"
         )

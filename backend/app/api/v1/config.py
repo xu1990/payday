@@ -68,14 +68,31 @@ async def get_public_splash_config(
     )
     config = result.scalar_one_or_none()
 
-    if not config or not config.value or not config.is_active:
+    # 检查配置是否存在
+    if not config:
+        return success_response(
+            data=SplashConfigResponse(is_active=False).model_dump(),
+            message="开屏配置未启用"
+        )
+
+    # 检查配置是否启用
+    is_active = getattr(config, 'is_active', False)
+    if not is_active:
+        return success_response(
+            data=SplashConfigResponse(is_active=False).model_dump(),
+            message="开屏配置未启用"
+        )
+
+    # 获取配置值
+    config_value = getattr(config, 'value', None)
+    if not config_value:
         return success_response(
             data=SplashConfigResponse(is_active=False).model_dump(),
             message="开屏配置未启用"
         )
 
     try:
-        splash_data = json.loads(config.value)
+        splash_data = json.loads(config_value)
         return success_response(
             data=SplashConfigResponse(
                 image_url=splash_data.get('image_url'),
@@ -85,7 +102,10 @@ async def get_public_splash_config(
             ).model_dump(),
             message="获取开屏配置成功"
         )
-    except (json.JSONDecodeError, TypeError):
+    except (json.JSONDecodeError, TypeError) as e:
+        from app.utils.logger import get_logger
+        logger = get_logger(__name__)
+        logger.warning(f"Invalid splash config JSON: {e}", extra={"config_value": config_value})
         return success_response(
             data=SplashConfigResponse(is_active=False).model_dump(),
             message="开屏配置格式错误"
