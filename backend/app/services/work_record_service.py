@@ -183,3 +183,58 @@ class WorkRecordService:
             return round(hours, 2)
         else:  # regular
             return 0.0
+
+    async def get_user_work_statistics(
+        self,
+        user_id: str,
+        year: int,
+        month: int
+    ) -> dict:
+        """
+        获取用户工作统计数据
+
+        Args:
+            user_id: 用户ID
+            year: 年份
+            month: 月份
+
+        Returns:
+            统计数据字典，包含加班总时长、工作天数、最近心情
+        """
+        from sqlalchemy import func
+
+        # Calculate date range for the month
+        date_from = datetime(year, month, 1)
+        if month == 12:
+            date_to = datetime(year + 1, 1, 1)
+        else:
+            date_to = datetime(year, month + 1, 1)
+
+        # Query total overtime hours and work days
+        result = await self.db.execute(
+            select(
+                func.sum(WorkRecord.overtime_hours).label("total_overtime"),
+                func.count(WorkRecord.id).label("work_days")
+            ).where(
+                WorkRecord.user_id == user_id,
+                WorkRecord.clock_in_time >= date_from,
+                WorkRecord.clock_in_time < date_to
+            )
+        )
+        stats = result.one()
+
+        # Query most recent mood
+        recent_result = await self.db.execute(
+            select(WorkRecord.mood)
+            .where(WorkRecord.user_id == user_id)
+            .where(WorkRecord.mood.isnot(None))
+            .order_by(WorkRecord.created_at.desc())
+            .limit(1)
+        )
+        recent_mood = recent_result.scalar_one_or_none()
+
+        return {
+            "total_overtime_hours": float(stats.total_overtime or 0),
+            "work_days": stats.work_days or 0,
+            "recent_mood": recent_mood
+        }

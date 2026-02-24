@@ -86,6 +86,31 @@ async def list_work_logs(
     )
 
 
+@router.get("/statistics", response_model=dict)
+async def get_work_statistics(
+    year: int = Query(..., ge=2020, le=2100, description="年份"),
+    month: int = Query(..., ge=1, le=12, description="月份"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    获取工作统计数据
+
+    返回指定年月的加班总时长、工作天数和最近心情
+    """
+    service = WorkRecordService(db)
+    stats = await service.get_user_work_statistics(
+        user_id=current_user.id,
+        year=year,
+        month=month
+    )
+
+    return success_response(
+        data=stats,
+        message="获取工作统计数据成功"
+    )
+
+
 @router.get("/feed", response_model=dict)
 async def get_work_feed(
     feed_type: Optional[str] = Query(None, description="Feed类型筛选"),

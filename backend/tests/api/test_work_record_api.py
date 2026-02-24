@@ -283,3 +283,78 @@ class TestWorkRecordAPI:
         data = result["details"]
         assert data["page"] == 2
         assert data["page_size"] == 5
+
+    async def test_get_work_statistics(
+        self,
+        async_client,
+        db_session: AsyncSession,
+        test_user: User,
+        user_headers: dict
+    ):
+        """测试获取工作统计数据"""
+        from app.services.work_record_service import WorkRecordService
+        from app.schemas.work_record import WorkRecordCreate
+
+        # Create work records with overtime
+        service = WorkRecordService(db_session)
+        clock_in = datetime.utcnow()
+        clock_out = datetime.utcnow().replace(hour=20, minute=0)  # 8 hours later
+
+        work_data1 = WorkRecordCreate(
+            clock_in_time=clock_in,
+            clock_out_time=clock_out,
+            work_type="overtime",
+            content="加班工作",
+            mood="happy"
+        )
+        await service.create_work_record(test_user.id, work_data1)
+
+        work_data2 = WorkRecordCreate(
+            clock_in_time=clock_in,
+            clock_out_time=clock_out,
+            work_type="regular",
+            content="正常工作",
+            mood="neutral"
+        )
+        await service.create_work_record(test_user.id, work_data2)
+
+        # Get statistics for current month
+        now = datetime.utcnow()
+        response = await async_client.get(
+            "/api/v1/work-logs/statistics",
+            headers=user_headers,
+            params={"year": now.year, "month": now.month}
+        )
+
+        assert response.status_code == 200
+        result = response.json()
+        assert result["code"] == "SUCCESS"
+        data = result["details"]
+        assert "total_overtime_hours" in data
+        assert "work_days" in data
+        assert "recent_mood" in data
+        assert data["total_overtime_hours"] > 0
+        assert data["work_days"] >= 2
+        assert data["recent_mood"] in ["happy", "neutral", "sad", None]
+
+    async def test_get_work_statistics_no_data(
+        self,
+        async_client,
+        test_user: User,
+        user_headers: dict
+    ):
+        """测试获取工作统计数据（无数据）"""
+        now = datetime.utcnow()
+        response = await async_client.get(
+            "/api/v1/work-logs/statistics",
+            headers=user_headers,
+            params={"year": now.year, "month": now.month}
+        )
+
+        assert response.status_code == 200
+        result = response.json()
+        assert result["code"] == "SUCCESS"
+        data = result["details"]
+        assert data["total_overtime_hours"] == 0
+        assert data["work_days"] == 0
+        assert data["recent_mood"] is None
