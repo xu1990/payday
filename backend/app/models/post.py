@@ -19,7 +19,7 @@ class Post(Base):
     images = Column(JSON, nullable=True, comment="图片 URL 列表，最多9张")
     tags = Column(JSON, nullable=True, comment="标签列表")
     type = Column(
-        Enum("complaint", "sharing", "question", name="post_type_enum"),
+        Enum("complaint", "sharing", "question", "work", name="post_type_enum"),
         default="complaint",
         nullable=False,
     )
