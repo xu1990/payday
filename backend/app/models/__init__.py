@@ -29,6 +29,7 @@ from .ability_points import AbilityPoint, AbilityPointTransaction, PointRedempti
 from .user_invitation import UserInvitation
 from .point_product import PointProduct
 from .point_order import PointOrder
+from .work_record import WorkRecord
 
 __all__ = [
     "Base",
@@ -67,4 +68,5 @@ __all__ = [
     "UserInvitation",
     "PointProduct",
     "PointOrder",
+    "WorkRecord",
 ]
