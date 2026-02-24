@@ -1,6 +1,6 @@
 """积分商品模型 - Sprint 4.7 商品兑换系统"""
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Text, Boolean, DateTime
+from sqlalchemy import Column, String, Integer, Text, Boolean, DateTime, ForeignKey
 
 from .base import Base
 from .user import gen_uuid
@@ -25,6 +25,10 @@ class PointProduct(Base):
 
     # 分类与排序
     category = Column(String(50), nullable=True, comment="商品分类")
+    category_id = Column(String(36), ForeignKey("point_categories.id"),
+                        nullable=True, index=True, comment="分类ID")
+    has_sku = Column(Boolean, default=False,
+                     nullable=False, comment="是否启用SKU管理")
     sort_order = Column(Integer, default=0, nullable=False, comment="排序权重（越大越靠前）")
 
     # 状态
