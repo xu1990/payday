@@ -63,3 +63,66 @@ class Product(Base):
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class ProductSKU(Base):
+    """商品SKU（规格）表"""
+    __tablename__ = "product_skus"
+
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    product_id = Column(String(36), ForeignKey("products.id"), nullable=False, index=True)
+
+    # SKU identification
+    sku_code = Column(String(50), unique=True, nullable=False, comment="SKU代码")
+    name = Column(String(100), nullable=False, comment="SKU名称")
+
+    # Variant attributes
+    attributes = Column(JSON, nullable=False, comment="规格属性")
+
+    # Inventory
+    stock = Column(Integer, default=0, nullable=False, comment="库存")
+    stock_unlimited = Column(Boolean, default=False, nullable=False, comment="库存无限")
+
+    # Images (specific to this SKU)
+    images = Column(JSON, nullable=True, comment="SKU图片")
+
+    # Weight for shipping
+    weight_grams = Column(Integer, nullable=True, comment="重量(克)")
+
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationship
+    # product = relationship("Product", back_populates="skus")
+
+
+class ProductPrice(Base):
+    """商品多价格表"""
+    __tablename__ = "product_prices"
+
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    sku_id = Column(String(36), ForeignKey("product_skus.id"), nullable=False, index=True)
+
+    # Price type
+    price_type = Column(
+        SQLEnum("base", "member", "bulk", "promotion", name="price_type_enum"),
+        nullable=False
+    )
+
+    # Price (can be points or cash)
+    price_amount = Column(Integer, nullable=False, comment="价格(分或积分)")
+    currency = Column(
+        SQLEnum("CNY", "POINTS", name="price_currency_enum"),
+        nullable=False
+    )
+
+    # Conditions
+    min_quantity = Column(Integer, default=1, nullable=False, comment="最小数量")
+    membership_level = Column(Integer, nullable=True, comment="会员等级")
+
+    # Validity period
+    valid_from = Column(DateTime, nullable=True)
+    valid_until = Column(DateTime, nullable=True)
+
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

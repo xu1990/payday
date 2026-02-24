@@ -1,5 +1,5 @@
 import pytest
-from app.models.product import ProductCategory
+from app.models.product import ProductCategory, Product
 
 
 @pytest.mark.asyncio
@@ -42,3 +42,35 @@ async def test_category_hierarchy(db_session):
     await db_session.commit()
 
     assert child.parent_id == parent.id
+
+
+@pytest.mark.asyncio
+async def test_create_product_with_sku(db_session):
+    """Test creating product with SKU variants"""
+    # Create product
+    product = Product(
+        id="prod-1",
+        name="T恤",
+        item_type="physical",
+        product_type="cash"
+    )
+    db_session.add(product)
+    await db_session.flush()
+
+    # Create SKU
+    from app.models.product import ProductSKU
+
+    sku = ProductSKU(
+        id="sku-1",
+        product_id="prod-1",
+        sku_code="TSHIRT-RED-L",
+        name="红色 - L码",
+        attributes={"color": "red", "size": "L"},
+        stock=100,
+        weight_grams=200
+    )
+    db_session.add(sku)
+    await db_session.commit()
+
+    assert sku.attributes["color"] == "red"
+    assert sku.stock == 100
