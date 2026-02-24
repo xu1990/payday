@@ -31,7 +31,8 @@ class Order(Base):
     )
     payment_status = Column(
         SQLEnum("pending", "paid", "failed", "refunded", name="order_payment_status"),
-        default="pending"
+        default="pending",
+        index=True
     )
     transaction_id = Column(String(100), nullable=True, comment="Payment transaction ID")
     paid_at = Column(DateTime, nullable=True, comment="Payment timestamp")
