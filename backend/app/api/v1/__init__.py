@@ -36,6 +36,7 @@ from .work_record import router as work_record_router
 from .cart import router as cart_router
 from .orders import router as orders_router
 from .shipping import router as shipping_router
+from .point_categories import router as point_categories_router
 
 api_router = APIRouter(prefix="/api/v1", tags=["v1"])
 
@@ -76,6 +77,7 @@ api_router.include_router(work_record_router)
 api_router.include_router(cart_router)
 api_router.include_router(orders_router)
 api_router.include_router(shipping_router)
+api_router.include_router(point_categories_router)
 
 
 @api_router.get("/ping")
