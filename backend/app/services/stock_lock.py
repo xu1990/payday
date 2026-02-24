@@ -23,6 +23,24 @@ import redis.asyncio as aioredis
 
 logger = logging.getLogger(__name__)
 
+# Lua script for atomic stock lock acquisition
+# This script ensures that the check-and-increment operation is atomic,
+# preventing race conditions where multiple concurrent requests could oversell stock.
+LOCK_SCRIPT = """
+local stock = tonumber(redis.call('GET', KEYS[1])) or 0
+local locked = tonumber(redis.call('GET', KEYS[2])) or 0
+local quantity = tonumber(ARGV[1])
+local ttl = tonumber(ARGV[2])
+
+if locked + quantity <= stock then
+    redis.call('INCRBY', KEYS[2], quantity)
+    redis.call('EXPIRE', KEYS[2], ttl)
+    return 1
+else
+    return 0
+end
+"""
+
 
 class StockLockService:
     """
@@ -95,11 +113,13 @@ class StockLockService:
         """
         获取库存锁
 
-        使用Redis INCR进行原子操作：
-        1. 获取当前库存和已锁定数量
+        使用Redis Lua脚本进行原子操作，防止并发超卖：
+        1. 原子性地获取当前库存和已锁定数量
         2. 检查锁定后是否超过可用库存
         3. 如果超过则返回False
-        4. 否则增加锁定数量并设置TTL
+        4. 否则原子性地增加锁定数量并设置TTL
+
+        Lua脚本确保整个操作是原子的，不存在竞态条件。
 
         Args:
             sku_id: SKU ID
@@ -119,35 +139,31 @@ class StockLockService:
         try:
             redis = await self._get_redis()
 
-            # 使用pipeline获取库存和锁定数量
-            pipe = redis.pipeline()
-            pipe.get(stock_key)
-            pipe.get(lock_key)
-            results = await pipe.execute()
-
-            stock_value, locked_value = results
-
-            # 解析库存值
-            available = int(stock_value) if stock_value else 0
-            locked_qty = int(locked_value) if locked_value else 0
-
-            # 检查库存是否充足
-            if locked_qty + quantity > available:
-                logger.info(
-                    f"Insufficient stock for {sku_id}: "
-                    f"available={available}, locked={locked_qty}, requested={quantity}"
-                )
-                return False
-
-            # 原子性地增加锁定数量
-            await redis.incrby(lock_key, quantity)
-            await redis.expire(lock_key, self.LOCK_TTL)
-
-            logger.info(
-                f"Stock lock acquired for {sku_id}: "
-                f"quantity={quantity}, total_locked={locked_qty + quantity}"
+            # 使用Lua脚本原子性地检查并锁定库存
+            # 脚本返回1表示成功，0表示库存不足
+            result = await redis.eval(
+                LOCK_SCRIPT,
+                2,  # Number of keys
+                stock_key,  # KEYS[1]
+                lock_key,  # KEYS[2]
+                quantity,  # ARGV[1]
+                self.LOCK_TTL  # ARGV[2]
             )
-            return True
+
+            success = bool(result)
+
+            if success:
+                logger.info(
+                    f"Stock lock acquired for {sku_id}: "
+                    f"quantity={quantity}"
+                )
+            else:
+                logger.info(
+                    f"Failed to acquire lock for {sku_id}: "
+                    f"insufficient stock, requested={quantity}"
+                )
+
+            return success
 
         except (aioredis.ConnectionError, aioredis.TimeoutError) as e:
             logger.error(f"Redis connection error acquiring lock for {sku_id}: {e}")

@@ -40,6 +40,7 @@ def create_mock_redis_pipeline(stock_value=None, locked_value=None):
     mock_redis.zadd = AsyncMock()
     mock_redis.zrevrange = AsyncMock()
     mock_redis.exists = AsyncMock()
+    mock_redis.eval = AsyncMock()  # For Lua script execution
 
     # 创建pipeline mock
     mock_pipeline = MagicMock()
@@ -57,34 +58,39 @@ class TestAcquireStockLock:
     async def test_acquire_lock_with_sufficient_stock(self):
         """测试库存充足时成功获取锁"""
         mock_redis = create_mock_redis_pipeline("100", "0")
-        mock_redis.incrby = AsyncMock(return_value=5)
-        mock_redis.expire = AsyncMock(return_value=True)
+        mock_redis.eval = AsyncMock(return_value=1)  # Lua script returns 1 for success
 
         service = StockLockService(redis_client=mock_redis)
         result = await service.acquire_stock_lock(sku_id="sku_123", quantity=5)
 
         assert result is True
-        mock_redis.incrby.assert_called_once_with("stock:lock:sku_123", 5)
-        mock_redis.expire.assert_called_once_with("stock:lock:sku_123", 300)
+        mock_redis.eval.assert_called_once()
+        # Verify the call arguments
+        call_args = mock_redis.eval.call_args
+        assert call_args[0][0].strip().startswith("local stock")  # Lua script
+        assert call_args[0][1] == 2  # Number of keys
+        assert call_args[0][2] == "sku:stock:sku_123"  # KEYS[1]
+        assert call_args[0][3] == "stock:lock:sku_123"  # KEYS[2]
+        assert call_args[0][4] == 5  # ARGV[1] - quantity
+        assert call_args[0][5] == 300  # ARGV[2] - TTL
 
     @pytest.mark.asyncio
     async def test_acquire_lock_with_insufficient_stock(self):
         """测试库存不足时获取锁失败"""
         mock_redis = create_mock_redis_pipeline("10", "8")
+        mock_redis.eval = AsyncMock(return_value=0)  # Lua script returns 0 for failure
 
         service = StockLockService(redis_client=mock_redis)
         result = await service.acquire_stock_lock(sku_id="sku_123", quantity=5)
 
         assert result is False
-        # 验证没有调用incrby（因为库存不足）
-        mock_redis.incrby.assert_not_called()
+        mock_redis.eval.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_acquire_lock_exactly_available(self):
         """测试库存刚好足够"""
         mock_redis = create_mock_redis_pipeline("10", "0")
-        mock_redis.incrby = AsyncMock(return_value=10)
-        mock_redis.expire = AsyncMock(return_value=True)
+        mock_redis.eval = AsyncMock(return_value=1)
 
         service = StockLockService(redis_client=mock_redis)
         result = await service.acquire_stock_lock(sku_id="sku_123", quantity=10)
@@ -95,6 +101,7 @@ class TestAcquireStockLock:
     async def test_acquire_lock_exceeds_by_one(self):
         """测试库存差1个不足"""
         mock_redis = create_mock_redis_pipeline("10", "0")
+        mock_redis.eval = AsyncMock(return_value=0)
 
         service = StockLockService(redis_client=mock_redis)
         result = await service.acquire_stock_lock(sku_id="sku_123", quantity=11)
@@ -105,8 +112,7 @@ class TestAcquireStockLock:
     async def test_acquire_lock_with_existing_locks(self):
         """测试已有部分锁定时获取锁"""
         mock_redis = create_mock_redis_pipeline("100", "50")
-        mock_redis.incrby = AsyncMock(return_value=80)
-        mock_redis.expire = AsyncMock(return_value=True)
+        mock_redis.eval = AsyncMock(return_value=1)
 
         service = StockLockService(redis_client=mock_redis)
         result = await service.acquire_stock_lock(sku_id="sku_123", quantity=30)
@@ -117,6 +123,7 @@ class TestAcquireStockLock:
     async def test_acquire_lock_no_existing_stock_key(self):
         """测试SKU库存不存在"""
         mock_redis = create_mock_redis_pipeline(None, "0")
+        mock_redis.eval = AsyncMock(return_value=0)
 
         service = StockLockService(redis_client=mock_redis)
         result = await service.acquire_stock_lock(sku_id="sku_123", quantity=5)
@@ -127,8 +134,7 @@ class TestAcquireStockLock:
     async def test_acquire_lock_no_existing_lock_key(self):
         """测试锁定键不存在"""
         mock_redis = create_mock_redis_pipeline("100", None)
-        mock_redis.incrby = AsyncMock(return_value=5)
-        mock_redis.expire = AsyncMock(return_value=True)
+        mock_redis.eval = AsyncMock(return_value=1)
 
         service = StockLockService(redis_client=mock_redis)
         result = await service.acquire_stock_lock(sku_id="sku_123", quantity=5)
@@ -139,26 +145,27 @@ class TestAcquireStockLock:
     async def test_acquire_lock_sets_ttl(self):
         """测试设置锁TTL"""
         mock_redis = create_mock_redis_pipeline("100", "0")
-        mock_redis.incrby = AsyncMock(return_value=5)
-        mock_redis.expire = AsyncMock(return_value=True)
+        mock_redis.eval = AsyncMock(return_value=1)
 
         service = StockLockService(redis_client=mock_redis)
         await service.acquire_stock_lock(sku_id="sku_123", quantity=5)
 
-        # 验证设置了正确的TTL（300秒 = 5分钟）
-        mock_redis.expire.assert_called_once_with("stock:lock:sku_123", 300)
+        # 验证eval被调用，且TTL参数为300
+        call_args = mock_redis.eval.call_args
+        assert call_args[0][5] == 300  # ARGV[2] - TTL
 
     @pytest.mark.asyncio
     async def test_acquire_lock_zero_quantity(self):
         """测试请求0数量"""
         mock_redis = create_mock_redis_pipeline("100", "0")
-        mock_redis.incrby = AsyncMock(return_value=0)
-        mock_redis.expire = AsyncMock(return_value=True)
+        mock_redis.eval = AsyncMock(return_value=1)
 
         service = StockLockService(redis_client=mock_redis)
         result = await service.acquire_stock_lock(sku_id="sku_123", quantity=0)
 
-        assert result is False  # quantity <= 0 应该返回False
+        assert result is False  # quantity <= 0 should return False
+        # eval should not be called for invalid input
+        mock_redis.eval.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_acquire_lock_negative_quantity(self):
@@ -169,6 +176,7 @@ class TestAcquireStockLock:
         result = await service.acquire_stock_lock(sku_id="sku_123", quantity=-5)
 
         assert result is False
+        mock_redis.eval.assert_not_called()
 
 
 class TestConfirmStock:
@@ -281,8 +289,7 @@ class TestConcurrentLockAttempts:
         """测试并发锁：先到先得"""
         # 第一次请求：库存100，锁定0 -> 成功锁定20
         mock_redis = create_mock_redis_pipeline("100", "0")
-        mock_redis.incrby = AsyncMock(return_value=20)
-        mock_redis.expire = AsyncMock(return_value=True)
+        mock_redis.eval = AsyncMock(return_value=1)  # First request succeeds
 
         service = StockLockService(redis_client=mock_redis)
 
@@ -290,13 +297,8 @@ class TestConcurrentLockAttempts:
         result1 = await service.acquire_stock_lock(sku_id="sku_123", quantity=20)
         assert result1 is True
 
-        # 重置mock：库存100，已锁定20
-        mock_redis.pipeline = MagicMock(
-            return_value=MagicMock(
-                get=AsyncMock(side_effect=["100", "20"]),
-                execute=AsyncMock(return_value=["100", "20"])
-            )
-        )
+        # 重置eval to fail for second request (would exceed stock)
+        mock_redis.eval = AsyncMock(return_value=0)
 
         # 第二次请求90个（应该失败，只剩80）
         result2 = await service.acquire_stock_lock(sku_id="sku_123", quantity=90)
@@ -307,22 +309,15 @@ class TestConcurrentLockAttempts:
         """测试并发锁：两个请求都成功"""
         # 第一次请求
         mock_redis = create_mock_redis_pipeline("100", "0")
-        mock_redis.incrby = AsyncMock(return_value=30)
-        mock_redis.expire = AsyncMock(return_value=True)
+        mock_redis.eval = AsyncMock(return_value=1)
 
         service = StockLockService(redis_client=mock_redis)
 
         result1 = await service.acquire_stock_lock(sku_id="sku_123", quantity=30)
         assert result1 is True
 
-        # 第二次请求
-        mock_redis.pipeline = MagicMock(
-            return_value=MagicMock(
-                get=AsyncMock(side_effect=["100", "30"]),
-                execute=AsyncMock(return_value=["100", "30"])
-            )
-        )
-        mock_redis.incrby = AsyncMock(return_value=70)
+        # 第二次请求 - also succeeds (within stock limit)
+        mock_redis.eval = AsyncMock(return_value=1)
 
         result2 = await service.acquire_stock_lock(sku_id="sku_123", quantity=40)
         assert result2 is True
@@ -335,28 +330,26 @@ class TestTTLExpiration:
     async def test_lock_has_ttl(self):
         """测试锁有TTL"""
         mock_redis = create_mock_redis_pipeline("100", "0")
-        mock_redis.incrby = AsyncMock(return_value=5)
-        mock_redis.expire = AsyncMock(return_value=True)
+        mock_redis.eval = AsyncMock(return_value=1)
 
         service = StockLockService(redis_client=mock_redis)
         await service.acquire_stock_lock(sku_id="sku_123", quantity=5)
 
-        # 验证expire被调用
-        mock_redis.expire.assert_called_once()
+        # 验证eval被调用
+        mock_redis.eval.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_lock_ttl_value(self):
         """测试锁TTL值为300秒"""
         mock_redis = create_mock_redis_pipeline("100", "0")
-        mock_redis.incrby = AsyncMock(return_value=5)
-        mock_redis.expire = AsyncMock(return_value=True)
+        mock_redis.eval = AsyncMock(return_value=1)
 
         service = StockLockService(redis_client=mock_redis)
         await service.acquire_stock_lock(sku_id="sku_123", quantity=5)
 
-        # 获取expire调用的第二个参数（TTL值）
-        call_args = mock_redis.expire.call_args
-        assert call_args[0][1] == 300
+        # 验证TTL参数为300
+        call_args = mock_redis.eval.call_args
+        assert call_args[0][5] == 300  # ARGV[2] - TTL
 
 
 class TestErrorHandling:
@@ -366,7 +359,7 @@ class TestErrorHandling:
     async def test_redis_connection_error_on_get(self):
         """测试Redis连接错误（get操作）"""
         mock_redis = create_mock_redis_pipeline(None, None)
-        mock_redis.pipeline.return_value.execute = AsyncMock(
+        mock_redis.eval = AsyncMock(
             side_effect=ConnectionError("Redis connection failed")
         )
 
@@ -380,7 +373,7 @@ class TestErrorHandling:
     async def test_redis_timeout_error(self):
         """测试Redis超时错误"""
         mock_redis = create_mock_redis_pipeline(None, None)
-        mock_redis.pipeline.return_value.execute = AsyncMock(
+        mock_redis.eval = AsyncMock(
             side_effect=aioredis.TimeoutError("Redis timeout")
         )
 
@@ -434,8 +427,7 @@ class TestStockLockServiceIntegration:
         """测试完整的锁生命周期：获取 -> 确认 -> 释放"""
         # 步骤1：获取锁
         mock_redis = create_mock_redis_pipeline("100", "0")
-        mock_redis.incrby = AsyncMock(return_value=5)
-        mock_redis.expire = AsyncMock(return_value=True)
+        mock_redis.eval = AsyncMock(return_value=1)
 
         service = StockLockService(redis_client=mock_redis)
 
@@ -460,8 +452,7 @@ class TestStockLockServiceIntegration:
         """测试锁获取和释放生命周期：获取 -> 释放"""
         # 步骤1：获取锁
         mock_redis = create_mock_redis_pipeline("100", "0")
-        mock_redis.incrby = AsyncMock(return_value=5)
-        mock_redis.expire = AsyncMock(return_value=True)
+        mock_redis.eval = AsyncMock(return_value=1)
 
         service = StockLockService(redis_client=mock_redis)
 
@@ -485,8 +476,7 @@ class TestStockLockServiceEdgeCases:
     async def test_very_large_quantity(self):
         """测试非常大的数量"""
         mock_redis = create_mock_redis_pipeline("1000000", "0")
-        mock_redis.incrby = AsyncMock(return_value=100000)
-        mock_redis.expire = AsyncMock(return_value=True)
+        mock_redis.eval = AsyncMock(return_value=1)
 
         service = StockLockService(redis_client=mock_redis)
         result = await service.acquire_stock_lock(sku_id="sku_123", quantity=100000)
@@ -498,8 +488,7 @@ class TestStockLockServiceEdgeCases:
         """测试不同SKU的锁"""
         # SKU1
         mock_redis = create_mock_redis_pipeline("100", "0")
-        mock_redis.incrby = AsyncMock(return_value=10)
-        mock_redis.expire = AsyncMock(return_value=True)
+        mock_redis.eval = AsyncMock(return_value=1)
 
         service = StockLockService(redis_client=mock_redis)
 
@@ -516,6 +505,7 @@ class TestStockLockServiceEdgeCases:
         # 如果库存为0但允许无限库存，应该返回True
         # 这个测试用于验证未来如果需要支持无限库存的情况
         mock_redis = create_mock_redis_pipeline("0", "0")
+        mock_redis.eval = AsyncMock(return_value=0)
 
         service = StockLockService(redis_client=mock_redis)
         result = await service.acquire_stock_lock(sku_id="sku_unlimited", quantity=5)
