@@ -29,9 +29,33 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """
+    DOWNGRADE WARNING: This migration is NOT safe to rollback if work-type posts exist!
+
+    Before downgrading, you must either:
+    1. Delete all posts with type='work', OR
+    2. Migrate them to another valid type (complaint/sharing/question)
+
+    Failure to do so will cause data integrity errors as those posts will reference
+    an invalid enum value.
+    """
     # For MySQL, remove 'work' from the enum
+    # SAFETY CHECK: Ensure no work-type posts exist before downgrading
     try:
+        # Check for existing work-type posts
+        result = op.execute("SELECT COUNT(*) FROM posts WHERE type = 'work'")
+        count = result.fetchone()[0] if result else 0
+
+        if count > 0:
+            raise Exception(
+                f"Cannot downgrade: {count} posts with type='work' exist. "
+                f"Please delete or migrate these posts before running downgrade."
+            )
+
         op.execute("ALTER TABLE posts MODIFY COLUMN type ENUM('complaint', 'sharing', 'question') NOT NULL COMMENT 'Post type'")
-    except Exception:
+    except Exception as e:
         # If not MySQL (e.g., SQLite in tests), the enum is handled by SQLAlchemy
+        # Or if there's a safety check error, propagate it
+        if "Cannot downgrade" in str(e):
+            raise
         pass
