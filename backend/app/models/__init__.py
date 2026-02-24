@@ -30,6 +30,7 @@ from .user_invitation import UserInvitation
 from .point_product import PointProduct
 from .point_order import PointOrder
 from .work_record import WorkRecord
+from .product import ProductCategory, Product
 
 __all__ = [
     "Base",
@@ -69,4 +70,6 @@ __all__ = [
     "PointProduct",
     "PointOrder",
     "WorkRecord",
+    "ProductCategory",
+    "Product",
 ]
