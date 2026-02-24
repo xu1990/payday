@@ -38,6 +38,7 @@ from .orders import router as orders_router
 from .shipping import router as shipping_router
 from .point_categories import router as point_categories_router
 from .couriers import router as couriers_router
+from .admin_address import router as admin_address_router, users_router as admin_users_addresses_router
 
 api_router = APIRouter(prefix="/api/v1", tags=["v1"])
 
@@ -80,6 +81,8 @@ api_router.include_router(orders_router)
 api_router.include_router(shipping_router)
 api_router.include_router(point_categories_router)
 api_router.include_router(couriers_router)
+api_router.include_router(admin_address_router)
+api_router.include_router(admin_users_addresses_router)
 
 
 @api_router.get("/ping")
