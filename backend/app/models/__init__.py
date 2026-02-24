@@ -29,6 +29,7 @@ from .ability_points import AbilityPoint, AbilityPointTransaction, PointRedempti
 from .user_invitation import UserInvitation
 from .point_product import PointProduct
 from .point_order import PointOrder
+from .point_category import PointCategory
 from .work_record import WorkRecord
 from .product import ProductCategory, Product
 from .address import AdminRegion, UserAddress
@@ -72,6 +73,7 @@ __all__ = [
     "UserInvitation",
     "PointProduct",
     "PointOrder",
+    "PointCategory",
     "WorkRecord",
     "ProductCategory",
     "Product",
