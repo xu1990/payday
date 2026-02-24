@@ -745,3 +745,27 @@ class ShippingService:
             .where(CourierCompany.is_active == True)
         )
         return result.scalar_one_or_none()
+
+    async def get_shipment_by_order_id(
+        self,
+        db: AsyncSession,
+        order_id: str
+    ) -> Optional[OrderShipment]:
+        """
+        根据订单ID获取发货记录
+
+        Args:
+            db: 数据库session
+            order_id: 订单ID
+
+        Returns:
+            Optional[OrderShipment]: 发货记录对象，如果不存在则返回None
+        """
+        try:
+            result = await db.execute(
+                select(OrderShipment).where(OrderShipment.order_id == order_id)
+            )
+            return result.scalar_one_or_none()
+        except Exception as e:
+            logger.error(f"Error getting shipment by order {order_id}: {e}")
+            raise
