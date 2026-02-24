@@ -223,3 +223,63 @@ class TestWorkRecordAPI:
         )
 
         assert response.status_code == 404
+
+    async def test_get_work_feed(
+        self,
+        async_client,
+        db_session: AsyncSession,
+        test_user: User,
+        user_headers: dict
+    ):
+        """测试获取工作动态feed"""
+        from app.services.work_record_service import WorkRecordService
+        from app.schemas.work_record import WorkRecordCreate
+
+        # Create multiple work records
+        service = WorkRecordService(db_session)
+        for i in range(3):
+            work_data = WorkRecordCreate(
+                clock_in_time=datetime.utcnow(),
+                work_type="regular",
+                content=f"工作内容 {i+1}"
+            )
+            await service.create_work_record(test_user.id, work_data)
+
+        # Get work feed
+        response = await async_client.get(
+            "/api/v1/work-logs/feed",
+            headers=user_headers,
+            params={"page": 1, "page_size": 10}
+        )
+
+        assert response.status_code == 200
+        result = response.json()
+        assert result["code"] == "SUCCESS"
+        data = result["details"]
+        assert "items" in data
+        assert "total" in data
+        assert "page" in data
+        assert "page_size" in data
+        assert data["page"] == 1
+        assert data["page_size"] == 10
+        assert len(data["items"]) >= 3
+
+    async def test_get_work_feed_pagination(
+        self,
+        async_client,
+        test_user: User,
+        user_headers: dict
+    ):
+        """测试工作动态feed分页"""
+        response = await async_client.get(
+            "/api/v1/work-logs/feed",
+            headers=user_headers,
+            params={"page": 2, "page_size": 5}
+        )
+
+        assert response.status_code == 200
+        result = response.json()
+        assert result["code"] == "SUCCESS"
+        data = result["details"]
+        assert data["page"] == 2
+        assert data["page_size"] == 5

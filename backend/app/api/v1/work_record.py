@@ -86,6 +86,66 @@ async def list_work_logs(
     )
 
 
+@router.get("/feed", response_model=dict)
+async def get_work_feed(
+    feed_type: Optional[str] = Query(None, description="Feed类型筛选"),
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(20, ge=1, le=100, description="每页数量"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    获取工作动态Feed
+
+    返回所有工作类型的帖子，按创建时间倒序排列
+    """
+    from sqlalchemy import select
+    from app.models.post import Post
+
+    # Query work-type posts
+    query = select(Post).where(Post.type == "work", Post.status == "normal")
+    query = query.order_by(Post.created_at.desc())
+    query = query.offset((page - 1) * page_size).limit(page_size)
+
+    result = await db.execute(query)
+    posts = result.scalars().all()
+
+    # Convert posts to dict format
+    items = []
+    for post in posts:
+        items.append({
+            "id": post.id,
+            "user_id": post.user_id,
+            "anonymous_name": post.anonymous_name,
+            "user_avatar": post.user_avatar,
+            "content": post.content,
+            "images": post.images or [],
+            "tags": post.tags or [],
+            "type": post.type,
+            "salary_range": post.salary_range,
+            "industry": post.industry,
+            "city": post.city,
+            "topic_ids": post.topic_ids or [],
+            "visibility": post.visibility,
+            "view_count": post.view_count,
+            "like_count": post.like_count,
+            "comment_count": post.comment_count,
+            "status": post.status,
+            "created_at": post.created_at.isoformat() if post.created_at else None,
+            "updated_at": post.updated_at.isoformat() if post.updated_at else None,
+        })
+
+    return success_response(
+        data={
+            "total": len(items),
+            "items": items,
+            "page": page,
+            "page_size": page_size
+        },
+        message="获取工作动态Feed成功"
+    )
+
+
 @router.get("/{work_log_id}", response_model=dict)
 async def get_work_log_detail(
     work_log_id: str,
