@@ -178,6 +178,9 @@ class OrderService:
         redis = await self._get_redis()
         stock_lock_service = StockLockService(redis_client=redis)
 
+        # Track all acquired stock locks for cleanup on failure
+        locked_skus = []  # List of (sku_id, quantity) tuples
+
         try:
             # 1. 获取并验证所有SKU
             order_items = []
@@ -204,6 +207,9 @@ class OrderService:
                         code="INSUFFICIENT_STOCK",
                         details={"sku_id": item_data.sku_id}
                     )
+
+                # Track this lock for cleanup
+                locked_skus.append((item_data.sku_id, item_data.quantity))
 
                 # 计算小计
                 if price_info["currency"] == "CNY":
@@ -346,18 +352,23 @@ class OrderService:
 
             return self._order_to_response(order)
 
-        except (NotFoundException, BusinessException):
-            # 业务异常，回滚
+        except Exception:
+            # Rollback: release all acquired stock locks
+            for sku_id, quantity in locked_skus:
+                try:
+                    await stock_lock_service.release_stock_lock(sku_id, quantity)
+                    logger.info(f"Released stock lock for SKU {sku_id}, quantity: {quantity}")
+                except Exception as release_error:
+                    logger.error(
+                        f"Failed to release stock lock for SKU {sku_id}, "
+                        f"quantity: {quantity}, error: {release_error}"
+                    )
+
+            # Database rollback
             await db.rollback()
+
+            # Re-raise the exception
             raise
-        except Exception as e:
-            # 其他异常，回滚
-            await db.rollback()
-            logger.error(f"Error creating order for user {user_id}: {e}")
-            raise BusinessException(
-                "创建订单失败",
-                code="ORDER_CREATE_FAILED"
-            )
 
     async def get_order(
         self,

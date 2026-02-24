@@ -464,7 +464,7 @@ class TestCreateOrder:
 
     @pytest.mark.asyncio
     async def test_create_order_rollback_on_error(self):
-        """测试创建订单失败时回滚"""
+        """测试创建订单失败时回滚并释放库存锁定"""
         mock_db = create_mock_db()
         mock_redis = create_mock_redis()
 
@@ -491,11 +491,87 @@ class TestCreateOrder:
 
         service = OrderService(redis_client=mock_redis)
 
-        with pytest.raises(BusinessException):
+        # IntegrityError is re-raised after cleanup
+        with pytest.raises(IntegrityError):
             await service.create_order(mock_db, "user_123", order_data)
 
         # Verify rollback was called
         mock_db.rollback.assert_called_once()
+
+        # Verify stock lock was acquired (eval called once)
+        assert mock_redis.eval.call_count == 1
+
+        # Verify stock lock was released (decrby called to release)
+        mock_redis.decrby.assert_called_once()
+        # Check that it was called with the correct lock key and quantity
+        call_args = mock_redis.decrby.call_args
+        assert "sku_123" in call_args[0][0]  # lock key contains sku_id
+        assert call_args[0][1] == 1  # quantity
+
+    @pytest.mark.asyncio
+    async def test_create_order_multi_item_stock_cleanup_on_failure(self):
+        """测试多商品订单创建失败时释放所有已锁定的库存"""
+        mock_db = create_mock_db()
+        mock_redis = create_mock_redis()
+
+        # First two items have stock, third item fails
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.side_effect = [
+            create_mock_product("product_1"),      # Item 1: product
+            create_mock_sku("sku_1", "product_1", stock=100),  # Item 1: SKU
+            create_mock_price("sku_1", 10000),     # Item 1: price
+            create_mock_product("product_2"),      # Item 2: product
+            create_mock_sku("sku_2", "product_2", stock=50),   # Item 2: SKU
+            create_mock_price("sku_2", 20000),     # Item 2: price
+            create_mock_product("product_3"),      # Item 3: product
+            create_mock_sku("sku_3", "product_3", stock=0),    # Item 3: SKU - no stock!
+            create_mock_price("sku_3", 30000),     # Item 3: price
+        ]
+        mock_db.execute.return_value = mock_result
+
+        # Stock lock: first two succeed, third fails
+        mock_redis.eval = AsyncMock(side_effect=[1, 1, 0])  # Lock, Lock, Fail
+        mock_redis.incr = AsyncMock(return_value=1)
+
+        order_data = OrderCreate(
+            items=[
+                OrderItemCreate(sku_id="sku_1", quantity=2),
+                OrderItemCreate(sku_id="sku_2", quantity=3),
+                OrderItemCreate(sku_id="sku_3", quantity=1),
+            ],
+            shipping_address_id="address_123",
+            payment_method="wechat",
+            points_to_use=0
+        )
+
+        service = OrderService(redis_client=mock_redis)
+
+        with pytest.raises(BusinessException) as exc_info:
+            await service.create_order(mock_db, "user_123", order_data)
+
+        assert "库存不足" in str(exc_info.value)
+        assert exc_info.value.code == "INSUFFICIENT_STOCK"
+
+        # Verify that eval was called 3 times for acquire (sku_1, sku_2, sku_3)
+        assert mock_redis.eval.call_count == 3
+
+        # Verify that decrby was called 2 times to release locks for sku_1 and sku_2
+        assert mock_redis.decrby.call_count == 2
+
+        # Verify the releases were for the correct SKUs and quantities
+        decrby_calls = mock_redis.decrby.call_args_list
+        released_skus = [call[0][0] for call in decrby_calls]
+        released_quantities = [call[0][1] for call in decrby_calls]
+
+        # Should have released sku_1 with quantity 2 and sku_2 with quantity 3
+        assert any("sku_1" in sku for sku in released_skus)
+        assert any("sku_2" in sku for sku in released_skus)
+        assert 2 in released_quantities
+        assert 3 in released_quantities
+
+        # Verify rollback was called
+        mock_db.rollback.assert_called_once()
+
 
 
 class TestGetOrder:
