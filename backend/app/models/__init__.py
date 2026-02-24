@@ -32,7 +32,7 @@ from .point_order import PointOrder
 from .work_record import WorkRecord
 from .product import ProductCategory, Product
 from .address import AdminRegion, UserAddress
-from .shipping import ShippingTemplate, ShippingTemplateRegion, CourierCompany
+from .shipping import ShippingTemplate, ShippingTemplateRegion, CourierCompany, OrderShipment, OrderReturn
 from .order import Order, OrderItem
 
 __all__ = [
@@ -80,6 +80,8 @@ __all__ = [
     "ShippingTemplate",
     "ShippingTemplateRegion",
     "CourierCompany",
+    "OrderShipment",
+    "OrderReturn",
     "Order",
     "OrderItem",
 ]

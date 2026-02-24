@@ -2,7 +2,7 @@
 物流模型 - Shipping Module
 """
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, Text, Numeric
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, Text, Numeric, Enum as SQLEnum, JSON
 
 from .base import Base
 from .user import gen_uuid
@@ -92,3 +92,103 @@ class CourierCompany(Base):
 
     # Relationships
     # shipments = relationship("OrderShipment", back_populates="courier")
+
+
+class OrderShipment(Base):
+    """订单发货表"""
+    __tablename__ = "order_shipments"
+
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    order_id = Column(String(36), ForeignKey("orders.id"), nullable=False, index=True)
+
+    # Courier information
+    courier_code = Column(String(20), nullable=False, comment="物流公司代码")
+    courier_name = Column(String(50), nullable=False, comment="物流公司名称")
+    tracking_number = Column(String(50), nullable=False, comment="物流单号")
+
+    # Shipment status
+    status = Column(
+        SQLEnum(
+            "pending", "picked_up", "in_transit", "delivered", "failed",
+            name="order_shipment_status"
+        ),
+        default="pending",
+        nullable=False,
+        comment="发货状态"
+    )
+
+    # Timestamps
+    shipped_at = Column(DateTime, nullable=False, comment="发货时间")
+    delivered_at = Column(DateTime, nullable=True, comment="签收时间")
+
+    # Tracking details (JSON)
+    tracking_info = Column(JSON, nullable=True, comment="物流跟踪详情")
+
+    # Relationships
+    # order = relationship("Order", back_populates="shipment")
+    # courier = relationship("CourierCompany", back_populates="shipments")
+
+
+class OrderReturn(Base):
+    """订单退货表"""
+    __tablename__ = "order_returns"
+
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    order_id = Column(String(36), ForeignKey("orders.id"), nullable=False, index=True)
+    order_item_id = Column(String(36), nullable=False, comment="订单明细ID")
+
+    # Return reason
+    return_reason = Column(
+        SQLEnum(
+            "quality_issue", "damaged", "wrong_item", "not_as_described",
+            "no_longer_needed", "other",
+            name="order_return_reason"
+        ),
+        nullable=False,
+        comment="退货原因"
+    )
+    return_description = Column(Text, nullable=True, comment="退货说明")
+
+    # Evidence images (JSON)
+    images = Column(JSON, nullable=True, comment="退货凭证图片")
+
+    # Return type
+    return_type = Column(
+        SQLEnum(
+            "refund_only", "replace", "return_and_refund",
+            name="order_return_type"
+        ),
+        nullable=False,
+        comment="退货类型"
+    )
+
+    # Return status
+    status = Column(
+        SQLEnum(
+            "requested", "approved", "rejected", "shipped_back",
+            "received", "processing", "completed",
+            name="order_return_status"
+        ),
+        default="requested",
+        nullable=False,
+        index=True,
+        comment="退货状态"
+    )
+
+    # Refund information
+    refund_amount = Column(Numeric(10, 2), nullable=True, comment="退款金额(分)")
+    refund_transaction_id = Column(String(100), nullable=True, comment="退款交易ID")
+
+    # Timestamps
+    requested_at = Column(DateTime, default=datetime.utcnow, nullable=False, comment="申请时间")
+    approved_at = Column(DateTime, nullable=True, comment="审批时间")
+    completed_at = Column(DateTime, nullable=True, comment="完成时间")
+
+    # Admin information
+    admin_id = Column(String(36), nullable=True, comment="处理管理员ID")
+    admin_notes = Column(Text, nullable=True, comment="管理员备注")
+
+    # Relationships
+    # order = relationship("Order", back_populates="returns")
+    # order_item = relationship("OrderItem")
+    # admin = relationship("AdminUser")
