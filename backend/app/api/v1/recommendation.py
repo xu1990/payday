@@ -1,15 +1,13 @@
 """
 内容推荐接口 - 热门帖子、个性化推荐、话题推荐
 """
-from fastapi import APIRouter, Depends, Query
-
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.schemas.post import PostResponse
 from app.services import recommendation_service
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/recommendations", tags=["recommendations"])
 

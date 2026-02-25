@@ -2,13 +2,13 @@
 定时任务 - 发薪日提醒、统计数据计算等
 使用 Celery Beat 调度
 """
-from celery import shared_task
 from datetime import datetime, timedelta
 
 from app.core.database import SessionLocal
-from app.models.user import User
 from app.models.notification import Notification
 from app.models.payday import PaydayConfig
+from app.models.user import User
+from celery import shared_task
 from sqlalchemy import select
 
 
@@ -73,8 +73,8 @@ def calculate_daily_statistics() -> dict:
     try:
         # 统计今日新增用户数
         today = datetime.now().date()
-        from app.models.post import Post
         from app.models.comment import Comment
+        from app.models.post import Post
         from app.models.salary import SalaryRecord
         from sqlalchemy import func
 

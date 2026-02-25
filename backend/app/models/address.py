@@ -2,7 +2,8 @@
 地址模型 - Address Management Module
 """
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, Text
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 
 from .base import Base
 from .user import gen_uuid

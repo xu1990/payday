@@ -68,7 +68,8 @@ describe('Login 视图', () => {
       global: {
         stubs: {
           'el-card': {
-            template: '<div class="login-card"><slot name="header">薪日 PayDay · 管理后台</slot></div>',
+            template:
+              '<div class="login-card"><slot name="header">薪日 PayDay · 管理后台</slot></div>',
           },
           'el-form': true,
           'el-form-item': true,

@@ -10,8 +10,8 @@ try:
     BLEACH_AVAILABLE = True
 except ImportError:
     BLEACH_AVAILABLE = False
-    import re
     import html
+    import re
 
 
 def sanitize_html(content: Optional[str]) -> Optional[str]:

@@ -204,7 +204,12 @@ onMounted(() => {
     >
       <el-form :model="form" label-width="100px">
         <el-form-item label="话题名称" required>
-          <el-input v-model="form.name" placeholder="请输入话题名称" maxlength="50" show-word-limit />
+          <el-input
+            v-model="form.name"
+            placeholder="请输入话题名称"
+            maxlength="50"
+            show-word-limit
+          />
         </el-form-item>
         <el-form-item label="描述">
           <el-input

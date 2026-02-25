@@ -2,10 +2,9 @@
 Celery 应用 - 技术方案 2.4 消息队列，Sprint 2.3 风控异步任务
 broker/backend 使用 Redis，与 config 一致
 """
+from app.core.config import get_settings
 from celery import Celery
 from celery.schedules import crontab
-
-from app.core.config import get_settings
 
 settings = get_settings()
 

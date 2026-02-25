@@ -1,13 +1,15 @@
-import pytest
+import random
 from datetime import datetime
-from app.services.work_record_service import WorkRecordService
-from app.models.work_record import WorkRecord
+
+import pytest
 from app.models.post import Post
 from app.models.user import User
+from app.models.work_record import WorkRecord
 from app.schemas.work_record import WorkRecordCreate
-from sqlalchemy.ext.asyncio import AsyncSession
+from app.services.work_record_service import WorkRecordService
 from sqlalchemy import select
-import random
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 async def create_test_user(db: AsyncSession) -> User:
     """Create a test user"""

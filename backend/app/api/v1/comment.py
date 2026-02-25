@@ -1,23 +1,21 @@
 """
 评论 - 帖子下评论列表、发表评论/回复、删除；与技术方案 2.1.1 一致
 """
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.database import get_db
-from app.core.exceptions import NotFoundException, AuthenticationException, BusinessException, success_response
 from app.core.deps import get_current_user
+from app.core.exceptions import (AuthenticationException, BusinessException, NotFoundException,
+                                 success_response)
 from app.models.post import Post
 from app.models.user import User
 from app.schemas.comment import CommentCreate, CommentResponse
-from app.services.comment_service import (
-    create as create_comment,
-    delete as delete_comment,
-    get_by_id as get_comment,
-    list_roots_with_replies,
-)
+from app.services.comment_service import create as create_comment
+from app.services.comment_service import delete as delete_comment
+from app.services.comment_service import get_by_id as get_comment
+from app.services.comment_service import list_roots_with_replies
 from app.tasks.risk_check import run_risk_check_for_comment
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/posts", tags=["comments"])
 

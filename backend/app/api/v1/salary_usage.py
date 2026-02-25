@@ -2,28 +2,19 @@
 薪资使用记录 API
 """
 from typing import Optional
+
+from app.core.deps import get_current_user, get_db, rate_limit_general
+from app.core.exceptions import success_response
+from app.models.salary_usage import SalaryUsageRecord
+from app.models.user import User
+from app.schemas.salary_usage import (SalaryUsageCreate, SalaryUsageListResponse,
+                                      SalaryUsageResponse, SalaryUsageUpdate)
+from app.services.salary_usage_service import (_decrypt_with_salt, create_salary_usage,
+                                               delete_salary_usage, get_salary_usage,
+                                               get_usage_statistics_by_type, list_salary_usages,
+                                               update_salary_usage)
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.deps import get_db, get_current_user, rate_limit_general
-from app.models.user import User
-from app.schemas.salary_usage import (
-    SalaryUsageCreate,
-    SalaryUsageResponse,
-    SalaryUsageUpdate,
-    SalaryUsageListResponse,
-)
-from app.services.salary_usage_service import (
-    create_salary_usage,
-    get_salary_usage,
-    update_salary_usage,
-    delete_salary_usage,
-    list_salary_usages,
-    get_usage_statistics_by_type,
-    _decrypt_with_salt,
-)
-from app.models.salary_usage import SalaryUsageRecord
-from app.core.exceptions import success_response
 
 router = APIRouter(prefix="/salary-usage", tags=["薪资使用记录"])
 

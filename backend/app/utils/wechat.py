@@ -1,8 +1,9 @@
 """
 微信小程序 code2session - 技术方案 2.1 认证
 """
-import httpx
 from typing import Optional
+
+import httpx
 from app.core.config import get_settings
 
 
@@ -74,8 +75,8 @@ async def get_access_token() -> str:
     Returns:
         access_token 字符串
     """
-    from app.utils.logger import get_logger
     from app.core.cache import get_redis_client
+    from app.utils.logger import get_logger
     logger = get_logger(__name__)
 
     settings = get_settings()
@@ -148,9 +149,10 @@ async def get_unlimited_qrcode(
     Returns:
         PNG 图片的二进制数据
     """
-    from app.utils.logger import get_logger
-    from app.core.cache import get_redis_client
     import hashlib
+
+    from app.core.cache import get_redis_client
+    from app.utils.logger import get_logger
     logger = get_logger(__name__)
 
     settings = get_settings()

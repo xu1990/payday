@@ -1,19 +1,14 @@
 """用户服务测试"""
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.services.user_service import (
-    get_user_by_id,
-    update_user,
-    get_user_profile_data,
-    list_users_for_admin,
-)
-from app.models.user import User
-from app.models.post import Post
+from app.core.exceptions import NotFoundException
 from app.models.checkin import CheckIn
 from app.models.follow import Follow
+from app.models.post import Post
+from app.models.user import User
 from app.schemas.user import UserUpdate
-from app.core.exceptions import NotFoundException
+from app.services.user_service import (get_user_by_id, get_user_profile_data, list_users_for_admin,
+                                       update_user)
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 

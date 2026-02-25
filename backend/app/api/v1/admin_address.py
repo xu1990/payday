@@ -9,17 +9,17 @@ Admin User Address Management Endpoints
 - 设置默认地址
 - 获取用户的所有地址
 """
-from typing import Optional, List
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Optional
 
 from app.core.database import get_db
 from app.core.deps import get_current_admin_user
-from app.core.exceptions import success_response, NotFoundException
-from app.models.user import User
+from app.core.exceptions import NotFoundException, success_response
 from app.models.address import UserAddress
-from app.services.user_address_service import UserAddressService
+from app.models.user import User
 from app.schemas.address import UserAddressResponse, UserAddressUpdate
+from app.services.user_address_service import UserAddressService
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/user-addresses", tags=["admin-user-address"])
 

@@ -3,15 +3,16 @@ Test suite for TrackingService.
 
 Tests real-time logistics tracking integration with courier APIs.
 """
-import pytest
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, Mock, patch
-import httpx
 
-from app.services.tracking_service import TrackingService
-from app.models.tracking import Shipment, TrackingEvent, TrackingStatus
+import httpx
+import pytest
 from app.core.exceptions import BusinessException, ValidationException
-from app.schemas.tracking import TrackingInfo, TrackingEvent as TrackingEventSchema
+from app.models.tracking import Shipment, TrackingEvent, TrackingStatus
+from app.schemas.tracking import TrackingEvent as TrackingEventSchema
+from app.schemas.tracking import TrackingInfo
+from app.services.tracking_service import TrackingService
 
 
 class TestTrackingService:

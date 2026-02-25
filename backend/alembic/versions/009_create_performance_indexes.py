@@ -5,8 +5,8 @@ Revises: 008
 Create Date: 2025-02-12
 
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = '009'
 down_revision = '008'

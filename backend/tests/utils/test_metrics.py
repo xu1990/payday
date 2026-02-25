@@ -1,12 +1,12 @@
 """
 单元测试 - Prometheus 监控指标 (app.utils.metrics)
 """
-import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
-from fastapi import Request, Response
 
+import pytest
 from app.utils import metrics
+from fastapi import Request, Response
 
 
 class TestMetricsInitialization:

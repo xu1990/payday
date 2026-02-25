@@ -1,8 +1,10 @@
+from datetime import date, datetime
+
 import pytest
-from datetime import datetime, date
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.work_record import WorkRecord
 from app.models.user import User
+from app.models.work_record import WorkRecord
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 @pytest.mark.asyncio
 async def test_create_work_record(db_session: AsyncSession):

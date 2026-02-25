@@ -6,8 +6,8 @@ from typing import Optional
 
 from app.core.config import settings
 from app.utils.cos import cos_service as _cos_service
-from app.utils.oss import oss_service as _oss_service
 from app.utils.logger import get_logger
+from app.utils.oss import oss_service as _oss_service
 
 logger = get_logger(__name__)
 

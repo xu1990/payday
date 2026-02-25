@@ -1,6 +1,7 @@
 """Savings Goal Schemas - 存款目标数据验证（Sprint 4.4）"""
 from datetime import date, datetime
 from typing import List, Optional
+
 from pydantic import BaseModel, Field
 
 

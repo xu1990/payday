@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  listPointOrders,
-  processPointOrder,
-  type PointOrder,
-} from '@/api/pointShop'
+import { listPointOrders, processPointOrder, type PointOrder } from '@/api/pointShop'
 import { formatDate } from '@/utils/format'
 
 const list = ref<PointOrder[]>([])
@@ -49,15 +45,11 @@ function handleStatusChange() {
 
 async function handleComplete(order: PointOrder) {
   try {
-    await ElMessageBox.confirm(
-      `确定完成订单"${order.order_number}"吗？`,
-      '确认完成',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'success',
-      }
-    )
+    await ElMessageBox.confirm(`确定完成订单"${order.order_number}"吗？`, '确认完成', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'success',
+    })
     await processPointOrder(order.id, 'complete')
     ElMessage.success('订单已完成')
     await loadData()
@@ -144,13 +136,11 @@ onMounted(() => {
       </el-select>
     </div>
 
-    <el-table :data="list" v-loading="loading" stripe>
+    <el-table v-loading="loading" :data="list" stripe>
       <el-table-column prop="order_number" label="订单号" width="200" />
       <el-table-column prop="product_name" label="商品名称" width="180" />
       <el-table-column prop="points_cost" label="积分" width="100">
-        <template #default="{ row }">
-          {{ row.points_cost }} 积分
-        </template>
+        <template #default="{ row }"> {{ row.points_cost }} 积分 </template>
       </el-table-column>
       <el-table-column prop="user_id" label="用户ID" width="180" />
       <el-table-column prop="status" label="状态" width="100">
@@ -190,9 +180,7 @@ onMounted(() => {
           >
             取消
           </el-button>
-          <span v-if="row.status !== 'pending'" style="color: #999; font-size: 12px">
-            已处理
-          </span>
+          <span v-if="row.status !== 'pending'" style="color: #999; font-size: 12px"> 已处理 </span>
         </template>
       </el-table-column>
     </el-table>

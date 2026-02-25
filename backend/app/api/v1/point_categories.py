@@ -3,24 +3,18 @@
 Sprint 4.7 - 商品兑换系统
 """
 from typing import Optional
-from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel, Field
-
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import get_current_admin_user
 from app.core.exceptions import success_response
-from app.models.user import User
 from app.models.point_category import PointCategory
-from app.services.point_category_service import (
-    create_category,
-    get_category,
-    get_category_tree,
-    list_categories,
-    update_category,
-    delete_category,
-)
+from app.models.user import User
+from app.services.point_category_service import (create_category, delete_category, get_category,
+                                                 get_category_tree, list_categories,
+                                                 update_category)
+from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/point-categories", tags=["admin-point-categories"])
 
@@ -90,6 +84,39 @@ async def create_point_category(
     return success_response(
         data=category_to_dict(category),
         message="创建分类成功"
+    )
+
+
+@router.get("")
+async def list_point_categories(
+    active_only: bool = Query(False, description="是否只返回启用的分类"),
+    current_admin: User = Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """获取积分商品分类列表（平铺）"""
+    # Get all categories by passing a special marker
+    # We'll query directly to get all categories
+    from sqlalchemy import select
+
+    query = select(PointCategory)
+
+    if active_only:
+        query = query.where(PointCategory.is_active == True)
+
+    query = query.order_by(
+        PointCategory.sort_order.desc(),
+        PointCategory.created_at.desc()
+    )
+
+    result = await db.execute(query)
+    categories = result.scalars().all()
+
+    # Convert all categories to dict
+    categories_data = [category_to_dict(cat) for cat in categories]
+
+    return success_response(
+        data=categories_data,
+        message="获取分类列表成功"
     )
 
 

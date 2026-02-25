@@ -1,22 +1,16 @@
 """积分退货API - Sprint 4.7 商品兑换系统"""
-from typing import Optional, List
-from fastapi import APIRouter, Depends, Query, Body
-from pydantic import BaseModel, Field
-
-from sqlalchemy.ext.asyncio import AsyncSession
 import json
+from typing import List, Optional
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, get_current_admin_user
-from app.core.exceptions import success_response, NotFoundException, BusinessException
+from app.core.deps import get_current_admin_user, get_current_user
+from app.core.exceptions import BusinessException, NotFoundException, success_response
 from app.models.user import User
-from app.services.point_return_service import (
-    create_return,
-    list_returns,
-    get_return,
-    approve_return,
-    reject_return,
-)
+from app.services.point_return_service import (approve_return, create_return, get_return,
+                                               list_returns, reject_return)
+from fastapi import APIRouter, Body, Depends, Query
+from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/point-returns", tags=["point-returns"])
 

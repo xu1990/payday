@@ -9,10 +9,10 @@ Stock Lock Service 测试 - 分布式库存锁定服务
 5. TTL过期
 6. 错误处理
 """
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-import redis.asyncio as aioredis
 
+import pytest
+import redis.asyncio as aioredis
 from app.services.stock_lock import StockLockService
 
 

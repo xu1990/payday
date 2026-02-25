@@ -1,6 +1,6 @@
 """测试加密工具"""
 import pytest
-from app.utils.encryption import encrypt_amount, decrypt_amount
+from app.utils.encryption import decrypt_amount, encrypt_amount
 
 
 class TestEncryptAmount:

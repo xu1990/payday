@@ -1,5 +1,5 @@
 import pytest
-from app.models.shipping import ShippingTemplate, ShippingTemplateRegion, CourierCompany
+from app.models.shipping import CourierCompany, ShippingTemplate, ShippingTemplateRegion
 
 
 @pytest.mark.asyncio

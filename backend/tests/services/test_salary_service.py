@@ -1,22 +1,13 @@
 """工资记录服务集成测试"""
-import pytest
 from datetime import date, datetime
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.salary_service import (
-    create,
-    list_by_user,
-    get_by_id,
-    update,
-    delete,
-    record_to_response,
-    get_by_id_for_admin,
-    delete_for_admin,
-    update_risk_for_admin,
-    list_all_for_admin,
-)
-from app.schemas.salary import SalaryRecordCreate, SalaryRecordUpdate
+import pytest
 from app.core.exceptions import NotFoundException, ValidationException
+from app.schemas.salary import SalaryRecordCreate, SalaryRecordUpdate
+from app.services.salary_service import (create, delete, delete_for_admin, get_by_id,
+                                         get_by_id_for_admin, list_all_for_admin, list_by_user,
+                                         record_to_response, update, update_risk_for_admin)
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 

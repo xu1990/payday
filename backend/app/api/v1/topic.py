@@ -1,14 +1,12 @@
 """
 话题公开接口 - 小程序端
 """
-from fastapi import APIRouter, Depends, Query
-
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.database import get_db
 from app.core.exceptions import success_response
 from app.schemas.topic import TopicResponse
 from app.services import topic_service
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/topics", tags=["topics"])
 

@@ -3,11 +3,11 @@
 打造职场人的"第一次"仪式感
 """
 from datetime import datetime
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
 
 from app.models.base import Base
 from app.models.user import gen_uuid
+from sqlalchemy import Column, DateTime, ForeignKey, String, Text
+from sqlalchemy.orm import relationship
 
 
 class FirstSalaryUsage(Base):

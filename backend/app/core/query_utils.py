@@ -1,12 +1,12 @@
 """
 查询优化工具 - 提供常用的查询优化模式
 """
-from typing import Type, TypeVar, List, Optional
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload, joinedload
+from typing import List, Optional, Type, TypeVar
 
 from app.models.base import Base
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload, selectinload
 
 T = TypeVar('T', bound=Base)
 

@@ -1,11 +1,12 @@
 """
 薪资使用记录 Model
 """
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
-from sqlalchemy.orm import relationship
 from datetime import datetime
 
 from app.models.base import Base
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import relationship
+
 from .user import gen_uuid
 
 

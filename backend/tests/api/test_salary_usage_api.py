@@ -1,8 +1,9 @@
 """
 薪资使用记录 API 集成测试
 """
-import pytest
 from datetime import datetime
+
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -343,9 +344,9 @@ class TestSalaryUsageAPI:
         test_salary
     ):
         """测试用户只能访问自己的薪资使用记录"""
+        from app.models.payday import PaydayConfig
         from app.models.salary_usage import SalaryUsageRecord
         from app.services.salary_usage_service import _encrypt_with_salt
-        from app.models.payday import PaydayConfig
         from tests.test_utils import TestDataFactory
 
         # Create another user with their own salary record

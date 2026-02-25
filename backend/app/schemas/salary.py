@@ -10,9 +10,8 @@
 from datetime import date, datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, field_validator
-
 from app.models.salary import SalaryRecord
+from pydantic import BaseModel, Field, field_validator
 
 
 class SalaryRecordBase(BaseModel):

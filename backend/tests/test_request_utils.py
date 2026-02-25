@@ -2,8 +2,8 @@
 请求工具函数测试
 """
 import pytest
-from fastapi import Request, HTTPException
 from app.utils.request import get_client_ip
+from fastapi import HTTPException, Request
 
 
 class TestGetClientIp:

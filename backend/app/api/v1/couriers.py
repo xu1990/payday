@@ -3,23 +3,17 @@
 管理后台 - 物流公司CRUD操作
 """
 from typing import Optional
-from fastapi import APIRouter, Depends, Query
-
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import get_current_admin_user
 from app.core.exceptions import success_response
-from app.models.user import User
 from app.models.shipping import CourierCompany
+from app.models.user import User
 from app.schemas.shipping import CourierCreate, CourierUpdate
-from app.services.courier_service import (
-    create_courier,
-    get_courier,
-    list_couriers,
-    update_courier,
-    delete_courier,
-)
+from app.services.courier_service import (create_courier, delete_courier, get_courier,
+                                          list_couriers, update_courier)
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/couriers", tags=["admin-couriers"])
 

@@ -1,23 +1,16 @@
 """
 支付 API - 处理支付相关请求
 """
-from fastapi import APIRouter, Depends, Header, Request
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.api.v1.schemas.payment import (
-    CreatePaymentRequest,
-    CreatePaymentResponse,
-    PaymentErrorResponse,
-)
-from app.core.deps import get_db, get_current_user
+from app.api.v1.schemas.payment import (CreatePaymentRequest, CreatePaymentResponse,
+                                        PaymentErrorResponse)
+from app.core.deps import get_current_user, get_db
 from app.core.exceptions import BusinessException, NotFoundException, success_response
 from app.models.user import User
-from app.services.payment_service import (
-    create_membership_payment,
-    generate_payment_response,
-    handle_payment_notify,
-)
+from app.services.payment_service import (create_membership_payment, generate_payment_response,
+                                          handle_payment_notify)
 from app.utils.wechat_pay import parse_payment_notify
+from fastapi import APIRouter, Depends, Header, Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/payment", tags=["payment"])
 
@@ -130,9 +123,9 @@ async def get_order_status(
     Returns:
         订单详情
     """
-    from sqlalchemy import select
+    from app.core.exceptions import AuthorizationException, NotFoundException
     from app.models.membership import MembershipOrder
-    from app.core.exceptions import NotFoundException, AuthorizationException
+    from sqlalchemy import select
 
     # 查询订单
     result = await db.execute(

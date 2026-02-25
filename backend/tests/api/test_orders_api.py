@@ -9,17 +9,18 @@ Order API Endpoints Tests
 - PUT /orders/{order_id}/cancel - 取消订单
 - GET /orders/{order_id}/status - 获取订单状态
 """
-import pytest
 from datetime import datetime
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.main import app
+
+import pytest
 from app.core.deps import get_current_user
+from app.core.exceptions import BusinessException, NotFoundException
+from app.main import app
 from app.models.user import User
 from app.schemas.order import OrderResponse
-from app.core.exceptions import BusinessException, NotFoundException
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 # Mock get_current_user dependency

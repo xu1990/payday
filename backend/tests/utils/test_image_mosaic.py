@@ -1,16 +1,12 @@
 """
 单元测试 - 图片打码服务 (app.utils.image_mosaic)
 """
-import pytest
 import io
 from unittest.mock import AsyncMock, MagicMock, patch
-from PIL import Image
 
-from app.utils.image_mosaic import (
-    ImageMosaicService,
-    image_mosaic_service,
-    mosaic_salary_image,
-)
+import pytest
+from app.utils.image_mosaic import ImageMosaicService, image_mosaic_service, mosaic_salary_image
+from PIL import Image
 
 
 class TestSensitiveTextDetection:

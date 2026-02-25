@@ -1,11 +1,11 @@
 """
 单元测试 - 腾讯云天御内容安全服务 (app.utils.tencent_yu)
 """
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
 
+import pytest
 from app.utils.tencent_yu import TencentYuService
+from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
 
 
 class TestTencentYuServiceInit:

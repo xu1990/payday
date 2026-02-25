@@ -2,7 +2,8 @@
 打卡表 - Sprint 3.3 打卡功能 + Sprint 4.5 增强功能
 """
 from datetime import date, datetime
-from sqlalchemy import Column, String, Date, DateTime, ForeignKey, Integer, JSON
+
+from sqlalchemy import JSON, Column, Date, DateTime, ForeignKey, Integer, String
 
 from .base import Base
 from .user import gen_uuid

@@ -1,14 +1,14 @@
 """
 公共配置 API - 小程序获取协议、开屏配置等
 """
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
 
 from app.core.database import get_db
 from app.core.exceptions import success_response
 from app.models.miniprogram_config import MiniprogramConfig
-from typing import Optional
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/config", tags=["public-config"])
 
@@ -60,8 +60,9 @@ async def get_public_splash_config(
     db: AsyncSession = Depends(get_db),
 ):
     """获取开屏页面配置（公开接口）"""
-    from sqlalchemy import select
     import json
+
+    from sqlalchemy import select
 
     result = await db.execute(
         select(MiniprogramConfig).where(MiniprogramConfig.key == 'splash_config')

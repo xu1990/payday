@@ -6,18 +6,12 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-  size: 'medium'
+  size: 'medium',
 })
 </script>
 
 <template>
-  <image
-    v-if="avatar"
-    :src="avatar"
-    class="avatar"
-    :class="size"
-    mode="aspectFill"
-  />
+  <image v-if="avatar" :src="avatar" class="avatar" :class="size" mode="aspectFill" />
   <view v-else class="avatar-placeholder" :class="size">
     {{ anonymousName?.substring(0, 1) || '?' }}
   </view>

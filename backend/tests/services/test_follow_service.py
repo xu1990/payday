@@ -1,11 +1,10 @@
 """关注服务集成测试"""
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import update
-
-from app.services import follow_service
 from app.models.follow import Follow
 from app.models.post import Post
+from app.services import follow_service
+from sqlalchemy import update
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 

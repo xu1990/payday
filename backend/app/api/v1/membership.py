@@ -3,22 +3,16 @@
 """
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
-
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.exceptions import success_response
-from app.models.user import User
 from app.models.membership import MembershipOrder
+from app.models.user import User
 from app.schemas.membership import MembershipListResponse, MembershipOrderCreate
-from app.services.membership_service import (
-    cancel_order,
-    create_order,
-    get_active_membership,
-    get_my_orders,
-    list_memberships,
-    verify_membership_benefits,
-)
+from app.services.membership_service import (cancel_order, create_order, get_active_membership,
+                                             get_my_orders, list_memberships,
+                                             verify_membership_benefits)
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/membership", tags=["membership"])

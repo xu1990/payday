@@ -1,30 +1,20 @@
 """积分商品API - Sprint 4.7 商品兑换系统"""
-from typing import Optional, List
-from fastapi import APIRouter, Depends, Query, Body
-from pydantic import BaseModel, Field
-
-from sqlalchemy.ext.asyncio import AsyncSession
 import json
+from typing import List, Optional
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, get_current_admin_user
+from app.core.deps import get_current_admin_user, get_current_user
 from app.core.exceptions import success_response
+from app.models.address import UserAddress
 from app.models.user import User
-from app.services.point_product_service import (
-    # 商品管理
-    create_product,
-    update_product,
-    delete_product,
-    list_products,
-    get_product,
-    # 订单管理
-    create_order,
-    list_my_orders,
-    get_order,
-    cancel_order,
-    list_all_orders,
-    process_order,
-)
+from app.services.point_product_service import (cancel_order, create_order,  # 商品管理; 订单管理
+                                                create_product, delete_product, get_order,
+                                                get_product, list_all_orders, list_my_orders,
+                                                list_products, process_order, update_product)
+from fastapi import APIRouter, Body, Depends, Query
+from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/point-shop", tags=["point-shop"])
 
@@ -55,6 +45,7 @@ class ProductUpdate(BaseModel):
 
 class OrderCreate(BaseModel):
     product_id: str
+    address_id: Optional[str] = None
     delivery_info: Optional[str] = None
     notes: Optional[str] = None
 
@@ -139,6 +130,7 @@ async def create_user_order(
         body.product_id,
         body.delivery_info,
         body.notes,
+        body.address_id,
     )
 
     data = {
@@ -186,6 +178,24 @@ async def get_order_detail(
     """获取订单详情"""
     order = await get_order(db, order_id, current_user.id)
 
+    # 查询收货地址
+    address = None
+    if order.address_id:
+        result = await db.execute(
+            select(UserAddress).where(UserAddress.id == order.address_id)
+        )
+        addr = result.scalar_one_or_none()
+        if addr:
+            address = {
+                "id": addr.id,
+                "contact_name": addr.contact_name,
+                "contact_phone": addr.contact_phone,
+                "province_name": addr.province_name,
+                "city_name": addr.city_name,
+                "district_name": addr.district_name,
+                "detailed_address": addr.detailed_address,
+            }
+
     data = {
         "id": order.id,
         "order_number": order.order_number,
@@ -194,8 +204,12 @@ async def get_order_detail(
         "points_cost": order.points_cost,
         "delivery_info": order.delivery_info,
         "notes": order.notes,
+        "notes_admin": order.notes_admin,
         "status": order.status,
+        "address": address,
+        "shipment_id": order.shipment_id,
         "created_at": order.created_at.isoformat(),
+        "processed_at": order.processed_at.isoformat() if order.processed_at else None,
     }
 
     return success_response(data=data)

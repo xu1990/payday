@@ -269,11 +269,7 @@ onMounted(() => {
       <scroll-view v-else class="list" scroll-y @scrolltolower="loadMore">
         <view v-for="user in users" :key="user.id" class="user-card">
           <view class="user-info" @click="goToProfile(user.id)">
-            <UserAvatar
-              :avatar="user.avatar"
-              :anonymous-name="user.anonymous_name"
-              size="medium"
-            />
+            <UserAvatar :avatar="user.avatar" :anonymous-name="user.anonymous_name" size="medium" />
 
             <view class="user-details">
               <text class="username">{{ user.anonymous_name }}</text>

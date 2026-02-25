@@ -28,10 +28,7 @@ export interface OrderListResult {
 }
 
 /** 订单列表 */
-export function listOrders(params?: {
-  limit?: number
-  offset?: number
-}) {
+export function listOrders(params?: { limit?: number; offset?: number }) {
   const { limit = 20, offset = 0 } = params ?? {}
   const q = new URLSearchParams()
   q.set('limit', String(limit))

@@ -1,17 +1,12 @@
 """邀请系统API - Sprint 4.7 邀请注册获取积分"""
-from fastapi import APIRouter, Depends, Query, Body
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.exceptions import success_response
 from app.models.user import User
-from app.services.invitation_service import (
-    get_my_invite_code,
-    get_invitation_stats,
-    apply_invite_code,
-    get_my_invitations,
-)
+from app.services.invitation_service import (apply_invite_code, get_invitation_stats,
+                                             get_my_invitations, get_my_invite_code)
+from fastapi import APIRouter, Body, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/invitation", tags=["invitation"])
 

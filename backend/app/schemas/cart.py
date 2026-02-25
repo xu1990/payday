@@ -2,7 +2,7 @@
 购物车 - 请求/响应模型
 Shopping Cart schemas for e-commerce
 """
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 

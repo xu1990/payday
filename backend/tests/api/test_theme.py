@@ -21,9 +21,8 @@ To run these tests after the infrastructure is fixed:
     pytest tests/api/test_theme.py -v
 """
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.theme import Theme, UserSetting
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 

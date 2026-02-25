@@ -1,26 +1,16 @@
 """Savings Goal API - 存款目标接口（Sprint 4.4）"""
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.exceptions import success_response
 from app.models.user import User
-from app.schemas.savings_goal import (
-    SavingsGoalCreate,
-    SavingsGoalUpdate,
-    SavingsGoalResponse,
-    SavingsGoalDeposit,
-)
-from app.services.savings_goal_service import (
-    create_savings_goal,
-    get_savings_goal_by_id,
-    list_savings_goals,
-    update_savings_goal,
-    delete_savings_goal,
-    add_deposit,
-    goal_to_response,
-)
+from app.schemas.savings_goal import (SavingsGoalCreate, SavingsGoalDeposit, SavingsGoalResponse,
+                                      SavingsGoalUpdate)
+from app.services.savings_goal_service import (add_deposit, create_savings_goal,
+                                               delete_savings_goal, get_savings_goal_by_id,
+                                               goal_to_response, list_savings_goals,
+                                               update_savings_goal)
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/savings-goals", tags=["savings-goals"])
 

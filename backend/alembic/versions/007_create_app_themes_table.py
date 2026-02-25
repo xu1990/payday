@@ -5,8 +5,8 @@ Revises: 007
 Create Date: 2025-02-12
 
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy import func
 
 revision = '007'

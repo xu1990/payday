@@ -26,13 +26,12 @@ from typing import List, Optional
 from uuid import uuid4
 
 import redis.asyncio as aioredis
+from app.core.exceptions import BusinessException, NotFoundException
+from app.models.product import Product, ProductPrice, ProductSKU
+from app.schemas.cart import CartItemResponse, CartResponse, ProductBasicInfo, SKUBasicInfo
+from app.services.stock_lock import StockLockService
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.schemas.cart import CartResponse, CartItemResponse, ProductBasicInfo, SKUBasicInfo
-from app.services.stock_lock import StockLockService
-from app.models.product import Product, ProductSKU, ProductPrice
-from app.core.exceptions import NotFoundException, BusinessException
 
 logger = logging.getLogger(__name__)
 

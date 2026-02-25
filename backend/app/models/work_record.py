@@ -2,7 +2,10 @@
 工作记录表 - 牛马日志 Module
 """
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, ForeignKey, Integer, Numeric, JSON, Enum as SQLEnum
+
+from sqlalchemy import JSON, Column, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Integer, Numeric, String
 
 from .base import Base
 from .user import gen_uuid

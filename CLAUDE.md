@@ -137,10 +137,63 @@ backend/
 - Never store raw salary values in the database
 - Use \`encryption_service.encrypt_amount()\` and \`decrypt_amount()\` for salary data
 
+### CSRF Protection
+
+The application implements strict CSRF protection for state-changing operations:
+
+- **Admin endpoints**: All requests to \`/api/v1/admin/*\` require CSRF validation (including GET requests with non-readonly parameters)
+- **User endpoints**: POST/PUT/DELETE/PATCH operations require CSRF validation
+- **Safe methods**: Standard REST read-only operations (GET, HEAD, OPTIONS) are exempt for user endpoints
+- **Implementation**: Use \`verify_csrf_token()\` for admin routes, \`verify_csrf_token_for_user()\` for user routes
+
+Usage in routes:
+\`\`\`python
+from app.core.deps import verify_csrf_token
+
+@router.delete("/admin/endpoint")
+async def endpoint(..., _csrf: bool = Depends(verify_csrf_token)):
+    ...
+\`\`\`
+
+### Rate Limiting
+
+Built-in rate limiters available as dependencies in \`app/core/deps.py\`:
+
+- \`rate_limit_general()\` - 100 requests/minute for general APIs
+- \`rate_limit_login()\` - 5 requests/minute for login endpoints (prevents brute force)
+- \`rate_limit_post()\` - 10 requests/minute for posting content
+- \`rate_limit_comment()\` - 20 requests/minute for comments
+
+Usage:
+\`\`\`python
+from app.core.deps import rate_limit_login
+
+@router.post("/auth/login")
+async def login(..., _rate_limit: bool = Depends(rate_limit_login)):
+    ...
+\`\`\`
+
 ### Authentication
 
 - **Mini-program**: WeChat code2session → JWT (see \`app/api/v1/auth.py\`)
 - **Admin**: Username/password → JWT with \`scope=admin\` (see \`app/core/security.py\`)
+
+### Permission System
+
+Admin roles and hierarchy (defined in \`app/core/deps.py\`):
+
+- \`superadmin\` - Level 3: Full access including user management
+- \`admin\` - Level 2: Standard admin operations
+- \`readonly\` - Level 1: Read-only access
+
+Usage:
+\`\`\`python
+from app.core.deps import require_permission
+
+@router.put("/endpoint")
+async def endpoint(..., _perm: bool = Depends(require_permission("admin"))):
+    ...
+\`\`\`
 
 ### Database Migrations
 
@@ -176,6 +229,31 @@ Key files:
 - \`src/router/\` - Route definitions
 - \`src/stores/\` - Pinia state stores
 - \`src/views/\` - Page components
+- \`src/components/pointShop/\` - Shared components for Point Shop module
+
+### Admin Web Shared Components
+
+The admin panel includes reusable Vue 3 components in \`src/components/pointShop/\`:
+
+- \`CategoryTreeSelect\` - Hierarchical category picker with single selection
+- \`CourierSelect\` - Courier company dropdown with feature tags (COD, cold chain)
+- \`AddressForm\` - Complete address form with validation (contact, phone, region, detailed address)
+- \`RegionPricingForm\` - Shipping pricing configuration by region
+
+Import usage:
+\`\`\`typescript
+import {
+  CategoryTreeSelect,
+  CourierSelect,
+  AddressForm,
+  RegionPricingForm,
+  type AddressFormData,
+  type RegionPricing,
+  type PricingConfig,
+} from '@/components/pointShop'
+\`\`\`
+
+See \`admin-web/src/components/pointShop/README.md\` for detailed documentation.
 
 ### Miniapp
 
@@ -363,10 +441,29 @@ No build-time env vars needed for development. API proxy configured in \`vite.co
 ## Deployment Notes
 
 1. **Database**: Run migrations before first startup
-2. **Admin User**: Create at least one admin user via \`scripts/create_first_admin.py\`
-3. **Celery**:
-   - Start worker: \`celery -A app.tasks.worker -l info\`
-   - Start beat (for scheduled tasks): \`celery -A app.tasks.beat -l info\`
+   \`\`\`bash
+   cd backend && python3 -m alembic upgrade head
+   \`\`\`
+
+2. **Admin User**: Create at least one admin user
+   \`\`\`bash
+   cd backend && python3 scripts/create_first_admin.py
+   \`\`\`
+
+3. **Celery** (async tasks and scheduled jobs):
+   \`\`\`bash
+   cd backend
+
+   # Start Celery worker (executes async tasks)
+   celery -A app.celery_app.celery worker -l info
+
+   # Start Celery beat (scheduled tasks like payday reminders)
+   celery -A app.celery_app.celery beat -l info
+
+   # Start both with flower monitoring (optional)
+   celery -A app.celery_app.celery flower --port=5555
+   \`\`\`
+
 4. **Proxy**: Configure nginx/proxy for API routing
 
 See \`docs/管理后台部署说明.md\` for detailed deployment instructions.
@@ -396,6 +493,55 @@ Refer to \`docs/迭代规划_Sprint与任务.md\` for detailed sprint breakdown:
 
 ---
 
+## Point Shop Admin Module
+
+### Features
+
+The points shop admin module provides comprehensive management for:
+
+- **Categories**: Hierarchical product categories (3 levels)
+- **Products**: Product CRUD with multi-specification SKU support
+- **Couriers**: Express company management
+- **User Addresses**: View and manage user delivery addresses
+- **Shipping Templates**: Regional shipping cost configuration
+- **Shipments**: Order shipment tracking
+- **Returns**: Return request processing
+
+### API Endpoints
+
+- `/api/v1/admin/point-categories/*` - Category management
+- `/api/v1/admin/point-products/{id}/skus` - SKU management
+- `/api/v1/admin/couriers/*` - Courier management
+- `/api/v1/admin/user-addresses/*` - Address management
+- `/api/v1/admin/shipping-templates/*` - Shipping templates
+- `/api/v1/admin/point-shipments/*` - Shipment management
+- `/api/v1/admin/point-returns/*` - Return management
+
+### Frontend Pages
+
+- `/admin/point-categories` - Category management
+- `/admin/couriers` - Courier management
+- `/admin/user-addresses` - Address management
+- `/admin/point-shop` - Product management (enhanced with SKU)
+- `/admin/shipping-templates` - Shipping template management
+- `/admin/point-shipments` - Shipment management
+- `/admin/point-returns` - Return management
+
+### Database Models
+
+New models added:
+- `PointCategory` - Product categories
+- `PointSpecification` - Product specifications (e.g., Color, Size)
+- `PointSpecificationValue` - Specification values (e.g., Red, Blue)
+- `PointProductSKU` - Product SKUs with independent inventory/pricing
+- `PointReturn` - Return requests
+
+Updated models:
+- `PointProduct` - Added `category_id`, `has_sku` fields
+- `PointOrder` - Added `sku_id`, `address_id`, `shipment_id` fields
+
+---
+
 ## Key Implementation Notes
 
 ### Dependencies
@@ -412,7 +558,18 @@ Refer to \`docs/迭代规划_Sprint与任务.md\` for detailed sprint breakdown:
 
 ### Exception Handling Best Practices
 
-When raising exceptions in services or routes:
+Available exception types in \`app/core/exceptions.py\`:
+
+- \`PayDayException\` - Base exception (500 Internal Server Error)
+- \`BusinessException\` - Business logic errors (400 Bad Request)
+- \`AuthenticationException\` - Authentication failures (401 Unauthorized)
+- \`AuthorizationException\` - Permission denied (403 Forbidden)
+- \`NotFoundException\` - Resource not found (404 Not Found)
+- \`ValidationException\` - Parameter validation errors (422 Unprocessable Entity)
+- \`RateLimitException\` - Rate limit exceeded (429 Too Many Requests)
+- \`ExternalServiceException\` - External service failures (503 Service Unavailable)
+
+Usage examples:
 
 \`\`\`python
 # For business logic errors
@@ -431,6 +588,10 @@ return error_response(
     code="CREATE_FAILED",
     details={"reason": "..."}
 )
+
+# For consistent success responses
+from app.core.exceptions import success_response
+return success_response(data={"id": 123}, message="创建成功")
 \`\`\`
 
 ### Adding New API Endpoints
@@ -457,6 +618,7 @@ Follow this pattern when adding new endpoints:
 
 ### Daily Development
 
-1. Start backend: \`cd backend && uvicorn app.main:app --reload\`
-2. Start Celery worker: \`celery -A app.tasks.worker -l info\`
-3. Start Celery beat: \`celery -A app.tasks.beat -l info\`
+1. Start backend: \`cd backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000\`
+2. Start Celery worker: \`cd backend && celery -A app.celery_app.celery worker -l info\`
+3. Start Celery beat (scheduled tasks): \`cd backend && celery -A app.celery_app.celery beat -l info\`
+4. Start admin web: \`cd admin-web && npm run dev\` (runs on port 5174)

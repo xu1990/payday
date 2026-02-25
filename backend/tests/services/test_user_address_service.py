@@ -7,14 +7,14 @@ UserAddress Service 测试 - 用户地址服务
 3. update_address - 更新地址（成功、地址不存在）
 4. set_default_address - 设置默认地址（成功、地址不存在、取消其他默认）
 """
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.services.user_address_service import UserAddressService
-from app.models.address import UserAddress
+import pytest
 from app.core.exceptions import NotFoundException
+from app.models.address import UserAddress
+from app.services.user_address_service import UserAddressService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def create_mock_db():

@@ -1,12 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  listOrders,
-  updateOrderStatus,
-  type OrderItem,
-  type OrderStatusUpdate,
-} from '@/api/order'
+import { listOrders, updateOrderStatus, type OrderItem, type OrderStatusUpdate } from '@/api/order'
 import BaseDataTable from '@/components/BaseDataTable.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import { formatDate, formatAmount } from '@/utils/format'
@@ -119,7 +114,7 @@ onMounted(() => {
               pending: { text: '待支付', type: 'info' },
               paid: { text: '已支付', type: 'success' },
               cancelled: { text: '已取消', type: 'info' },
-              refunded: { text: '已退款', type: 'danger' }
+              refunded: { text: '已退款', type: 'danger' },
             }"
           />
         </template>
@@ -147,10 +142,10 @@ onMounted(() => {
         <template #default="{ row }">
           <el-select
             :model-value="row.status"
-            @change="(val: OrderStatusUpdate['status']) => handleStatusChange(row.id, val)"
             :disabled="updatingOrderId === row.id"
             size="small"
             style="width: 120px"
+            @change="(val: OrderStatusUpdate['status']) => handleStatusChange(row.id, val)"
           >
             <el-option label="待支付" value="pending" />
             <el-option label="已支付" value="paid" />

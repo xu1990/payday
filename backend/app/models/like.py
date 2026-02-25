@@ -2,7 +2,8 @@
 点赞表 - 与迭代规划 2.2 数据模型一致，target_type 区分 post/comment
 """
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, Enum, ForeignKey, UniqueConstraint
+
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, String, UniqueConstraint
 
 from .base import Base
 from .user import gen_uuid

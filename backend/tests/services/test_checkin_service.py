@@ -1,10 +1,10 @@
 """打卡服务测试"""
-import pytest
 from datetime import date, timedelta
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services import checkin_service
+import pytest
 from app.models.checkin import CheckIn
+from app.services import checkin_service
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 

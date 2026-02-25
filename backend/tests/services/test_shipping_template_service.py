@@ -2,18 +2,13 @@
 运费模板服务测试
 """
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic_core import ValidationError
-
-from app.services.shipping_service import ShippingTemplateService
+from app.core.exceptions import BusinessException, NotFoundException, ValidationException
 from app.models.shipping import ShippingTemplate, ShippingTemplateRegion
-from app.schemas.shipping import (
-    ShippingTemplateCreate,
-    ShippingTemplateUpdate,
-    ShippingTemplateRegionCreate,
-    ShippingTemplateRegionUpdate
-)
-from app.core.exceptions import NotFoundException, ValidationException, BusinessException
+from app.schemas.shipping import (ShippingTemplateCreate, ShippingTemplateRegionCreate,
+                                  ShippingTemplateRegionUpdate, ShippingTemplateUpdate)
+from app.services.shipping_service import ShippingTemplateService
+from pydantic_core import ValidationError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TestCreateTemplate:

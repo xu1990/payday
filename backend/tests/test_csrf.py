@@ -1,16 +1,11 @@
 """
 单元测试 - CSRF 保护模块 (app.core.csrf)
 """
-import pytest
-from unittest.mock import patch, AsyncMock, MagicMock
-from fastapi import Request
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.core.csrf import (
-    CSRFTokenManager,
-    CSRFException,
-    csrf_response,
-    csrf_manager,
-)
+import pytest
+from app.core.csrf import CSRFException, CSRFTokenManager, csrf_manager, csrf_response
+from fastapi import Request
 
 
 class TestCSRFTokenManager:

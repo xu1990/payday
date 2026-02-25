@@ -1,12 +1,12 @@
 """
 积分分类服务 - Sprint 4.7 商品兑换系统
 """
-from typing import List, Optional, Dict, Any
-from sqlalchemy import select, and_, func
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, List, Optional
 
-from app.models.point_category import PointCategory
 from app.core.exceptions import NotFoundException, ValidationException
+from app.models.point_category import PointCategory
+from sqlalchemy import and_, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def create_category(
@@ -146,11 +146,14 @@ def _build_category_tree(
                 "id": category.id,
                 "name": category.name,
                 "description": category.description,
+                "parent_id": category.parent_id,
                 "icon_url": category.icon_url,
                 "banner_url": category.banner_url,
                 "level": category.level,
                 "sort_order": category.sort_order,
-                "is_active": category.is_active,
+                "is_active": bool(category.is_active),
+                "created_at": category.created_at.isoformat() if category.created_at else None,
+                "updated_at": category.updated_at.isoformat() if category.updated_at else None,
                 "children": _build_category_tree(categories, category.id),
             }
             tree.append(node)

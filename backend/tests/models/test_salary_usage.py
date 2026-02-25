@@ -1,15 +1,15 @@
 """
 薪资使用记录模型测试
 """
-import pytest
-from datetime import datetime, date
-from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import date, datetime
 
+import pytest
+from app.models.payday import PaydayConfig
+from app.models.salary import SalaryRecord
 from app.models.salary_usage import SalaryUsageRecord
 from app.models.user import User
-from app.models.salary import SalaryRecord
-from app.models.payday import PaydayConfig
 from app.utils.encryption import encrypt_amount
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 

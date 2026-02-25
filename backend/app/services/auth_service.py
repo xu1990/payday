@@ -3,22 +3,22 @@
 支持 Refresh Token 机制
 支持手机号登录
 """
-import random
-import string
 import hmac
+import random
 import re
+import string
 from typing import Optional, Tuple
 
-from sqlalchemy import select, exc as sqlalchemy_exc, update
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.user import User
-from app.models.phone_lookup import PhoneLookup, hash_phone_number
-from app.utils.wechat import code2session, get_phone_number_from_wechat
-from app.core.security import create_access_token, create_refresh_token
 from app.core.cache import get_redis_client
 from app.core.exceptions import BusinessException, NotFoundException, ValidationException
-from app.utils.encryption import encrypt_amount, decrypt_amount
+from app.core.security import create_access_token, create_refresh_token
+from app.models.phone_lookup import PhoneLookup, hash_phone_number
+from app.models.user import User
+from app.utils.encryption import decrypt_amount, encrypt_amount
+from app.utils.wechat import code2session, get_phone_number_from_wechat
+from sqlalchemy import exc as sqlalchemy_exc
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _gen_anonymous_name() -> str:
@@ -233,10 +233,10 @@ async def login_with_code(db: AsyncSession, code: str, phone_code: Optional[str]
         (access_token, refresh_token, user) 或 None
     """
     from datetime import datetime, timedelta
-    from sqlalchemy import update
 
     # 开发环境模拟登录（如果未配置微信凭证）
     from app.core.config import get_settings
+    from sqlalchemy import update
     settings = get_settings()
 
     if not settings.wechat_app_id or not settings.wechat_app_secret:

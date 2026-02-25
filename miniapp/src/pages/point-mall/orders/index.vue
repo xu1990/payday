@@ -44,7 +44,12 @@
     </view>
 
     <view v-else class="orders-list">
-      <view v-for="order in orders" :key="order.id" class="order-item">
+      <view
+        v-for="order in orders"
+        :key="order.id"
+        class="order-item"
+        @tap="goToDetail(order)"
+      >
         <view class="order-header">
           <text class="order-number">订单号：{{ order.order_number }}</text>
           <view class="order-status" :class="'status-' + order.status">
@@ -75,7 +80,7 @@
         </view>
 
         <view v-if="order.status === 'pending'" class="order-actions">
-          <button class="cancel-btn" @tap="handleCancel(order)">取消订单</button>
+          <button class="cancel-btn" @tap.stop="handleCancel(order)">取消订单</button>
         </view>
       </view>
     </view>
@@ -164,6 +169,12 @@ function formatTime(timeStr) {
   const hour = String(date.getHours()).padStart(2, '0')
   const minute = String(date.getMinutes()).padStart(2, '0')
   return `${month}月${day}日 ${hour}:${minute}`
+}
+
+function goToDetail(order) {
+  uni.navigateTo({
+    url: `/pages/point-mall/orders/detail?id=${order.id}`,
+  })
 }
 </script>
 

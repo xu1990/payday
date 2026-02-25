@@ -1,11 +1,10 @@
 """
 存储服务状态检查 API - 查看 COS/OSS 配置状态
 """
-from fastapi import APIRouter, Depends
-
 from app.core.deps import get_current_admin
 from app.models.admin import AdminUser
 from app.utils.storage import storage_service
+from fastapi import APIRouter, Depends
 
 router = APIRouter(prefix="/storage", tags=["storage"])
 

@@ -16,16 +16,16 @@ User Address API Endpoints Tests
 - 业务规则验证
 - 错误处理
 """
-import pytest
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
-from httpx import AsyncClient, ASGITransport
 
-from app.main import app
+import pytest
 from app.core.deps import get_current_admin
-from app.models.admin import AdminUser
-from app.models.address import UserAddress
 from app.core.exceptions import NotFoundException
+from app.main import app
+from app.models.address import UserAddress
+from app.models.admin import AdminUser
+from httpx import ASGITransport, AsyncClient
 
 
 # Mock get_current_admin dependency

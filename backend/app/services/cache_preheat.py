@@ -1,18 +1,14 @@
 """
 缓存预热服务 - 应用启动时或定时预热热点数据
 """
-from sqlalchemy import select, func
-from typing import Dict, Any
 from datetime import datetime, timedelta
+from typing import Any, Dict
 
+from app.core.cache import LikeCacheService, PostCacheService
 from app.core.database import AsyncSession
-from app.models.user import User
+from app.models.membership import AppTheme, Membership
 from app.models.post import Post
-from app.models.membership import Membership, AppTheme
-from app.core.cache import (
-    PostCacheService,
-    LikeCacheService,
-)
+from app.models.user import User
 # TODO: Fix missing imports - cache_service and UserCacheService don't exist
 # from app.core.cache import (
 #     cache_service,
@@ -21,6 +17,7 @@ from app.core.cache import (
 #     LikeCacheService,
 # )
 from app.utils.logger import get_logger
+from sqlalchemy import func, select
 
 logger = get_logger(__name__)
 
@@ -136,10 +133,7 @@ async def preheat_statistics_data(db: AsyncSession) -> Dict[str, Any]:
     """
     预热统计数据缓存
     """
-    from app.services.statistics_service import (
-        get_insights_distributions,
-        get_overview_stats,
-    )
+    from app.services.statistics_service import get_insights_distributions, get_overview_stats
 
     try:
         # 预热概览统计

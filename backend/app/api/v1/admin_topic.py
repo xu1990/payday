@@ -1,16 +1,14 @@
 """
 话题管理接口 - 管理后台
 """
-from fastapi import APIRouter, Depends, Query
-
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.database import get_db
 from app.core.deps import get_current_admin_user
-from app.core.exceptions import success_response, NotFoundException
+from app.core.exceptions import NotFoundException, success_response
 from app.models.user import User
-from app.schemas.topic import TopicCreate, TopicUpdate, TopicResponse
+from app.schemas.topic import TopicCreate, TopicResponse, TopicUpdate
 from app.services import topic_service
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/topics", tags=["admin-topics"])
 

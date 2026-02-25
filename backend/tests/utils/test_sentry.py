@@ -1,11 +1,12 @@
 """
 单元测试 - Sentry 错误追踪集成 (app.utils.sentry)
 """
-import pytest
-import os
-from unittest.mock import MagicMock, patch, mock_open
 import asyncio
+import os
 import sys
+from unittest.mock import MagicMock, mock_open, patch
+
+import pytest
 
 # Mock sentry_sdk before importing the module
 sys.modules['sentry_sdk'] = MagicMock()
@@ -280,8 +281,8 @@ class TestCaptureException:
 
     def test_capture_exception_with_tags_and_extra(self):
         """测试带标签和额外数据的异常捕获"""
-        from app.utils import sentry
         import sentry_sdk
+        from app.utils import sentry
 
         sentry._sentry_initialized = True
 
@@ -329,8 +330,8 @@ class TestCaptureMessage:
 
     def test_capture_message_with_tags(self):
         """测试带标签的消息捕获"""
-        from app.utils import sentry
         import sentry_sdk
+        from app.utils import sentry
 
         sentry._sentry_initialized = True
 
@@ -365,8 +366,8 @@ class TestSetUserContext:
 
     def test_set_user_context_initialized(self):
         """测试设置用户上下文"""
-        from app.utils import sentry
         import sentry_sdk
+        from app.utils import sentry
 
         sentry._sentry_initialized = True
 
@@ -401,8 +402,8 @@ class TestClearUserContext:
 
     def test_clear_user_context_initialized(self):
         """测试清除用户上下文"""
-        from app.utils import sentry
         import sentry_sdk
+        from app.utils import sentry
 
         sentry._sentry_initialized = True
 
@@ -422,8 +423,8 @@ class TestConfigureScope:
 
     def test_configure_scope(self):
         """测试配置 Scope"""
-        from app.utils import sentry
         import sentry_sdk
+        from app.utils import sentry
 
         with patch('sentry_sdk.configure_scope') as mock_configure:
             mock_scope = MagicMock()
@@ -451,8 +452,8 @@ class TestAddBreadcrumb:
 
     def test_add_breadcrumb_initialized(self):
         """测试添加面包屑"""
-        from app.utils import sentry
         import sentry_sdk
+        from app.utils import sentry
 
         sentry._sentry_initialized = True
 
@@ -487,8 +488,8 @@ class TestSetTransaction:
 
     def test_set_transaction_initialized(self):
         """测试设置事务"""
-        from app.utils import sentry
         import sentry_sdk
+        from app.utils import sentry
 
         sentry._sentry_initialized = True
 

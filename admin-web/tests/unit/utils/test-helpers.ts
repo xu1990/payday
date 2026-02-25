@@ -27,7 +27,8 @@ export function mockElementPlus() {
     },
     ElInput: {
       name: 'ElInput',
-      template: '<input :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+      template:
+        '<input :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
     },
     ElForm: {
       name: 'ElForm',
@@ -56,10 +57,10 @@ export function setupGlobalTestConfig() {
 export function createMockStore<T extends Record<string, any>>(defaults: T) {
   return {
     ...defaults,
-    $reset: vi.fn(function() {
+    $reset: vi.fn(function () {
       Object.assign(this, defaults)
     }),
-    $patch: vi.fn(function(partial: Partial<T>) {
+    $patch: vi.fn(function (partial: Partial<T>) {
       Object.assign(this, partial)
     }),
   }
@@ -89,7 +90,7 @@ export function mockVueRouter() {
         query: {},
       },
     },
-   路由: {
+    路由: {
       path: '/',
       name: 'home',
     },
@@ -121,11 +122,7 @@ export function mockApiResponse<T>(data: T, delay = 100): Promise<{ data: T }> {
 /**
  * Mock API 错误
  */
-export function mockApiError(
-  message: string,
-  code = 500,
-  delay = 100
-): Promise<never> {
+export function mockApiError(message: string, code = 500, delay = 100): Promise<never> {
   return new Promise((_, reject) => {
     setTimeout(() => {
       reject(new Error(message))
@@ -240,10 +237,7 @@ export function formatDateTimeForTest(date: Date): string {
 /**
  * 断言响应数据结构
  */
-export function assertResponseShape(
-  response: Record<string, any>,
-  requiredKeys: string[]
-) {
+export function assertResponseShape(response: Record<string, any>, requiredKeys: string[]) {
   requiredKeys.forEach(key => {
     expect(response).toHaveProperty(key)
   })

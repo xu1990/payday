@@ -2,54 +2,31 @@
 管理后台 - 登录、用户、工资、统计、帖子/评论管理、风控待审（Sprint 2.4）
 """
 from typing import Optional
-from pydantic import BaseModel, Field
 
-from fastapi import APIRouter, Depends, Form, Query, Response, UploadFile, File
-from fastapi.responses import JSONResponse
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.deps import get_current_admin, verify_csrf_token, require_permission
 from app.core.database import get_db
-from app.core.exceptions import (
-    AuthenticationException,
-    NotFoundException,
-    success_response,
-)
+from app.core.deps import get_current_admin, require_permission, verify_csrf_token
+from app.core.exceptions import AuthenticationException, NotFoundException, success_response
 from app.models.admin import AdminUser
-from app.schemas.admin import (
-    AdminLoginRequest,
-    AdminTokenResponse,
-    AdminUserDetail,
-    AdminUserListItem,
-    AdminSalaryRecordItem,
-    AdminSalaryRecordUpdateRiskRequest,
-    AdminStatisticsResponse,
-    AdminPostListItem,
-    AdminPostListResponse,
-    AdminPostUpdateStatusRequest,
-    AdminCommentListItem,
-    AdminCommentListResponse,
-    AdminCommentUpdateRiskRequest,
-)
+from app.schemas.admin import (AdminCommentListItem, AdminCommentListResponse,
+                               AdminCommentUpdateRiskRequest, AdminLoginRequest, AdminPostListItem,
+                               AdminPostListResponse, AdminPostUpdateStatusRequest,
+                               AdminSalaryRecordItem, AdminSalaryRecordUpdateRiskRequest,
+                               AdminStatisticsResponse, AdminTokenResponse, AdminUserDetail,
+                               AdminUserListItem)
 from app.services.admin_auth_service import login_admin
-from app.services.user_service import get_user_by_id, list_users_for_admin
-from app.services.salary_service import (
-    list_all_for_admin,
-    delete_for_admin,
-    update_risk_for_admin,
-    record_to_response as salary_record_to_response,
-)
+from app.services.comment_service import list_comments_for_admin, update_comment_risk_for_admin
+from app.services.post_service import delete_post_for_admin
+from app.services.post_service import get_by_id_for_admin as get_post_by_id_for_admin
+from app.services.post_service import list_posts_for_admin, update_post_status_for_admin
+from app.services.salary_service import delete_for_admin, list_all_for_admin
+from app.services.salary_service import record_to_response as salary_record_to_response
+from app.services.salary_service import update_risk_for_admin
 from app.services.statistics_service import get_admin_dashboard_stats
-from app.services.post_service import (
-    list_posts_for_admin,
-    get_by_id_for_admin as get_post_by_id_for_admin,
-    update_post_status_for_admin,
-    delete_post_for_admin,
-)
-from app.services.comment_service import (
-    list_comments_for_admin,
-    update_comment_risk_for_admin,
-)
+from app.services.user_service import get_user_by_id, list_users_for_admin
+from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -179,8 +156,8 @@ async def admin_user_list(
     )
 
     # Import utilities for phone number handling
-    from app.utils.phone import mask_phone_number
     from app.utils.encryption import decrypt_amount
+    from app.utils.phone import mask_phone_number
 
     items = []
     for u in users:

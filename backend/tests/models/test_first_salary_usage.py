@@ -1,14 +1,12 @@
 """
 Test FirstSalaryUsage model and schemas
 """
-import pytest
 from datetime import datetime
+
+import pytest
 from app.models.first_salary_usage import FirstSalaryUsage
-from app.schemas.first_salary_usage import (
-    FirstSalaryUsageCreate,
-    FirstSalaryUsageUpdate,
-    FirstSalaryUsageResponse,
-)
+from app.schemas.first_salary_usage import (FirstSalaryUsageCreate, FirstSalaryUsageResponse,
+                                            FirstSalaryUsageUpdate)
 
 
 class TestFirstSalaryUsageModel:

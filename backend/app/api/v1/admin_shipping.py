@@ -22,27 +22,18 @@ Shipping Template Management API - Admin Panel
 - 统一错误处理
 """
 from typing import Optional
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import get_current_admin_user
-from app.core.exceptions import (
-    success_response,
-    NotFoundException,
-    BusinessException,
-    ValidationException,
-)
+from app.core.exceptions import (BusinessException, NotFoundException, ValidationException,
+                                 success_response)
 from app.models.user import User
-from app.schemas.shipping import (
-    ShippingTemplateCreate,
-    ShippingTemplateUpdate,
-    ShippingTemplateResponse,
-    ShippingTemplateRegionCreate,
-    ShippingTemplateRegionUpdate,
-    ShippingTemplateRegionResponse,
-)
+from app.schemas.shipping import (ShippingTemplateCreate, ShippingTemplateRegionCreate,
+                                  ShippingTemplateRegionResponse, ShippingTemplateRegionUpdate,
+                                  ShippingTemplateResponse, ShippingTemplateUpdate)
 from app.services.shipping_service import ShippingTemplateService
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/shipping-templates", tags=["admin-shipping"])
 
@@ -61,10 +52,13 @@ async def list_shipping_templates(
     service = ShippingTemplateService(db)
 
     templates = await service.list_templates(
-        limit=limit,
-        offset=offset,
-        active_only=active_only
+        skip=offset,  # 服务使用 skip 而不是 offset
+        limit=limit
     )
+
+    # 如果 active_only 为 True，过滤结果
+    if active_only:
+        templates = [t for t in templates if t.is_active]
 
     # 转换为响应格式
     items = []

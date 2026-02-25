@@ -4,17 +4,17 @@
 
 这个脚本会创建各种类型的测试通知，用于验证通知功能。
 """
+import asyncio
 import os
 import sys
-import asyncio
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.database import SessionLocal
-from app.models.user import User
-from app.models.post import Post
 from app.models.comment import Comment
 from app.models.notification import Notification
+from app.models.post import Post
+from app.models.user import User
 from sqlalchemy import select
 
 

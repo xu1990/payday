@@ -1,15 +1,13 @@
 """
 Test First Salary Usage Service
 """
-import pytest
-from unittest.mock import Mock, AsyncMock
-from sqlalchemy.ext.asyncio import AsyncSession
+from unittest.mock import AsyncMock, Mock
 
-from app.services.first_salary_usage_service import (
-    create_first_salary_usage_records,
-    get_first_salary_usage_by_salary,
-    check_user_has_first_salary_usage
-)
+import pytest
+from app.services.first_salary_usage_service import (check_user_has_first_salary_usage,
+                                                     create_first_salary_usage_records,
+                                                     get_first_salary_usage_by_salary)
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

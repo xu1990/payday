@@ -4,13 +4,14 @@
 支持每条记录独立的随机 salt
 """
 import base64
-import os
 import hashlib
+import os
+from typing import Tuple
+
+from app.core.config import get_settings
+from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from cryptography.fernet import Fernet
-from app.core.config import get_settings
-from typing import Tuple
 
 # 密钥版本（支持密钥轮换）
 CURRENT_KEY_VERSION = 2

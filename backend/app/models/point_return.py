@@ -1,6 +1,7 @@
 """积分订单退货模型"""
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Text, DateTime, ForeignKey, Enum
+
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String, Text
 
 from .base import Base
 from .user import gen_uuid

@@ -1,22 +1,17 @@
 """
 工作记录 API - 牛马日志 Module
 """
-from typing import Optional
 from datetime import datetime
-
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
 
 from app.core.database import get_db
-from app.core.exceptions import NotFoundException, ValidationException, success_response
 from app.core.deps import get_current_user
+from app.core.exceptions import NotFoundException, ValidationException, success_response
 from app.models.user import User
-from app.schemas.work_record import (
-    WorkRecordCreate,
-    WorkRecordResponse,
-    WorkRecordListResponse
-)
+from app.schemas.work_record import WorkRecordCreate, WorkRecordListResponse, WorkRecordResponse
 from app.services.work_record_service import WorkRecordService
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/work-logs", tags=["work-logs"])
 
@@ -124,8 +119,8 @@ async def get_work_feed(
 
     返回所有工作类型的帖子，按创建时间倒序排列
     """
-    from sqlalchemy import select
     from app.models.post import Post
+    from sqlalchemy import select
 
     # Query work-type posts
     query = select(Post).where(Post.type == "work", Post.status == "normal")

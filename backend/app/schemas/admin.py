@@ -1,6 +1,6 @@
 """管理端 - 登录、用户列表/详情、工资列表、统计"""
 from datetime import date, datetime
-from typing import List, Optional, Literal
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 

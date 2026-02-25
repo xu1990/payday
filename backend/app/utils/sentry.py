@@ -4,14 +4,16 @@ Sentry 错误追踪集成 - 技术方案 6.2
 """
 import os
 from typing import Optional
-from sentry_sdk import init as sentry_init, capture_exception, capture_message, set_tag
-from sentry_sdk.integrations.fastapi import FastApiIntegration
-from sentry_sdk.integrations.celery import CeleryIntegration
-from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
-from sentry_sdk.integrations.redis import RedisIntegration
 
 from app.core.config import get_settings
 from app.utils.logger import get_logger
+from sentry_sdk import capture_exception, capture_message
+from sentry_sdk import init as sentry_init
+from sentry_sdk import set_tag
+from sentry_sdk.integrations.celery import CeleryIntegration
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.redis import RedisIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
 logger = get_logger(__name__)
 

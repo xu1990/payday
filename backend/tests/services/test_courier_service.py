@@ -2,17 +2,10 @@
 单元测试 - 物流公司服务 (app.services.courier_service)
 """
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.services.courier_service import (
-    create_courier,
-    get_courier,
-    list_couriers,
-    get_courier_by_code,
-    update_courier,
-    delete_courier,
-)
 from app.core.exceptions import NotFoundException, ValidationException
+from app.services.courier_service import (create_courier, delete_courier, get_courier,
+                                          get_courier_by_code, list_couriers, update_courier)
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

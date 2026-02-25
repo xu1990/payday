@@ -77,7 +77,7 @@ const handleImageRequest = async (options: UploadRequestOptions) => {
   }
 }
 
-const beforeImageUpload: UploadProps['beforeUpload'] = (rawFile) => {
+const beforeImageUpload: UploadProps['beforeUpload'] = rawFile => {
   if (!rawFile.type.startsWith('image/')) {
     ElMessage.error('只能上传图片文件')
     return false
@@ -111,17 +111,22 @@ onMounted(loadData)
             <el-button type="primary" :loading="uploading">选择图片</el-button>
           </el-upload>
           <div v-if="imageUrl" class="image-preview">
-            <el-image :src="imageUrl" fit="contain" style="width: 200px; height: 300px;" />
+            <el-image :src="imageUrl" fit="contain" style="width: 200px; height: 300px" />
           </div>
         </el-form-item>
 
         <el-form-item label="欢迎文字">
-          <el-input v-model="form.content" placeholder="请输入欢迎文字" maxlength="50" show-word-limit />
+          <el-input
+            v-model="form.content"
+            placeholder="请输入欢迎文字"
+            maxlength="50"
+            show-word-limit
+          />
         </el-form-item>
 
         <el-form-item label="倒计时时长">
           <el-input-number v-model="form.countdown" :min="1" :max="10" controls-position="right" />
-          <span style="margin-left: 8px; color: #999;">秒</span>
+          <span style="margin-left: 8px; color: #999">秒</span>
         </el-form-item>
 
         <el-form-item label="启用状态">

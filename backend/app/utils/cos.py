@@ -5,9 +5,9 @@ import uuid
 from datetime import timedelta
 from typing import Optional
 
-from qcloud_cos import CosConfig, CosS3Client
 from app.core.config import settings
 from app.utils.logger import get_logger
+from qcloud_cos import CosConfig, CosS3Client
 
 logger = get_logger(__name__)
 

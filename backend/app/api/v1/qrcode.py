@@ -4,20 +4,16 @@
 import base64
 import io
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Query, Body, Depends
-from fastapi.responses import Response
-from pydantic import BaseModel, Field
-
-from app.core.exceptions import success_response, NotFoundException
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.exceptions import NotFoundException, success_response
+from app.services.qrcode_mapping_service import create_qrcode_mapping, get_qrcode_mapping
 from app.utils.wechat import get_unlimited_qrcode
-from app.services.qrcode_mapping_service import (
-    create_qrcode_mapping,
-    get_qrcode_mapping
-)
+from fastapi import APIRouter, Body, Depends, Query
+from fastapi.responses import Response
+from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/qrcode", tags=["qrcode"])
 
@@ -363,8 +359,9 @@ async def create_qrcode_with_mapping(
     except Exception as e:
         # 微信API失败（开发环境页面不存在），降级为普通二维码
         logger.warning(f"WeChat QR code API failed, falling back to regular QR code: {e}")
-        import qrcode
         import io
+
+        import qrcode
 
         try:
             # 生成包含短码查询URL的普通二维码

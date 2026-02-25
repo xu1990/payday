@@ -14,16 +14,16 @@ VirtualProduct Service 测试 - 虚拟商品自动发货服务
 10. 并发发货码生成
 11. 错误处理
 """
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from decimal import Decimal
 from datetime import datetime, timedelta
-from sqlalchemy.exc import IntegrityError
+from decimal import Decimal
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.services.virtual_product_service import VirtualProductService
+import pytest
+from app.core.exceptions import BusinessException, NotFoundException, ValidationException
 from app.models.order import Order, OrderItem
 from app.models.product import Product, ProductSKU
-from app.core.exceptions import NotFoundException, BusinessException, ValidationException
+from app.services.virtual_product_service import VirtualProductService
+from sqlalchemy.exc import IntegrityError
 
 
 def create_mock_redis():

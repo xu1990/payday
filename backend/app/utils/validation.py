@@ -2,8 +2,8 @@
 输入验证工具 - 防止无效数据进入系统
 """
 import re
-from uuid import UUID
 from typing import Optional
+from uuid import UUID
 
 from app.core.exceptions import ValidationException
 

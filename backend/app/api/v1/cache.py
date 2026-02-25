@@ -1,14 +1,12 @@
 """
 缓存管理 API - 用于缓存预热和管理
 """
-from fastapi import APIRouter, Depends
-
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.api.v1.schemas.cache import PreheatResponse
-from app.core.deps import get_db, get_current_admin_user
+from app.core.deps import get_current_admin_user, get_db
 from app.services.cache_preheat import preheat_all
 from app.utils.logger import get_logger
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = get_logger(__name__)
 

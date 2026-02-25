@@ -33,35 +33,35 @@ export function usePagination<T>(
 
   // 设置分页
   const setPagination = (newPage: number) => {
-    state.page = newPage
-    state.pageSize = state.pageSize
+    state.value.page = newPage
+    state.value.pageSize = state.value.pageSize
   }
 
   // 下一页
   const nextPage = () => {
-    if (state.page * state.pageSize >= state.total) {
+    if (state.value.page * state.value.pageSize >= state.value.total) {
       return // 已是最后一页
     }
-    state.page++
+    state.value.page++
   }
 
   // 上一页
   const prevPage = () => {
-    if (state.page <= 1) {
+    if (state.value.page <= 1) {
       return // 已是第一页
     }
-    state.page--
+    state.value.page--
   }
 
   // 重置分页
   const reset = () => {
-    state.page = 1
+    state.value.page = 1
   }
 
   return {
-    page: state.page,
-    pageSize: state.pageSize,
-    total: state.total,
+    page: state.value.page,
+    pageSize: state.value.pageSize,
+    total: state.value.total,
     setPagination,
     nextPage,
     prevPage,

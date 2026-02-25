@@ -1,6 +1,7 @@
 """积分商品模型 - Sprint 4.7 商品兑换系统"""
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Text, Boolean, DateTime, ForeignKey
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 
 from .base import Base
 from .user import gen_uuid
@@ -30,6 +31,31 @@ class PointProduct(Base):
     has_sku = Column(Boolean, default=False,
                      nullable=False, comment="是否启用SKU管理")
     sort_order = Column(Integer, default=0, nullable=False, comment="排序权重（越大越靠前）")
+
+    # 商品类型
+    product_type = Column(
+        String(20),
+        default="physical",
+        nullable=False,
+        comment="商品类型: virtual=虚拟商品, physical=实物商品, bundle=套餐商品"
+    )
+
+    # 物流方式
+    shipping_method = Column(
+        String(20),
+        default="express",
+        nullable=False,
+        comment="物流方式: express=快递 delivery, self_pickup=自提, no_shipping=无需快递"
+    )
+
+    # 运费模板
+    shipping_template_id = Column(
+        String(36),
+        ForeignKey("shipping_templates.id"),
+        nullable=True,
+        index=True,
+        comment="运费模板ID"
+    )
 
     # 状态
     is_active = Column(Boolean, default=True, nullable=False, comment="是否上架")

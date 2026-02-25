@@ -24,7 +24,6 @@ Admin Config API 端点测试
 """
 import pytest
 
-
 # ==================== 主题管理 ====================
 
 class TestThemeListEndpoint:

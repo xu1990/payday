@@ -1,7 +1,6 @@
 """关注相关 schema - 列表项复用 UserResponse"""
-from pydantic import BaseModel
-
 from app.schemas.user import UserResponse
+from pydantic import BaseModel
 
 
 class FollowActionResponse(BaseModel):

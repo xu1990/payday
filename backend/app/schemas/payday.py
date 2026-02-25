@@ -4,9 +4,8 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
-
 from app.models.payday import PaydayConfig
+from pydantic import BaseModel, Field
 
 
 class PaydayConfigBase(BaseModel):

@@ -53,7 +53,6 @@ function reportMetric(metric: VitalMetric) {
     //   level: metric.rating === 'poor' ? 'warning' : 'info',
     //   extra: metric,
     // })
-
     // 或发送到自己的统计端点
     // fetch('/api/v1/analytics/performance', {
     //   method: 'POST',
@@ -77,7 +76,7 @@ export function initPerformanceMonitoring() {
   isInitialized = true
 
   // LCP (Largest Contentful Paint)
-  onLCP((metric) => {
+  onLCP(metric => {
     reportMetric({
       name: 'LCP',
       value: metric.value,
@@ -87,7 +86,7 @@ export function initPerformanceMonitoring() {
   })
 
   // FID (First Input Delay)
-  onFID((metric) => {
+  onFID(metric => {
     reportMetric({
       name: 'FID',
       value: metric.value,
@@ -97,7 +96,7 @@ export function initPerformanceMonitoring() {
   })
 
   // CLS (Cumulative Layout Shift)
-  onCLS((metric) => {
+  onCLS(metric => {
     reportMetric({
       name: 'CLS',
       value: metric.value,
@@ -107,7 +106,7 @@ export function initPerformanceMonitoring() {
   })
 
   // FCP (First Contentful Paint) - 额外的有用的指标
-  onFCP((metric) => {
+  onFCP(metric => {
     reportMetric({
       name: 'FCP',
       value: metric.value,
@@ -136,10 +135,7 @@ export function reportCustomTiming(name: string, duration: number) {
  * 测量异步操作性能
  * 包装异步函数并自动报告其执行时间
  */
-export function measurePerformance<T extends (...args: any[]) => any>(
-  name: string,
-  fn: T
-): T {
+export function measurePerformance<T extends (...args: any[]) => any>(name: string, fn: T): T {
   return (...args: Parameters<T>) => {
     const start = performance.now()
 

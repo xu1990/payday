@@ -2,7 +2,7 @@
 Test phone number encryption and masking utilities
 """
 import pytest
-from app.utils.encryption import encrypt_amount, decrypt_amount
+from app.utils.encryption import decrypt_amount, encrypt_amount
 
 
 def test_encrypt_phone_number():

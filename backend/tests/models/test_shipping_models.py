@@ -1,12 +1,13 @@
 """
 Tests for OrderShipment and OrderReturn models
 """
-import pytest
 from datetime import datetime
-from sqlalchemy import select, func
-from app.models.shipping import OrderShipment, OrderReturn
-from app.models.user import User
+
+import pytest
 from app.models.order import Order, OrderItem
+from app.models.shipping import OrderReturn, OrderShipment
+from app.models.user import User
+from sqlalchemy import func, select
 
 
 @pytest.mark.asyncio

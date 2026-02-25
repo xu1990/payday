@@ -191,7 +191,7 @@ class TestCartResponse:
 
     def test_cart_with_items(self):
         """测试带商品的购物车"""
-        from app.schemas.cart import CartResponse, CartItemResponse, ProductBasicInfo, SKUBasicInfo
+        from app.schemas.cart import CartItemResponse, CartResponse, ProductBasicInfo, SKUBasicInfo
 
         product = ProductBasicInfo(
             id="product_123",

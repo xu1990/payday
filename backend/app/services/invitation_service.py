@@ -1,14 +1,14 @@
 """邀请服务 - Sprint 4.7 邀请系统"""
 from typing import Optional, Tuple
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import BusinessException, ValidationException
+from app.models.ability_points import AbilityPointTransaction
 from app.models.user import User
 from app.models.user_invitation import UserInvitation
-from app.models.ability_points import AbilityPointTransaction
-from app.utils.invite_code import get_or_create_invite_code, validate_invite_code
 from app.services.ability_points_service import add_points
-from app.core.exceptions import BusinessException, ValidationException
+from app.utils.invite_code import get_or_create_invite_code, validate_invite_code
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # 常量配置
 INVITER_REWARD_POINTS = 30  # 邀请者奖励积分

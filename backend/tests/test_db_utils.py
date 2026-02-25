@@ -1,11 +1,11 @@
 """
 单元测试 - 数据库事务管理工具 (app.core.db_utils)
 """
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-from sqlalchemy.ext.asyncio import AsyncSession
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.core.db_utils import transaction, commit_or_rollback, TransactionalMixin
+import pytest
+from app.core.db_utils import TransactionalMixin, commit_or_rollback, transaction
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TestTransaction:

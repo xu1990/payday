@@ -6,6 +6,7 @@ IMPORTANT: This file runs before any test imports to set up mocks
 import sys
 from datetime import datetime
 from unittest.mock import MagicMock, Mock
+
 import pytest
 
 # Store the original modules before mocking
@@ -71,11 +72,12 @@ def client(db_session):
     这是解决 TestClient async/await 问题的关键 fixture
     它将测试数据库会话注入到 FastAPI 的依赖注入系统中
     """
-    from fastapi.testclient import TestClient
-    from app.main import app
-    from app.core.database import get_db
-    from app.core import cache as cache_module
     from unittest.mock import AsyncMock, MagicMock, patch
+
+    from app.core import cache as cache_module
+    from app.core.database import get_db
+    from app.main import app
+    from fastapi.testclient import TestClient
 
     # 保存原始 Redis 客户端
     original_redis = cache_module.redis_client

@@ -2,19 +2,10 @@
 单元测试 - 自定义异常 (app.core.exceptions)
 """
 import pytest
+from app.core.exceptions import (AuthenticationException, AuthorizationException, BusinessException,
+                                 ExternalServiceException, NotFoundException, PayDayException,
+                                 RateLimitException, ValidationException, error_response)
 from fastapi import status
-
-from app.core.exceptions import (
-    PayDayException,
-    AuthenticationException,
-    AuthorizationException,
-    NotFoundException,
-    ValidationException,
-    RateLimitException,
-    ExternalServiceException,
-    BusinessException,
-    error_response,
-)
 
 
 class TestAuthorizationException:

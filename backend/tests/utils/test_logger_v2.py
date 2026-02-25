@@ -1,24 +1,17 @@
 """
 单元测试 - 结构化日志工具 (app.utils.logger_v2)
 """
-import pytest
-import logging
 import json
+import logging
+import os
+import tempfile
 import threading
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-import tempfile
-import os
 
-from app.utils.logger_v2 import (
-    StructuredLogger,
-    set_log_context,
-    clear_log_context,
-    get_logger,
-    setup_json_handler,
-    configure_logging,
-    _log_context,
-)
+import pytest
+from app.utils.logger_v2 import (StructuredLogger, _log_context, clear_log_context,
+                                 configure_logging, get_logger, set_log_context, setup_json_handler)
 
 
 class TestStructuredLogger:

@@ -6,8 +6,9 @@
 - POST /api/v1/auth/refresh - 刷新access token
 - POST /api/v1/auth/logout - 登出（撤销refresh token）
 """
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock, Mock
 
 
 class MockPipeline:

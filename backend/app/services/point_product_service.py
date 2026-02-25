@@ -1,16 +1,15 @@
 """积分商品服务 - Sprint 4.7 商品兑换系统"""
+import json
 from datetime import datetime
 from typing import List, Optional
-from sqlalchemy import select, and_
-from sqlalchemy.ext.asyncio import AsyncSession
-import json
 
-from app.models.point_product import PointProduct
+from app.core.exceptions import BusinessException, NotFoundException, ValidationException
 from app.models.point_order import PointOrder
-from app.services.ability_points_service import spend_points, add_points
-from app.core.exceptions import NotFoundException, BusinessException, ValidationException
+from app.models.point_product import PointProduct
+from app.services.ability_points_service import add_points, spend_points
 from app.utils.order_number import generate_order_number, is_order_number_exists
-
+from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # ============== 商品管理（管理员） ==============
 
@@ -138,6 +137,7 @@ async def create_order(
     product_id: str,
     delivery_info: Optional[str] = None,
     notes: Optional[str] = None,
+    address_id: Optional[str] = None,
 ) -> PointOrder:
     """
     创建订单（用户下单）
@@ -213,6 +213,7 @@ async def create_order(
         points_cost=product.points_cost,
         delivery_info=delivery_info,
         notes=notes,
+        address_id=address_id,
         status="pending",
     )
     db.add(order)

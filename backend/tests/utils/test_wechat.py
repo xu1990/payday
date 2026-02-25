@@ -1,9 +1,9 @@
 """
 单元测试 - 微信小程序工具 (app.utils.wechat)
 """
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from app.utils.wechat import code2session
 
 

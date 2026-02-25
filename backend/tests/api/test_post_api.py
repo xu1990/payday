@@ -2,9 +2,9 @@
 帖子 API 集成测试
 """
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.user import User
 from app.models.post import Post
+from app.models.user import User
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

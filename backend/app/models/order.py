@@ -3,7 +3,10 @@
 Unified order table for all product types (point, cash, hybrid)
 """
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Numeric, DateTime, ForeignKey, Enum as SQLEnum, JSON
+
+from sqlalchemy import JSON, Column, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Integer, Numeric, String
 
 from .base import Base
 from .user import gen_uuid

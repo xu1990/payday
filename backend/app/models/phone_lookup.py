@@ -4,7 +4,8 @@
 """
 import hashlib
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, Index, ForeignKey
+
+from sqlalchemy import Column, DateTime, ForeignKey, Index, String
 from sqlalchemy.orm import relationship
 
 from .base import Base

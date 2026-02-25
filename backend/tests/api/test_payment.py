@@ -13,9 +13,10 @@ infrastructure needs to be fixed to properly override database dependencies.
 The issue is that TestClient doesn't properly inject the test database session
 into the get_db() dependency, causing async middleware errors.
 """
-import pytest
 import asyncio
-from unittest.mock import AsyncMock, patch, Mock
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 
 @pytest.mark.asyncio
@@ -370,9 +371,10 @@ class TestWechatPaymentNotifyEndpoint:
         sign: str = None,
     ) -> str:
         """构造支付通知XML（用于测试）"""
-        from app.core.config import get_settings
-        from app.utils.wechat_pay import sign_md5, dict_to_xml
         from datetime import datetime
+
+        from app.core.config import get_settings
+        from app.utils.wechat_pay import dict_to_xml, sign_md5
 
         settings = get_settings()
 

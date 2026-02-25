@@ -19,7 +19,7 @@ export interface ApiErrorResponse {
 export interface ApiResponse<T = {
   data: T
   message?: string
-}
+}>
 
 /** 分页响应 */
 export interface PaginatedResponse<T> {

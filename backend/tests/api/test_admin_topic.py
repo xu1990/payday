@@ -1,10 +1,9 @@
 """话题管理API测试"""
 import pytest
-from fastapi import status
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.user import User
 from app.services.topic_service import create_topic
+from fastapi import status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

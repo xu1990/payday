@@ -4,11 +4,10 @@
 from datetime import date, datetime, timedelta
 from typing import List, Optional, Tuple
 
-from sqlalchemy import select, func, desc
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.checkin import CheckIn
 from app.models.user import User
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_user_checkin_streak(db: AsyncSession, user_id: str) -> int:

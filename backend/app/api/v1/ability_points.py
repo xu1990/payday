@@ -1,30 +1,18 @@
 """Ability Points API - 能力值系统接口（Sprint 4.6）"""
+from app.core.database import get_db
+from app.core.deps import get_current_admin, get_current_user
+from app.core.exceptions import success_response
+from app.models.admin import AdminUser
+from app.models.user import User
+from app.schemas.ability_points import (AbilityPointResponse, AbilityPointTransactionResponse,
+                                        AdminRedemptionListResponse, PointRedemptionCreate,
+                                        PointRedemptionResponse, PointRedemptionUpdate)
+from app.services.ability_points_service import (POINT_EVENTS, create_redemption,
+                                                 get_all_redemptions, get_or_create_user_points,
+                                                 get_user_redemptions, get_user_transactions,
+                                                 trigger_event, update_redemption_status)
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.database import get_db
-from app.core.deps import get_current_user, get_current_admin
-from app.core.exceptions import success_response
-from app.models.user import User
-from app.models.admin import AdminUser
-from app.schemas.ability_points import (
-    AbilityPointResponse,
-    AbilityPointTransactionResponse,
-    PointRedemptionCreate,
-    PointRedemptionResponse,
-    PointRedemptionUpdate,
-    AdminRedemptionListResponse,
-)
-from app.services.ability_points_service import (
-    get_or_create_user_points,
-    get_user_transactions,
-    create_redemption,
-    get_user_redemptions,
-    get_all_redemptions,
-    update_redemption_status,
-    trigger_event,
-    POINT_EVENTS,
-)
 
 router = APIRouter(prefix="/ability-points", tags=["ability-points"])
 

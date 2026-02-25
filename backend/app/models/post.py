@@ -2,7 +2,8 @@
 帖子表 - 与迭代规划 2.2 数据模型一致，技术方案 2.2.1 分表策略（当前先单表，后续可按 created_at 按月分表）
 """
 from datetime import datetime
-from sqlalchemy import Column, String, Text, Integer, DateTime, Enum, ForeignKey, JSON, func
+
+from sqlalchemy import JSON, Column, DateTime, Enum, ForeignKey, Integer, String, Text, func
 
 from .base import Base
 from .user import gen_uuid

@@ -1,6 +1,7 @@
 """用户邀请关系表 - Sprint 4.7 邀请系统"""
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, ForeignKey, Index
+
+from sqlalchemy import Column, DateTime, ForeignKey, Index, String
 
 from .base import Base
 from .user import gen_uuid

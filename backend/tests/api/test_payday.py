@@ -1,10 +1,9 @@
 """发薪日配置API测试"""
 import pytest
-from fastapi import status
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.user import User
 from app.services.payday_service import create as create_config
+from fastapi import status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

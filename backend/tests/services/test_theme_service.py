@@ -1,10 +1,10 @@
 """主题服务测试"""
-import pytest
 from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services import theme_service
+import pytest
 from app.models.theme import Theme, UserSetting
+from app.services import theme_service
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 

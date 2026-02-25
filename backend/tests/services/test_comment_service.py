@@ -1,10 +1,10 @@
 """评论服务集成测试"""
-import pytest
 from unittest.mock import AsyncMock, patch
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services import comment_service
+import pytest
 from app.core.exceptions import NotFoundException
+from app.services import comment_service
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 

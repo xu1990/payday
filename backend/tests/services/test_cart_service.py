@@ -12,17 +12,12 @@ Shopping Cart Service 测试 - 购物车服务
 8. 错误处理
 9. 计算 totals（金额、积分、数量）
 """
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 import json
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+from app.schemas.cart import CartItemResponse, CartResponse, ProductBasicInfo, SKUBasicInfo
 from app.services.cart_service import CartService
-from app.schemas.cart import (
-    CartResponse,
-    CartItemResponse,
-    ProductBasicInfo,
-    SKUBasicInfo
-)
 
 
 def create_mock_redis():
@@ -209,7 +204,7 @@ class TestAddItem:
         mock_db = create_mock_db()
 
         # Mock SKU - Use a simple object, not MagicMock for nested fields
-        from app.models.product import ProductSKU, Product
+        from app.models.product import Product, ProductSKU
 
         class MockSKU:
             id = "sku_123"
@@ -475,7 +470,7 @@ class TestAddItem:
         mock_db = create_mock_db()
 
         # Mock SKU - Use a simple object, not MagicMock for nested fields
-        from app.models.product import ProductSKU, Product
+        from app.models.product import Product, ProductSKU
 
         class MockSKU:
             id = "sku_123"

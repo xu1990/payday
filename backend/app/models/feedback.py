@@ -2,7 +2,8 @@
 用户反馈表
 """
 from datetime import datetime
-from sqlalchemy import Column, String, Text, DateTime
+
+from sqlalchemy import Column, DateTime, String, Text
 from sqlalchemy.dialects.mysql import JSON
 
 from .base import Base

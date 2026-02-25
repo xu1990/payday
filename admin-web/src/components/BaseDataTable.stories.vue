@@ -51,7 +51,7 @@ const mockColumns = [
 ]
 
 const Template: StoryObj<Args> = {
-  render: (args) => ({
+  render: args => ({
     setup() {
       const data = ref(args.data || mockData)
       const columns = ref(args.columns || mockColumns)

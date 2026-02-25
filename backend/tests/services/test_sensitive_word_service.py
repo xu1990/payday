@@ -1,19 +1,13 @@
 """敏感词服务测试"""
-import pytest
 import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.sensitive_word_service import (
-    list_words,
-    get_word_by_id,
-    create_word,
-    update_word,
-    delete_word,
-    get_active_words_dict,
-    get_all_active_words_list,
-)
+import pytest
+from app.core.exceptions import BusinessException, NotFoundException
 from app.models.sensitive_word import SensitiveWord
-from app.core.exceptions import NotFoundException, BusinessException
+from app.services.sensitive_word_service import (create_word, delete_word, get_active_words_dict,
+                                                 get_all_active_words_list, get_word_by_id,
+                                                 list_words, update_word)
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TestListWords:

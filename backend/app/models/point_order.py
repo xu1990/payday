@@ -1,6 +1,7 @@
 """积分订单模型 - Sprint 4.7 商品兑换系统"""
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text, Enum
+
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String, Text
 
 from .base import Base
 from .user import gen_uuid

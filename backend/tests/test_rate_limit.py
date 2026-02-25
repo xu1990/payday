@@ -1,20 +1,14 @@
 """
 单元测试 - 速率限制模块 (app.core.rate_limit)
 """
-import pytest
 import time
-from unittest.mock import patch, AsyncMock, MagicMock
-from fastapi import Request
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.core.rate_limit import (
-    RateLimiter,
-    get_client_identifier,
-    RATE_LIMIT_GENERAL,
-    RATE_LIMIT_LOGIN,
-    RATE_LIMIT_POST,
-    RATE_LIMIT_COMMENT,
-)
+import pytest
 from app.core.exceptions import RateLimitException
+from app.core.rate_limit import (RATE_LIMIT_COMMENT, RATE_LIMIT_GENERAL, RATE_LIMIT_LOGIN,
+                                 RATE_LIMIT_POST, RateLimiter, get_client_identifier)
+from fastapi import Request
 
 
 class TestRateLimiter:

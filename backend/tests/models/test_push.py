@@ -1,11 +1,11 @@
 """
 单元测试 - 推送通知模型 (app.models.push)
 """
-import pytest
 from datetime import datetime
-from sqlalchemy import select
 
+import pytest
 from app.models.push import PushNotification
+from sqlalchemy import select
 
 
 class TestPushNotification:

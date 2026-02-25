@@ -1,24 +1,16 @@
 """
 单元测试 - 依赖注入模块 (app.core.deps)
 """
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import patch, AsyncMock, MagicMock
+from app.core.deps import (get_current_admin, get_current_user, rate_limit_comment,
+                           rate_limit_general, rate_limit_login, rate_limit_post,
+                           require_permission, verify_csrf_token, verify_request_signature)
+from app.models.admin import AdminUser
+from app.models.user import User
 from fastapi import HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials
-
-from app.core.deps import (
-    get_current_user,
-    get_current_admin,
-    require_permission,
-    verify_csrf_token,
-    verify_request_signature,
-    rate_limit_general,
-    rate_limit_login,
-    rate_limit_post,
-    rate_limit_comment,
-)
-from app.models.user import User
-from app.models.admin import AdminUser
 
 
 class TestGetCurrentUser:

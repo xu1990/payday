@@ -13,14 +13,14 @@ const saving = ref(false)
 
 // 计算属性：当前活动标签的内容
 const currentContent = computed({
-  get: () => activeTab.value === 'user' ? userContent.value : privacyContent.value,
+  get: () => (activeTab.value === 'user' ? userContent.value : privacyContent.value),
   set: (value: string) => {
     if (activeTab.value === 'user') {
       userContent.value = value
     } else {
       privacyContent.value = value
     }
-  }
+  },
 })
 
 async function loadData() {
@@ -70,18 +70,18 @@ onMounted(loadData)
     <div v-loading="loading" class="editor-container">
       <QuillEditor
         v-model:content="currentContent"
-        contentType="html"
+        content-type="html"
         theme="snow"
         :toolbar="[
           ['bold', 'italic', 'underline', 'strike'],
           ['blockquote', 'code-block'],
-          [{ 'header': 1 }, { 'header': 2 }],
-          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-          [{ 'indent': '-1'}, { 'indent': '+1' }],
+          [{ header: 1 }, { header: 2 }],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          [{ indent: '-1' }, { indent: '+1' }],
           ['link'],
-          ['clean']
+          ['clean'],
         ]"
-        style="height: 400px; margin-bottom: 60px;"
+        style="height: 400px; margin-bottom: 60px"
       />
 
       <div class="actions">
@@ -119,6 +119,6 @@ onMounted(loadData)
   background: #fff;
   padding: 16px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 </style>

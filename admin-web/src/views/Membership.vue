@@ -211,7 +211,12 @@ onMounted(() => {
     >
       <el-form :model="form" label-width="100px">
         <el-form-item label="套餐名称" required>
-          <el-input v-model="form.name" placeholder="请输入套餐名称" maxlength="50" show-word-limit />
+          <el-input
+            v-model="form.name"
+            placeholder="请输入套餐名称"
+            maxlength="50"
+            show-word-limit
+          />
         </el-form-item>
         <el-form-item label="权益说明">
           <el-input

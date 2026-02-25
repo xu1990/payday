@@ -1,18 +1,13 @@
 """薪资使用记录服务集成测试"""
-import pytest
 from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.salary_usage_service import (
-    create_salary_usage,
-    get_salary_usage,
-    update_salary_usage,
-    delete_salary_usage,
-    list_salary_usages,
-    get_usage_statistics_by_type,
-)
+import pytest
+from app.core.exceptions import AuthorizationException, NotFoundException
 from app.schemas.salary_usage import SalaryUsageCreate, SalaryUsageUpdate
-from app.core.exceptions import NotFoundException, AuthorizationException
+from app.services.salary_usage_service import (create_salary_usage, delete_salary_usage,
+                                               get_salary_usage, get_usage_statistics_by_type,
+                                               list_salary_usages, update_salary_usage)
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 
@@ -64,6 +59,7 @@ class TestCreateSalaryUsage:
 
         # 验证可以解密
         from app.utils.encryption import decrypt_amount
+
         # 注意：当前模型只存储加密金额，没有存储salt
         # 这个测试可能会失败，需要在后续修复模型
         # decrypted = decrypt_amount(usage.amount, salt)

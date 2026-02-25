@@ -2,6 +2,7 @@
 会员请求/响应模型 - Sprint 3.5
 """
 from typing import Optional
+
 from pydantic import BaseModel, Field
 
 

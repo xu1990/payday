@@ -1,12 +1,11 @@
 """用户API测试"""
 import pytest
-from fastapi import status
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.user import User
-from app.models.post import Post
 from app.models.checkin import CheckIn
 from app.models.follow import Follow
+from app.models.post import Post
+from app.models.user import User
+from fastapi import status
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 

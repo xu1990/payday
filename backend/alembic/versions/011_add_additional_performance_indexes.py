@@ -5,9 +5,8 @@ Revises: 010_add_membership_and_checkin_tables
 Create Date: 2026-02-12
 
 """
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '011_add_additional_performance_indexes'

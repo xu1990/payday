@@ -1,14 +1,13 @@
 """
 敏感词服务 - 管理敏感词的增删改查
 """
-from typing import List, Optional
 import uuid
+from typing import List, Optional
 
-from sqlalchemy import select, or_
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.core.exceptions import BusinessException, NotFoundException
 from app.models.sensitive_word import SensitiveWord
-from app.core.exceptions import NotFoundException, BusinessException
+from sqlalchemy import or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def list_words(

@@ -5,6 +5,11 @@ import request from '@/utils/request'
 
 const PREFIX = '/api/v1/point-shop'
 
+// ==================== 类型定义 ====================
+export type ProductType = 'virtual' | 'physical' | 'bundle'
+export type ShippingMethod = 'express' | 'self_pickup' | 'no_shipping'
+export type OrderStatus = 'pending' | 'completed' | 'cancelled' | 'refunded'
+
 // ==================== 商品 ====================
 
 /** 商品项 */
@@ -13,10 +18,16 @@ export interface PointProduct {
   name: string
   description: string | null
   image_url: string | null
+  image_urls?: string[]
   points_cost: number
   stock: number
   stock_unlimited: boolean
   category: string | null
+  category_id?: string
+  has_sku?: boolean
+  product_type: ProductType
+  shipping_method: ShippingMethod
+  shipping_template_id?: string | null
 }
 
 /** 商品列表响应 */
@@ -42,11 +53,121 @@ export function getPointProduct(productId: string) {
   })
 }
 
+// ==================== 地址 ====================
+
+/** 用户地址 */
+export interface UserAddress {
+  id: string
+  user_id: string
+  province_code: string
+  province_name: string
+  city_code: string
+  city_name: string
+  district_code: string
+  district_name: string
+  detailed_address: string
+  postal_code?: string
+  contact_name: string
+  contact_phone: string
+  is_default: boolean
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+/** 地址列表响应 */
+export interface UserAddressesResponse {
+  items: UserAddress[]
+  total: number
+}
+
+/** 创建地址请求 */
+export interface AddressCreate {
+  province_code: string
+  province_name: string
+  city_code: string
+  city_name: string
+  district_code: string
+  district_name: string
+  detailed_address: string
+  postal_code?: string
+  contact_name: string
+  contact_phone: string
+  is_default?: boolean
+}
+
+/** 更新地址请求 */
+export interface AddressUpdate {
+  province_code?: string
+  province_name?: string
+  city_code?: string
+  city_name?: string
+  district_code?: string
+  district_name?: string
+  detailed_address?: string
+  postal_code?: string
+  contact_name?: string
+  contact_phone?: string
+  is_default?: boolean
+}
+
+/** 获取我的地址列表 */
+export function getMyAddresses(activeOnly = true) {
+  return request<UserAddressesResponse>({
+    url: `/api/v1/user-addresses?active_only=${activeOnly}`,
+    method: 'GET',
+  })
+}
+
+/** 获取地址详情 */
+export function getAddress(addressId: string) {
+  return request<UserAddress>({
+    url: `/api/v1/user-addresses/${addressId}`,
+    method: 'GET',
+  })
+}
+
+/** 创建地址 */
+export function createAddress(data: AddressCreate) {
+  return request<UserAddress>({
+    url: '/api/v1/user-addresses',
+    method: 'POST',
+    data,
+  })
+}
+
+/** 更新地址 */
+export function updateAddress(addressId: string, data: AddressUpdate) {
+  return request<UserAddress>({
+    url: `/api/v1/user-addresses/${addressId}`,
+    method: 'PUT',
+    data,
+  })
+}
+
+/** 删除地址 */
+export function deleteAddress(addressId: string) {
+  return request({
+    url: `/api/v1/user-addresses/${addressId}`,
+    method: 'DELETE',
+  })
+}
+
+/** 设置默认地址 */
+export function setDefaultAddress(addressId: string) {
+  return request({
+    url: `/api/v1/user-addresses/${addressId}/set-default`,
+    method: 'POST',
+  })
+}
+
 // ==================== 订单 ====================
 
 /** 订单创建请求 */
 export interface PointOrderCreate {
   product_id: string
+  sku_id?: string
+  address_id?: string
   delivery_info?: string
   notes?: string
 }
@@ -58,8 +179,10 @@ export interface PointOrder {
   product_name: string
   product_image: string | null
   points_cost: number
-  status: 'pending' | 'completed' | 'cancelled' | 'refunded'
+  status: OrderStatus
   created_at: string
+  address_id?: string
+  shipment_id?: string
 }
 
 /** 订单列表响应 */
@@ -91,6 +214,8 @@ export function getMyPointOrders(status?: string, limit = 50, offset = 0) {
 export interface PointOrderDetail extends PointOrder {
   delivery_info?: string
   notes?: string
+  notes_admin?: string
+  processed_at?: string
 }
 
 /** 获取订单详情 */
@@ -102,9 +227,10 @@ export function getPointOrderDetail(orderId: string) {
 }
 
 /** 取消订单 */
-export function cancelPointOrder(orderId: string) {
+export function cancelPointOrder(orderId: string, reason?: string) {
   return request({
     url: `${PREFIX}/orders/${orderId}/cancel`,
     method: 'POST',
+    data: reason ? { reason } : undefined,
   })
 }

@@ -4,7 +4,7 @@
 """
 import hashlib
 import hmac
-from typing import Dict, Any
+from typing import Any, Dict
 
 from app.core.config import get_settings
 from app.core.exceptions import ValidationException

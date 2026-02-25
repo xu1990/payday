@@ -10,29 +10,21 @@
 6. Celery 任务集成
 """
 import os
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import patch, AsyncMock, MagicMock
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Set required environment variables before importing app modules
 os.environ.setdefault('JWT_SECRET_KEY', 'test_secret_key_for_jwt_must_be_at_least_32_bytes_long')
 os.environ.setdefault('ENCRYPTION_SECRET_KEY', 'test_encryption_secret_key_32_bytes_url_safe')
 
-from app.services.risk_service import (
-    RiskResult,
-    evaluate_content,
-    _text_contact_score,
-    _text_sensitive_score_from_db,
-    _image_score,
-)
-from app.tasks.risk_check import (
-    run_risk_check_for_post,
-    run_risk_check_for_comment,
-    _async_risk_check,
-    _async_risk_check_comment,
-)
-from app.models.post import Post
 from app.models.comment import Comment
+from app.models.post import Post
+from app.services.risk_service import (RiskResult, _image_score, _text_contact_score,
+                                       _text_sensitive_score_from_db, evaluate_content)
+from app.tasks.risk_check import (_async_risk_check, _async_risk_check_comment,
+                                  run_risk_check_for_comment, run_risk_check_for_post)
 from tests.test_utils import TestDataFactory
 
 

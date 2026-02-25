@@ -1,9 +1,8 @@
 """分享API测试"""
 import pytest
-from fastapi import status
-
-from app.models.user import User
 from app.models.share import Share
+from app.models.user import User
+from fastapi import status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

@@ -3,16 +3,17 @@
 """
 from typing import Literal, Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.database import get_db
-from app.core.exceptions import NotFoundException, AuthenticationException, BusinessException, success_response
 from app.core.deps import get_current_user, get_current_user_optional, rate_limit_post
+from app.core.exceptions import (AuthenticationException, BusinessException, NotFoundException,
+                                 success_response)
 from app.models.user import User
 from app.schemas.post import PostCreate, PostResponse
-from app.services.post_service import create as create_post, get_by_id, list_posts, search_posts
+from app.services.post_service import create as create_post
+from app.services.post_service import get_by_id, list_posts, search_posts
 from app.tasks.risk_check import run_risk_check_for_post
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 

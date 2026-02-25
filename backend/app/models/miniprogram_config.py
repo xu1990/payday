@@ -2,7 +2,8 @@
 小程序配置表 - 管理后台配置小程序基础设置
 """
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, Text, Boolean, Integer
+
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
 
 from .base import Base
 from .user import gen_uuid

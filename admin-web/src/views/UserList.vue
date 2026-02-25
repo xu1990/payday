@@ -1,11 +1,13 @@
 <template>
   <div>
-    <h2 class="page-title" id="page-title">用户管理</h2>
-    <SearchToolbar
-      v-model:keyword="keyword"
-      @search="onSearch"
-    >
-      <el-select v-model="statusFilter" placeholder="状态" clearable style="width: var(--input-width-md)">
+    <h2 id="page-title" class="page-title">用户管理</h2>
+    <SearchToolbar v-model:keyword="keyword" @search="onSearch">
+      <el-select
+        v-model="statusFilter"
+        placeholder="状态"
+        clearable
+        style="width: var(--input-width-md)"
+      >
         <el-option label="全部" value="" />
         <el-option label="正常" value="normal" />
         <el-option label="禁用" value="disabled" />
@@ -40,7 +42,9 @@
       </el-table-column>
       <el-table-column label="操作" width="100" fixed="right">
         <template #default="{ row }">
-          <el-button type="primary" link aria-label="查看用户详情" @click="goDetail(row.id)">详情</el-button>
+          <el-button type="primary" link aria-label="查看用户详情" @click="goDetail(row.id)"
+            >详情</el-button
+          >
         </template>
       </el-table-column>
     </BaseDataTable>
@@ -96,5 +100,8 @@ watch([page, pageSize], fetch)
 </script>
 
 <style scoped>
-.page-title { margin-bottom: 16px; font-size: 18px; }
+.page-title {
+  margin-bottom: 16px;
+  font-size: 18px;
+}
 </style>

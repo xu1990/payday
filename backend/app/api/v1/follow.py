@@ -1,30 +1,24 @@
 """
 关注接口 - 关注/取关、粉丝列表、关注列表；与技术方案 3.3.2 一致
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from typing import List
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
-from app.core.exceptions import NotFoundException, AuthorizationException, success_response
-from app.models.user import User
+from app.core.exceptions import AuthorizationException, NotFoundException, success_response
 from app.models.follow import Follow
+from app.models.user import User
 from app.schemas.follow import FollowActionResponse, FollowListResponse
-from app.schemas.user import UserResponse
 from app.schemas.post import PostResponse
-from app.services.follow_service import (
-    count_following_posts,
-    follow_user,
-    unfollow_user,
-    get_followers,
-    get_following,
-    is_following,
-    list_following_posts,
-)
+from app.schemas.user import UserResponse
+from app.services.follow_service import (count_following_posts, follow_user, get_followers,
+                                         get_following, is_following, list_following_posts,
+                                         unfollow_user)
 from app.services.user_service import get_user_by_id
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # User-scoped follow routes (follow/unfollow, followers, following lists)
 router = APIRouter(prefix="/user", tags=["follow"])

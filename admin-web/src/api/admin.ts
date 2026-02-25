@@ -42,9 +42,15 @@ const adminApi = axios.create({
 
 // 请求拦截器：添加token
 adminApi.interceptors.request.use(
-  (config) => {
+  config => {
     const authStore = useAuthStore()
-    console.log('[adminApi Request]', config.method?.toUpperCase(), config.url, 'token:', authStore.token ? `${authStore.token.substring(0, 20)}...` : 'MISSING')
+    console.log(
+      '[adminApi Request]',
+      config.method?.toUpperCase(),
+      config.url,
+      'token:',
+      authStore.token ? `${authStore.token.substring(0, 20)}...` : 'MISSING'
+    )
 
     // 添加 JWT token 到 Authorization header
     if (authStore.token) {
@@ -58,14 +64,14 @@ adminApi.interceptors.request.use(
 
     return config
   },
-  (error) => {
+  error => {
     return Promise.reject(error)
   }
 )
 
 // 响应拦截器：自动解包统一响应格式 + 处理401错误
 adminApi.interceptors.response.use(
-  (response) => {
+  response => {
     // 自动解包统一响应格式 {code, message, details}
     const data = response.data
     if (data && typeof data === 'object' && 'code' in data && 'details' in data) {
@@ -74,7 +80,7 @@ adminApi.interceptors.response.use(
     }
     return response
   },
-  async (error) => {
+  async error => {
     const authStore = useAuthStore()
     const originalRequest = error.config
 
@@ -98,7 +104,7 @@ adminApi.interceptors.response.use(
 
     // 如果正在刷新，将请求加入队列
     if (isRefreshing) {
-      return new Promise((resolve, reject) => {
+      return new Promise(resolve => {
         failedQueue.push((token: string) => {
           originalRequest.headers.Authorization = `Bearer ${token}`
           resolve(adminApi(originalRequest))
@@ -120,7 +126,7 @@ adminApi.interceptors.response.use(
         // SECURITY: 管理端不需要user_id进行token刷新
         // 后端可以从refresh token中解析admin信息
         const { data } = await adminApi.post('/admin/auth/refresh', {
-          refresh_token: refreshToken
+          refresh_token: refreshToken,
         })
 
         // 更新token
@@ -193,7 +199,7 @@ export interface AdminUserListItem {
   id: number
   openid: string
   anonymous_name: string
-  phone_number?: string | null  // Masked phone number (e.g., 138****8000)
+  phone_number?: string | null // Masked phone number (e.g., 138****8000)
   phone_verified: boolean
   status: string
   created_at: string
@@ -271,8 +277,8 @@ export async function getPost(postId: number): Promise<AdminPostListItem> {
 export async function updatePostStatus(
   postId: number,
   data: {
-    status?: string  // normal | hidden | deleted
-    risk_status?: string  // approved | rejected
+    status?: string // normal | hidden | deleted
+    risk_status?: string // approved | rejected
     risk_reason?: string
   }
 ): Promise<void> {
@@ -317,7 +323,7 @@ export async function getComments(params?: CommentListParams): Promise<{
 export async function updateCommentRisk(
   commentId: number,
   data: {
-    risk_status: string  // approved | rejected
+    risk_status: string // approved | rejected
     risk_reason?: string
   }
 ): Promise<void> {
@@ -343,9 +349,7 @@ export interface SalaryListParams {
   risk_status?: string
 }
 
-export async function getSalaryRecords(
-  params?: SalaryListParams
-): Promise<{
+export async function getSalaryRecords(params?: SalaryListParams): Promise<{
   items: AdminSalaryRecord[]
   total: number
 }> {
@@ -360,7 +364,7 @@ export async function deleteSalaryRecord(recordId: number): Promise<void> {
 export async function updateSalaryRecordRisk(
   recordId: number,
   data: {
-    risk_status: string  // approved | rejected
+    risk_status: string // approved | rejected
     risk_reason?: string
   }
 ): Promise<void> {

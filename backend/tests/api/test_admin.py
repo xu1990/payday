@@ -285,8 +285,8 @@ class TestAdminSalaryDeleteEndpoint:
     ):
         """测试管理员删除工资记录成功"""
         # 先创建一个工资记录
-        from tests.test_utils import TestDataFactory
         from app.models.payday import PaydayConfig
+        from tests.test_utils import TestDataFactory
 
         config = PaydayConfig(
             user_id=test_user.id,

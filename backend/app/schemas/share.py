@@ -1,8 +1,9 @@
 """
 分享请求/响应模型 - P1-2 分享功能
 """
-from typing import Optional, Literal, List
 from datetime import datetime
+from typing import List, Literal, Optional
+
 from pydantic import BaseModel, Field
 
 

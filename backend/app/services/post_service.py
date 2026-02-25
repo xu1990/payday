@@ -2,18 +2,17 @@
 帖子服务 - 发帖、列表（热门/最新）、详情；管理端列表/状态/删除；与技术方案 2.2、3.3.1 一致
 """
 import json
-from typing import List, Literal, Optional, Tuple
 from datetime import datetime
+from typing import List, Literal, Optional, Tuple
 
-from sqlalchemy import select, func
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.post import Post
-from app.schemas.post import PostCreate
 from app.core.cache import PostCacheService
 from app.core.exceptions import NotFoundException, ValidationException
+from app.models.post import Post
+from app.schemas.post import PostCreate
 from app.utils.sanitize import sanitize_html
+from sqlalchemy import func, select
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def create(
@@ -459,6 +458,7 @@ async def search_posts(
         # 更严格的输入清理：仅允许可打印字符，移除所有控制字符
         # 保留空格、标点符号、中文字符
         import re
+
         # 移除所有控制字符（0-31，除了空格32）和特殊SQL字符
         keyword = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', keyword)
         # 额外清理：移除可能的 SQL 注入模式
@@ -495,7 +495,7 @@ async def search_posts(
         # 使用验证后的标签列表进行JSON包含查询
         # SECURITY: 使用参数化查询防止SQL注入，使用固定参数名避免动态参数名问题
         if valid_tags:
-            from sqlalchemy import or_, text, bindparam
+            from sqlalchemy import bindparam, or_, text
 
             tag_conditions = []
             for idx, tag in enumerate(valid_tags):

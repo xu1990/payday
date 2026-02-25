@@ -1,7 +1,7 @@
 """测试阿里云OSS存储服务"""
-import pytest
 from unittest.mock import Mock, patch
 
+import pytest
 from app.utils.oss import OssService
 
 

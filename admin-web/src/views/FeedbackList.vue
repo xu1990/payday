@@ -27,7 +27,7 @@ onMounted(loadData)
       <h2>用户反馈</h2>
     </div>
 
-    <el-table :data="list" v-loading="loading" stripe border>
+    <el-table v-loading="loading" :data="list" stripe border>
       <el-table-column prop="created_at" label="时间" width="180" />
       <el-table-column prop="content" label="反馈内容" min-width="200" show-overflow-tooltip />
       <el-table-column label="图片" width="150">
@@ -36,7 +36,7 @@ onMounted(loadData)
             v-for="(img, idx) in row.images"
             :key="idx"
             :src="img"
-            style="width: 60px; height: 60px; margin-right: 8px;"
+            style="width: 60px; height: 60px; margin-right: 8px"
             :preview-src-list="row.images"
           />
         </template>
@@ -54,7 +54,13 @@ onMounted(loadData)
 </template>
 
 <style scoped>
-.feedback-page { padding: 24px; }
-.header { margin-bottom: 24px; }
-.header h2 { margin: 0; }
+.feedback-page {
+  padding: 24px;
+}
+.header {
+  margin-bottom: 24px;
+}
+.header h2 {
+  margin: 0;
+}
 </style>

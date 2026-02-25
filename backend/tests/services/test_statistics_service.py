@@ -1,14 +1,10 @@
 """统计服务集成测试"""
-import pytest
 from datetime import date, datetime
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.statistics_service import (
-    get_month_summary,
-    get_trend,
-    get_admin_dashboard_stats,
-    get_insights_distributions,
-)
+import pytest
+from app.services.statistics_service import (get_admin_dashboard_stats, get_insights_distributions,
+                                             get_month_summary, get_trend)
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 

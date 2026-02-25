@@ -2,8 +2,10 @@
 Redis 缓存服务 - 使用原生 async Redis（redis-py 5.0+）
 """
 from datetime import datetime
-from typing import Optional, List
+from typing import List, Optional
+
 import redis.asyncio as aioredis
+
 from .config import get_settings
 
 settings = get_settings()

@@ -1,20 +1,20 @@
 """
 点赞 - 帖子/评论点赞与取消；PRD：POST=点赞，DELETE=取消
 """
-from fastapi import APIRouter, Depends, HTTPException, Response, Query
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Literal
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
-from app.core.exceptions import success_response, NotFoundException
+from app.core.exceptions import NotFoundException, success_response
 from app.models.comment import Comment
 from app.models.like import Like
 from app.models.post import Post
 from app.models.user import User
 from app.schemas.like import LikeResponse
 from app.services import like_service
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(tags=["likes"])
 
@@ -92,8 +92,8 @@ async def get_my_likes(
 
     返回当前用户点赞过的帖子或评论列表
     """
-    from sqlalchemy import func
     from app.schemas.post import PostResponse
+    from sqlalchemy import func
 
     if target_type == "post":
         # 获取总数

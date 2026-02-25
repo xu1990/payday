@@ -18,15 +18,14 @@
 """
 import logging
 from datetime import datetime
-from typing import Optional, List
 from decimal import Decimal
+from typing import List, Optional
 
-from sqlalchemy import select, desc
+from app.core.exceptions import BusinessException, NotFoundException, ValidationException
+from app.models.point_order import PointOrder
+from app.models.shipping import CourierCompany, OrderShipment
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.order import Order
-from app.models.shipping import OrderShipment, CourierCompany
-from app.core.exceptions import NotFoundException, BusinessException, ValidationException
 
 logger = logging.getLogger(__name__)
 
@@ -73,11 +72,8 @@ class PointShipmentService:
     # Valid shipment statuses
     VALID_SHIPMENT_STATUSES = ["pending", "picked_up", "in_transit", "delivered", "failed"]
 
-    # Valid payment methods for point shipments
-    VALID_PAYMENT_METHODS = ["points", "hybrid"]
-
     # Valid statuses for shipment creation
-    CREATE_ALLOWED_STATUSES = ["paid"]
+    CREATE_ALLOWED_STATUSES = ["completed"]  # PointOrder uses 'completed' for paid/ready orders
 
     async def create_shipment(
         self,
@@ -117,25 +113,15 @@ class PointShipmentService:
             if not order:
                 raise NotFoundException("订单不存在")
 
-            # 2. 验证订单类型是积分订单
-            if order.payment_method not in self.VALID_PAYMENT_METHODS:
+            # 2. 验证订单状态（PointOrder 使用 "completed" 表示已支付/完成）
+            if order.status not in self.CREATE_ALLOWED_STATUSES:
                 raise BusinessException(
-                    "该订单类型不能使用积分订单物流服务",
-                    code="INVALID_ORDER_TYPE",
-                    details={
-                        "payment_method": order.payment_method,
-                        "allowed_methods": self.VALID_PAYMENT_METHODS
-                    }
+                    "订单状态不允许发货",
+                    code="ORDER_NOT_READY",
+                    details={"current_status": order.status, "required_status": "completed"}
                 )
 
-            # 3. 验证订单状态
-            if order.payment_status not in ["paid"]:
-                raise BusinessException(
-                    "订单未支付，不能发货",
-                    code="ORDER_NOT_PAID"
-                )
-
-            # 4. 检查是否已发货
+            # 3. 检查是否已发货
             existing_shipment = await self._get_shipment_by_order(db, order_id)
             if existing_shipment:
                 raise BusinessException(
@@ -162,8 +148,8 @@ class PointShipmentService:
             db.add(shipment)
             await db.flush()
 
-            # 7. 更新订单状态
-            order.status = "shipped"
+            # 7. 更新订单的发货ID
+            order.shipment_id = shipment.id
             order.updated_at = datetime.utcnow()
 
             await db.commit()
@@ -221,7 +207,7 @@ class PointShipmentService:
                 )
 
             # Build query
-            query = select(OrderShipment).join(Order)
+            query = select(OrderShipment).join(PointOrder)
 
             # Filter by status if provided
             if status:
@@ -241,7 +227,7 @@ class PointShipmentService:
 
             # Filter by user if provided
             if user_id:
-                query = query.where(Order.user_id == user_id)
+                query = query.where(PointOrder.user_id == user_id)
 
             # Order by creation time
             query = query.order_by(desc(OrderShipment.created_at))
@@ -369,14 +355,12 @@ class PointShipmentService:
                 shipment.tracking_info = tracking_info
 
             # 6. 更新订单状态（如果状态变更）
+            # Note: PointOrder status doesn't change based on shipment status
+            # The order remains "completed" once it's been paid/processed
+            # We just update the updated_at timestamp
             if status:
                 order = await self._get_order_by_id(db, shipment.order_id)
                 if order:
-                    if status == "delivered":
-                        order.status = "delivered"
-                    elif status in ["picked_up", "in_transit"]:
-                        order.status = "shipped"
-
                     order.updated_at = datetime.utcnow()
 
             await db.commit()
@@ -435,10 +419,10 @@ class PointShipmentService:
 
     # Private helper methods
 
-    async def _get_order_by_id(self, db: AsyncSession, order_id: str) -> Optional[Order]:
+    async def _get_order_by_id(self, db: AsyncSession, order_id: str) -> Optional[PointOrder]:
         """根据ID获取订单"""
         result = await db.execute(
-            select(Order).where(Order.id == order_id)
+            select(PointOrder).where(PointOrder.id == order_id)
         )
         return result.scalar_one_or_none()
 

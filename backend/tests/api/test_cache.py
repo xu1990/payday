@@ -1,6 +1,7 @@
 """缓存管理API测试"""
+from unittest.mock import AsyncMock, Mock
+
 import pytest
-from unittest.mock import Mock, AsyncMock
 from fastapi import status
 
 

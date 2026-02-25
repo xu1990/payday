@@ -23,7 +23,7 @@ vi.mock('@/api/admin', () => ({
 
 // Mock format utility
 vi.mock('@/utils/format', () => ({
-  formatDate: vi.fn((date) => '2024-01-01 12:00'),
+  formatDate: vi.fn(date => '2024-01-01 12:00'),
 }))
 
 describe('PostList 视图', () => {
@@ -35,7 +35,7 @@ describe('PostList 视图', () => {
     const wrapper = mount(PostList, {
       global: {
         stubs: {
-          'BaseDataTable': true,
+          BaseDataTable: true,
           'el-table-column': true,
           'el-button': true,
           'el-select': true,
@@ -52,7 +52,7 @@ describe('PostList 视图', () => {
     const wrapper = mount(PostList, {
       global: {
         stubs: {
-          'BaseDataTable': true,
+          BaseDataTable: true,
           'el-table-column': true,
           'el-button': true,
           'el-select': true,
@@ -69,7 +69,7 @@ describe('PostList 视图', () => {
     const wrapper = mount(PostList, {
       global: {
         stubs: {
-          'BaseDataTable': true,
+          BaseDataTable: true,
           'el-table-column': true,
           'el-button': true,
           'el-select': true,
@@ -86,7 +86,7 @@ describe('PostList 视图', () => {
     const wrapper = mount(PostList, {
       global: {
         stubs: {
-          'BaseDataTable': true,
+          BaseDataTable: true,
           'el-table-column': true,
           'el-button': true,
           'el-select': true,
@@ -104,7 +104,7 @@ describe('PostList 视图', () => {
     const wrapper = mount(PostList, {
       global: {
         stubs: {
-          'BaseDataTable': true,
+          BaseDataTable: true,
           'el-table-column': true,
           'el-button': true,
           'el-select': true,
@@ -122,7 +122,7 @@ describe('PostList 视图', () => {
     const wrapper = mount(PostList, {
       global: {
         stubs: {
-          'BaseDataTable': {
+          BaseDataTable: {
             template: '<div class="data-table"><slot /></div>',
           },
           'el-table-column': true,
@@ -141,7 +141,7 @@ describe('PostList 视图', () => {
     const wrapper = mount(PostList, {
       global: {
         stubs: {
-          'BaseDataTable': true,
+          BaseDataTable: true,
           'el-table-column': {
             template: '<div class="table-col"><slot /></div>',
           },
@@ -161,7 +161,7 @@ describe('PostList 视图', () => {
     const wrapper = mount(PostList, {
       global: {
         stubs: {
-          'BaseDataTable': true,
+          BaseDataTable: true,
           'el-table-column': true,
           'el-button': true,
           'el-select': true,
@@ -181,7 +181,7 @@ describe('PostList 视图', () => {
     const wrapper = mount(PostList, {
       global: {
         stubs: {
-          'BaseDataTable': true,
+          BaseDataTable: true,
           'el-table-column': true,
           'el-button': {
             template: '<button class="action-btn"><slot /></button>',

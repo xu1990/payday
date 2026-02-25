@@ -2,9 +2,8 @@
 单元测试 - 通用数据模式 (app.schemas.common)
 """
 import pytest
-from pydantic import ValidationError
-
 from app.schemas.common import IdSchema
+from pydantic import ValidationError
 
 
 class TestIdSchema:

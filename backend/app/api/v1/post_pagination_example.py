@@ -3,13 +3,13 @@
 展示如何将传统 OFFSET 分页改造为游标分页
 """
 from typing import Literal, Optional
-from fastapi import APIRouter, Query, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.models.post import Post
 from app.schemas.post import PostResponse
 from app.utils.pagination import CursorPaginator
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/posts_v2", tags=["posts_v2"])
 
@@ -94,7 +94,7 @@ async def post_search_cursor(
 
     演示带筛选条件的游标分页
     """
-    from sqlalchemy import or_, desc
+    from sqlalchemy import desc, or_
 
     # 构建筛选条件
     filters = [Post.status == "normal"]

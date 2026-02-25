@@ -1,9 +1,8 @@
 """通知服务测试"""
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.services import notification_service
 from app.models.notification import Notification
+from app.services import notification_service
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 

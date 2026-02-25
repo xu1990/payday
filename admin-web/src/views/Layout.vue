@@ -56,7 +56,14 @@
             <span>积分商城</span>
           </template>
           <el-menu-item index="/point-shop" aria-label="积分商品">积分商品</el-menu-item>
+          <el-menu-item index="/point-shop/create" aria-label="新增商品">新增商品</el-menu-item>
+          <el-menu-item index="/point-categories" aria-label="分类管理">分类管理</el-menu-item>
           <el-menu-item index="/point-orders" aria-label="积分订单">积分订单</el-menu-item>
+          <el-menu-item index="/point-shipments" aria-label="发货管理">发货管理</el-menu-item>
+          <el-menu-item index="/point-returns" aria-label="退货管理">退货管理</el-menu-item>
+          <el-menu-item index="/couriers" aria-label="物流公司">物流公司</el-menu-item>
+          <el-menu-item index="/shipping-templates" aria-label="运费模板">运费模板</el-menu-item>
+          <el-menu-item index="/user-addresses" aria-label="用户地址">用户地址</el-menu-item>
         </el-sub-menu>
 
         <!-- 系统配置 -->
@@ -93,7 +100,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { DataAnalysis, User, Document, ChatDotRound, UserFilled, Setting, ShoppingCart } from '@element-plus/icons-vue'
+import {
+  DataAnalysis,
+  User,
+  Document,
+  ChatDotRound,
+  UserFilled,
+  Setting,
+  ShoppingCart,
+} from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
@@ -113,7 +128,9 @@ function logout() {
 </script>
 
 <style scoped>
-.layout { height: 100vh; }
+.layout {
+  height: 100vh;
+}
 .aside {
   background: #304156;
   overflow-x: hidden;
@@ -134,7 +151,9 @@ function logout() {
   box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
   padding: 0 16px;
 }
-.title { font-size: 16px; }
+.title {
+  font-size: 16px;
+}
 .main {
   background: #f0f2f5;
   padding: 16px;

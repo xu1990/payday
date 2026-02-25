@@ -18,7 +18,6 @@ Point SKU API 端点测试
 """
 import pytest
 
-
 # ==================== 规格管理 ====================
 
 class TestCreateSpecificationEndpoint:

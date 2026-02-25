@@ -2,12 +2,11 @@
 Integration tests for post like status in API responses
 """
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.core.security import create_access_token
 from app.models.like import Like
 from app.models.post import Post
 from app.models.user import User
-from app.core.security import create_access_token
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

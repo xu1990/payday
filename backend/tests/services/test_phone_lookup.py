@@ -2,12 +2,11 @@
 测试手机号查找表功能
 """
 import pytest
-from sqlalchemy import select
-
-from app.models.user import User
-from app.models.phone_lookup import PhoneLookup, hash_phone_number
-from app.services.auth_service import get_user_by_phone, bind_phone_to_user
 from app.core.exceptions import NotFoundException, ValidationException
+from app.models.phone_lookup import PhoneLookup, hash_phone_number
+from app.models.user import User
+from app.services.auth_service import bind_phone_to_user, get_user_by_phone
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio

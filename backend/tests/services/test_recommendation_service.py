@@ -1,21 +1,18 @@
 """推荐服务测试"""
-import pytest
 from datetime import datetime, timedelta
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.recommendation_service import (
-    recommend_posts_hot,
-    recommend_posts_for_user,
-    recommend_topics,
-)
-from app.services.post_service import create
-from app.services.topic_service import create_topic
-from app.services.follow_service import follow_user
-from app.services.like_service import like_post
-from app.models.post import Post
+import pytest
 from app.models.like import Like
+from app.models.post import Post
 from app.models.user import User
 from app.schemas.post import PostCreate
+from app.services.follow_service import follow_user
+from app.services.like_service import like_post
+from app.services.post_service import create
+from app.services.recommendation_service import (recommend_posts_for_user, recommend_posts_hot,
+                                                 recommend_topics)
+from app.services.topic_service import create_topic
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def create_test_user(db: AsyncSession, openid: str, nickname: str, anonymous_name: str) -> User:

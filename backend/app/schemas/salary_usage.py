@@ -1,9 +1,10 @@
 """
 薪资使用记录 Schemas
 """
-from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional
+
+from pydantic import BaseModel, Field
 
 
 class SalaryUsageBase(BaseModel):

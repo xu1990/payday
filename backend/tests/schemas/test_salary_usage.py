@@ -1,18 +1,13 @@
 """
 测试薪资使用记录 Schemas
 """
-import pytest
 from datetime import datetime
-from pydantic import ValidationError
 
-from app.schemas.salary_usage import (
-    SalaryUsageBase,
-    SalaryUsageCreate,
-    SalaryUsageUpdate,
-    SalaryUsageInDB,
-    SalaryUsageResponse,
-    SalaryUsageListResponse,
-)
+import pytest
+from app.schemas.salary_usage import (SalaryUsageBase, SalaryUsageCreate, SalaryUsageInDB,
+                                      SalaryUsageListResponse, SalaryUsageResponse,
+                                      SalaryUsageUpdate)
+from pydantic import ValidationError
 
 
 class TestSalaryUsageCreate:

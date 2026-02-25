@@ -1,11 +1,7 @@
 <template>
   <div>
     <h2 class="page-title">工资记录</h2>
-    <SearchToolbar
-      v-model:keyword="filterUserId"
-      placeholder="用户 ID 筛选"
-      @search="fetch"
-    />
+    <SearchToolbar v-model:keyword="filterUserId" placeholder="用户 ID 筛选" @search="fetch" />
 
     <BaseDataTable
       v-model:current-page="page"
@@ -44,11 +40,17 @@
       :close-on-click-modal="false"
       @closed="auditRow = null"
     >
-      <p v-if="auditRow">记录 ID：{{ auditRow.id }}，金额 {{ auditRow.amount }} 元。请选择审核结果：</p>
+      <p v-if="auditRow">
+        记录 ID：{{ auditRow.id }}，金额 {{ auditRow.amount }} 元。请选择审核结果：
+      </p>
       <template #footer>
         <el-button @click="auditDialogVisible = false">取消</el-button>
-        <el-button type="success" :loading="auditLoading" @click="submitAudit('approved')">通过</el-button>
-        <el-button type="danger" :loading="auditLoading" @click="submitAudit('rejected')">拒绝</el-button>
+        <el-button type="success" :loading="auditLoading" @click="submitAudit('approved')"
+          >通过</el-button
+        >
+        <el-button type="danger" :loading="auditLoading" @click="submitAudit('rejected')"
+          >拒绝</el-button
+        >
       </template>
     </el-dialog>
   </div>
@@ -57,7 +59,12 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getSalaryRecords, deleteSalaryRecord, updateSalaryRecordRisk, type AdminSalaryRecordItem } from '@/api/admin'
+import {
+  getSalaryRecords,
+  deleteSalaryRecord,
+  updateSalaryRecordRisk,
+  type AdminSalaryRecordItem,
+} from '@/api/admin'
 import BaseDataTable from '@/components/BaseDataTable.vue'
 import SearchToolbar from '@/components/SearchToolbar.vue'
 import StatusTag from '@/components/StatusTag.vue'

@@ -1,9 +1,10 @@
 """
 单元测试 - 订单模式 (app.schemas.order)
 """
+from datetime import datetime
+
 import pytest
 from pydantic import ValidationError
-from datetime import datetime
 
 
 class TestOrderItemCreate:
@@ -225,7 +226,7 @@ class TestOrderResponse:
 
     def test_order_with_items(self):
         """测试带订单明细的订单响应"""
-        from app.schemas.order import OrderResponse, OrderItemResponse
+        from app.schemas.order import OrderItemResponse, OrderResponse
 
         items = [
             OrderItemResponse(

@@ -2,10 +2,9 @@
 二维码参数映射表
 用于将复杂参数映射到简短的小程序码 scene
 """
-from sqlalchemy import Column, String, JSON, DateTime, Integer
-from sqlalchemy.orm import relationship
-
 from app.models.base import Base
+from sqlalchemy import JSON, Column, DateTime, Integer, String
+from sqlalchemy.orm import relationship
 
 
 class QRCodeMapping(Base):

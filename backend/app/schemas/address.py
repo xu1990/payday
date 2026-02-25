@@ -2,12 +2,14 @@
 地址相关的Pydantic模型 - Address Schemas
 
 包含用户地址的请求和响应模型：
+- UserAddressCreate - 创建地址请求
 - UserAddressResponse - 地址响应
 - UserAddressUpdate - 更新地址请求
 """
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class UserAddressResponse(BaseModel):
@@ -30,6 +32,21 @@ class UserAddressResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserAddressCreate(BaseModel):
+    """创建地址请求"""
+    province_code: str = Field(..., min_length=1, max_length=20, description="省份代码")
+    province_name: str = Field(..., min_length=1, max_length=50, description="省份名称")
+    city_code: str = Field(..., min_length=1, max_length=20, description="城市代码")
+    city_name: str = Field(..., min_length=1, max_length=50, description="城市名称")
+    district_code: str = Field(..., min_length=1, max_length=20, description="区县代码")
+    district_name: str = Field(..., min_length=1, max_length=50, description="区县名称")
+    detailed_address: str = Field(..., min_length=1, max_length=200, description="详细地址")
+    postal_code: Optional[str] = Field(None, max_length=10, description="邮政编码")
+    contact_name: str = Field(..., min_length=1, max_length=50, description="联系人姓名")
+    contact_phone: str = Field(..., min_length=1, max_length=20, description="联系电话")
+    is_default: bool = Field(False, description="是否默认地址")
 
 
 class UserAddressUpdate(BaseModel):

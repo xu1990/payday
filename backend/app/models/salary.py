@@ -2,7 +2,9 @@
 工资记录表 - 与技术方案 2.2.3 金额加密存储；Sprint 3.3 增强字段
 """
 from datetime import date, datetime
-from sqlalchemy import Column, String, Text, Date, Enum, DateTime, ForeignKey, JSON, Integer, Numeric
+
+from sqlalchemy import (JSON, Column, Date, DateTime, Enum, ForeignKey, Integer, Numeric, String,
+                        Text)
 
 from .base import Base
 from .user import gen_uuid

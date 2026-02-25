@@ -32,8 +32,8 @@ const meta: Meta<Args> = {
         'deleted',
         'cancelled',
       ],
-      },
     },
+  },
   },
 }
 

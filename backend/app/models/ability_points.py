@@ -1,9 +1,9 @@
 """Ability Points Models - 能力值系统（Sprint 4.6）"""
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text, Numeric
 
 from app.models.base import Base
 from app.models.user import gen_uuid
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, String, Text
 
 
 class AbilityPoint(Base):

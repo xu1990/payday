@@ -7,15 +7,12 @@
 
 这些测试通过完全 mock 来绕过这些问题。
 """
-import pytest
-from datetime import datetime, timedelta, date
-from unittest.mock import MagicMock, patch, PropertyMock
+from datetime import date, datetime, timedelta
+from unittest.mock import MagicMock, PropertyMock, patch
 
-from app.tasks.scheduled import (
-    send_payday_reminders,
-    calculate_daily_statistics,
-    cleanup_expired_cache,
-)
+import pytest
+from app.tasks.scheduled import (calculate_daily_statistics, cleanup_expired_cache,
+                                 send_payday_reminders)
 
 
 class TestSendPaydayReminders:

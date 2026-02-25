@@ -5,8 +5,9 @@ Note: This test file needs the real celery module, not the mock in tests/api/con
 So we restore the real celery before importing app.celery_app
 """
 import sys
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 # Restore real celery module (undo the mock from tests/api/conftest.py)
 if 'celery' in sys.modules and isinstance(sys.modules['celery'], MagicMock):

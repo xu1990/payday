@@ -1,13 +1,10 @@
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
 from alembic import context
-
 from app.core.config import get_settings
 from app.models import Base  # noqa: F401
-from app.models import user, payday, salary  # noqa: F401 - register tables
+from app.models import payday, salary, user  # noqa: F401 - register tables
+from sqlalchemy import engine_from_config, pool
 
 config = context.config
 

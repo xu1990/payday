@@ -2,7 +2,10 @@
 物流模型 - Shipping Module
 """
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, Text, Numeric, Enum as SQLEnum, JSON
+
+from sqlalchemy import JSON, Boolean, Column, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Integer, Numeric, String, Text
 
 from .base import Base
 from .user import gen_uuid
@@ -123,6 +126,10 @@ class OrderShipment(Base):
 
     # Tracking details (JSON)
     tracking_info = Column(JSON, nullable=True, comment="物流跟踪详情")
+
+    # Record timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, comment="创建时间")
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False, comment="更新时间")
 
     # Relationships
     # order = relationship("Order", back_populates="shipment")

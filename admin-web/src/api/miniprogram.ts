@@ -40,7 +40,9 @@ export function listConfigs(): Promise<{ data: MiniprogramConfigItem[]; message:
 /**
  * 创建小程序配置
  */
-export function createConfig(data: MiniprogramConfigCreate): Promise<{ data: MiniprogramConfigItem; message: string }> {
+export function createConfig(
+  data: MiniprogramConfigCreate
+): Promise<{ data: MiniprogramConfigItem; message: string }> {
   return request({ url: PREFIX, method: 'POST', data })
 }
 
@@ -57,7 +59,9 @@ export function updateConfig(
 /**
  * 删除小程序配置
  */
-export function deleteConfig(configId: string): Promise<{ data: { deleted: boolean }; message: string }> {
+export function deleteConfig(
+  configId: string
+): Promise<{ data: { deleted: boolean }; message: string }> {
   return request({ url: `${PREFIX}/${configId}`, method: 'DELETE' })
 }
 

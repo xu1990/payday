@@ -1,7 +1,9 @@
-import pytest
-from pydantic import ValidationError
 from datetime import datetime
+
+import pytest
 from app.schemas.work_record import WorkRecordCreate, WorkRecordResponse
+from pydantic import ValidationError
+
 
 def test_work_record_create_schema():
     """Test WorkRecordCreate schema validation"""

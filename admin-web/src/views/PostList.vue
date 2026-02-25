@@ -2,12 +2,24 @@
   <div>
     <h2 class="page-title">帖子管理</h2>
     <div class="toolbar" role="search" aria-label="帖子筛选工具栏">
-      <el-select v-model="filterStatus" placeholder="状态" clearable style="width: 120px" aria-label="按状态筛选">
+      <el-select
+        v-model="filterStatus"
+        placeholder="状态"
+        clearable
+        style="width: 120px"
+        aria-label="按状态筛选"
+      >
         <el-option label="正常" value="normal" />
         <el-option label="已隐藏" value="hidden" />
         <el-option label="已删除" value="deleted" />
       </el-select>
-      <el-select v-model="filterRiskStatus" placeholder="风控状态" clearable style="width: 120px" aria-label="按风控状态筛选">
+      <el-select
+        v-model="filterRiskStatus"
+        placeholder="风控状态"
+        clearable
+        style="width: 120px"
+        aria-label="按风控状态筛选"
+      >
         <el-option label="待审" value="pending" />
         <el-option label="通过" value="approved" />
         <el-option label="拒绝" value="rejected" />
@@ -46,13 +58,28 @@
       </el-table-column>
       <el-table-column label="操作" width="260" fixed="right">
         <template #default="{ row }">
-          <el-button type="primary" link aria-label="查看帖子详情" @click="openDetail(row)">详情</el-button>
+          <el-button type="primary" link aria-label="查看帖子详情" @click="openDetail(row)"
+            >详情</el-button
+          >
           <template v-if="row.risk_status === 'pending'">
-            <el-button type="success" link aria-label="通过该帖子" @click="approve(row)">通过</el-button>
-            <el-button type="warning" link aria-label="拒绝该帖子" @click="reject(row)">拒绝</el-button>
+            <el-button type="success" link aria-label="通过该帖子" @click="approve(row)"
+              >通过</el-button
+            >
+            <el-button type="warning" link aria-label="拒绝该帖子" @click="reject(row)"
+              >拒绝</el-button
+            >
           </template>
-          <el-button v-if="row.status === 'normal'" type="warning" link aria-label="隐藏该帖子" @click="hide(row)">隐藏</el-button>
-          <el-button type="danger" link aria-label="删除该帖子" @click="onDelete(row)">删除</el-button>
+          <el-button
+            v-if="row.status === 'normal'"
+            type="warning"
+            link
+            aria-label="隐藏该帖子"
+            @click="hide(row)"
+            >隐藏</el-button
+          >
+          <el-button type="danger" link aria-label="删除该帖子" @click="onDelete(row)"
+            >删除</el-button
+          >
         </template>
       </el-table-column>
     </BaseDataTable>
@@ -65,14 +92,27 @@
         <p><strong>内容：</strong></p>
         <div class="content-block">{{ currentPost.content }}</div>
         <p v-if="currentPost.images?.length">图片：{{ currentPost.images.length }} 张</p>
-        <p><strong>浏览/点赞/评论：</strong>{{ currentPost.view_count }} / {{ currentPost.like_count }} / {{ currentPost.comment_count }}</p>
-        <p><strong>状态 / 风控：</strong>{{ currentPost.status }} / {{ currentPost.risk_status }}</p>
-        <p v-if="currentPost.risk_reason"><strong>风控原因：</strong>{{ currentPost.risk_reason }}</p>
+        <p>
+          <strong>浏览/点赞/评论：</strong>{{ currentPost.view_count }} /
+          {{ currentPost.like_count }} / {{ currentPost.comment_count }}
+        </p>
+        <p>
+          <strong>状态 / 风控：</strong>{{ currentPost.status }} / {{ currentPost.risk_status }}
+        </p>
+        <p v-if="currentPost.risk_reason">
+          <strong>风控原因：</strong>{{ currentPost.risk_reason }}
+        </p>
       </template>
     </el-dialog>
 
     <el-dialog v-model="rejectVisible" title="拒绝原因" width="400px" aria-label="拒绝原因对话框">
-      <el-input v-model="rejectReason" type="textarea" placeholder="选填" :rows="3" aria-label="拒绝原因" />
+      <el-input
+        v-model="rejectReason"
+        type="textarea"
+        placeholder="选填"
+        :rows="3"
+        aria-label="拒绝原因"
+      />
       <template #footer>
         <el-button aria-label="取消拒绝" @click="rejectVisible = false">取消</el-button>
         <el-button type="primary" aria-label="确认拒绝" @click="confirmReject">确定拒绝</el-button>
@@ -84,12 +124,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  getPosts,
-  updatePostStatus,
-  deletePost,
-  type AdminPostListItem,
-} from '@/api/admin'
+import { getPosts, updatePostStatus, deletePost, type AdminPostListItem } from '@/api/admin'
 import BaseDataTable from '@/components/BaseDataTable.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import { getCommonApiErrorMessage } from '@/utils/error'
@@ -205,5 +240,11 @@ watch([page, pageSize], fetch)
 </script>
 
 <style scoped>
-.content-block { white-space: pre-wrap; background: var(--color-bg-base); padding: var(--spacing-md); border-radius: var(--radius-sm); margin: var(--spacing-sm) 0; }
+.content-block {
+  white-space: pre-wrap;
+  background: var(--color-bg-base);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  margin: var(--spacing-sm) 0;
+}
 </style>

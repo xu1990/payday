@@ -1,12 +1,11 @@
 """推荐接口API测试"""
 import pytest
-from fastapi import status
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.user import User
+from app.schemas.post import PostCreate
 from app.services.post_service import create
 from app.services.topic_service import create_topic
-from app.schemas.post import PostCreate
+from fastapi import status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def create_test_user(db: AsyncSession, openid: str, anonymous_name: str) -> User:

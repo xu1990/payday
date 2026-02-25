@@ -144,7 +144,7 @@ onMounted(() => {
       <el-button type="primary" @click="openCreate">创建配置</el-button>
     </div>
 
-    <el-table :data="list" v-loading="loading" stripe border style="width: 100%">
+    <el-table v-loading="loading" :data="list" stripe border style="width: 100%">
       <el-table-column prop="key" label="配置键" width="200" />
       <el-table-column prop="value" label="配置值" min-width="250" show-overflow-tooltip />
       <el-table-column prop="description" label="说明" width="200" show-overflow-tooltip />
@@ -164,7 +164,11 @@ onMounted(() => {
       <el-table-column label="操作" width="260" fixed="right">
         <template #default="{ row }">
           <el-button size="small" @click="openEdit(row)">编辑</el-button>
-          <el-button size="small" :type="row.is_active ? 'warning' : 'success'" @click="toggleActive(row)">
+          <el-button
+            size="small"
+            :type="row.is_active ? 'warning' : 'success'"
+            @click="toggleActive(row)"
+          >
             {{ row.is_active ? '禁用' : '启用' }}
           </el-button>
           <el-button size="small" type="danger" @click="doDelete(row)">删除</el-button>
@@ -187,7 +191,9 @@ onMounted(() => {
             show-word-limit
             :disabled="dialogMode === 'edit'"
           />
-          <div class="form-tip">常用配置键：app_name（应用名称）、logo_url（Logo）、splash_image（开屏图）、privacy_policy（隐私协议）</div>
+          <div class="form-tip">
+            常用配置键：app_name（应用名称）、logo_url（Logo）、splash_image（开屏图）、privacy_policy（隐私协议）
+          </div>
         </el-form-item>
         <el-form-item label="配置值">
           <el-input

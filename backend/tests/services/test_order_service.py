@@ -13,19 +13,19 @@ Order Service 测试 - 订单服务
 9. 数据库事务回滚
 10. 错误处理
 """
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from decimal import Decimal
 from datetime import datetime
-from sqlalchemy.exc import IntegrityError
+from decimal import Decimal
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.services.order_service import OrderService
-from app.schemas.order import OrderCreate, OrderItemCreate, OrderResponse
-from app.models.order import Order, OrderItem
-from app.models.product import Product, ProductSKU, ProductPrice
-from app.models.user import User
+import pytest
+from app.core.exceptions import BusinessException, NotFoundException
 from app.models.address import UserAddress
-from app.core.exceptions import NotFoundException, BusinessException
+from app.models.order import Order, OrderItem
+from app.models.product import Product, ProductPrice, ProductSKU
+from app.models.user import User
+from app.schemas.order import OrderCreate, OrderItemCreate, OrderResponse
+from app.services.order_service import OrderService
+from sqlalchemy.exc import IntegrityError
 
 
 def create_mock_redis():

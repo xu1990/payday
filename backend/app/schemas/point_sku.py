@@ -1,5 +1,6 @@
 """Point SKU Schemas - 积分商品SKU数据验证（Sprint 4.7）"""
-from typing import List, Optional, Dict
+from typing import Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -118,6 +119,7 @@ class SKUResponse(BaseModel):
     def from_db(cls, sku) -> "SKUResponse":
         """从数据库模型创建响应"""
         import json
+
         # 解析specs JSON
         try:
             specs_dict = json.loads(sku.specs) if isinstance(sku.specs, str) else sku.specs

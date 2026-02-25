@@ -3,7 +3,8 @@
 """
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Enum, DateTime, ForeignKey
+
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from .base import Base

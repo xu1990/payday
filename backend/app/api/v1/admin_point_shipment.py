@@ -1,18 +1,17 @@
 """
 积分订单物流管理接口 - 管理后台
 """
-from typing import Optional, List
-from fastapi import APIRouter, Depends, Query, Path
-from pydantic import BaseModel, Field
-
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Optional
 
 from app.core.database import get_db
 from app.core.deps import get_current_admin_user
-from app.core.exceptions import success_response, NotFoundException, ValidationException
-from app.models.user import User
+from app.core.exceptions import NotFoundException, ValidationException, success_response
 from app.models.shipping import OrderShipment
+from app.models.user import User
 from app.services.point_shipment_service import PointShipmentService
+from fastapi import APIRouter, Depends, Path, Query
+from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/point-shipments", tags=["admin-point-shipments"])
 
@@ -56,6 +55,57 @@ class ShipmentListResponse(BaseModel):
 
 
 # ==================== API 端点 ====================
+
+class PointOrderBasic(BaseModel):
+    """待发货订单基本信息"""
+    id: str
+    order_number: str
+    product_name: str
+    status: str
+    user_id: str
+
+
+@router.get("/pending-orders", response_model=List[PointOrderBasic])
+async def get_pending_point_orders(
+    current_admin: User = Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """获取待发货订单列表（没有发货记录的已支付积分订单）"""
+    try:
+        from app.models.point_order import PointOrder
+        from sqlalchemy import select
+
+        # 获取已完成的积分订单（可以发货的订单）
+        query = select(PointOrder).where(PointOrder.status == "completed")
+
+        result = await db.execute(query)
+        orders = result.scalars().all()
+
+        # 过滤出没有发货记录的订单
+        pending_orders = []
+        for order in orders:
+            # 检查是否已有发货记录
+            shipment_query = select(OrderShipment).where(OrderShipment.order_id == order.id)
+            shipment_result = await db.execute(shipment_query)
+            existing_shipment = shipment_result.scalar_one_or_none()
+
+            if not existing_shipment:
+                pending_orders.append(order)
+
+        return [
+            PointOrderBasic(
+                id=order.id,
+                order_number=order.order_number,
+                product_name=order.product_name or "",
+                status=order.status,
+                user_id=order.user_id
+            )
+            for order in pending_orders
+        ]
+
+    except Exception as e:
+        raise ValidationException(f"获取待发货订单失败: {str(e)}")
+
 
 @router.get("", response_model=ShipmentListResponse)
 async def list_point_shipments(

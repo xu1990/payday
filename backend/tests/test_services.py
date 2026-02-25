@@ -1,14 +1,11 @@
 """
 服务层测试
 """
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
-from app.services.risk_service import (
-    RiskResult,
-    evaluate_content,
-    _text_contact_score,
-    _text_sensitive_score,
-)
+from app.services.risk_service import (RiskResult, _text_contact_score, _text_sensitive_score,
+                                       evaluate_content)
 
 
 class TestTextContactScore:

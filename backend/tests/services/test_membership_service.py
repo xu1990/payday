@@ -1,21 +1,16 @@
 """
 单元测试 - 会员服务 (app.services.membership_service)
 """
-import pytest
 from datetime import datetime, timedelta
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.membership import Membership, MembershipOrder
-from app.services.membership_service import (
-    list_memberships,
-    create_order,
-    get_my_orders,
-    get_active_membership,
-    verify_membership_benefits,
-    cancel_order,
-)
+import pytest
 from app.core.exceptions import BusinessException, NotFoundException
+from app.models.membership import Membership, MembershipOrder
 from app.schemas.membership import MembershipOrderCreate
+from app.services.membership_service import (cancel_order, create_order, get_active_membership,
+                                             get_my_orders, list_memberships,
+                                             verify_membership_benefits)
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

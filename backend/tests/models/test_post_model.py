@@ -1,7 +1,8 @@
 """Test Post model with user_avatar field"""
+from datetime import datetime
+
 import pytest
 from app.models.post import Post
-from datetime import datetime
 from sqlalchemy import select
 
 

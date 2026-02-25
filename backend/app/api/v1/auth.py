@@ -2,16 +2,15 @@
 认证接口 - POST /login 微信 code 登录
 支持 Refresh Token 机制
 """
-from fastapi import APIRouter, Depends
-from app.core.exceptions import BusinessException, AuthenticationException, success_response
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.database import get_db
-from app.core.deps import get_current_user, rate_limit_login, rate_limit_general
+from app.core.deps import get_current_user, rate_limit_general, rate_limit_login
+from app.core.exceptions import AuthenticationException, BusinessException, success_response
 from app.core.security import verify_token_type
 from app.models.user import User
 from app.schemas.auth import LoginRequest, LoginResponse, RefreshTokenRequest, RefreshTokenResponse
 from app.services.auth_service import login_with_code, refresh_access_token, revoke_refresh_token
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -35,8 +34,8 @@ async def login(
 
     # Add phone info if exists (masked)
     if user.phone_number:
-        from app.utils.phone import mask_phone_number
         from app.utils.encryption import decrypt_amount
+        from app.utils.phone import mask_phone_number
 
         # Phone number is stored in format: encrypted:salt
         parts = user.phone_number.split(':')

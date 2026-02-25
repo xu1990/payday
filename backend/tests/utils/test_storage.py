@@ -1,9 +1,9 @@
 """
 单元测试 - 统一存储服务 (app.utils.storage)
 """
-import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from app.utils.storage import UnifiedStorageService
 
 

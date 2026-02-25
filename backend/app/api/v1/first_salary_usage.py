@@ -2,28 +2,21 @@
 第一笔工资用途 API
 """
 from typing import Optional
+
+from app.core.deps import get_current_user, get_db, rate_limit_general
+from app.core.exceptions import success_response
+from app.models.first_salary_usage import FirstSalaryUsage
+from app.models.user import User
+from app.schemas.first_salary_usage import (FirstSalaryUsageCreate, FirstSalaryUsageListResponse,
+                                            FirstSalaryUsageResponse, FirstSalaryUsageUpdate)
+from app.services.first_salary_usage_service import (_decrypt_with_salt, create_first_salary_usage,
+                                                     delete_first_salary_usage,
+                                                     get_first_salary_usage,
+                                                     get_usage_statistics_by_category,
+                                                     list_first_salary_usages,
+                                                     update_first_salary_usage)
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.deps import get_db, get_current_user, rate_limit_general
-from app.models.user import User
-from app.models.first_salary_usage import FirstSalaryUsage
-from app.schemas.first_salary_usage import (
-    FirstSalaryUsageCreate,
-    FirstSalaryUsageResponse,
-    FirstSalaryUsageUpdate,
-    FirstSalaryUsageListResponse,
-)
-from app.services.first_salary_usage_service import (
-    create_first_salary_usage,
-    get_first_salary_usage,
-    update_first_salary_usage,
-    delete_first_salary_usage,
-    list_first_salary_usages,
-    get_usage_statistics_by_category,
-    _decrypt_with_salt,
-)
-from app.core.exceptions import success_response
 
 router = APIRouter(prefix="/first-salary-usage", tags=["第一笔工资用途"])
 

@@ -18,20 +18,19 @@
 """
 import logging
 from datetime import datetime
-from typing import Optional
 from decimal import Decimal
+from typing import Optional
 
 import redis.asyncio as aioredis
+from app.core.exceptions import BusinessException, NotFoundException
+from app.models.address import UserAddress
+from app.models.order import Order, OrderItem
+from app.models.product import Product, ProductPrice, ProductSKU
+from app.models.user import User
+from app.schemas.order import OrderCreate, OrderItemCreate, OrderResponse
+from app.services.stock_lock import StockLockService
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.schemas.order import OrderCreate, OrderResponse, OrderItemCreate
-from app.models.order import Order, OrderItem
-from app.models.product import Product, ProductSKU, ProductPrice
-from app.models.user import User
-from app.models.address import UserAddress
-from app.services.stock_lock import StockLockService
-from app.core.exceptions import NotFoundException, BusinessException
 
 logger = logging.getLogger(__name__)
 

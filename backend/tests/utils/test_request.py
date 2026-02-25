@@ -1,10 +1,10 @@
 """测试HTTP请求工具"""
-import pytest
-from fastapi import Request
-from starlette.datastructures import Headers
 from unittest.mock import Mock
 
+import pytest
 from app.utils.request import get_client_ip
+from fastapi import Request
+from starlette.datastructures import Headers
 
 
 class TestGetClientIP:

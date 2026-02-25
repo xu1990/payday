@@ -2,7 +2,8 @@
 通知表 - 与迭代规划 2.2 数据模型一致，技术方案 2.2.1 按 user_id 哈希分表（当前先单表）
 """
 from datetime import datetime
-from sqlalchemy import Column, String, Text, Boolean, DateTime, Enum, ForeignKey
+
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, String, Text
 
 from .base import Base
 from .user import gen_uuid

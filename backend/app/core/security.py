@@ -5,10 +5,9 @@ JWT 认证与密码哈希 - 技术方案 2.1 认证与 2.2.3；管理端 passlib
 from datetime import datetime, timedelta
 from typing import Optional
 
+from app.core.config import get_settings
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-
-from app.core.config import get_settings
 
 pwd_ctx = CryptContext(
     schemes=["bcrypt"],

@@ -1,6 +1,7 @@
-import pytest
 import json
-from app.models.point_sku import PointSpecification, PointSpecificationValue, PointProductSKU
+
+import pytest
+from app.models.point_sku import PointProductSKU, PointSpecification, PointSpecificationValue
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

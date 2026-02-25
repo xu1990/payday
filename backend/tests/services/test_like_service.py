@@ -1,10 +1,10 @@
 """点赞服务集成测试"""
-import pytest
 from unittest.mock import AsyncMock, patch
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services import like_service
+import pytest
 from app.models.like import Like
+from app.services import like_service
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 
@@ -200,6 +200,7 @@ class TestLikeComment:
         post = await TestDataFactory.create_post(db_session, user.id)
 
         from app.services import comment_service
+
         # Mock notification service for comment creation
         with patch('app.services.comment_service.notification_service.create_notification', new_callable=AsyncMock):
             comment = await comment_service.create(
@@ -229,6 +230,7 @@ class TestLikeComment:
         post = await TestDataFactory.create_post(db_session, user.id)
 
         from app.services import comment_service
+
         # Mock notification service for comment creation
         with patch('app.services.comment_service.notification_service.create_notification', new_callable=AsyncMock):
             comment = await comment_service.create(
@@ -256,6 +258,7 @@ class TestLikeComment:
         post = await TestDataFactory.create_post(db_session, user.id)
 
         from app.services import comment_service
+
         # Mock notification service for comment creation
         with patch('app.services.comment_service.notification_service.create_notification', new_callable=AsyncMock):
             comment = await comment_service.create(
@@ -289,6 +292,7 @@ class TestLikeComment:
         post = await TestDataFactory.create_post(db_session, user1.id)
 
         from app.services import comment_service
+
         # Mock notification service for comment creation
         with patch('app.services.comment_service.notification_service.create_notification', new_callable=AsyncMock):
             comment = await comment_service.create(
@@ -318,6 +322,7 @@ class TestLikeComment:
         post = await TestDataFactory.create_post(db_session, user.id)
 
         from app.services import comment_service
+
         # Mock notification service for comment creation
         with patch('app.services.comment_service.notification_service.create_notification', new_callable=AsyncMock):
             comment = await comment_service.create(
@@ -346,6 +351,7 @@ class TestUnlikeComment:
         post = await TestDataFactory.create_post(db_session, user.id)
 
         from app.services import comment_service
+
         # Mock notification service for comment creation
         with patch('app.services.comment_service.notification_service.create_notification', new_callable=AsyncMock):
             comment = await comment_service.create(
@@ -377,6 +383,7 @@ class TestUnlikeComment:
         post = await TestDataFactory.create_post(db_session, user.id)
 
         from app.services import comment_service
+
         # Mock notification service for comment creation
         with patch('app.services.comment_service.notification_service.create_notification', new_callable=AsyncMock):
             comment = await comment_service.create(
@@ -408,6 +415,7 @@ class TestUnlikeComment:
         post = await TestDataFactory.create_post(db_session, user.id)
 
         from app.services import comment_service
+
         # Mock notification service for comment creation
         with patch('app.services.comment_service.notification_service.create_notification', new_callable=AsyncMock):
             comment = await comment_service.create(
@@ -430,6 +438,7 @@ class TestUnlikeComment:
         post = await TestDataFactory.create_post(db_session, user.id)
 
         from app.services import comment_service
+
         # Mock notification service for comment creation
         with patch('app.services.comment_service.notification_service.create_notification', new_callable=AsyncMock):
             comment = await comment_service.create(
@@ -501,6 +510,7 @@ class TestIsLiked:
         post = await TestDataFactory.create_post(db_session, user.id)
 
         from app.services import comment_service
+
         # Mock notification service for comment creation
         with patch('app.services.comment_service.notification_service.create_notification', new_callable=AsyncMock):
             comment = await comment_service.create(
@@ -531,6 +541,7 @@ class TestIsLiked:
         post = await TestDataFactory.create_post(db_session, user.id)
 
         from app.services import comment_service
+
         # Mock notification service for comment creation
         with patch('app.services.comment_service.notification_service.create_notification', new_callable=AsyncMock):
             comment = await comment_service.create(

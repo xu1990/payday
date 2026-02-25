@@ -3,11 +3,10 @@
 """
 from __future__ import annotations
 
-from sqlalchemy import select, update, func
+from app.models.notification import Notification
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.notification import Notification
 
 
 async def create_notification(

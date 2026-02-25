@@ -1,6 +1,7 @@
 """测试日期工具"""
-import pytest
 from datetime import datetime
+
+import pytest
 from app.utils.date import now
 
 

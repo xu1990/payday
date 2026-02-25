@@ -3,15 +3,14 @@
 """
 from __future__ import annotations
 
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.core.cache import LikeCacheService
 from app.models.comment import Comment
 from app.models.like import Like
 from app.models.post import Post
 from app.services import notification_service
-from app.core.cache import LikeCacheService
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def _get_like(

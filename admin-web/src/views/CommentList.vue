@@ -2,8 +2,20 @@
   <div>
     <h2 class="page-title">评论管理</h2>
     <div class="toolbar" role="search" aria-label="评论筛选工具栏">
-      <el-input v-model="filterPostId" placeholder="帖子 ID" clearable style="width: 280px" aria-label="按帖子ID筛选" />
-      <el-select v-model="filterRiskStatus" placeholder="风控状态" clearable style="width: 120px" aria-label="按风控状态筛选">
+      <el-input
+        v-model="filterPostId"
+        placeholder="帖子 ID"
+        clearable
+        style="width: 280px"
+        aria-label="按帖子ID筛选"
+      />
+      <el-select
+        v-model="filterRiskStatus"
+        placeholder="风控状态"
+        clearable
+        style="width: 120px"
+        aria-label="按风控状态筛选"
+      >
         <el-option label="待审" value="pending" />
         <el-option label="通过" value="approved" />
         <el-option label="拒绝" value="rejected" />
@@ -36,15 +48,25 @@
       <el-table-column label="操作" width="180" fixed="right">
         <template #default="{ row }">
           <template v-if="row.risk_status === 'pending'">
-            <el-button type="success" link aria-label="通过该评论" @click="approve(row)">通过</el-button>
-            <el-button type="warning" link aria-label="拒绝该评论" @click="reject(row)">拒绝</el-button>
+            <el-button type="success" link aria-label="通过该评论" @click="approve(row)"
+              >通过</el-button
+            >
+            <el-button type="warning" link aria-label="拒绝该评论" @click="reject(row)"
+              >拒绝</el-button
+            >
           </template>
         </template>
       </el-table-column>
     </BaseDataTable>
 
     <el-dialog v-model="rejectVisible" title="拒绝原因" width="400px" aria-label="拒绝原因对话框">
-      <el-input v-model="rejectReason" type="textarea" placeholder="选填" :rows="3" aria-label="拒绝原因" />
+      <el-input
+        v-model="rejectReason"
+        type="textarea"
+        placeholder="选填"
+        :rows="3"
+        aria-label="拒绝原因"
+      />
       <template #footer>
         <el-button aria-label="取消拒绝" @click="rejectVisible = false">取消</el-button>
         <el-button type="primary" aria-label="确认拒绝" @click="confirmReject">确定拒绝</el-button>
@@ -56,11 +78,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import {
-  getComments,
-  updateCommentRisk,
-  type AdminCommentListItem,
-} from '@/api/admin'
+import { getComments, updateCommentRisk, type AdminCommentListItem } from '@/api/admin'
 import BaseDataTable from '@/components/BaseDataTable.vue'
 import StatusTag from '@/components/StatusTag.vue'
 

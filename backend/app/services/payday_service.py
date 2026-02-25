@@ -3,13 +3,12 @@
 """
 from typing import List, Optional
 
+from app.core.exceptions import NotFoundException
+from app.models.payday import PaydayConfig
+from app.schemas.payday import PaydayConfigCreate, PaydayConfigUpdate
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.payday import PaydayConfig
-from app.schemas.payday import PaydayConfigCreate, PaydayConfigUpdate
-from app.core.exceptions import NotFoundException
 
 
 async def list_by_user(db: AsyncSession, user_id: str) -> List[PaydayConfig]:

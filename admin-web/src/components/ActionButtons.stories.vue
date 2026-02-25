@@ -40,7 +40,7 @@ const meta: Meta<Args> = {
 export default meta
 
 const Template: StoryObj<Args> = {
-  render: (args) => ({
+  render: args => ({
     setup() {
       return { args }
     },
@@ -133,7 +133,7 @@ export const WithCustomSlot = {
     showToggle: false,
     showDelete: false,
   },
-  render: (args) => ({
+  render: args => ({
     setup() {
       return { args }
     },

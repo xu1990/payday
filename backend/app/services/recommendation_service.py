@@ -3,12 +3,11 @@
 """
 from __future__ import annotations
 
-from sqlalchemy import select, func, desc
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.post import Post
-from app.models.like import Like
 from app.models.follow import Follow
+from app.models.like import Like
+from app.models.post import Post
+from sqlalchemy import desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def recommend_posts_hot(

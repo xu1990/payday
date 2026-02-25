@@ -1,13 +1,10 @@
 """测试验证工具"""
-import pytest
 from uuid import UUID
-from app.utils.validation import (
-    validate_uuid,
-    is_valid_uuid,
-    validate_anonymous_name,
-    validate_salary_amount,
-)
+
+import pytest
 from app.core.exceptions import ValidationException
+from app.utils.validation import (is_valid_uuid, validate_anonymous_name, validate_salary_amount,
+                                  validate_uuid)
 
 
 class TestValidateUUID:

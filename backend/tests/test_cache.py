@@ -1,26 +1,14 @@
 """
 单元测试 - Redis 缓存服务模块 (app.core.cache)
 """
-import pytest
-from unittest.mock import patch, AsyncMock, MagicMock
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.core.cache import (
-    get_redis_client,
-    close_redis,
-    get_user_info_key,
-    get_payday_status_key,
-    get_post_hot_key,
-    get_post_view_key,
-    get_like_status_key,
-    PostCacheService,
-    LikeCacheService,
-    USER_INFO_TTL,
-    PAYDAY_STATUS_TTL,
-    POST_HOT_TTL,
-    POST_VIEW_TTL,
-    LIKE_STATUS_TTL,
-)
+import pytest
+from app.core.cache import (LIKE_STATUS_TTL, PAYDAY_STATUS_TTL, POST_HOT_TTL, POST_VIEW_TTL,
+                            USER_INFO_TTL, LikeCacheService, PostCacheService, close_redis,
+                            get_like_status_key, get_payday_status_key, get_post_hot_key,
+                            get_post_view_key, get_redis_client, get_user_info_key)
 
 
 class TestCacheKeyFunctions:

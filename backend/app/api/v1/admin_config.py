@@ -2,18 +2,17 @@
 会员与主题配置接口 - 管理后台
 """
 from typing import Optional
-from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel, Field
-
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import get_current_admin_user
-from app.core.exceptions import success_response, NotFoundException
-from app.models.user import User
-from app.models.membership import Membership, AppTheme, MembershipOrder
+from app.core.exceptions import NotFoundException, success_response
+from app.models.membership import AppTheme, Membership, MembershipOrder
 from app.models.miniprogram_config import MiniprogramConfig
+from app.models.user import User
 from app.schemas.membership import MembershipCreate, MembershipResponse
+from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin/config", tags=["admin-config"])
 
@@ -158,7 +157,7 @@ async def list_memberships(
     db: AsyncSession = Depends(get_db),
 ):
     """获取会员套餐列表。"""
-    from sqlalchemy import select, func
+    from sqlalchemy import func, select
 
     q = select(Membership)
     if active_only:
@@ -258,7 +257,7 @@ async def list_orders(
     db: AsyncSession = Depends(get_db),
 ):
     """获取会员订单列表。"""
-    from sqlalchemy import select, func
+    from sqlalchemy import func, select
 
     q = select(MembershipOrder)
     # 关联会员套餐名称
@@ -551,8 +550,9 @@ async def get_splash_config(
     db: AsyncSession = Depends(get_db),
 ):
     """获取开屏配置"""
-    from sqlalchemy import select
     import json
+
+    from sqlalchemy import select
 
     result = await db.execute(
         select(MiniprogramConfig).where(MiniprogramConfig.key == 'splash_config')
@@ -617,8 +617,9 @@ async def update_splash_config(
     db: AsyncSession = Depends(get_db),
 ):
     """更新开屏配置"""
-    from sqlalchemy import select, update
     import json
+
+    from sqlalchemy import select, update
 
     # 查找现有配置
     result = await db.execute(

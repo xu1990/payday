@@ -2,17 +2,13 @@
 打卡接口 - 打卡、连续天数统计、日历；Sprint 3.3
 """
 from datetime import date
-from fastapi import APIRouter, Depends, Query
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
-from app.schemas.checkin import CheckInCreate, CheckInCalendarResponse, CheckInStatsResponse
-from app.services.checkin_service import (
-    check_in,
-    get_checkin_calendar,
-    get_checkin_stats,
-)
+from app.schemas.checkin import CheckInCalendarResponse, CheckInCreate, CheckInStatsResponse
+from app.services.checkin_service import check_in, get_checkin_calendar, get_checkin_stats
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/checkin", tags=["checkin"])

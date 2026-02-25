@@ -5,17 +5,26 @@ import { request } from '@/utils/request'
 
 const PREFIX = '/point-shop/admin'
 
+// ==================== 商品类型和物流方式 ====================
+export type ProductType = 'virtual' | 'physical' | 'bundle'
+export type ShippingMethod = 'express' | 'self_pickup' | 'no_shipping'
+
 // ==================== 商品管理 ====================
 export interface PointProduct {
   id: string
   name: string
   description: string | null
   image_urls: string[]
-  image_url: string | null  // 兼容旧版，第一张图片
+  image_url: string | null // 兼容旧版，第一张图片
   points_cost: number
   stock: number
   stock_unlimited: boolean
   category: string | null
+  category_id: string | null
+  has_sku: boolean
+  product_type: ProductType
+  shipping_method: ShippingMethod
+  shipping_template_id: string | null
   is_active: boolean
   sort_order: number
   created_at: string
@@ -29,6 +38,11 @@ export interface PointProductCreate {
   stock: number
   stock_unlimited?: boolean
   category?: string | null
+  category_id?: string | null
+  has_sku?: boolean
+  product_type?: ProductType
+  shipping_method?: ShippingMethod
+  shipping_template_id?: string | null
   sort_order?: number
 }
 
@@ -40,7 +54,12 @@ export interface PointProductUpdate {
   stock?: number
   stock_unlimited?: boolean
   category?: string | null
+  category_id?: string | null
+  has_sku?: boolean
   is_active?: boolean
+  product_type?: ProductType
+  shipping_method?: ShippingMethod
+  shipping_template_id?: string | null
   sort_order?: number
 }
 
@@ -120,11 +139,7 @@ export interface PointOrderListResult {
 }
 
 /** 订单列表 */
-export function listPointOrders(params?: {
-  status?: string
-  limit?: number
-  offset?: number
-}) {
+export function listPointOrders(params?: { status?: string; limit?: number; offset?: number }) {
   const { limit = 20, offset = 0, status } = params ?? {}
   const q = new URLSearchParams()
   q.set('limit', String(limit))
@@ -137,11 +152,7 @@ export function listPointOrders(params?: {
 }
 
 /** 处理订单（完成或取消） */
-export function processPointOrder(
-  orderId: string,
-  action: 'complete' | 'cancel',
-  notes?: string
-) {
+export function processPointOrder(orderId: string, action: 'complete' | 'cancel', notes?: string) {
   return request({
     url: `${PREFIX}/orders/${orderId}/process`,
     method: 'POST',

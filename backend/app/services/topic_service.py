@@ -3,12 +3,11 @@
 """
 from __future__ import annotations
 
-from sqlalchemy import select, func, update
+from app.core.exceptions import NotFoundException
+from app.models.topic import Topic
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.topic import Topic
-from app.core.exceptions import NotFoundException
 
 
 async def create_topic(

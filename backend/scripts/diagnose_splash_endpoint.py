@@ -20,10 +20,10 @@ from pathlib import Path
 # 添加项目根目录到 Python 路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from sqlalchemy import text, inspect
 from app.core.database import get_db
 from app.models.miniprogram_config import MiniprogramConfig
 from app.utils.logger import get_logger
+from sqlalchemy import inspect, text
 
 logger = get_logger(__name__)
 
@@ -119,8 +119,9 @@ async def test_endpoint_logic(db):
     """测试端点逻辑"""
     print("\n=== 5. 测试端点逻辑 ===")
     try:
-        from sqlalchemy import select
         import json
+
+        from sqlalchemy import select
 
         result = await db.execute(
             select(MiniprogramConfig).where(MiniprogramConfig.key == 'splash_config')

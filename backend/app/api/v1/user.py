@@ -3,16 +3,17 @@
 """
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import APIRouter, Depends, Query, File, UploadFile
-from pydantic import BaseModel, Field
 
+from app.core.database import get_db
 from app.core.deps import get_current_user
-from app.core.exceptions import success_response, NotFoundException
+from app.core.exceptions import NotFoundException, success_response
 from app.models.user import User
 from app.schemas.user import UserResponse, UserUpdate
-from app.services.user_service import update_user, get_user_profile_data, deactivate_user, reactivate_user, upload_user_avatar, get_user_by_id
 from app.services.follow_service import is_following
-from app.core.database import get_db
+from app.services.user_service import (deactivate_user, get_user_by_id, get_user_profile_data,
+                                       reactivate_user, update_user, upload_user_avatar)
+from fastapi import APIRouter, Depends, File, Query, UploadFile
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/user", tags=["user"])
@@ -23,8 +24,8 @@ def _user_to_response(user: User) -> dict:
     phone_number = None
     phone_verified = user.phone_verified == 1
     if user.phone_number:
-        from app.utils.phone import mask_phone_number
         from app.utils.encryption import decrypt_amount
+        from app.utils.phone import mask_phone_number
 
         # Phone number is stored in format: encrypted:salt
         parts = user.phone_number.split(':')
@@ -188,8 +189,9 @@ async def submit_feedback(
     db: AsyncSession = Depends(get_db),
 ):
     """提交用户反馈"""
-    from app.models.feedback import Feedback
     import uuid
+
+    from app.models.feedback import Feedback
 
     feedback = Feedback(
         id=str(uuid.uuid4()),

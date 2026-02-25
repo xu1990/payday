@@ -22,5 +22,5 @@ export function getFeedbackList(): Promise<{ data: FeedbackItem[]; message: stri
 }
 
 export default {
-  getFeedbackList
+  getFeedbackList,
 }

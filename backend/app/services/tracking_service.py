@@ -7,16 +7,15 @@ and update shipment tracking information.
 import asyncio
 import logging
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 import httpx
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
-
-from app.models.tracking import Shipment, TrackingEvent, TrackingStatus
-from app.schemas.tracking import TrackingInfo, TrackingEvent as TrackingEventSchema
 from app.core.exceptions import BusinessException, ValidationException
-
+from app.models.tracking import Shipment, TrackingEvent, TrackingStatus
+from app.schemas.tracking import TrackingEvent as TrackingEventSchema
+from app.schemas.tracking import TrackingInfo
+from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

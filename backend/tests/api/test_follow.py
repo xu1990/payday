@@ -41,6 +41,7 @@ class TestFollowUserEndpoint:
         """测试关注用户成功"""
         # 创建另一个用户作为被关注对象
         import asyncio
+
         from tests.test_utils import TestDataFactory
 
         async def create_target_user():
@@ -86,6 +87,7 @@ class TestFollowUserEndpoint:
     ):
         """测试关注用户失败 - 用户不允许被关注"""
         import asyncio
+
         from tests.test_utils import TestDataFactory
 
         async def create_target_user():
@@ -128,6 +130,7 @@ class TestFollowUserEndpoint:
     ):
         """测试关注用户失败 - 未提供认证token"""
         import asyncio
+
         from tests.test_utils import TestDataFactory
 
         async def create_target_user():
@@ -151,6 +154,7 @@ class TestFollowUserEndpoint:
     ):
         """测试关注用户失败 - 已经关注过（幂等行为）"""
         import asyncio
+
         from tests.test_utils import TestDataFactory
 
         async def create_target_user():
@@ -193,8 +197,9 @@ class TestUnfollowUserEndpoint:
     ):
         """测试取消关注成功"""
         import asyncio
-        from tests.test_utils import TestDataFactory
+
         from app.services.follow_service import follow_user
+        from tests.test_utils import TestDataFactory
 
         async def setup_follow():
             target_user = await TestDataFactory.create_user(
@@ -226,6 +231,7 @@ class TestUnfollowUserEndpoint:
     ):
         """测试取消关注失败 - 未关注过"""
         import asyncio
+
         from tests.test_utils import TestDataFactory
 
         async def create_target_user():
@@ -251,6 +257,7 @@ class TestUnfollowUserEndpoint:
     ):
         """测试取消关注失败 - 未提供认证token"""
         import asyncio
+
         from tests.test_utils import TestDataFactory
 
         async def create_target_user():
@@ -279,8 +286,9 @@ class TestMyFollowersEndpoint:
     ):
         """测试获取当前用户的粉丝列表成功"""
         import asyncio
-        from tests.test_utils import TestDataFactory
+
         from app.services.follow_service import follow_user
+        from tests.test_utils import TestDataFactory
 
         async def setup_followers():
             # 创建多个粉丝
@@ -324,8 +332,9 @@ class TestMyFollowersEndpoint:
     ):
         """测试粉丝列表分页"""
         import asyncio
-        from tests.test_utils import TestDataFactory
+
         from app.services.follow_service import follow_user
+        from tests.test_utils import TestDataFactory
 
         async def setup_followers():
             # 创建5个粉丝
@@ -408,8 +417,9 @@ class TestMyFollowingEndpoint:
     ):
         """测试获取当前用户的关注列表成功"""
         import asyncio
-        from tests.test_utils import TestDataFactory
+
         from app.services.follow_service import follow_user
+        from tests.test_utils import TestDataFactory
 
         async def setup_following():
             # 创建多个关注对象
@@ -453,8 +463,9 @@ class TestMyFollowingEndpoint:
     ):
         """测试关注列表分页"""
         import asyncio
-        from tests.test_utils import TestDataFactory
+
         from app.services.follow_service import follow_user
+        from tests.test_utils import TestDataFactory
 
         async def setup_following():
             # 创建5个关注对象
@@ -525,8 +536,9 @@ class TestMyFeedEndpoint:
     ):
         """测试获取关注流成功"""
         import asyncio
-        from tests.test_utils import TestDataFactory
+
         from app.services.follow_service import follow_user
+        from tests.test_utils import TestDataFactory
 
         async def setup_feed():
             # 创建关注对象
@@ -578,8 +590,9 @@ class TestMyFeedEndpoint:
     ):
         """测试关注流分页"""
         import asyncio
-        from tests.test_utils import TestDataFactory
+
         from app.services.follow_service import follow_user
+        from tests.test_utils import TestDataFactory
 
         async def setup_feed():
             # 创建关注对象
@@ -642,8 +655,9 @@ class TestMyFeedEndpoint:
     ):
         """测试关注流只返回已审核通过的帖子"""
         import asyncio
-        from tests.test_utils import TestDataFactory
+
         from app.services.follow_service import follow_user
+        from tests.test_utils import TestDataFactory
 
         async def setup_feed():
             # 创建关注对象
@@ -715,8 +729,9 @@ class TestUserFollowersEndpoint:
     ):
         """测试获取指定用户的粉丝列表成功"""
         import asyncio
-        from tests.test_utils import TestDataFactory
+
         from app.services.follow_service import follow_user
+        from tests.test_utils import TestDataFactory
 
         async def setup_followers():
             # 创建目标用户
@@ -776,6 +791,7 @@ class TestUserFollowersEndpoint:
     ):
         """测试获取指定用户的粉丝列表 - 空列表"""
         import asyncio
+
         from tests.test_utils import TestDataFactory
 
         async def create_user():
@@ -807,8 +823,9 @@ class TestUserFollowingEndpoint:
     ):
         """测试获取指定用户的关注列表成功"""
         import asyncio
-        from tests.test_utils import TestDataFactory
+
         from app.services.follow_service import follow_user
+        from tests.test_utils import TestDataFactory
 
         async def setup_following():
             # 创建目标用户
@@ -868,6 +885,7 @@ class TestUserFollowingEndpoint:
     ):
         """测试获取指定用户的关注列表 - 空列表"""
         import asyncio
+
         from tests.test_utils import TestDataFactory
 
         async def create_user():
@@ -900,8 +918,9 @@ class TestBatchFollowStatusEndpoint:
     ):
         """测试批量获取关注状态成功"""
         import asyncio
-        from tests.test_utils import TestDataFactory
+
         from app.models.follow import Follow
+        from tests.test_utils import TestDataFactory
 
         # 创建目标用户
         async def setup_users():

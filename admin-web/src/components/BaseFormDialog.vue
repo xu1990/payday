@@ -7,9 +7,9 @@
     v-bind="$attrs"
   >
     <el-form
+      ref="formRef"
       :model="form"
       :rules="rules"
-      ref="formRef"
       label-width="100px"
       :aria-label="`${title}表单`"
     >

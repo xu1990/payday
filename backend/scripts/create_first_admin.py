@@ -4,9 +4,9 @@
 在 backend 目录执行: python3 scripts/create_first_admin.py
 """
 import os
-import sys
 import secrets
 import string
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

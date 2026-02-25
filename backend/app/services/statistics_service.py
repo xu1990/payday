@@ -4,13 +4,12 @@
 from datetime import date, datetime, time
 from typing import Dict, List
 
-from sqlalchemy import select, func, case
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.salary import SalaryRecord
 from app.models.post import Post
+from app.models.salary import SalaryRecord
 from app.models.user import User
 from app.utils.encryption import decrypt_amount
+from sqlalchemy import case, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_month_summary(db: AsyncSession, user_id: str, year: int, month: int) -> dict:

@@ -25,11 +25,11 @@ test_post.py, test_statistics.py, test_theme.py, and other API test files.
 To run these tests after the infrastructure is fixed:
     pytest tests/api/test_checkin.py -v
 """
-import pytest
 from datetime import date, timedelta
-from sqlalchemy.ext.asyncio import AsyncSession
 
+import pytest
 from app.models.checkin import CheckIn
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 

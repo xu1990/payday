@@ -19,19 +19,19 @@ Shipping and Returns API Endpoints Tests
 - 业务规则验证
 - 错误处理
 """
-import pytest
 from datetime import datetime
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.main import app
-from app.core.deps import get_current_user, get_current_admin
-from app.models.user import User
-from app.models.admin import AdminUser
-from app.models.shipping import OrderShipment, OrderReturn
+import pytest
+from app.core.deps import get_current_admin, get_current_user
 from app.core.exceptions import BusinessException, NotFoundException
+from app.main import app
+from app.models.admin import AdminUser
+from app.models.shipping import OrderReturn, OrderShipment
+from app.models.user import User
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 # Mock get_current_user dependency

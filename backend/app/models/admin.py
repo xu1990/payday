@@ -3,7 +3,7 @@
 """
 from datetime import datetime
 
-from sqlalchemy import Column, String, DateTime
+from sqlalchemy import Column, DateTime, String
 
 from .base import Base
 from .user import gen_uuid

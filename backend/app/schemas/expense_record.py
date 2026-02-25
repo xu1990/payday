@@ -1,6 +1,7 @@
 """Expense Record Schemas - 支出记录数据验证"""
 from datetime import date, datetime
 from typing import List, Optional
+
 from pydantic import BaseModel, Field
 
 

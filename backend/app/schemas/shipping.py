@@ -19,10 +19,10 @@ Shipping and Returns - Request/Response Schemas
 - ShippingTemplateRegionResponse - 运费模板区域响应
 """
 from datetime import datetime
-from typing import List, Literal, Optional, Dict, Any
 from decimal import Decimal
+from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, field_validator, ConfigDict, field_serializer
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 
 class ShipmentCreate(BaseModel):

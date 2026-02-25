@@ -1,15 +1,14 @@
 """Expense API - 支出记录接口"""
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-
 from app.core.database import get_db
 from app.core.deps import get_current_user, rate_limit_general
-from app.core.exceptions import success_response, NotFoundException, AuthorizationException
-from app.models.user import User
+from app.core.exceptions import AuthorizationException, NotFoundException, success_response
 from app.models.salary import SalaryRecord
+from app.models.user import User
 from app.schemas.expense_record import ExpenseListCreate, ExpenseRecordResponse
 from app.services.expense_service import create_expense_records, get_expenses_by_salary
+from fastapi import APIRouter, Depends
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/salary", tags=["expenses"])
 

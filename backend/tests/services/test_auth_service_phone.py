@@ -2,16 +2,12 @@
 Auth service phone login tests - TDD approach
 Tests for phone number binding and login with phone_code parameter
 """
-import pytest
-from unittest.mock import AsyncMock, patch, Mock
-from sqlalchemy.ext.asyncio import AsyncSession
+from unittest.mock import AsyncMock, Mock, patch
 
-from app.services.auth_service import (
-    get_or_create_user,
-    login_with_code,
-    bind_phone_to_user,
-)
+import pytest
 from app.models.user import User
+from app.services.auth_service import bind_phone_to_user, get_or_create_user, login_with_code
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 

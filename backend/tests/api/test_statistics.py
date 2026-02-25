@@ -21,8 +21,9 @@ test_post.py, and other API test files.
 To run these tests after the infrastructure is fixed:
     pytest tests/api/test_statistics.py -v
 """
-import pytest
 from datetime import date
+
+import pytest
 
 
 @pytest.mark.asyncio

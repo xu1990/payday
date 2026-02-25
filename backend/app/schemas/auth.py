@@ -1,5 +1,6 @@
 """认证相关 schema"""
 from typing import Optional
+
 from pydantic import BaseModel, Field
 
 

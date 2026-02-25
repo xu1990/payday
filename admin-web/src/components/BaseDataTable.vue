@@ -1,12 +1,6 @@
 <template>
   <div class="base-data-table">
-    <el-table
-      v-loading="loading"
-      :data="items"
-      stripe
-      v-bind="$attrs"
-      :aria-label="tableLabel"
-    >
+    <el-table v-loading="loading" :data="items" stripe v-bind="$attrs" :aria-label="tableLabel">
       <slot></slot>
     </el-table>
 
@@ -33,8 +27,8 @@ interface Props<T = unknown> {
   total: number
   loading: boolean
   showPagination?: boolean
-  debounceMs?: number  // 防抖延迟（毫秒）
-  tableLabel?: string  // 表格的可访问性标签
+  debounceMs?: number // 防抖延迟（毫秒）
+  tableLabel?: string // 表格的可访问性标签
 }
 
 const emit = defineEmits(['page-change'])
@@ -45,7 +39,7 @@ const pageSize = defineModel<number>('pageSize', { default: 20 })
 // 存储props以便访问
 const props = withDefaults(defineProps<Props<T>>(), {
   showPagination: true,
-  debounceMs: 200,  // 默认 200ms 防抖
+  debounceMs: 200, // 默认 200ms 防抖
   tableLabel: '数据表格',
 })
 

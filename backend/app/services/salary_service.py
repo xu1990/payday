@@ -5,15 +5,14 @@
 from datetime import date, datetime
 from typing import List, Optional
 
-from sqlalchemy import select
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.core.database import transactional
+from app.core.exceptions import NotFoundException, ValidationException
 from app.models.salary import SalaryRecord
 from app.schemas.salary import SalaryRecordCreate, SalaryRecordUpdate
 from app.utils.encryption import decrypt_amount, encrypt_amount
-from app.core.exceptions import NotFoundException, ValidationException
-from app.core.database import transactional
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def record_to_response(record: SalaryRecord) -> dict:

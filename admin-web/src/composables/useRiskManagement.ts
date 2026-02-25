@@ -41,7 +41,7 @@ export function useRiskManagement<T extends { id: string; risk_status?: string }
     try {
       await updateFn(rejectTarget.value.id, {
         risk_status: 'rejected',
-        risk_reason: rejectReason.value
+        risk_reason: rejectReason.value,
       })
       ElMessage.success('已拒绝')
       rejectVisible.value = false
@@ -64,7 +64,7 @@ export function useRiskManagement<T extends { id: string; risk_status?: string }
   ) => {
     try {
       await updateFn(item.id, {
-        risk_status: 'approved'
+        risk_status: 'approved',
       })
       ElMessage.success('已通过')
     } catch (error: unknown) {
@@ -83,6 +83,6 @@ export function useRiskManagement<T extends { id: string; risk_status?: string }
     rejectTarget,
     reject,
     approve,
-    confirmReject
+    confirmReject,
   }
 }

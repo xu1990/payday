@@ -38,11 +38,7 @@ export interface TopicListResult {
 }
 
 /** 话题列表 */
-export function listTopics(params?: {
-  active_only?: boolean
-  limit?: number
-  offset?: number
-}) {
+export function listTopics(params?: { active_only?: boolean; limit?: number; offset?: number }) {
   const { active_only = false, limit = 20, offset = 0 } = params ?? {}
   const q = new URLSearchParams()
   q.set('active_only', String(active_only))

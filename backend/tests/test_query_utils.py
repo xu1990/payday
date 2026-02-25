@@ -1,14 +1,14 @@
 """
 单元测试 - 查询优化工具 (app.core.query_utils)
 """
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.core.query_utils import QueryHelper, get_or_404
+import pytest
 from app.core.exceptions import NotFoundException
+from app.core.query_utils import QueryHelper, get_or_404
 from app.models.user import User
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TestQueryHelper:
@@ -49,8 +49,8 @@ class TestQueryHelper:
     @pytest.mark.asyncio
     async def test_get_by_id_with_eager_loads(self, db_session):
         """测试按ID查找实体 - 带预加载"""
-        from tests.test_utils import TestDataFactory
         from sqlalchemy.orm import selectinload
+        from tests.test_utils import TestDataFactory
 
         user = await TestDataFactory.create_user(db_session)
 

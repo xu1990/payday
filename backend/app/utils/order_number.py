@@ -1,9 +1,10 @@
 """订单号生成工具"""
 from datetime import datetime
 from typing import Optional
+
+from app.models.point_order import PointOrder
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.point_order import PointOrder
 
 
 def generate_order_number() -> str:

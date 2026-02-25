@@ -3,11 +3,10 @@
 """
 from typing import List, Optional
 
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.theme import Theme, UserSetting
 from app.models.user import User
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def list_themes(db: AsyncSession) -> List[Theme]:

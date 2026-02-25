@@ -19,33 +19,20 @@ Shipping and Returns API Endpoints
 - 完整的退货流程管理
 - 统一错误处理
 """
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
+from app.core.database import get_db
+from app.core.deps import get_current_admin, get_current_user
+from app.core.exceptions import (BusinessException, NotFoundException, ValidationException,
+                                 success_response)
+from app.models.admin import AdminUser
+from app.models.user import User
+from app.schemas.shipping import (RefundProcess, ReturnApprove, ReturnCreate, ReturnReject,
+                                  ReturnResponse, ShipmentCreate, ShipmentResponse, TrackingUpdate)
+from app.services.shipping_service import ShippingService
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.database import get_db
-from app.core.deps import get_current_user, get_current_admin
-from app.core.exceptions import (
-    success_response,
-    NotFoundException,
-    BusinessException,
-    ValidationException,
-)
-from app.models.user import User
-from app.models.admin import AdminUser
-from app.schemas.shipping import (
-    ShipmentCreate,
-    ShipmentResponse,
-    TrackingUpdate,
-    ReturnCreate,
-    ReturnResponse,
-    ReturnApprove,
-    ReturnReject,
-    RefundProcess,
-)
-from app.services.shipping_service import ShippingService
 
 router = APIRouter(tags=["shipping"])
 

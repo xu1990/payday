@@ -1,38 +1,21 @@
 """积分商品SKU管理API - Sprint 4.7 SKU管理系统"""
 from typing import Optional
-from fastapi import APIRouter, Depends
-
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import get_current_admin_user
 from app.core.exceptions import success_response
 from app.models.user import User
-from app.schemas.point_sku import (
-    SpecificationCreate,
-    SpecificationUpdate,
-    SpecificationResponse,
-    SpecificationValueCreate,
-    SpecificationValueUpdate,
-    SpecificationValueResponse,
-    SKUCreate,
-    SKUUpdate,
-    SKUResponse,
-    SKUBatchUpdate,
-)
-from app.services.point_sku_service import (
-    create_specification,
-    list_specifications,
-    update_specification as service_update_specification,
-    delete_specification,
-    create_spec_value,
-    delete_spec_value,
-    create_sku,
-    list_skus,
-    update_sku,
-    delete_sku,
-    batch_update_skus,
-)
+from app.schemas.point_sku import (SKUBatchUpdate, SKUCreate, SKUResponse, SKUUpdate,
+                                   SpecificationCreate, SpecificationResponse, SpecificationUpdate,
+                                   SpecificationValueCreate, SpecificationValueResponse,
+                                   SpecificationValueUpdate)
+from app.services.point_sku_service import (batch_update_skus, create_sku, create_spec_value,
+                                            create_specification, delete_sku, delete_spec_value,
+                                            delete_specification, list_skus, list_specifications,
+                                            update_sku)
+from app.services.point_sku_service import update_specification as service_update_specification
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/admin", tags=["point-skus"])
 
@@ -150,7 +133,8 @@ async def update_specification_value(
     db: AsyncSession = Depends(get_db),
 ):
     """更新规格值（管理员）"""
-    from app.services.point_sku_service import update_specification_value as service_update_spec_value
+    from app.services.point_sku_service import \
+        update_specification_value as service_update_spec_value
 
     await service_update_spec_value(
         db,

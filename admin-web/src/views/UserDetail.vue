@@ -15,7 +15,9 @@
           <el-descriptions-item label="关注数">{{ user.follower_count }}</el-descriptions-item>
           <el-descriptions-item label="粉丝数">{{ user.following_count }}</el-descriptions-item>
           <el-descriptions-item label="帖子数">{{ user.post_count }}</el-descriptions-item>
-          <el-descriptions-item label="注册时间">{{ formatDate(user.created_at) }}</el-descriptions-item>
+          <el-descriptions-item label="注册时间">{{
+            formatDate(user.created_at)
+          }}</el-descriptions-item>
         </el-descriptions>
       </template>
     </el-card>

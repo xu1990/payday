@@ -3,14 +3,14 @@
 """
 import json
 from typing import Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, desc, func
 
+from app.core.exceptions import AuthorizationException, NotFoundException, ValidationException
 from app.models.first_salary_usage import FirstSalaryUsage
 from app.models.salary import SalaryRecord
 from app.schemas.first_salary_usage import FirstSalaryUsageCreate, FirstSalaryUsageUpdate
-from app.utils.encryption import encrypt_amount, decrypt_amount
-from app.core.exceptions import NotFoundException, ValidationException, AuthorizationException
+from app.utils.encryption import decrypt_amount, encrypt_amount
+from sqlalchemy import and_, desc, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _encrypt_with_salt(amount: float) -> str:

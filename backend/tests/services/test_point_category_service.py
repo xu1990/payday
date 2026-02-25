@@ -2,17 +2,11 @@
 单元测试 - 积分分类服务 (app.services.point_category_service)
 """
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.services.point_category_service import (
-    create_category,
-    get_category,
-    list_categories,
-    get_category_tree,
-    update_category,
-    delete_category,
-)
 from app.core.exceptions import NotFoundException, ValidationException
+from app.services.point_category_service import (create_category, delete_category, get_category,
+                                                 get_category_tree, list_categories,
+                                                 update_category)
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

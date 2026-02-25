@@ -19,11 +19,26 @@
           </el-table-column>
           <el-table-column label="操作" width="260" fixed="right">
             <template #default="{ row }">
-              <el-button type="primary" link aria-label="查看帖子详情" @click="openPostDetail(row)">详情</el-button>
-              <el-button type="success" link aria-label="通过该帖子" @click="approvePost(row)">通过</el-button>
-              <el-button type="warning" link aria-label="拒绝该帖子" @click="rejectPost(row)">拒绝</el-button>
-              <el-button v-if="row.status === 'normal'" type="warning" link aria-label="隐藏该帖子" @click="hidePost(row)">隐藏</el-button>
-              <el-button type="danger" link aria-label="删除该帖子" @click="deletePost(row)">删除</el-button>
+              <el-button type="primary" link aria-label="查看帖子详情" @click="openPostDetail(row)"
+                >详情</el-button
+              >
+              <el-button type="success" link aria-label="通过该帖子" @click="approvePost(row)"
+                >通过</el-button
+              >
+              <el-button type="warning" link aria-label="拒绝该帖子" @click="rejectPost(row)"
+                >拒绝</el-button
+              >
+              <el-button
+                v-if="row.status === 'normal'"
+                type="warning"
+                link
+                aria-label="隐藏该帖子"
+                @click="hidePost(row)"
+                >隐藏</el-button
+              >
+              <el-button type="danger" link aria-label="删除该帖子" @click="deletePost(row)"
+                >删除</el-button
+              >
             </template>
           </el-table-column>
         </el-table>
@@ -41,7 +56,9 @@
       </el-tab-pane>
       <el-tab-pane label="评论待审" name="comments">
         <div class="toolbar">
-          <el-button type="primary" aria-label="刷新评论列表" @click="fetchComments">刷新</el-button>
+          <el-button type="primary" aria-label="刷新评论列表" @click="fetchComments"
+            >刷新</el-button
+          >
         </div>
         <el-table v-loading="commentsLoading" :data="comments" stripe aria-label="待审评论列表">
           <el-table-column prop="id" label="ID" width="280" show-overflow-tooltip />
@@ -54,8 +71,12 @@
           </el-table-column>
           <el-table-column label="操作" width="180" fixed="right">
             <template #default="{ row }">
-              <el-button type="success" link aria-label="通过该评论" @click="approveComment(row)">通过</el-button>
-              <el-button type="warning" link aria-label="拒绝该评论" @click="rejectComment(row)">拒绝</el-button>
+              <el-button type="success" link aria-label="通过该评论" @click="approveComment(row)"
+                >通过</el-button
+              >
+              <el-button type="warning" link aria-label="拒绝该评论" @click="rejectComment(row)"
+                >拒绝</el-button
+              >
             </template>
           </el-table-column>
         </el-table>
@@ -72,7 +93,12 @@
         />
       </el-tab-pane>
     </el-tabs>
-    <el-dialog v-model="postDetailVisible" title="帖子详情" width="600px" aria-label="帖子详情对话框">
+    <el-dialog
+      v-model="postDetailVisible"
+      title="帖子详情"
+      width="600px"
+      aria-label="帖子详情对话框"
+    >
       <template v-if="currentPost">
         <p><strong>ID：</strong>{{ currentPost.id }}</p>
         <p><strong>匿名昵称：</strong>{{ currentPost.anonymous_name }}</p>
@@ -80,7 +106,10 @@
         <p><strong>内容：</strong></p>
         <div class="content-block">{{ currentPost.content }}</div>
         <p v-if="currentPost.images?.length">图片：{{ currentPost.images.length }} 张</p>
-        <p><strong>浏览/点赞/评论：</strong>{{ currentPost.view_count }} / {{ currentPost.like_count }} / {{ currentPost.comment_count }}</p>
+        <p>
+          <strong>浏览/点赞/评论：</strong>{{ currentPost.view_count }} /
+          {{ currentPost.like_count }} / {{ currentPost.comment_count }}
+        </p>
       </template>
     </el-dialog>
     <el-dialog v-model="rejectVisible" title="拒绝原因" width="400px" aria-label="拒绝原因对话框">
@@ -171,10 +200,12 @@ async function fetchComments() {
 }
 
 function openPostDetail(row: AdminPostListItem) {
-  getPost(row.id).then((post) => {
-    currentPost.value = post
-    postDetailVisible.value = true
-  }).catch(() => ElMessage.error('获取详情失败'))
+  getPost(row.id)
+    .then(post => {
+      currentPost.value = post
+      postDetailVisible.value = true
+    })
+    .catch(() => ElMessage.error('获取详情失败'))
 }
 
 async function approvePost(row: AdminPostListItem) {
@@ -252,16 +283,18 @@ async function hidePost(row: AdminPostListItem) {
 function deletePost(row: AdminPostListItem) {
   ElMessageBox.confirm('确定删除该帖子？', '提示', {
     type: 'warning',
-  }).then(async () => {
-    try {
-      await deletePostApi(row.id)
-      ElMessage.success('已删除')
-      await fetchPosts()
-    } catch (e: unknown) {
-      const err = e as { response?: { status: number } }
-      ElMessage.error(err.response?.status === 404 ? '帖子不存在' : '删除失败')
-    }
-  }).catch(() => {})
+  })
+    .then(async () => {
+      try {
+        await deletePostApi(row.id)
+        ElMessage.success('已删除')
+        await fetchPosts()
+      } catch (e: unknown) {
+        const err = e as { response?: { status: number } }
+        ElMessage.error(err.response?.status === 404 ? '帖子不存在' : '删除失败')
+      }
+    })
+    .catch(() => {})
 }
 
 async function approveComment(row: AdminCommentListItem) {
@@ -286,15 +319,27 @@ onMounted(() => {
   fetchPosts()
   fetchComments()
 })
-watch(activeTab, (name) => {
+watch(activeTab, name => {
   if (name === 'posts') fetchPosts()
   else fetchComments()
 })
 </script>
 
 <style scoped>
-.page-title { margin-bottom: 16px; font-size: 18px; }
-.toolbar { margin-bottom: 16px; }
-.pagination { margin-top: 16px; justify-content: flex-end; }
-.content-block { white-space: pre-wrap; max-height: 200px; overflow: auto; }
+.page-title {
+  margin-bottom: 16px;
+  font-size: 18px;
+}
+.toolbar {
+  margin-bottom: 16px;
+}
+.pagination {
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+.content-block {
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow: auto;
+}
 </style>

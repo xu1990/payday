@@ -3,14 +3,14 @@ Prometheus 监控指标 - 技术方案 6.1.1
 提供 HTTP 请求、数据库、缓存等关键指标暴露
 """
 import time
-from prometheus_client import Counter, Histogram, Gauge, Info, CollectorRegistry, generate_latest
-from prometheus_client.exposition import CONTENT_TYPE_LATEST
 from functools import wraps
 from typing import Callable, Optional
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.utils.logger import get_logger
+from fastapi import Request, Response
+from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram, Info, generate_latest
+from prometheus_client.exposition import CONTENT_TYPE_LATEST
+from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = get_logger(__name__)
 

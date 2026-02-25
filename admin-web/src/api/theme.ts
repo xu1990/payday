@@ -41,11 +41,7 @@ export interface ThemeListResult {
 }
 
 /** 主题列表 */
-export function listThemes(params?: {
-  active_only?: boolean
-  limit?: number
-  offset?: number
-}) {
+export function listThemes(params?: { active_only?: boolean; limit?: number; offset?: number }) {
   const { active_only = false, limit = 20, offset = 0 } = params ?? {}
   const q = new URLSearchParams()
   q.set('active_only', String(active_only))

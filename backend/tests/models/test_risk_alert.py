@@ -1,11 +1,11 @@
 """
 单元测试 - 风险预警模型 (app.models.risk_alert)
 """
-import pytest
 from datetime import datetime
-from sqlalchemy import select
 
+import pytest
 from app.models.risk_alert import RiskAlert
+from sqlalchemy import select
 
 
 class TestRiskAlert:

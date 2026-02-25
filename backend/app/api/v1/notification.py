@@ -2,19 +2,14 @@
 通知 - 列表、未读数、标记已读
 """
 from typing import Optional
-from fastapi import APIRouter, Depends, Query
-
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
-from app.schemas.notification import (
-    MarkReadBody,
-    NotificationListResponse,
-    NotificationResponse,
-)
+from app.schemas.notification import MarkReadBody, NotificationListResponse, NotificationResponse
 from app.services import notification_service
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 

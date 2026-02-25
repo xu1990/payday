@@ -12,20 +12,16 @@ BundleProduct Service 测试 - 套餐商品管理服务
 8. 并发测试
 9. 错误处理
 """
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from decimal import Decimal
 from datetime import datetime, timedelta
-from sqlalchemy.exc import IntegrityError, DatabaseError
+from decimal import Decimal
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.services.bundle_service import BundleProductService
-from app.models.product import Product, ProductSKU, ProductBundle, ProductPrice
+import pytest
+from app.core.exceptions import BusinessException, NotFoundException, ValidationException
+from app.models.product import Product, ProductBundle, ProductPrice, ProductSKU
 from app.models.user import User
-from app.core.exceptions import (
-    NotFoundException,
-    BusinessException,
-    ValidationException,
-)
+from app.services.bundle_service import BundleProductService
+from sqlalchemy.exc import DatabaseError, IntegrityError
 
 
 def create_mock_redis():

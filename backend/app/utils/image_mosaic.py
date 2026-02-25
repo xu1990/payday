@@ -2,14 +2,14 @@
 图片打码服务 - 技术方案 3.2.3
 用于工资截图敏感信息自动脱敏（手机号、身份证、姓名等）
 """
-import re
 import io
-from typing import List, Tuple, Optional
-from PIL import Image, ImageDraw
+import re
+from typing import List, Optional, Tuple
 
 from app.utils.logger import get_logger
-from app.utils.tencent_yu import tencent_yu_service
 from app.utils.storage import storage_service
+from app.utils.tencent_yu import tencent_yu_service
+from PIL import Image, ImageDraw
 
 logger = get_logger(__name__)
 

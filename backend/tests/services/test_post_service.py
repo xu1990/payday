@@ -1,21 +1,14 @@
 """帖子服务集成测试"""
-import pytest
 from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.post_service import (
-    create,
-    get_by_id,
-    list_posts,
-    search_posts,
-    get_posts_by_ids,
-    update_post_status_for_admin,
-    delete_post_for_admin,
-    list_posts_for_admin,
-    get_by_id_for_admin,
-)
-from app.schemas.post import PostCreate
+import pytest
 from app.core.exceptions import NotFoundException, ValidationException
+from app.schemas.post import PostCreate
+from app.services.post_service import (create, delete_post_for_admin, get_by_id,
+                                       get_by_id_for_admin, get_posts_by_ids, list_posts,
+                                       list_posts_for_admin, search_posts,
+                                       update_post_status_for_admin)
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 
@@ -1278,8 +1271,8 @@ class TestUserAvatarField:
     @pytest.mark.asyncio
     async def test_get_post_detail_includes_user_avatar(self, db_session: AsyncSession):
         """Test get_by_id returns user_avatar field"""
-        from app.services.post_service import create, get_by_id
         from app.schemas.post import PostCreate
+        from app.services.post_service import create, get_by_id
 
         # First create a post
         post_data = PostCreate(content="Test content")

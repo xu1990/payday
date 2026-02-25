@@ -2,28 +2,16 @@
 单元测试 - 全局异常处理 (app.core.error_handler)
 """
 import pytest
-from fastapi import Request, HTTPException, status
+from app.core.error_handler import (auth_exception_handler, database_exception_handler,
+                                    general_exception_handler, http_exception_handler,
+                                    payday_exception_handler, setup_exception_handlers,
+                                    validation_exception_handler)
+from app.core.exceptions import (AuthenticationException, ExternalServiceException,
+                                 NotFoundException, PayDayException, RateLimitException,
+                                 ValidationException, error_response)
+from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
-
-from app.core.error_handler import (
-    payday_exception_handler,
-    http_exception_handler,
-    validation_exception_handler,
-    auth_exception_handler,
-    database_exception_handler,
-    general_exception_handler,
-    setup_exception_handlers,
-)
-from app.core.exceptions import (
-    PayDayException,
-    AuthenticationException,
-    NotFoundException,
-    ValidationException,
-    RateLimitException,
-    ExternalServiceException,
-    error_response,
-)
 
 
 class TestPaydayExceptionHandler:

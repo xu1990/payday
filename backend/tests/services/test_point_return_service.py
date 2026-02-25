@@ -1,28 +1,23 @@
 """
 单元测试 - 积分退货服务 (app.services.point_return_service)
 """
-import pytest
 from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.point_return_service import (
-    create_return,
-    list_returns,
-    get_return,
-    approve_return,
-    reject_return,
-)
-from app.core.exceptions import NotFoundException, BusinessException, ValidationException
+import pytest
+from app.core.exceptions import BusinessException, NotFoundException, ValidationException
+from app.services.point_return_service import (approve_return, create_return, get_return,
+                                               list_returns, reject_return)
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio
 async def test_create_return(db_session: AsyncSession):
     """Test creating a return request"""
-    from app.models.point_return import PointReturn
     from app.models.point_order import PointOrder
     from app.models.point_product import PointProduct
-    from tests.test_utils import TestDataFactory
+    from app.models.point_return import PointReturn
     from app.utils.order_number import generate_order_number
+    from tests.test_utils import TestDataFactory
 
     # Create test data
     user = await TestDataFactory.create_user(db_session, openid="test_openid")
@@ -88,11 +83,11 @@ async def test_list_returns_empty(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_list_returns_with_data(db_session: AsyncSession):
     """Test listing returns with data"""
-    from app.models.point_return import PointReturn
     from app.models.point_order import PointOrder
     from app.models.point_product import PointProduct
-    from tests.test_utils import TestDataFactory
+    from app.models.point_return import PointReturn
     from app.utils.order_number import generate_order_number
+    from tests.test_utils import TestDataFactory
 
     # Create test data
     user = await TestDataFactory.create_user(db_session, openid="test_openid")
@@ -146,11 +141,11 @@ async def test_list_returns_with_data(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_list_returns_by_status(db_session: AsyncSession):
     """Test listing returns by status"""
-    from app.models.point_return import PointReturn
     from app.models.point_order import PointOrder
     from app.models.point_product import PointProduct
-    from tests.test_utils import TestDataFactory
+    from app.models.point_return import PointReturn
     from app.utils.order_number import generate_order_number
+    from tests.test_utils import TestDataFactory
 
     # Create test data
     user = await TestDataFactory.create_user(db_session, openid="test_openid")
@@ -212,11 +207,11 @@ async def test_list_returns_by_status(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_get_return(db_session: AsyncSession):
     """Test getting a return by ID"""
-    from app.models.point_return import PointReturn
     from app.models.point_order import PointOrder
     from app.models.point_product import PointProduct
-    from tests.test_utils import TestDataFactory
+    from app.models.point_return import PointReturn
     from app.utils.order_number import generate_order_number
+    from tests.test_utils import TestDataFactory
 
     # Create test data
     user = await TestDataFactory.create_user(db_session, openid="test_openid")
@@ -264,11 +259,11 @@ async def test_get_return_not_found(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_approve_return(db_session: AsyncSession):
     """Test approving a return request"""
-    from app.models.point_return import PointReturn
     from app.models.point_order import PointOrder
     from app.models.point_product import PointProduct
-    from tests.test_utils import TestDataFactory
+    from app.models.point_return import PointReturn
     from app.utils.order_number import generate_order_number
+    from tests.test_utils import TestDataFactory
 
     # Create test data
     user = await TestDataFactory.create_user(db_session, openid="test_openid")
@@ -329,11 +324,11 @@ async def test_approve_return_not_found(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_approve_return_already_processed(db_session: AsyncSession):
     """Test approving a return that's already processed"""
-    from app.models.point_return import PointReturn
     from app.models.point_order import PointOrder
     from app.models.point_product import PointProduct
-    from tests.test_utils import TestDataFactory
+    from app.models.point_return import PointReturn
     from app.utils.order_number import generate_order_number
+    from tests.test_utils import TestDataFactory
 
     # Create test data
     user = await TestDataFactory.create_user(db_session, openid="test_openid")
@@ -383,11 +378,11 @@ async def test_approve_return_already_processed(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_reject_return(db_session: AsyncSession):
     """Test rejecting a return request"""
-    from app.models.point_return import PointReturn
     from app.models.point_order import PointOrder
     from app.models.point_product import PointProduct
-    from tests.test_utils import TestDataFactory
+    from app.models.point_return import PointReturn
     from app.utils.order_number import generate_order_number
+    from tests.test_utils import TestDataFactory
 
     # Create test data
     user = await TestDataFactory.create_user(db_session, openid="test_openid")
@@ -448,11 +443,11 @@ async def test_reject_return_not_found(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_reject_return_already_processed(db_session: AsyncSession):
     """Test rejecting a return that's already processed"""
-    from app.models.point_return import PointReturn
     from app.models.point_order import PointOrder
     from app.models.point_product import PointProduct
-    from tests.test_utils import TestDataFactory
+    from app.models.point_return import PointReturn
     from app.utils.order_number import generate_order_number
+    from tests.test_utils import TestDataFactory
 
     # Create test data
     user = await TestDataFactory.create_user(db_session, openid="test_openid")

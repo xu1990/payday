@@ -16,22 +16,17 @@ Order API Endpoints
 - 支持状态筛选和分页
 - 统一错误处理
 """
-from typing import Dict, Any, Optional
-
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Dict, Optional
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
-from app.core.exceptions import (
-    success_response,
-    NotFoundException,
-    BusinessException,
-)
+from app.core.exceptions import BusinessException, NotFoundException, success_response
 from app.models.user import User
 from app.schemas.order import OrderCreate, OrderResponse
 from app.services.order_service import OrderService
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -138,8 +133,8 @@ async def list_orders_endpoint(
         Dict: 订单列表（包含分页信息）
     """
     try:
-        from sqlalchemy import select, func, desc
         from app.models.order import Order
+        from sqlalchemy import desc, func, select
 
         # 构建查询
         query = select(Order).where(Order.user_id == str(current_user.id))

@@ -1,10 +1,11 @@
 """邀请码生成工具"""
 import random
 from typing import Optional
+
+from app.core.exceptions import BusinessException
+from app.models.user import User
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.user import User
-from app.core.exceptions import BusinessException
 
 
 def generate_invite_code() -> str:

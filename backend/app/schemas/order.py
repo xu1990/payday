@@ -3,7 +3,7 @@
 E-commerce Order System - Unified order schemas
 """
 from datetime import datetime
-from typing import List, Literal, Optional, Dict, Any
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
 

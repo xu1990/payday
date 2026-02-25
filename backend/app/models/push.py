@@ -2,7 +2,8 @@
 推送通知表 - Sprint 3.5 运营功能
 """
 from datetime import datetime
-from sqlalchemy import Column, String, Text, Boolean, DateTime, Integer, ForeignKey
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 
 from .base import Base
 from .user import gen_uuid

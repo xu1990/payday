@@ -22,8 +22,9 @@ require database access (like token refresh) pass.
 The test structure is correct and will pass once the TestClient infrastructure
 issue is resolved.
 """
-import pytest
 from datetime import datetime
+
+import pytest
 
 
 class TestListNotificationsEndpoint:
@@ -38,6 +39,7 @@ class TestListNotificationsEndpoint:
     ):
         """测试获取通知列表成功 - 基本查询"""
         import asyncio
+
         from tests.test_utils import TestDataFactory
 
         async def create_notifications():
@@ -98,6 +100,7 @@ class TestListNotificationsEndpoint:
     ):
         """测试获取通知列表 - 仅未读"""
         import asyncio
+
         from tests.test_utils import TestDataFactory
 
         async def create_notifications():
@@ -145,6 +148,7 @@ class TestListNotificationsEndpoint:
     ):
         """测试获取通知列表 - 按类型筛选"""
         import asyncio
+
         from tests.test_utils import TestDataFactory
 
         async def create_notifications():
@@ -193,6 +197,7 @@ class TestListNotificationsEndpoint:
     ):
         """测试获取通知列表 - 分页参数"""
         import asyncio
+
         from tests.test_utils import TestDataFactory
 
         async def create_notifications():
@@ -258,6 +263,7 @@ class TestGetUnreadCountEndpoint:
     ):
         """测试获取未读通知数量成功"""
         import asyncio
+
         from tests.test_utils import TestDataFactory
 
         async def create_notifications():
@@ -334,6 +340,7 @@ class TestMarkReadEndpoint:
     ):
         """测试标记多条通知已读"""
         import asyncio
+
         from tests.test_utils import TestDataFactory
 
         async def create_notifications():
@@ -377,6 +384,7 @@ class TestMarkReadEndpoint:
     ):
         """测试标记全部通知已读"""
         import asyncio
+
         from tests.test_utils import TestDataFactory
 
         async def create_notifications():
@@ -472,6 +480,7 @@ class TestMarkOneReadEndpoint:
     ):
         """测试标记单条通知已读成功"""
         import asyncio
+
         from tests.test_utils import TestDataFactory
 
         async def create_notification():
@@ -537,6 +546,7 @@ class TestDeleteNotificationsEndpoint:
     ):
         """测试删除指定ID的通知"""
         import asyncio
+
         from tests.test_utils import TestDataFactory
 
         async def create_notifications():
@@ -583,6 +593,7 @@ class TestDeleteNotificationsEndpoint:
     ):
         """测试删除全部通知"""
         import asyncio
+
         from tests.test_utils import TestDataFactory
 
         async def create_notifications():

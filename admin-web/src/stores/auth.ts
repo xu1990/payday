@@ -91,9 +91,9 @@ export const useAuthStore = defineStore('auth', {
     _isLoggedIn: !!safeGetItem('payday_admin_token'),
   }),
   getters: {
-    isLoggedIn: (state) => state._isLoggedIn,
+    isLoggedIn: state => state._isLoggedIn,
     /** 验证当前 token 是否具有 admin scope（由后端验证）*/
-    hasAdminScope: (state) => state._isLoggedIn,
+    hasAdminScope: state => state._isLoggedIn,
   },
   actions: {
     setToken(t: string, csrfToken?: string, refreshToken?: string) {

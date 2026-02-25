@@ -2,12 +2,14 @@
 统计 - 本月汇总、简单趋势、数据洞察（Sprint 3.2）
 """
 from datetime import date
-from fastapi import APIRouter, Depends, Query
 
-from app.core.deps import get_current_user
 from app.core.database import get_db
+from app.core.deps import get_current_user
 from app.models.user import User
-from app.services.statistics_service import get_month_summary, get_trend, get_insights_distributions, get_year_end_bonus_stats, get_ontime_payment_stats
+from app.services.statistics_service import (get_insights_distributions, get_month_summary,
+                                             get_ontime_payment_stats, get_trend,
+                                             get_year_end_bonus_stats)
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/statistics", tags=["statistics"])

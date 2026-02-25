@@ -4,23 +4,18 @@
 from datetime import date
 from typing import Optional
 
-from fastapi import Depends, HTTPException, Query
-
-from app.core.deps import get_current_user
-from app.core.exceptions import NotFoundException, AuthenticationException, BusinessException, success_response
 from app.core.database import get_db
+from app.core.deps import get_current_user
+from app.core.exceptions import (AuthenticationException, BusinessException, NotFoundException,
+                                 success_response)
 from app.models.user import User
 from app.schemas.salary import SalaryRecordCreate, SalaryRecordResponse, SalaryRecordUpdate
-from app.services.salary_service import (
-    create as create_record,
-    delete as delete_record,
-    get_by_id,
-    list_by_user,
-    record_to_response,
-    update as update_record,
-)
+from app.services.salary_service import create as create_record
+from app.services.salary_service import delete as delete_record
+from app.services.salary_service import get_by_id, list_by_user, record_to_response
+from app.services.salary_service import update as update_record
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter
 
 router = APIRouter(prefix="/salary", tags=["salary"])
 

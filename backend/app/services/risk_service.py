@@ -5,13 +5,11 @@
 import re
 from dataclasses import dataclass
 from typing import List, Optional
+
+from app.services import sensitive_word_service
+from app.utils.tencent_yu import tencent_yu_image_check, tencent_yu_text_check
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.utils.tencent_yu import (
-    tencent_yu_text_check,
-    tencent_yu_image_check,
-)
-from app.services import sensitive_word_service
 
 @dataclass
 class RiskResult:

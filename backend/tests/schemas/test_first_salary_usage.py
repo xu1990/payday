@@ -2,7 +2,8 @@
 Test First Salary Usage Schemas
 """
 import pytest
-from app.schemas.first_salary_usage import FirstSalaryUsageCreate, FirstSalaryUsageResponse, FirstSalaryUsageListCreate
+from app.schemas.first_salary_usage import (FirstSalaryUsageCreate, FirstSalaryUsageListCreate,
+                                            FirstSalaryUsageResponse)
 
 
 def test_first_salary_usage_create_schema():

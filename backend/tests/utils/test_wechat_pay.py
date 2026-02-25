@@ -1,19 +1,13 @@
 """
 单元测试 - 微信支付工具 (app.utils.wechat_pay)
 """
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.utils.wechat_pay import (
-    generate_nonce_str,
-    dict_to_xml,
-    xml_to_dict,
-    sign_md5,
-    verify_sign,
-    parse_payment_notify,
-)
+import pytest
 from app.core.exceptions import ValidationException
+from app.utils.wechat_pay import (dict_to_xml, generate_nonce_str, parse_payment_notify, sign_md5,
+                                  verify_sign, xml_to_dict)
 
 
 class TestGenerateNonceStr:

@@ -1,11 +1,12 @@
 """
 单元测试 - 签名验证模块 (app.core.signature)
 """
-import pytest
 import time
-from unittest.mock import patch, MagicMock
-from app.core.signature import verify_signature, verify_timestamp
+from unittest.mock import MagicMock, patch
+
+import pytest
 from app.core.exceptions import ValidationException
+from app.core.signature import verify_signature, verify_timestamp
 
 
 class TestVerifySignature:

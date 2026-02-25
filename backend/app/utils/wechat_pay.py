@@ -10,10 +10,9 @@ import time
 from typing import Any
 
 import httpx
-from defusedxml.ElementTree import fromstring as safe_fromstring
-from defusedxml.ElementTree import ParseError
-
 from app.core.config import get_settings
+from defusedxml.ElementTree import ParseError
+from defusedxml.ElementTree import fromstring as safe_fromstring
 
 settings = get_settings()
 

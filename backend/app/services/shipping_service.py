@@ -43,23 +43,18 @@ ShippingTemplateService - 运费模板服务
 """
 import logging
 from datetime import datetime
-from typing import Optional, List
 from decimal import Decimal
+from typing import List, Optional
 
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.core.exceptions import BusinessException, NotFoundException, ValidationException
 from app.models.order import Order, OrderItem
-from app.models.shipping import OrderShipment, OrderReturn, CourierCompany, ShippingTemplate, ShippingTemplateRegion
-from app.schemas.shipping import (
-    ShippingTemplateCreate,
-    ShippingTemplateUpdate,
-    ShippingTemplateRegionCreate,
-    ShippingTemplateRegionUpdate,
-    ShippingTemplateResponse,
-    ShippingTemplateRegionResponse
-)
-from app.core.exceptions import NotFoundException, BusinessException, ValidationException
+from app.models.shipping import (CourierCompany, OrderReturn, OrderShipment, ShippingTemplate,
+                                 ShippingTemplateRegion)
+from app.schemas.shipping import (ShippingTemplateCreate, ShippingTemplateRegionCreate,
+                                  ShippingTemplateRegionResponse, ShippingTemplateRegionUpdate,
+                                  ShippingTemplateResponse, ShippingTemplateUpdate)
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

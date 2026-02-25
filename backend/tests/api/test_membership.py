@@ -1,12 +1,12 @@
 """会员API测试"""
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
+from app.models.membership import Membership, MembershipOrder
+from app.models.user import User
+from app.schemas.membership import MembershipOrderCreate
 from fastapi import status
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.user import User
-from app.models.membership import Membership, MembershipOrder
-from app.schemas.membership import MembershipOrderCreate
 
 
 async def create_test_membership(db: AsyncSession, name: str, price: float, days: int) -> Membership:

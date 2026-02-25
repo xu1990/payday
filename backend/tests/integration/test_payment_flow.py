@@ -1,9 +1,8 @@
 """支付流程集成测试"""
 import pytest
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.main import app
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 
@@ -92,8 +91,8 @@ async def test_membership_purchase_flow(db_session: AsyncSession):
             assert response.status_code == 200
 
         # 步骤5: 验证订单状态已更新
-        from sqlalchemy import select
         from app.models.membership import MembershipOrder
+        from sqlalchemy import select
 
         result = await db_session.execute(
             select(MembershipOrder).where(MembershipOrder.id == order.id)
@@ -158,8 +157,8 @@ async def test_payment_failure_handling(db_session: AsyncSession):
             assert response.status_code == 200  # 微信需要200响应，但订单未更新
 
         # 验证订单状态仍然是pending
-        from sqlalchemy import select
         from app.models.membership import MembershipOrder
+        from sqlalchemy import select
 
         result = await db_session.execute(
             select(MembershipOrder).where(MembershipOrder.id == order.id)

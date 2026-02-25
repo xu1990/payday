@@ -1,7 +1,7 @@
 """测试腾讯云COS存储服务"""
-import pytest
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
 
+import pytest
 from app.utils.cos import CosService
 
 

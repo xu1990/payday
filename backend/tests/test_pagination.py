@@ -1,16 +1,12 @@
 """分页工具测试"""
-import pytest
 from datetime import datetime, timedelta
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
 
-from app.utils.pagination import (
-    CursorPaginator,
-    CursorPaginationResult,
-    offset_paginate,
-)
-from app.models.user import User
+import pytest
 from app.models.post import Post
+from app.models.user import User
+from app.utils.pagination import CursorPaginationResult, CursorPaginator, offset_paginate
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 

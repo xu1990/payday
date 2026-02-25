@@ -2,8 +2,10 @@
 分页工具类 - 统一分页逻辑，避免代码重复
 提供计算分页参数的通用方法
 """
-from typing import Generic, Tuple, List, Optional
+from typing import Generic, List, Optional, Tuple
+
 from sqlalchemy import func, select
+
 
 def calculate_pagination(limit: int, offset: int) -> Tuple[int, int]:
     """

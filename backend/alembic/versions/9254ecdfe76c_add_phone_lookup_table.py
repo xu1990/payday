@@ -5,9 +5,8 @@ Revises: 4_1_002
 Create Date: 2025-02-21
 
 """
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '4_1_003'

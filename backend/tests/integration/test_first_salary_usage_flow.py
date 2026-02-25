@@ -2,12 +2,12 @@
 第一笔工资用途集成测试
 测试完整的 CRUD 流程
 """
-import pytest
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date, datetime
 
+import pytest
 from app.main import app
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

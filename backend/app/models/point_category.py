@@ -1,6 +1,7 @@
 """积分商品分类模型"""
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Text, Boolean, DateTime, ForeignKey
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 
 from .base import Base
 from .user import gen_uuid

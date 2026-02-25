@@ -2,7 +2,10 @@
 物流跟踪模型 - Tracking Module
 """
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, Text, Enum as SQLEnum
+
+from sqlalchemy import Boolean, Column, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Integer, String, Text
 
 from .base import Base
 from .user import gen_uuid

@@ -2,11 +2,12 @@
 薪日 PayDay 主服务配置 - 与技术方案 v1.0 一致
 从环境变量读取 MySQL/Redis/COS/微信等配置
 """
-from pydantic_settings import BaseSettings
-from functools import lru_cache
-import secrets
 import logging
+import secrets
 import string
+from functools import lru_cache
+
+from pydantic_settings import BaseSettings
 
 logger = logging.getLogger(__name__)
 

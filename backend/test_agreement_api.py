@@ -1,10 +1,11 @@
 """测试协议 API 返回格式"""
 import asyncio
-from sqlalchemy import select
-from app.core.database import async_session_maker
-from app.models.miniprogram_config import MiniprogramConfig
-from app.core.exceptions import success_response
+
 from app.api.v1.config import AgreementResponse
+from app.core.database import async_session_maker
+from app.core.exceptions import success_response
+from app.models.miniprogram_config import MiniprogramConfig
+from sqlalchemy import select
 
 
 async def test_agreement_data():

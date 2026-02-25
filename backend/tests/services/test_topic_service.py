@@ -1,18 +1,11 @@
 """话题服务测试"""
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.services.topic_service import (
-    create_topic,
-    get_topic_by_id,
-    list_topics,
-    update_topic,
-    delete_topic,
-    increment_post_count,
-    decrement_post_count,
-)
-from app.models.topic import Topic
 from app.core.exceptions import NotFoundException
+from app.models.topic import Topic
+from app.services.topic_service import (create_topic, decrement_post_count, delete_topic,
+                                        get_topic_by_id, increment_post_count, list_topics,
+                                        update_topic)
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TestCreateTopic:

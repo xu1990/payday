@@ -1,20 +1,17 @@
 """
 发薪日配置 - 当前用户的 list/create/get/update/delete
 """
-from fastapi import APIRouter, Depends, HTTPException
-
-from app.core.deps import get_current_user
-from app.core.exceptions import NotFoundException, AuthenticationException, BusinessException, success_response
 from app.core.database import get_db
+from app.core.deps import get_current_user
+from app.core.exceptions import (AuthenticationException, BusinessException, NotFoundException,
+                                 success_response)
 from app.models.user import User
 from app.schemas.payday import PaydayConfigCreate, PaydayConfigResponse, PaydayConfigUpdate
-from app.services.payday_service import (
-    create as create_config,
-    delete as delete_config,
-    get_by_id,
-    list_by_user,
-    update as update_config,
-)
+from app.services.payday_service import create as create_config
+from app.services.payday_service import delete as delete_config
+from app.services.payday_service import get_by_id, list_by_user
+from app.services.payday_service import update as update_config
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/payday", tags=["payday"])

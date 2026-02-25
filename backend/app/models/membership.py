@@ -2,7 +2,8 @@
 会员与订单表 - Sprint 3.5 会员与商业化
 """
 from datetime import datetime, timedelta
-from sqlalchemy import Column, String, DateTime, ForeignKey, Integer, Numeric, Text, Enum, Boolean
+
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text
 
 from .base import Base
 from .user import gen_uuid

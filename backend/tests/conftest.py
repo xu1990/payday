@@ -1,24 +1,23 @@
 """
 Pytest 配置和共享 fixtures
 """
-import pytest
 import asyncio
 from typing import AsyncGenerator, Generator
-from unittest.mock import patch, AsyncMock
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+from unittest.mock import AsyncMock, patch
 
+import pytest
 from app.core.config import get_settings
 from app.core.security import create_access_token
 from app.models.base import Base
-from app.models.user import User
+from app.models.membership import AppTheme, Membership, MembershipOrder
+from app.models.notification import Notification
+from app.models.payday import PaydayConfig
 from app.models.post import Post
 from app.models.salary import SalaryRecord
-from app.models.payday import PaydayConfig
-from app.models.membership import Membership, MembershipOrder, AppTheme
-from app.models.notification import Notification
+from app.models.user import User
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
 from tests.test_utils import TestDataFactory
-
 
 # 测试数据库 URL（使用内存数据库或测试数据库）
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -114,8 +113,8 @@ async def test_user(db_session: AsyncSession) -> User:
 @pytest.fixture
 async def test_admin(db_session: AsyncSession):
     """创建测试管理员用户"""
-    from app.models.admin import AdminUser
     from app.core.security import hash_password
+    from app.models.admin import AdminUser
 
     admin = AdminUser(
         username="test_admin",
@@ -157,10 +156,11 @@ def admin_headers(admin_token: str) -> dict:
 @pytest.fixture
 async def async_client(db_session: AsyncSession):
     """异步HTTP客户端用于集成测试，使用测试数据库会话"""
-    from httpx import AsyncClient, ASGITransport
-    from app.main import app
     from unittest.mock import patch
+
     from app.core.database import get_db
+    from app.main import app
+    from httpx import ASGITransport, AsyncClient
 
     # Override the get_db dependency to use our test session
     async def override_get_db():

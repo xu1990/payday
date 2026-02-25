@@ -1,24 +1,17 @@
 """
 测试积分商品SKU服务 - TDD
 """
-import pytest
 import json
-from sqlalchemy import select
+
+import pytest
+from app.core.exceptions import BusinessException, NotFoundException, ValidationException
 from app.models.point_product import PointProduct
-from app.models.point_sku import PointSpecification, PointSpecificationValue, PointProductSKU
-from app.services.point_sku_service import (
-    create_specification,
-    list_specifications,
-    delete_specification,
-    create_spec_value,
-    delete_spec_value,
-    create_sku,
-    list_skus,
-    update_sku,
-    delete_sku,
-    batch_update_skus,
-)
-from app.core.exceptions import NotFoundException, ValidationException, BusinessException
+from app.models.point_sku import PointProductSKU, PointSpecification, PointSpecificationValue
+from app.services.point_sku_service import (batch_update_skus, create_sku, create_spec_value,
+                                            create_specification, delete_sku, delete_spec_value,
+                                            delete_specification, list_skus, list_specifications,
+                                            update_sku)
+from sqlalchemy import select
 
 
 @pytest.mark.asyncio

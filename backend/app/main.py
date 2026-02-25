@@ -3,25 +3,20 @@
 集成 Prometheus 监控指标 + Sentry 错误追踪
 """
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Response, Request, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
+from app.api.v1 import api_router
 from app.core.config import get_settings
 from app.core.database import async_session_maker
 from app.core.error_handler import setup_exception_handlers
-from app.api.v1 import api_router
 from app.services.cache_preheat import preheat_all
-from app.utils.logger import get_logger
-from app.utils.metrics import (
-    PrometheusMiddleware,
-    get_metrics_text,
-    get_metrics_content_type,
-    set_app_info,
-    collect_application_metrics,
-)
-from app.utils.sentry import init_on_startup
 from app.utils import date as date_utils
+from app.utils.logger import get_logger
+from app.utils.metrics import (PrometheusMiddleware, collect_application_metrics,
+                               get_metrics_content_type, get_metrics_text, set_app_info)
+from app.utils.sentry import init_on_startup
+from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 logger = get_logger(__name__)
 settings = get_settings()

@@ -13,17 +13,17 @@ Shipping Service 测试 - 物流服务
 9. 业务逻辑验证（订单所有权、状态检查、金额验证）
 10. 错误处理和异常场景
 """
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from decimal import Decimal
 from datetime import datetime, timedelta
-from sqlalchemy.ext.asyncio import AsyncSession
+from decimal import Decimal
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.services.shipping_service import ShippingService
+import pytest
+from app.core.exceptions import BusinessException, NotFoundException, ValidationException
 from app.models.order import Order, OrderItem
-from app.models.shipping import OrderShipment, OrderReturn, CourierCompany
+from app.models.shipping import CourierCompany, OrderReturn, OrderShipment
 from app.models.user import User
-from app.core.exceptions import NotFoundException, BusinessException, ValidationException
+from app.services.shipping_service import ShippingService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TestCreateShipment:
@@ -804,9 +804,10 @@ async def _create_test_user(db: AsyncSession) -> User:
 
 async def _create_test_admin(db: AsyncSession):
     """创建测试管理员"""
-    from app.models.admin import AdminUser
-    from app.core.security import hash_password
     import uuid
+
+    from app.core.security import hash_password
+    from app.models.admin import AdminUser
 
     admin = AdminUser(
         id=f"admin_{uuid.uuid4().hex}",

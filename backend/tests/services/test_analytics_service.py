@@ -16,17 +16,17 @@ Analytics Service 测试 - 订单分析服务
 12. 大数据集处理
 13. 图表数据格式化
 """
-import pytest
+from datetime import date, datetime, timedelta
 from decimal import Decimal
-from datetime import datetime, timedelta, date
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.analytics_service import AnalyticsService
+import pytest
+from app.core.exceptions import ValidationException
 from app.models.order import Order, OrderItem
 from app.models.product import Product, ProductCategory
 from app.models.user import User
-from app.core.exceptions import ValidationException
+from app.services.analytics_service import AnalyticsService
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 

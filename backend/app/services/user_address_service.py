@@ -8,11 +8,11 @@ UserAddress Service - 用户地址服务
 - 设置默认地址
 """
 from typing import List, Optional
+
+from app.core.exceptions import NotFoundException
+from app.models.address import UserAddress
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.address import UserAddress
-from app.core.exceptions import NotFoundException
 
 
 class UserAddressService:

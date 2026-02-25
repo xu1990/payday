@@ -1,16 +1,11 @@
 """风控服务测试"""
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-from sqlalchemy.ext.asyncio import AsyncSession
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.services.risk_service import (
-    _text_contact_score,
-    _text_sensitive_score,
-    _image_score,
-    evaluate_content,
-    _text_sensitive_score_from_db,
-    RiskResult,
-)
+import pytest
+from app.services.risk_service import (RiskResult, _image_score, _text_contact_score,
+                                       _text_sensitive_score, _text_sensitive_score_from_db,
+                                       evaluate_content)
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TestTextContactScore:

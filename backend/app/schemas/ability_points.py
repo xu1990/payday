@@ -1,6 +1,7 @@
 """Ability Points Schemas - 能力值系统数据验证（Sprint 4.6）"""
 from datetime import datetime
 from typing import List, Optional
+
 from pydantic import BaseModel, Field
 
 

@@ -1,8 +1,8 @@
 """测试日志工具"""
-import pytest
 import logging
 from unittest.mock import patch
 
+import pytest
 from app.utils.logger import get_logger
 
 

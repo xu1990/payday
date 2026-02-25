@@ -1,21 +1,12 @@
 """积分商品SKU服务 - Sprint 4.7 多规格系统"""
-from typing import List, Dict, Optional
-from sqlalchemy import select, and_, delete
-from sqlalchemy.ext.asyncio import AsyncSession
 import json
+from typing import Dict, List, Optional
 
+from app.core.exceptions import BusinessException, NotFoundException, ValidationException
 from app.models.point_product import PointProduct
-from app.models.point_sku import (
-    PointSpecification,
-    PointSpecificationValue,
-    PointProductSKU,
-)
-from app.core.exceptions import (
-    NotFoundException,
-    BusinessException,
-    ValidationException,
-)
-
+from app.models.point_sku import PointProductSKU, PointSpecification, PointSpecificationValue
+from sqlalchemy import and_, delete, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # ============== 规格管理 ==============
 

@@ -5,14 +5,17 @@
 import base64
 import json
 from typing import Dict, List, Optional
-from tencentcloud.common import credential
-from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
-from tencentcloud.tms.v20200713 import tms_client, models as tms_models
-from tencentcloud.ims.v20201229 import ims_client, models as ims_models
-from tencentcloud.ocr.v20181119 import ocr_client, models as ocr_models
 
 from app.core.config import settings
 from app.utils.logger import get_logger
+from tencentcloud.common import credential
+from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
+from tencentcloud.ims.v20201229 import ims_client
+from tencentcloud.ims.v20201229 import models as ims_models
+from tencentcloud.ocr.v20181119 import models as ocr_models
+from tencentcloud.ocr.v20181119 import ocr_client
+from tencentcloud.tms.v20200713 import models as tms_models
+from tencentcloud.tms.v20200713 import tms_client
 
 logger = get_logger(__name__)
 

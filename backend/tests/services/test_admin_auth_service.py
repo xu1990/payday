@@ -1,14 +1,11 @@
 """管理端认证服务测试"""
-import pytest
 from unittest.mock import AsyncMock, patch
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.admin_auth_service import (
-    get_admin_by_username,
-    login_admin,
-)
-from app.models.admin import AdminUser
+import pytest
 from app.core.security import hash_password
+from app.models.admin import AdminUser
+from app.services.admin_auth_service import get_admin_by_username, login_admin
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 

@@ -227,10 +227,20 @@ onMounted(() => {
     >
       <el-form :model="form" label-width="120px">
         <el-form-item label="主题名称" required>
-          <el-input v-model="form.name" placeholder="请输入主题名称" maxlength="50" show-word-limit />
+          <el-input
+            v-model="form.name"
+            placeholder="请输入主题名称"
+            maxlength="50"
+            show-word-limit
+          />
         </el-form-item>
         <el-form-item label="主题代码" required>
-          <el-input v-model="form.code" placeholder="请输入主题代码（唯一标识）" maxlength="50" show-word-limit />
+          <el-input
+            v-model="form.code"
+            placeholder="请输入主题代码（唯一标识）"
+            maxlength="50"
+            show-word-limit
+          />
         </el-form-item>
         <el-form-item label="预览图">
           <el-input v-model="form.preview_image" placeholder="请输入图片URL" maxlength="500" />

@@ -1,13 +1,13 @@
 """评论API测试"""
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
+from app.models.user import User
+from app.schemas.post import PostCreate
+from app.services.comment_service import create as create_comment
+from app.services.post_service import create as create_post
 from fastapi import status
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.user import User
-from app.services.post_service import create as create_post
-from app.services.comment_service import create as create_comment
-from app.schemas.post import PostCreate
 
 
 async def create_test_user(db: AsyncSession, openid: str, anonymous_name: str) -> User:
@@ -296,6 +296,7 @@ class TestCommentCreateEndpoint:
     ):
         """测试评论状态异常的帖子"""
         from app.models.post import Post
+
         # 创建状态不是normal的帖子
         post = Post(
             user_id=test_user.id,
@@ -321,6 +322,7 @@ class TestCommentCreateEndpoint:
     ):
         """测试评论未通过审核的帖子"""
         from app.models.post import Post
+
         # 创建风险状态未通过的帖子
         post = Post(
             user_id=test_user.id,

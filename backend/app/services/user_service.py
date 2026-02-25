@@ -3,12 +3,11 @@
 """
 from typing import List, Optional, Tuple
 
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.core.exceptions import NotFoundException
 from app.models.user import User
 from app.schemas.user import UserUpdate
-from app.core.exceptions import NotFoundException
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_user_by_id(db: AsyncSession, user_id: str) -> Optional[User]:
@@ -31,10 +30,11 @@ async def update_user(db: AsyncSession, user_id: str, data: UserUpdate) -> User:
 async def get_user_profile_data(db: AsyncSession, user_id: str, target_user_id: str) -> dict:
     """获取用户主页数据 - 优化N+1查询"""
     import asyncio
-    from app.models.post import Post
+
     from app.models.checkin import CheckIn
-    from app.models.salary import SalaryRecord
     from app.models.follow import Follow
+    from app.models.post import Post
+    from app.models.salary import SalaryRecord
     from sqlalchemy import func
 
     # 并发查询所有数据
@@ -113,7 +113,8 @@ async def list_users_for_admin(
 async def deactivate_user(db: AsyncSession, user_id: str) -> User:
     """注销用户（软删除）"""
     from datetime import datetime, timedelta
-    from sqlalchemy import update, select
+
+    from sqlalchemy import select, update
 
     # 设置注销时间
     result = await db.execute(
@@ -131,7 +132,7 @@ async def deactivate_user(db: AsyncSession, user_id: str) -> User:
 
 async def reactivate_user(db: AsyncSession, user_id: str) -> User:
     """恢复已注销的用户"""
-    from sqlalchemy import update, select
+    from sqlalchemy import select, update
 
     await db.execute(
         update(User)

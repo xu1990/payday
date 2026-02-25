@@ -1,9 +1,9 @@
 """Savings Goal Model - 存款目标（Sprint 4.4）"""
-from datetime import datetime, date
-from sqlalchemy import Column, String, Text, Numeric, Integer, DateTime, ForeignKey, Date, Enum
+from datetime import date, datetime
 
 from app.models.base import Base
 from app.models.user import gen_uuid
+from sqlalchemy import Column, Date, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text
 
 
 class SavingsGoal(Base):

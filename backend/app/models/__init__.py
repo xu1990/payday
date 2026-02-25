@@ -1,42 +1,42 @@
 # 数据模型 - 与技术方案 2.2 一致
-from .base import Base
-from .user import User
-from .payday import PaydayConfig
-from .salary import SalaryRecord
-from .post import Post
+from .ability_points import AbilityPoint, AbilityPointTransaction, PointRedemption
+from .address import AdminRegion, UserAddress
 from .admin import AdminUser
-from .comment import Comment
-from .like import Like
-from .notification import Notification
-from .follow import Follow
+from .base import Base
 from .checkin import CheckIn
-from .membership import Membership, MembershipOrder, AppTheme
+from .comment import Comment
+from .expense_record import ExpenseRecord
+from .feedback import Feedback
+from .first_salary_usage import FirstSalaryUsage
+from .follow import Follow
+from .like import Like
+from .membership import AppTheme, Membership, MembershipOrder
+from .miniprogram_config import MiniprogramConfig
+from .notification import Notification
+from .order import Order, OrderItem
+from .payday import PaydayConfig
+from .phone_lookup import PhoneLookup, hash_phone_number
+from .point_category import PointCategory
+from .point_order import PointOrder
+from .point_product import PointProduct
+from .point_return import PointReturn
+from .point_sku import PointProductSKU, PointSpecification, PointSpecificationValue
+from .post import Post
+from .product import Product, ProductCategory
 from .push import PushNotification
 from .risk_alert import RiskAlert
+from .salary import SalaryRecord
+from .salary_usage import SalaryUsageRecord
+from .savings_goal import SavingsGoal
 from .sensitive_word import SensitiveWord
 from .share import Share
+from .shipping import (CourierCompany, OrderReturn, OrderShipment, ShippingTemplate,
+                       ShippingTemplateRegion)
 from .theme import Theme, UserSetting
 from .topic import Topic
-from .miniprogram_config import MiniprogramConfig
-from .feedback import Feedback
-from .salary_usage import SalaryUsageRecord
-from .first_salary_usage import FirstSalaryUsage
-from .phone_lookup import PhoneLookup, hash_phone_number
-from .first_salary_usage import FirstSalaryUsage
-from .expense_record import ExpenseRecord
-from .savings_goal import SavingsGoal
-from .ability_points import AbilityPoint, AbilityPointTransaction, PointRedemption
+from .user import User
 from .user_invitation import UserInvitation
-from .point_product import PointProduct
-from .point_order import PointOrder
-from .point_category import PointCategory
-from .point_sku import PointSpecification, PointSpecificationValue, PointProductSKU
-from .point_return import PointReturn
 from .work_record import WorkRecord
-from .product import ProductCategory, Product
-from .address import AdminRegion, UserAddress
-from .shipping import ShippingTemplate, ShippingTemplateRegion, CourierCompany, OrderShipment, OrderReturn
-from .order import Order, OrderItem
 
 __all__ = [
     "Base",

@@ -1,12 +1,12 @@
 """Expense Record Service"""
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from typing import List
 from datetime import date
 from decimal import Decimal
+from typing import List
 
 from app.models.expense_record import ExpenseRecord
 from app.schemas.expense_record import ExpenseRecordCreate
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def create_expense_records(
@@ -73,8 +73,8 @@ async def get_monthly_expense_summary(
     month: int
 ) -> dict:
     """获取月度支出汇总"""
-    from sqlalchemy import func
     from app.models.expense_record import ExpenseRecord
+    from sqlalchemy import func
 
     stmt = (
         select(ExpenseRecord)

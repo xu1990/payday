@@ -1,13 +1,13 @@
 """
 单元测试 - 查询优化工具 (app.core.query_utils)
 """
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from sqlalchemy import select
 
-from app.core.query_utils import QueryHelper, get_or_404
+import pytest
 from app.core.exceptions import NotFoundException
+from app.core.query_utils import QueryHelper, get_or_404
 from app.models.user import User
+from sqlalchemy import select
 
 
 class TestQueryHelperGetById:

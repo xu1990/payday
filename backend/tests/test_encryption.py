@@ -1,14 +1,9 @@
 """加密工具测试"""
-import pytest
 import base64
 
-from app.utils.encryption import (
-    encrypt_amount,
-    decrypt_amount,
-    _generate_salt,
-    _derive_key,
-    _get_cipher,
-)
+import pytest
+from app.utils.encryption import (_derive_key, _generate_salt, _get_cipher, decrypt_amount,
+                                  encrypt_amount)
 
 
 class TestGenerateSalt:

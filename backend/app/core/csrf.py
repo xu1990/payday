@@ -4,9 +4,10 @@ CSRF 保护 - 双重提交 Cookie 模式
 """
 import secrets
 from typing import Optional
-from fastapi import Request, HTTPException, status
-from fastapi.responses import JSONResponse
+
 from app.core.cache import get_redis_client
+from fastapi import HTTPException, Request, status
+from fastapi.responses import JSONResponse
 
 
 class CSRFTokenManager:
@@ -71,6 +72,7 @@ class CSRFTokenManager:
 
         # 使用常量时间比较防止时序攻击
         import hmac
+
         # 确保两个参数都是相同类型（都转换为bytes）
         token_bytes = token.encode('utf-8') if isinstance(token, str) else token
         stored_bytes = stored_token.encode('utf-8') if isinstance(stored_token, str) else stored_token

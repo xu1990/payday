@@ -3,14 +3,13 @@
 """
 from typing import List, Optional, Tuple
 
-from sqlalchemy import select, update, func
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.core.exceptions import NotFoundException
 from app.models.comment import Comment
 from app.models.post import Post
 from app.services import notification_service
-from app.core.exceptions import NotFoundException
+from sqlalchemy import func, select, update
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def list_by_post(
@@ -157,7 +156,8 @@ async def delete(db: AsyncSession, comment_id: str, user_id: str) -> bool:
     Returns:
         是否删除成功
     """
-    from sqlalchemy import update, delete as sql_delete
+    from sqlalchemy import delete as sql_delete
+    from sqlalchemy import update
 
     # 先获取评论用于权限验证
     comment = await get_by_id(db, comment_id)

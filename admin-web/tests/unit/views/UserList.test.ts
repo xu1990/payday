@@ -34,8 +34,8 @@ describe('UserList 视图', () => {
     const wrapper = mount(UserList, {
       global: {
         stubs: {
-          'SearchToolbar': true,
-          'BaseDataTable': true,
+          SearchToolbar: true,
+          BaseDataTable: true,
           'el-table-column': true,
           'el-button': true,
           'el-select': true,
@@ -51,8 +51,8 @@ describe('UserList 视图', () => {
     const wrapper = mount(UserList, {
       global: {
         stubs: {
-          'SearchToolbar': true,
-          'BaseDataTable': true,
+          SearchToolbar: true,
+          BaseDataTable: true,
           'el-table-column': true,
           'el-button': true,
           'el-select': true,
@@ -68,10 +68,10 @@ describe('UserList 视图', () => {
     const wrapper = mount(UserList, {
       global: {
         stubs: {
-          'SearchToolbar': {
+          SearchToolbar: {
             template: '<div class="search-toolbar"><slot /></div>',
           },
-          'BaseDataTable': true,
+          BaseDataTable: true,
           'el-table-column': true,
           'el-button': true,
           'el-select': true,
@@ -87,8 +87,8 @@ describe('UserList 视图', () => {
     const wrapper = mount(UserList, {
       global: {
         stubs: {
-          'SearchToolbar': true,
-          'BaseDataTable': true,
+          SearchToolbar: true,
+          BaseDataTable: true,
           'el-table-column': true,
           'el-button': true,
           'el-select': true,
@@ -105,8 +105,8 @@ describe('UserList 视图', () => {
     const wrapper = mount(UserList, {
       global: {
         stubs: {
-          'SearchToolbar': true,
-          'BaseDataTable': {
+          SearchToolbar: true,
+          BaseDataTable: {
             template: '<div class="data-table"><slot /></div>',
           },
           'el-table-column': true,
@@ -124,8 +124,8 @@ describe('UserList 视图', () => {
     const wrapper = mount(UserList, {
       global: {
         stubs: {
-          'SearchToolbar': true,
-          'BaseDataTable': true,
+          SearchToolbar: true,
+          BaseDataTable: true,
           'el-table-column': {
             template: '<div class="table-col"><slot /></div>',
           },
@@ -144,8 +144,8 @@ describe('UserList 视图', () => {
     const wrapper = mount(UserList, {
       global: {
         stubs: {
-          'SearchToolbar': true,
-          'BaseDataTable': true,
+          SearchToolbar: true,
+          BaseDataTable: true,
           'el-table-column': true,
           'el-button': true,
           'el-select': true,

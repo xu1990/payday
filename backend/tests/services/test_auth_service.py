@@ -1,15 +1,11 @@
 """认证服务集成测试"""
-import pytest
-from unittest.mock import AsyncMock, patch, Mock
-from sqlalchemy.ext.asyncio import AsyncSession
+from unittest.mock import AsyncMock, Mock, patch
 
-from app.services.auth_service import (
-    get_or_create_user,
-    login_with_code,
-    refresh_access_token,
-    revoke_refresh_token,
-)
+import pytest
 from app.models.user import User
+from app.services.auth_service import (get_or_create_user, login_with_code, refresh_access_token,
+                                       revoke_refresh_token)
+from sqlalchemy.ext.asyncio import AsyncSession
 from tests.test_utils import TestDataFactory
 
 

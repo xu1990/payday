@@ -3,14 +3,14 @@
 使用 Celery 异步任务处理
 """
 import asyncio
-from celery import shared_task
-from sqlalchemy import select, update
 
 from app.core.database import SessionLocal, async_session_maker
+from app.models.comment import Comment
 from app.models.notification import Notification
 from app.models.post import Post
-from app.models.comment import Comment
-from app.services.risk_service import evaluate_content, RiskResult
+from app.services.risk_service import RiskResult, evaluate_content
+from celery import shared_task
+from sqlalchemy import select, update
 
 
 @shared_task(name="tasks.run_risk_check_for_post")

@@ -3,7 +3,8 @@
 记录用户的分享行为（分享到微信好友、朋友圈等）
 """
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, ForeignKey, Integer
+
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 
 from .base import Base
 from .user import gen_uuid

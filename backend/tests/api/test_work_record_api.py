@@ -1,11 +1,12 @@
 """
 工作记录 API 集成测试 - 牛马日志 Module
 """
-import pytest
 from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
+
+import pytest
 from app.models.user import User
 from app.models.work_record import WorkRecord
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio
@@ -64,8 +65,8 @@ class TestWorkRecordAPI:
     ):
         """测试获取工作记录列表"""
         # Create a work record directly in DB for testing
-        from app.services.work_record_service import WorkRecordService
         from app.schemas.work_record import WorkRecordCreate
+        from app.services.work_record_service import WorkRecordService
 
         service = WorkRecordService(db_session)
         work_data = WorkRecordCreate(
@@ -97,8 +98,8 @@ class TestWorkRecordAPI:
     ):
         """测试获取工作记录详情"""
         # Create a work record
-        from app.services.work_record_service import WorkRecordService
         from app.schemas.work_record import WorkRecordCreate
+        from app.services.work_record_service import WorkRecordService
 
         service = WorkRecordService(db_session)
         work_data = WorkRecordCreate(
@@ -130,8 +131,8 @@ class TestWorkRecordAPI:
     ):
         """测试打卡下班"""
         # Create a work record without clock out
-        from app.services.work_record_service import WorkRecordService
         from app.schemas.work_record import WorkRecordCreate
+        from app.services.work_record_service import WorkRecordService
 
         service = WorkRecordService(db_session)
         work_data = WorkRecordCreate(
@@ -165,8 +166,8 @@ class TestWorkRecordAPI:
     ):
         """测试重复打卡下班应该失败"""
         # Create a work record with clock out time
-        from app.services.work_record_service import WorkRecordService
         from app.schemas.work_record import WorkRecordCreate
+        from app.services.work_record_service import WorkRecordService
 
         service = WorkRecordService(db_session)
         clock_in = datetime.utcnow()
@@ -232,8 +233,8 @@ class TestWorkRecordAPI:
         user_headers: dict
     ):
         """测试获取工作动态feed"""
-        from app.services.work_record_service import WorkRecordService
         from app.schemas.work_record import WorkRecordCreate
+        from app.services.work_record_service import WorkRecordService
 
         # Create multiple work records
         service = WorkRecordService(db_session)
@@ -292,8 +293,8 @@ class TestWorkRecordAPI:
         user_headers: dict
     ):
         """测试获取工作统计数据"""
-        from app.services.work_record_service import WorkRecordService
         from app.schemas.work_record import WorkRecordCreate
+        from app.services.work_record_service import WorkRecordService
 
         # Create work records with overtime
         service = WorkRecordService(db_session)

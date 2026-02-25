@@ -4,16 +4,15 @@
 注意: app/services/cache_preheat.py 中 cache_service 未导入（有 TODO 注释）
 测试通过注入 cache_service mock 到模块命名空间来绕过此问题
 """
-import pytest
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch, MagicMock
-from sqlalchemy.ext.asyncio import AsyncSession
-
 import sys
-import app.services.cache_preheat as cache_preheat_module
+from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import app.services.cache_preheat as cache_preheat_module
+import pytest
+from app.models.membership import AppTheme, Membership
 from app.models.post import Post
-from app.models.membership import Membership, AppTheme
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.fixture(autouse=True)

@@ -8,9 +8,10 @@
 - PUT /api/v1/salary/{id} - 更新工资记录
 - DELETE /api/v1/salary/{id} - 删除工资记录
 """
-import pytest
 from datetime import date, datetime
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 
 @pytest.mark.asyncio

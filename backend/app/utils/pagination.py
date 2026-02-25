@@ -2,9 +2,10 @@
 游标分页工具 - 技术方案 4.1.1
 避免深度分页性能问题，使用基于 ID 的游标分页替代 OFFSET
 """
-from typing import TypeVar, Generic, Optional, List, Tuple
+from typing import Generic, List, Optional, Tuple, TypeVar
+
 from pydantic import BaseModel
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeMeta
 
@@ -116,7 +117,7 @@ class CursorPaginator:
         技术方案 4.1.1 - 游标分页条件构建
         使用多个 OR 条件，每个条件检查排序字段是否小于游标值
         """
-        from sqlalchemy import or_, and_
+        from sqlalchemy import and_, or_
 
         if not cursor:
             return self.filter_expr

@@ -3,25 +3,19 @@
 """
 from typing import Optional
 
-from fastapi import Depends, HTTPException, status, Header, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from app.models.admin import AdminUser
+from app.models.user import User
+from fastapi import Depends, Header, HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .csrf import CSRFException, csrf_manager
 from .database import get_db
+from .rate_limit import (RATE_LIMIT_COMMENT, RATE_LIMIT_GENERAL, RATE_LIMIT_LOGIN, RATE_LIMIT_POST,
+                         RateLimiter, get_client_identifier)
 from .security import decode_token
 from .signature import verify_signature, verify_timestamp
-from .rate_limit import (
-    RateLimiter,
-    get_client_identifier,
-    RATE_LIMIT_GENERAL,
-    RATE_LIMIT_LOGIN,
-    RATE_LIMIT_POST,
-    RATE_LIMIT_COMMENT,
-)
-from .csrf import csrf_manager, CSRFException
-from app.models.user import User
-from app.models.admin import AdminUser
 
 security = HTTPBearer(auto_error=False)
 
@@ -299,8 +293,9 @@ async def verify_request_signature(
         return True
 
     # 开发环境记录但不跳过验证
-    from .config import get_settings
     import logging
+
+    from .config import get_settings
     settings = get_settings()
 
     if settings.debug:

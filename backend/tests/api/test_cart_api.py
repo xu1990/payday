@@ -9,13 +9,14 @@ Shopping Cart API Integration Tests
 - DELETE /cart/items/{item_id} - 移除购物车商品
 - DELETE /cart - 清空购物车
 """
-import pytest
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+from app.core.deps import get_current_user
 from app.main import app
 from app.schemas.cart import CartResponse
-from app.core.deps import get_current_user
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 # Mock get_current_user dependency
@@ -116,9 +117,10 @@ async def test_get_cart_with_items():
 @pytest.mark.asyncio
 async def test_add_item_to_cart(db_session: AsyncSession):
     """测试添加商品到购物车 - 新商品"""
-    from app.models.product import Product, ProductSKU, ProductPrice
-    from app.services.cart_service import CartService
     import uuid
+
+    from app.models.product import Product, ProductPrice, ProductSKU
+    from app.services.cart_service import CartService
 
     # 创建测试商品和SKU
     product = Product(
@@ -193,10 +195,11 @@ async def test_add_item_to_cart(db_session: AsyncSession):
 @pytest.mark.asyncio
 async def test_add_item_insufficient_stock(db_session: AsyncSession):
     """测试添加商品到购物车 - 库存不足"""
-    from app.models.product import Product, ProductSKU, ProductPrice
-    from app.services.cart_service import CartService
-    from app.core.exceptions import BusinessException
     import uuid
+
+    from app.core.exceptions import BusinessException
+    from app.models.product import Product, ProductPrice, ProductSKU
+    from app.services.cart_service import CartService
 
     # 创建测试商品和SKU
     product = Product(
@@ -285,8 +288,8 @@ async def test_add_item_invalid_quantity():
 @pytest.mark.asyncio
 async def test_add_item_sku_not_found(db_session: AsyncSession):
     """测试添加商品到购物车 - SKU不存在"""
-    from app.services.cart_service import CartService
     from app.core.exceptions import NotFoundException
+    from app.services.cart_service import CartService
 
     # Mock Redis
     mock_redis = MagicMock()

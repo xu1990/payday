@@ -17,9 +17,10 @@ into get_db() dependency, causing async middleware errors.
 This same issue affects existing tests in test_salary.py and test_auth.py.
 Only tests that don't require database access (like token refresh) pass.
 """
-import pytest
 from datetime import datetime
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 
 @pytest.mark.asyncio

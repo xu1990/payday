@@ -4,15 +4,34 @@
       <template #header>
         <span>薪日 PayDay · 管理后台</span>
       </template>
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="0" @submit.prevent="onSubmit">
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-width="0"
+        @submit.prevent="onSubmit"
+      >
         <el-form-item prop="username">
           <el-input v-model="form.username" placeholder="用户名" size="large" />
         </el-form-item>
         <el-form-item prop="password">
-          <el-input v-model="form.password" type="password" placeholder="密码" size="large" show-password @keyup.enter="onSubmit" />
+          <el-input
+            v-model="form.password"
+            type="password"
+            placeholder="密码"
+            size="large"
+            show-password
+            @keyup.enter="onSubmit"
+          />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" size="large" :loading="loading" style="width: 100%" @click="onSubmit">
+          <el-button
+            type="primary"
+            size="large"
+            :loading="loading"
+            style="width: 100%"
+            @click="onSubmit"
+          >
             登录
           </el-button>
         </el-form-item>
@@ -55,9 +74,11 @@ const rules: FormRules = {
 
 async function onSubmit() {
   if (!formRef.value) return
-  await formRef.value.validate((valid) => {
-    if (!valid) return
-  }).catch(() => {})
+  await formRef.value
+    .validate(valid => {
+      if (!valid) return
+    })
+    .catch(() => {})
   error.value = ''
   loading.value = true
   try {
@@ -88,5 +109,7 @@ async function onSubmit() {
 .login-card {
   width: 360px;
 }
-.mb-2 { margin-bottom: 8px; }
+.mb-2 {
+  margin-bottom: 8px;
+}
 </style>

@@ -3,15 +3,14 @@
 """
 from typing import List, Optional, Tuple
 
-from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.follow import Follow
-from app.models.user import User
 from app.models.post import Post
+from app.models.user import User
 from app.services.notification_service import create_notification
 from app.utils.logger import get_logger
+from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = get_logger(__name__)
 

@@ -1,5 +1,5 @@
 import pytest
-from app.models.product import ProductCategory, Product
+from app.models.product import Product, ProductCategory
 
 
 @pytest.mark.asyncio

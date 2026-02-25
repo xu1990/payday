@@ -2,7 +2,10 @@
 商品模型 - Enhanced E-commerce Module
 """
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, Enum as SQLEnum, JSON
+
+from sqlalchemy import JSON, Boolean, Column, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Integer, String
 
 from .base import Base
 from .user import gen_uuid

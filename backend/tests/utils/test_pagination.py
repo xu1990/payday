@@ -1,14 +1,14 @@
 """
 单元测试 - 游标分页工具 (app.utils.pagination)
 """
-import pytest
 import base64
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
-from sqlalchemy import desc, asc, or_, and_
 
-from app.utils.pagination import CursorPaginator, CursorPaginationResult, offset_paginate
+import pytest
 from app.models.user import User
+from app.utils.pagination import CursorPaginationResult, CursorPaginator, offset_paginate
+from sqlalchemy import and_, asc, desc, or_
 
 
 class TestCursorPaginationResult:

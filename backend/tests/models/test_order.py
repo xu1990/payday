@@ -1,12 +1,13 @@
 """
 Tests for Order and OrderItem models
 """
-import pytest
 from datetime import datetime
-from sqlalchemy import select, func, text
+
+import pytest
+from app.models.address import UserAddress
 from app.models.order import Order, OrderItem
 from app.models.user import User
-from app.models.address import UserAddress
+from sqlalchemy import func, select, text
 
 
 @pytest.mark.asyncio
