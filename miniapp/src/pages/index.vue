@@ -487,6 +487,8 @@ function createPostWithTopic(topicId: string, topicName: string) {
 </template>
 
 <style scoped lang="scss">
+@import '@/styles/glass';
+
 .root-container {
   padding: calc(5rpx + env(safe-area-inset-top)) 2.5rem;
   text-align: center;
@@ -498,10 +500,8 @@ function createPostWithTopic(topicId: string, topicName: string) {
   display: flex;
   align-items: center;
   padding: 1rem;
-  background: #fff;
-  border-radius: 12rpx;
+  @include glass-card();
   margin-bottom: 1rem;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
 }
 
 .user-avatar {
@@ -521,38 +521,38 @@ function createPostWithTopic(topicId: string, topicName: string) {
 .user-name {
   font-size: 28rpx;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
   text-align: left;
 }
 
 .user-points {
   font-size: 24rpx;
-  color: #ff6b6b;
+  color: $semantic-error;
   font-weight: 600;
   text-align: left;
 }
 
 .user-arrow {
   font-size: 40rpx;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .payday-card {
   margin: 1rem 0;
   padding: 1rem;
-  background: #f5f5f5;
-  border-radius: 8px;
+  @include glass-card();
 }
 
 .payday-title {
   font-weight: 600;
   display: block;
+  color: var(--text-primary);
 }
 
 .payday-desc {
   display: block;
   margin-top: 0.5rem;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .entry-row {
@@ -561,7 +561,7 @@ function createPostWithTopic(topicId: string, topicName: string) {
 
 .btn-primary {
   padding: 0.5rem 1.5rem;
-  background: #07c160;
+  background: $gradient-brand;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -569,7 +569,7 @@ function createPostWithTopic(topicId: string, topicName: string) {
 
 .btn-secondary {
   padding: 0.5rem 1.5rem;
-  background: #576b95;
+  background: $brand-primary;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -579,8 +579,8 @@ function createPostWithTopic(topicId: string, topicName: string) {
 .btn-outline {
   padding: 0.5rem 1.5rem;
   background: transparent;
-  color: #07c160;
-  border: 1px solid #07c160;
+  color: var(--brand-primary);
+  border: 1px solid var(--brand-primary);
   border-radius: 8px;
 }
 
@@ -589,7 +589,7 @@ function createPostWithTopic(topicId: string, topicName: string) {
   padding: 0.25rem 0;
   background: none;
   border: none;
-  color: #07c160;
+  color: var(--brand-primary);
   font-size: 0.9rem;
 }
 
@@ -604,6 +604,7 @@ function createPostWithTopic(topicId: string, topicName: string) {
   font-size: 0.95rem;
   display: block;
   margin-bottom: 0.5rem;
+  color: var(--text-primary);
 }
 
 .mood-row {
@@ -615,13 +616,15 @@ function createPostWithTopic(topicId: string, topicName: string) {
 .mood-item {
   padding: 0.4rem 0.8rem;
   border-radius: 999px;
-  border: 1px solid #ddd;
-  background: #fff;
+  border: 1rpx solid var(--border-regular);
+  background: var(--bg-glass-standard);
+  color: var(--text-primary);
 }
 
 .mood-item.active {
-  border-color: #07c160;
-  background: #e8f8f0;
+  border-color: var(--brand-primary);
+  background: var(--bg-glass-prominent);
+  color: var(--brand-primary);
 }
 
 .mood-label {
@@ -630,21 +633,21 @@ function createPostWithTopic(topicId: string, topicName: string) {
 
 .progress-bar {
   height: 8px;
-  background: #eee;
+  background: var(--bg-glass-standard);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .progress-inner {
   height: 100%;
-  background: #07c160;
+  background: $gradient-brand;
   border-radius: 4px;
   transition: width 0.2s;
 }
 
 .progress-desc {
   font-size: 0.85rem;
-  color: #666;
+  color: var(--text-secondary);
   margin-top: 0.25rem;
   display: block;
 }
@@ -664,7 +667,7 @@ function createPostWithTopic(topicId: string, topicName: string) {
 
 .more-link {
   font-size: 0.9rem;
-  color: #07c160;
+  color: var(--brand-primary);
   cursor: pointer;
 }
 
@@ -672,7 +675,7 @@ function createPostWithTopic(topicId: string, topicName: string) {
 .products-empty {
   text-align: center;
   padding: 2rem;
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 0.9rem;
 }
 
@@ -686,16 +689,14 @@ function createPostWithTopic(topicId: string, topicName: string) {
 .product-item {
   flex-shrink: 0;
   width: 200rpx;
-  background: #fff;
-  border-radius: 12rpx;
+  @include glass-card();
   overflow: hidden;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 
 .product-image {
   width: 200rpx;
   height: 200rpx;
-  background: #f5f5f5;
+  background: var(--bg-glass-subtle);
 
   &.placeholder {
     display: flex;
@@ -712,7 +713,7 @@ function createPostWithTopic(topicId: string, topicName: string) {
 .product-name {
   font-size: 0.85rem;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -729,12 +730,12 @@ function createPostWithTopic(topicId: string, topicName: string) {
 .product-points {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #ff6b6b;
+  color: $semantic-error;
 }
 
 .product-out-of-stock {
   font-size: 0.75rem;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 /* 快捷入口区域 */
@@ -759,13 +760,11 @@ function createPostWithTopic(topicId: string, topicName: string) {
 .quick-entry-icon {
   width: 88rpx;
   height: 88rpx;
-  background: #fff;
-  border-radius: 20rpx;
+  @include glass-card();
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 40rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
   transition: transform 0.2s;
 }
 
@@ -775,7 +774,7 @@ function createPostWithTopic(topicId: string, topicName: string) {
 
 .quick-entry-label {
   font-size: 24rpx;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 /* 热门话题区域 */
@@ -788,7 +787,7 @@ function createPostWithTopic(topicId: string, topicName: string) {
 .topics-empty {
   text-align: center;
   padding: 2rem;
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 0.9rem;
 }
 
@@ -803,9 +802,7 @@ function createPostWithTopic(topicId: string, topicName: string) {
   align-items: center;
   justify-content: space-between;
   padding: 1rem;
-  background: #fff;
-  border-radius: 12rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+  @include glass-card();
 }
 
 .topic-info {
@@ -819,17 +816,17 @@ function createPostWithTopic(topicId: string, topicName: string) {
 .topic-name {
   font-size: 28rpx;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .topic-count {
   font-size: 24rpx;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .topic-btn {
   padding: 0.4rem 1rem;
-  background: #07c160;
+  background: $gradient-brand;
   color: #fff;
   border: none;
   border-radius: 8rpx;

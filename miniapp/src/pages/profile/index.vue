@@ -224,10 +224,12 @@ onMounted(load)
 </template>
 
 <style scoped lang="scss">
+@import '@/styles/glass';
+
 .page {
   padding: calc(24rpx + env(safe-area-inset-top)) 24rpx calc(24rpx + env(safe-area-inset-bottom));
   min-height: 100vh;
-  background: #f5f5f5;
+  background: var(--bg-base);
 }
 
 // 用户头部
@@ -237,7 +239,7 @@ onMounted(load)
   align-items: center;
   padding: 40rpx 24rpx;
   margin-bottom: 24rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: $gradient-brand;
   border-radius: 16rpx;
 }
 
@@ -278,7 +280,7 @@ onMounted(load)
 .points-value {
   font-size: 28rpx;
   font-weight: 700;
-  color: #ffd700;
+  color: $accent-gold;
 }
 
 .points-label {
@@ -309,7 +311,7 @@ onMounted(load)
 
 .verified-badge {
   font-size: 20rpx;
-  color: #52c41a;
+  color: $semantic-success;
   font-weight: bold;
 }
 
@@ -324,7 +326,7 @@ onMounted(load)
 .tip {
   display: block;
   margin-top: 8rpx;
-  color: #666;
+  color: var(--text-secondary);
   font-size: 26rpx;
 }
 
@@ -336,23 +338,21 @@ onMounted(load)
 
 .summary-item {
   flex: 1;
-  background: #fff;
-  border-radius: 12rpx;
+  @include glass-card();
   padding: 24rpx;
   text-align: center;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 }
 
 .summary-num {
   font-size: 40rpx;
   font-weight: 600;
-  color: #667eea;
+  color: var(--brand-primary);
   display: block;
 }
 
 .summary-label {
   font-size: 24rpx;
-  color: #999;
+  color: var(--text-tertiary);
   display: block;
   margin-top: 8rpx;
 }
@@ -365,7 +365,7 @@ onMounted(load)
 
 .btn-primary {
   flex: 1;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: $gradient-brand;
   color: #fff;
   border: none;
   border-radius: 12rpx;
@@ -375,10 +375,8 @@ onMounted(load)
 
 .btn-outline {
   flex: 1;
-  background: #fff;
-  color: #667eea;
-  border: 1rpx solid #667eea;
-  border-radius: 12rpx;
+  @include glass-card();
+  color: var(--brand-primary);
   font-size: 28rpx;
   font-weight: 500;
 }
@@ -394,18 +392,16 @@ onMounted(load)
   justify-content: center;
   gap: 12rpx;
   padding: 20rpx;
-  background: #fff;
-  border-radius: 12rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  @include glass-card();
 }
 
 .entry-label {
   font-size: 28rpx;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .badge {
-  background: #ff4d4f;
+  background: $semantic-error;
   color: #fff;
   font-size: 20rpx;
   padding: 4rpx 12rpx;
@@ -417,20 +413,19 @@ onMounted(load)
 .section-title-alt {
   font-size: 28rpx;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   margin: 24rpx 0 16rpx;
 }
 
 .section {
-  background: #fff;
-  border-radius: 12rpx;
+  @include glass-card();
   padding: 24rpx;
 }
 
 .section-title {
   font-size: 28rpx;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   display: block;
   margin-bottom: 16rpx;
 }
@@ -440,7 +435,7 @@ onMounted(load)
 .empty {
   padding: 40rpx 0;
   text-align: center;
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 26rpx;
 }
 
@@ -455,14 +450,14 @@ onMounted(load)
   align-items: center;
   justify-content: space-between;
   padding: 20rpx;
-  background: #f8f8f8;
+  background: var(--bg-glass-standard);
   border-radius: 8rpx;
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .card:active {
-  background: #eee;
+  background: var(--bg-glass-prominent);
 }
 
 .card-content {
@@ -474,13 +469,13 @@ onMounted(load)
 .amount {
   font-size: 32rpx;
   font-weight: 600;
-  color: #07c160;
+  color: $semantic-success;
   display: block;
 }
 
 .meta {
   font-size: 24rpx;
-  color: #999;
+  color: var(--text-tertiary);
   display: block;
   margin-top: 8rpx;
 }
@@ -491,7 +486,7 @@ onMounted(load)
   align-items: center;
   justify-content: center;
   padding: 12rpx 16rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: $gradient-brand;
   border-radius: 8rpx;
   margin-left: 16rpx;
   min-width: 80rpx;

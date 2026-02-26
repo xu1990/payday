@@ -376,9 +376,11 @@ function goToPrivacyPolicy() {
 </script>
 
 <style scoped lang="scss">
+@import '@/styles/glass';
+
 .login-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: $gradient-brand;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -434,6 +436,7 @@ function goToPrivacyPolicy() {
   background: rgba(255, 255, 255, 0.15);
   border-radius: 20rpx;
   backdrop-filter: blur(10rpx);
+  border: 1rpx solid rgba(255, 255, 255, 0.2);
 }
 
 .invite-code-input {
@@ -443,13 +446,13 @@ function goToPrivacyPolicy() {
   border-radius: 12rpx;
   padding: 0 24rpx;
   font-size: 28rpx;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 12rpx;
   border: 2rpx solid rgba(255, 255, 255, 0.3);
   box-sizing: border-box;
 
   &::placeholder {
-    color: #999;
+    color: var(--text-tertiary);
   }
 }
 
@@ -471,7 +474,7 @@ function goToPrivacyPolicy() {
   justify-content: center;
   font-size: 32rpx;
   font-weight: 600;
-  color: #667eea;
+  color: var(--brand-primary);
   border: none;
   box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.3);
   transition: all 0.3s;
@@ -487,12 +490,12 @@ function goToPrivacyPolicy() {
   }
 
   &.login-btn-phone {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: $gradient-brand;
     color: #ffffff;
     border: 2rpx solid rgba(255, 255, 255, 0.3);
 
     &:active {
-      background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+      background: linear-gradient(135deg, $brand-primary-strong 0%, darken($brand-secondary, 10%) 100%);
     }
   }
 }
