@@ -26,6 +26,21 @@ class ShippingTemplate(Base):
         comment="计费方式: weight/quantity/fixed"
     )
 
+    # Free shipping configuration
+    free_shipping_type = Column(
+        String(20),
+        nullable=False,
+        default="none",
+        comment="包邮类型: none/amount/quantity/seller"
+    )
+    free_quantity = Column(Integer, nullable=True, comment="满件数包邮阈值")
+
+    # Excluded regions (non-deliverable areas)
+    excluded_regions = Column(JSON, nullable=True, comment="不配送区域JSON")
+
+    # Volume unit for volume-based charging
+    volume_unit = Column(Integer, nullable=True, comment="体积单位(cm³)")
+
     # Default shipping (for regions not specified)
     default_first_unit = Column(Integer, nullable=False, comment="首件/首重(克或件)")
     default_first_cost = Column(Integer, nullable=False, comment="首件运费(分)")
@@ -66,6 +81,12 @@ class ShippingTemplateRegion(Base):
 
     # Free shipping for this region
     free_threshold = Column(Integer, nullable=True, comment="包邮门槛(分)")
+
+    # Regional free quantity threshold
+    free_quantity = Column(Integer, nullable=True, comment="区域满件数包邮阈值")
+
+    # Excluded region flag
+    is_excluded = Column(Boolean, default=False, nullable=False, comment="是否不配送区域")
 
     is_active = Column(Boolean, default=True, nullable=False, comment="是否启用")
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
