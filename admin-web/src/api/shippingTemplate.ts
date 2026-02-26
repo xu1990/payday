@@ -8,18 +8,29 @@ const PREFIX = '/admin/shipping-templates'
 
 // ==================== Types ====================
 
-export type ChargeType = 'weight' | 'quantity' | 'fixed'
+export type ChargeType = 'weight' | 'quantity' | 'fixed' | 'volume'
+
+export type FreeShippingType = 'none' | 'amount' | 'quantity' | 'seller'
+
+export interface ExcludedRegion {
+  code: string
+  name: string
+}
 
 export interface ShippingTemplate {
   id: string
   name: string
   description: string | null
   charge_type: ChargeType
-  default_first_unit: number
-  default_first_cost: number // in cents
-  default_continue_unit: number
-  default_continue_cost: number // in cents
+  default_first_unit: number | null
+  default_first_cost: number | null // in cents
+  default_continue_unit: number | null
+  default_continue_cost: number | null // in cents
+  free_shipping_type: FreeShippingType
   free_threshold: number | null // in cents
+  free_quantity: number | null
+  excluded_regions: ExcludedRegion[] | null
+  volume_unit: number | null
   estimate_days_min: number | null
   estimate_days_max: number | null
   is_active: boolean
@@ -37,6 +48,8 @@ export interface ShippingTemplateRegion {
   continue_unit: number
   continue_cost: number // in cents
   free_threshold: number | null // in cents
+  free_quantity: number | null
+  is_excluded: boolean
   is_active: boolean
   created_at: string
 }
@@ -45,11 +58,15 @@ export interface ShippingTemplateCreate {
   name: string
   description?: string | null
   charge_type: ChargeType
-  default_first_unit: number
-  default_first_cost: number // in cents
-  default_continue_unit: number
-  default_continue_cost: number // in cents
+  default_first_unit?: number | null
+  default_first_cost?: number | null // in cents
+  default_continue_unit?: number | null
+  default_continue_cost?: number | null // in cents
+  free_shipping_type?: FreeShippingType
   free_threshold?: number | null // in cents
+  free_quantity?: number | null
+  excluded_regions?: ExcludedRegion[] | null
+  volume_unit?: number | null
   estimate_days_min?: number | null
   estimate_days_max?: number | null
 }
@@ -58,11 +75,15 @@ export interface ShippingTemplateUpdate {
   name?: string
   description?: string | null
   charge_type?: ChargeType
-  default_first_unit?: number
-  default_first_cost?: number // in cents
-  default_continue_unit?: number
-  default_continue_cost?: number // in cents
+  default_first_unit?: number | null
+  default_first_cost?: number | null // in cents
+  default_continue_unit?: number | null
+  default_continue_cost?: number | null // in cents
+  free_shipping_type?: FreeShippingType
   free_threshold?: number | null // in cents
+  free_quantity?: number | null
+  excluded_regions?: ExcludedRegion[] | null
+  volume_unit?: number | null
   estimate_days_min?: number | null
   estimate_days_max?: number | null
   is_active?: boolean
@@ -76,6 +97,8 @@ export interface ShippingTemplateRegionCreate {
   continue_unit: number
   continue_cost: number // in cents
   free_threshold?: number | null // in cents
+  free_quantity?: number | null
+  is_excluded?: boolean
 }
 
 export interface ShippingTemplateRegionUpdate {
@@ -86,6 +109,8 @@ export interface ShippingTemplateRegionUpdate {
   continue_unit?: number
   continue_cost?: number // in cents
   free_threshold?: number | null // in cents
+  free_quantity?: number | null
+  is_excluded?: boolean
   is_active?: boolean
 }
 
@@ -206,6 +231,7 @@ export function formatChargeType(type: ChargeType): string {
     weight: '按重量',
     quantity: '按件数',
     fixed: '固定运费',
+    volume: '按体积',
   }
   return types[type] || type
 }
@@ -216,8 +242,20 @@ export function getUnitLabel(chargeType: ChargeType): string {
     weight: 'g',
     quantity: '件',
     fixed: '',
+    volume: 'cm³',
   }
   return labels[chargeType] || ''
+}
+
+/** Format free shipping type for display */
+export function formatFreeShippingType(type: FreeShippingType): string {
+  const types: Record<FreeShippingType, string> = {
+    none: '不包邮',
+    amount: '满金额包邮',
+    quantity: '满件数包邮',
+    seller: '卖家承担运费',
+  }
+  return types[type] || type
 }
 
 /** Parse region codes string to array */
