@@ -18,9 +18,12 @@ import {
   type ShippingTemplateRegionCreate,
   type ShippingTemplateRegionUpdate,
   type ChargeType,
+  type FreeShippingType,
+  type ExcludedRegion,
   centsToYuan,
   yuanToCents,
   formatChargeType,
+  formatFreeShippingType,
   getUnitLabel,
   parseRegionCodes,
   parseRegionNames,
@@ -53,10 +56,18 @@ const form = ref<ShippingTemplateCreate>({
   default_first_cost: 500, // 500 cents = ¥5.00
   default_continue_unit: 1000,
   default_continue_cost: 10, // 10 cents per 1000g
+  free_shipping_type: 'none',
   free_threshold: null,
+  free_quantity: null,
+  excluded_regions: null,
+  volume_unit: null,
   estimate_days_min: null,
   estimate_days_max: null,
 })
+
+// New refs for free shipping and excluded regions
+const excludedProvinces = ref<string[]>([])
+const freeShippingType = ref<FreeShippingType>('none')
 
 // ==================== Region Management ====================
 const regions = ref<ShippingTemplateRegion[]>([])
@@ -80,6 +91,7 @@ const regionForm = ref<ShippingTemplateRegionCreate>({
 const selectedProvinces = ref<string[]>([])
 
 // ==================== Computed ====================
+const showPricingFields = computed(() => form.value.charge_type !== 'fixed')
 const chargeTypeUnit = computed(() => getUnitLabel(form.value.charge_type))
 const chargeTypeLabel = computed(() => formatChargeType(form.value.charge_type))
 
@@ -136,10 +148,16 @@ function openCreate() {
     default_first_cost: 500,
     default_continue_unit: 1000,
     default_continue_cost: 10,
+    free_shipping_type: 'none',
     free_threshold: null,
+    free_quantity: null,
+    excluded_regions: null,
+    volume_unit: null,
     estimate_days_min: null,
     estimate_days_max: null,
   }
+  freeShippingType.value = 'none'
+  excludedProvinces.value = []
   regions.value = []
   showDialog.value = true
 }
@@ -162,9 +180,23 @@ async function openEdit(item: ShippingTemplate) {
       default_first_cost: template.default_first_cost,
       default_continue_unit: template.default_continue_unit,
       default_continue_cost: template.default_continue_cost,
+      free_shipping_type: template.free_shipping_type || 'none',
       free_threshold: template.free_threshold,
+      free_quantity: template.free_quantity,
+      excluded_regions: template.excluded_regions,
+      volume_unit: template.volume_unit,
       estimate_days_min: template.estimate_days_min,
       estimate_days_max: template.estimate_days_max,
+    }
+
+    // Load free shipping type
+    freeShippingType.value = template.free_shipping_type || 'none'
+
+    // Load excluded provinces
+    if (template.excluded_regions && template.excluded_regions.length > 0) {
+      excludedProvinces.value = template.excluded_regions.map(r => r.code)
+    } else {
+      excludedProvinces.value = []
     }
 
     // Load regions
@@ -202,6 +234,22 @@ async function submit() {
       ElMessage.warning('最大天数不能小于最小天数')
       return
     }
+  }
+
+  // Sync free_shipping_type from ref to form
+  form.value.free_shipping_type = freeShippingType.value
+
+  // Build excluded_regions from selected provinces
+  if (excludedProvinces.value.length > 0) {
+    form.value.excluded_regions = excludedProvinces.value.map(code => {
+      const province = PROVINCES.find(p => p.code === code)
+      return {
+        code,
+        name: province?.name || code,
+      }
+    })
+  } else {
+    form.value.excluded_regions = null
   }
 
   submitLoading.value = true
