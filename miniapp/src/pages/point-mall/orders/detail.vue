@@ -215,10 +215,10 @@ function formatFullTime(timeStr) {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .order-detail-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background: var(--bg-base);
   padding-bottom: 120rpx;
 }
 
@@ -227,20 +227,20 @@ function formatFullTime(timeStr) {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 200rpx 0;
-  color: #999;
+  padding: $spacing-2xl 0;
+  color: var(--text-tertiary);
 }
 
 /* 状态区域 */
 .status-section {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 60rpx 30rpx 40rpx;
+  background: $gradient-brand;
+  padding: $spacing-xl $spacing-lg $spacing-lg;
 }
 
 .status-header {
   display: flex;
   align-items: flex-start;
-  gap: 20rpx;
+  gap: $spacing-md;
 }
 
 .status-icon {
@@ -252,17 +252,17 @@ function formatFullTime(timeStr) {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
+  gap: $spacing-sm;
 }
 
 .status-text {
-  font-size: 40rpx;
-  font-weight: bold;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
   color: #fff;
 }
 
 .status-hint {
-  font-size: 26rpx;
+  font-size: $font-size-sm;
   color: rgba(255, 255, 255, 0.9);
 }
 
@@ -271,28 +271,28 @@ function formatFullTime(timeStr) {
 .address-section,
 .shipment-section,
 .notes-section {
-  margin-top: 20rpx;
-  padding: 30rpx;
-  background-color: #fff;
+  margin-top: $spacing-md;
+  padding: $spacing-lg;
+  @include glass-card();
 }
 
 .section-title {
-  font-size: 32rpx;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 20rpx;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: var(--text-primary);
+  margin-bottom: $spacing-md;
 }
 
 /* 商品信息 */
 .product-card {
   display: flex;
-  gap: 20rpx;
+  gap: $spacing-md;
 }
 
 .product-image {
   width: 160rpx;
   height: 160rpx;
-  border-radius: 12rpx;
+  border-radius: $radius-md;
   flex-shrink: 0;
 }
 
@@ -300,7 +300,7 @@ function formatFullTime(timeStr) {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
+  background: var(--bg-base);
   font-size: 60rpx;
 }
 
@@ -309,30 +309,30 @@ function formatFullTime(timeStr) {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 8rpx 0;
+  padding: $spacing-xs 0;
 }
 
 .product-name {
-  font-size: 30rpx;
-  font-weight: 500;
-  color: #333;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: var(--text-primary);
   line-height: 1.4;
 }
 
 .product-meta {
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
+  gap: $spacing-xs;
 }
 
 .order-number {
-  font-size: 24rpx;
-  color: #666;
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
 }
 
 .order-time {
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 
 .product-points {
@@ -340,58 +340,58 @@ function formatFullTime(timeStr) {
   flex-direction: column;
   align-items: flex-end;
   justify-content: space-between;
-  padding: 8rpx 0;
+  padding: $spacing-xs 0;
 }
 
 .product-points .points {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #ff4d4f;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $semantic-error;
 }
 
 .product-points .label {
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 
 /* 地址卡片 */
 .address-card {
-  padding: 24rpx;
-  background-color: #f8f9fa;
-  border-radius: 12rpx;
+  padding: $spacing-md;
+  background: var(--bg-glass-subtle);
+  border-radius: $radius-md;
 }
 
 .address-top {
   display: flex;
-  gap: 20rpx;
-  margin-bottom: 16rpx;
+  gap: $spacing-md;
+  margin-bottom: $spacing-sm;
 }
 
 .contact-name {
-  font-size: 30rpx;
-  font-weight: 500;
-  color: #333;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: var(--text-primary);
 }
 
 .contact-phone {
-  font-size: 28rpx;
-  color: #666;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
 }
 
 .address-detail {
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
-  font-size: 28rpx;
-  color: #666;
+  gap: $spacing-xs;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
 /* 物流卡片 */
 .shipment-card {
-  padding: 24rpx;
-  background-color: #f8f9fa;
-  border-radius: 12rpx;
+  padding: $spacing-md;
+  background: var(--bg-glass-subtle);
+  border-radius: $radius-md;
 }
 
 .shipment-item {
@@ -401,47 +401,47 @@ function formatFullTime(timeStr) {
 }
 
 .shipment-item .label {
-  font-size: 28rpx;
-  color: #666;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
 }
 
 .shipment-item .value {
-  font-size: 28rpx;
-  color: #333;
-  font-weight: 500;
+  font-size: $font-size-sm;
+  color: var(--text-primary);
+  font-weight: $font-weight-medium;
 }
 
 /* 备注卡片 */
 .notes-card {
-  padding: 24rpx;
-  background-color: #f8f9fa;
-  border-radius: 12rpx;
+  padding: $spacing-md;
+  background: var(--bg-glass-subtle);
+  border-radius: $radius-md;
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
+  gap: $spacing-md;
 }
 
 .note-item {
-  font-size: 28rpx;
-  color: #666;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
 .note-item.admin {
-  color: #ff4d4f;
+  color: $semantic-error;
 }
 
 /* 处理时间 */
 .process-time-section {
-  margin-top: 20rpx;
-  padding: 30rpx;
-  background-color: #fff;
+  margin-top: $spacing-md;
+  padding: $spacing-lg;
+  @include glass-card();
   text-align: center;
 }
 
 .process-time {
-  font-size: 26rpx;
-  color: #999;
+  font-size: $font-size-sm;
+  color: var(--text-tertiary);
 }
 
 /* 操作按钮 */
@@ -450,20 +450,20 @@ function formatFullTime(timeStr) {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 20rpx 30rpx;
-  background-color: #fff;
-  border-top: 1rpx solid #eee;
-  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
+  padding: $spacing-md $spacing-lg;
+  background: var(--bg-glass-standard);
+  border-top: 1rpx solid var(--border-subtle);
+  box-shadow: $shadow-sm;
 }
 
 .cancel-btn {
   width: 100%;
   height: 88rpx;
-  background-color: #fff;
-  border: 1rpx solid #d9d9d9;
-  border-radius: 44rpx;
-  color: #666;
-  font-size: 32rpx;
+  background: var(--bg-glass-standard);
+  border: 1rpx solid var(--border-regular);
+  border-radius: $radius-full;
+  color: var(--text-secondary);
+  font-size: $font-size-base;
   line-height: 88rpx;
   text-align: center;
 }

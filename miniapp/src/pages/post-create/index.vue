@@ -410,19 +410,18 @@ async function submit() {
 <style scoped lang="scss">
 .page {
   min-height: 100vh;
-  padding: 24rpx;
-  background: #f5f5f5;
+  padding: $spacing-lg;
+  background: var(--bg-base);
 }
 
 .form {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 32rpx;
+  @include glass-card();
+  padding: $spacing-lg;
+  margin-bottom: $spacing-xl;
 }
 
 .row {
-  margin-bottom: 32rpx;
+  margin-bottom: $spacing-xl;
 
   &:last-child {
     margin-bottom: 0;
@@ -431,34 +430,34 @@ async function submit() {
 
 .label {
   display: block;
-  font-size: 28rpx;
-  color: #333;
-  font-weight: 500;
-  margin-bottom: 16rpx;
+  font-size: $font-size-sm;
+  color: var(--text-primary);
+  font-weight: $font-weight-medium;
+  margin-bottom: $spacing-base;
 }
 
 // 类型选择
 .type-row {
   .type-options {
     display: flex;
-    gap: 16rpx;
+    gap: $spacing-base;
   }
 
   .type-option {
     flex: 1;
-    padding: 16rpx 24rpx;
+    padding: $spacing-base $spacing-lg;
     text-align: center;
-    border: 2rpx solid #e0e0e0;
-    border-radius: 8rpx;
-    font-size: 28rpx;
-    color: #666;
+    border: 2rpx solid var(--border-regular);
+    border-radius: $radius-sm;
+    font-size: $font-size-sm;
+    color: var(--text-secondary);
     transition: all 0.3s;
 
     &.active {
-      border-color: #667eea;
+      border-color: $brand-secondary;
       background: rgba(102, 126, 234, 0.1);
-      color: #667eea;
-      font-weight: 600;
+      color: $brand-secondary;
+      font-weight: $font-weight-semibold;
     }
   }
 }
@@ -478,10 +477,10 @@ async function submit() {
 
   .char-count {
     position: absolute;
-    bottom: 16rpx;
-    right: 16rpx;
-    font-size: 24rpx;
-    color: #999;
+    bottom: $spacing-base;
+    right: $spacing-base;
+    font-size: $font-size-xs;
+    color: var(--text-tertiary);
   }
 }
 
@@ -510,8 +509,8 @@ async function submit() {
   position: relative;
   width: 100%;
   max-height: 70vh;
-  background: #fff;
-  border-radius: 24rpx 24rpx 0 0;
+  background: var(--bg-glass-subtle);
+  border-radius: $spacing-xl $spacing-xl 0 0;
   display: flex;
   flex-direction: column;
 }
@@ -520,65 +519,65 @@ async function submit() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24rpx 32rpx;
-  border-bottom: 1rpx solid #e5e5e5;
+  padding: $spacing-lg $spacing-md;
+  border-bottom: 1rpx solid var(--border-subtle);
 }
 
 .topic-picker-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #333;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
-  gap: 8rpx;
+  gap: $spacing-xs;
 }
 
 .topic-picker-count {
-  font-size: 24rpx;
-  color: #999;
-  font-weight: 400;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
+  font-weight: $font-weight-regular;
 }
 
 .topic-picker-close {
-  font-size: 36rpx;
-  color: #999;
-  padding: 8rpx;
+  font-size: $font-size-xl;
+  color: var(--text-tertiary);
+  padding: $spacing-xs;
 }
 
 .topic-picker-list {
   flex: 1;
-  padding: 16rpx 0;
+  padding: $spacing-base 0;
 }
 
 .topic-picker-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24rpx 32rpx;
+  padding: $spacing-lg $spacing-md;
   transition: background 0.2s;
 
   &:active {
-    background: #f5f5f5;
+    background: var(--bg-base);
   }
 }
 
 .topic-picker-name {
-  font-size: 28rpx;
-  color: #333;
+  font-size: $font-size-sm;
+  color: var(--text-primary);
   flex: 1;
 }
 
 .topic-picker-check {
-  font-size: 24rpx;
-  color: #667eea;
-  font-weight: 600;
+  font-size: $font-size-xs;
+  color: $brand-secondary;
+  font-weight: $font-weight-semibold;
 }
 
 .topic-picker-empty {
   padding: 80rpx 0;
   text-align: center;
-  font-size: 26rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 
 // 图片上传
@@ -586,7 +585,7 @@ async function submit() {
   .image-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 16rpx;
+    gap: $spacing-base;
   }
 
   .image-item {
@@ -597,7 +596,7 @@ async function submit() {
     image {
       width: 100%;
       height: 100%;
-      border-radius: 8rpx;
+      border-radius: $radius-sm;
     }
 
     .delete-btn {
@@ -612,7 +611,7 @@ async function submit() {
       align-items: center;
       justify-content: center;
       color: #fff;
-      font-size: 28rpx;
+      font-size: $font-size-sm;
       line-height: 1;
     }
   }
@@ -620,24 +619,24 @@ async function submit() {
   .add-image {
     width: 160rpx;
     height: 160rpx;
-    border: 2rpx dashed #ddd;
-    border-radius: 8rpx;
+    border: 2rpx dashed var(--border-regular);
+    border-radius: $radius-sm;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: #fafafa;
+    background: var(--bg-glass-subtle);
 
     .add-icon {
       font-size: 48rpx;
-      color: #999;
+      color: var(--text-tertiary);
       line-height: 1;
     }
 
     .add-text {
-      font-size: 24rpx;
-      color: #999;
-      margin-top: 8rpx;
+      font-size: $font-size-xs;
+      color: var(--text-tertiary);
+      margin-top: $spacing-xs;
     }
   }
 }
@@ -648,27 +647,27 @@ async function submit() {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20rpx 24rpx;
-    border: 1rpx solid #e0e0e0;
-    border-radius: 8rpx;
-    font-size: 28rpx;
-    color: #333;
-    background: #fafafa;
+    padding: $spacing-base $spacing-lg;
+    border: 1rpx solid var(--border-regular);
+    border-radius: $radius-sm;
+    font-size: $font-size-sm;
+    color: var(--text-primary);
+    background: var(--bg-glass-subtle);
 
     .arrow {
-      color: #999;
-      font-size: 32rpx;
-      font-weight: 300;
+      color: var(--text-tertiary);
+      font-size: $font-size-base;
+      font-weight: $font-weight-light;
     }
   }
 }
 
 .visibility-hint {
-  margin-top: -24rpx;
-  margin-bottom: 24rpx;
-  padding-left: 24rpx;
-  font-size: 24rpx;
-  color: #999;
+  margin-top: -$spacing-lg;
+  margin-bottom: $spacing-lg;
+  padding-left: $spacing-lg;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 
 // 按钮
@@ -676,11 +675,11 @@ async function submit() {
   width: 100%;
   height: 88rpx;
   line-height: 88rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: $gradient-brand;
   color: #fff;
-  border-radius: 12rpx;
-  font-size: 32rpx;
-  font-weight: 600;
+  border-radius: $radius-md;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
   border: none;
 
   &[disabled] {

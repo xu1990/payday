@@ -130,28 +130,28 @@ async function handleSubmit() {
 <style lang="scss" scoped>
 .goal-create-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding: 20rpx;
+  background: var(--bg-base);
+  padding: $spacing-md;
 }
 
 .header {
   text-align: center;
-  padding: 40rpx 0;
+  padding: $spacing-xl 0;
 
   .title {
-    font-size: 36rpx;
-    font-weight: bold;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
   }
 }
 
 .form {
-  background: white;
-  border-radius: 20rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
+  @include glass-card();
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
 
   .form-item {
-    margin-bottom: 30rpx;
+    margin-bottom: $spacing-lg;
 
     &:last-child {
       margin-bottom: 0;
@@ -159,21 +159,19 @@ async function handleSubmit() {
 
     .label {
       display: block;
-      font-size: 28rpx;
-      color: #333;
-      margin-bottom: 15rpx;
-      font-weight: 500;
+      font-size: $font-size-base;
+      color: var(--text-primary);
+      margin-bottom: $spacing-sm;
+      font-weight: $font-weight-medium;
     }
 
     .input,
     .textarea,
     .picker {
+      @include glass-input();
       width: 100%;
-      padding: 20rpx;
-      border: 1rpx solid #e0e0e0;
-      border-radius: 10rpx;
-      font-size: 28rpx;
-      background: #fafafa;
+      padding: $spacing-md;
+      font-size: $font-size-base;
     }
 
     .picker {
@@ -182,8 +180,8 @@ async function handleSubmit() {
       align-items: center;
 
       .arrow {
-        font-size: 20rpx;
-        color: #999;
+        font-size: $font-size-xs;
+        color: var(--text-tertiary);
       }
     }
 
@@ -194,19 +192,19 @@ async function handleSubmit() {
 }
 
 .footer {
-  padding: 20rpx 0;
+  padding: $spacing-md 0;
 
   .submit-btn {
     width: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: $gradient-brand;
     color: white;
     border: none;
-    border-radius: 50rpx;
-    padding: 30rpx;
-    font-size: 32rpx;
+    border-radius: $radius-xl;
+    padding: $spacing-lg;
+    font-size: $font-size-lg;
 
     &[disabled] {
-      background: #ccc;
+      background: var(--text-disabled);
     }
   }
 }

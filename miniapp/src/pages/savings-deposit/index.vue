@@ -1,7 +1,7 @@
 <template>
   <view class="savings-deposit-page">
     <view class="header">
-      <text class="title">💰 存入资金</text>
+      <text class="title">存款存入资金</text>
     </view>
 
     <view v-if="loading" class="loading">
@@ -154,77 +154,77 @@ async function handleDeposit() {
 <style lang="scss" scoped>
 .savings-deposit-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding: 20rpx;
+  background: var(--bg-base);
+  padding: $spacing-md;
 }
 
 .header {
   text-align: center;
-  padding: 30rpx 0;
+  padding: $spacing-lg 0;
 
   .title {
-    font-size: 36rpx;
-    font-weight: bold;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
   }
 }
 
 .loading {
   text-align: center;
-  padding: 100rpx 0;
-  color: #999;
+  padding: $spacing-3xl 0;
+  color: var(--text-tertiary);
 }
 
 .goal-info {
-  background: white;
-  border-radius: 20rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
+  @include glass-card();
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
 
   .goal-title {
-    font-size: 32rpx;
-    font-weight: bold;
-    margin-bottom: 20rpx;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    margin-bottom: $spacing-md;
+    color: var(--text-primary);
   }
 
   .goal-progress {
     .progress-label {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 10rpx;
-      font-size: 24rpx;
-      color: #666;
+      margin-bottom: $spacing-xs;
+      font-size: $font-size-sm;
+      color: var(--text-secondary);
     }
 
     .progress-bar {
       height: 16rpx;
-      background: #f0f0f0;
-      border-radius: 8rpx;
+      background: var(--bg-glass-subtle);
+      border-radius: $radius-sm;
       overflow: hidden;
-      margin-bottom: 10rpx;
+      margin-bottom: $spacing-xs;
 
       .progress-fill {
         height: 100%;
-        background: linear-gradient(90deg, #1890ff 0%, #52c41a 100%);
-        border-radius: 8rpx;
+        background: $gradient-brand;
+        border-radius: $radius-sm;
       }
     }
 
     .progress-percent {
-      font-size: 24rpx;
-      color: #1890ff;
-      font-weight: bold;
+      font-size: $font-size-sm;
+      color: $brand-primary;
+      font-weight: $font-weight-bold;
     }
   }
 }
 
 .form {
-  background: white;
-  border-radius: 20rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
+  @include glass-card();
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
 
   .form-item {
-    margin-bottom: 30rpx;
+    margin-bottom: $spacing-lg;
 
     &:last-child {
       margin-bottom: 0;
@@ -232,29 +232,27 @@ async function handleDeposit() {
 
     .label {
       display: block;
-      font-size: 28rpx;
-      color: #333;
-      margin-bottom: 15rpx;
-      font-weight: 500;
+      font-size: $font-size-base;
+      color: var(--text-primary);
+      margin-bottom: $spacing-sm;
+      font-weight: $font-weight-medium;
     }
 
     .amount-input {
       width: 100%;
-      padding: 20rpx;
-      border: 2rpx solid #1890ff;
-      border-radius: 10rpx;
-      font-size: 36rpx;
-      font-weight: bold;
+      padding: $spacing-md;
+      border: 2rpx solid $brand-primary;
+      border-radius: $radius-md;
+      font-size: $font-size-2xl;
+      font-weight: $font-weight-bold;
       text-align: center;
+      background: var(--bg-glass-subtle);
+      color: var(--text-primary);
     }
 
     .textarea {
+      @include glass-input();
       width: 100%;
-      padding: 20rpx;
-      border: 1rpx solid #e0e0e0;
-      border-radius: 10rpx;
-      font-size: 28rpx;
-      background: #fafafa;
       min-height: 120rpx;
     }
   }
@@ -262,59 +260,62 @@ async function handleDeposit() {
   .quick-amounts {
     display: flex;
     flex-wrap: wrap;
-    gap: 15rpx;
-    margin-top: 15rpx;
+    gap: $spacing-sm;
+    margin-top: $spacing-sm;
 
     .quick-btn {
-      padding: 15rpx 30rpx;
-      background: #f0f0f0;
-      border-radius: 50rpx;
-      font-size: 24rpx;
+      padding: $spacing-sm $spacing-lg;
+      background: var(--bg-glass-subtle);
+      border-radius: $radius-xl;
+      font-size: $font-size-sm;
+      color: var(--text-primary);
+      border: 1rpx solid var(--border-subtle);
     }
   }
 }
 
 .preview {
-  background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
-  border-radius: 20rpx;
-  padding: 30rpx;
+  background: $gradient-brand;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
   text-align: center;
-  margin-bottom: 20rpx;
+  margin-bottom: $spacing-md;
+  color: white;
 
   .preview-label {
     display: block;
-    font-size: 24rpx;
+    font-size: $font-size-sm;
     opacity: 0.8;
-    margin-bottom: 10rpx;
+    margin-bottom: $spacing-xs;
   }
 
   .preview-value {
     display: block;
-    font-size: 48rpx;
-    font-weight: bold;
+    font-size: $font-size-3xl;
+    font-weight: $font-weight-bold;
     margin-bottom: 5rpx;
   }
 
   .preview-percent {
-    font-size: 28rpx;
-    font-weight: bold;
+    font-size: $font-size-base;
+    font-weight: $font-weight-bold;
   }
 }
 
 .footer {
-  padding: 20rpx 0;
+  padding: $spacing-md 0;
 
   .submit-btn {
     width: 100%;
-    background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
+    background: linear-gradient(135deg, $semantic-success 0%, lighten($semantic-success, 10%) 100%);
     color: white;
     border: none;
-    border-radius: 50rpx;
-    padding: 30rpx;
-    font-size: 32rpx;
+    border-radius: $radius-xl;
+    padding: $spacing-lg;
+    font-size: $font-size-lg;
 
     &[disabled] {
-      background: #ccc;
+      background: var(--text-disabled);
     }
   }
 }

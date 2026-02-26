@@ -42,14 +42,14 @@ onMounted(loadAgreement)
     </view>
   </view>
   <view v-else class="legal-page loading">
-    <text>加载中...</text>
+    <view class="loading-spinner"></view>
   </view>
 </template>
 
 <style scoped lang="scss">
 .legal-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background: var(--bg-base);
 
   &.loading {
     display: flex;
@@ -59,27 +59,35 @@ onMounted(loadAgreement)
 }
 
 .container {
-  padding: 40rpx;
+  padding: $spacing-2xl;
 }
 
 .header {
   text-align: center;
-  margin-bottom: 60rpx;
+  margin-bottom: $spacing-3xl;
 }
 
 .title {
   display: block;
-  font-size: 48rpx;
-  font-weight: bold;
-  color: #333;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary);
 }
 
 .content {
-  background-color: #fff;
-  border-radius: 16rpx;
-  padding: 40rpx;
-  line-height: 1.8;
-  font-size: 28rpx;
-  color: #666;
+  @include glass-card();
+  padding: $spacing-2xl;
+  line-height: $line-height-relaxed;
+  font-size: $font-size-base;
+  color: var(--text-secondary);
+}
+
+.loading-spinner {
+  width: 48rpx;
+  height: 48rpx;
+  border: 4rpx solid var(--border-regular);
+  border-top-color: var(--brand-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 </style>

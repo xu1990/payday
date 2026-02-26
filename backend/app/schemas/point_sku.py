@@ -164,6 +164,9 @@ class SKUBatchUpdateItem(BaseModel):
     stock: Optional[int] = Field(None, ge=0, description="库存数量")
     points_cost: Optional[int] = Field(None, gt=0, description="积分价格")
     is_active: Optional[bool] = Field(None, description="是否启用")
+    stock_unlimited: Optional[bool] = Field(None, description="是否不限库存")
+    image_url: Optional[str] = Field(None, description="SKU主图")
+    sort_order: Optional[int] = Field(None, ge=0, description="排序值，值越大越靠前")
 
 
 class SKUBatchUpdate(BaseModel):

@@ -98,17 +98,17 @@ function formatDateTime(dateStr) {
 <style lang="scss" scoped>
 .point-history-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding: 20rpx;
+  background: var(--bg-base);
+  padding: $spacing-md;
 }
 
 .header {
   text-align: center;
-  padding: 30rpx 0;
+  padding: $spacing-lg 0;
 
   .title {
-    font-size: 36rpx;
-    font-weight: bold;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
   }
 }
 
@@ -116,27 +116,28 @@ function formatDateTime(dateStr) {
 .empty {
   text-align: center;
   padding: 100rpx 0;
-  color: #999;
+  color: var(--text-secondary);
 
   .empty-icon {
     display: block;
     font-size: 80rpx;
-    margin-bottom: 20rpx;
+    margin-bottom: $spacing-md;
   }
 
   .empty-text {
-    font-size: 28rpx;
+    font-size: $font-size-base;
   }
 }
 
 .transactions-list {
   .transaction-item {
+    @include glass-card();
     display: flex;
     align-items: center;
-    background: white;
-    border-radius: 20rpx;
-    padding: 25rpx;
-    margin-bottom: 15rpx;
+    background: var(--bg-glass-subtle);
+    border-radius: $radius-lg;
+    padding: $spacing-md;
+    margin-bottom: $spacing-sm;
 
     .transaction-icon {
       width: 80rpx;
@@ -145,18 +146,18 @@ function formatDateTime(dateStr) {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 40rpx;
-      font-weight: bold;
-      margin-right: 20rpx;
+      font-size: $font-size-2xl;
+      font-weight: $font-weight-bold;
+      margin-right: $spacing-md;
 
       &.earn {
-        background: #f6ffed;
-        color: #52c41a;
+        background: rgba($semantic-success, 0.1);
+        color: $semantic-success;
       }
 
       &.spend {
-        background: #fff1f0;
-        color: #ff4d4f;
+        background: rgba($semantic-error, 0.1);
+        color: $semantic-error;
       }
     }
 
@@ -164,33 +165,33 @@ function formatDateTime(dateStr) {
       flex: 1;
 
       .transaction-title {
-        font-size: 28rpx;
-        font-weight: bold;
-        margin-bottom: 5rpx;
+        font-size: $font-size-base;
+        font-weight: $font-weight-bold;
+        margin-bottom: $spacing-xs;
       }
 
       .transaction-desc {
-        font-size: 24rpx;
-        color: #999;
-        margin-bottom: 5rpx;
+        font-size: $font-size-sm;
+        color: var(--text-secondary);
+        margin-bottom: $spacing-xs;
       }
 
       .transaction-time {
-        font-size: 22rpx;
-        color: #ccc;
+        font-size: $font-size-xs;
+        color: var(--text-tertiary);
       }
     }
 
     .transaction-amount {
-      font-size: 36rpx;
-      font-weight: bold;
+      font-size: $font-size-xl;
+      font-weight: $font-weight-bold;
 
       &.earn {
-        color: #52c41a;
+        color: $semantic-success;
       }
 
       &.spend {
-        color: #ff4d4f;
+        color: $semantic-error;
       }
     }
   }

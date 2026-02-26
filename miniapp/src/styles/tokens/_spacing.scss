@@ -2,6 +2,7 @@
 
 $spacing-unit: 4rpx;
 
+// Numeric scale (0-24)
 $spacing-0: 0;
 $spacing-1: 4rpx;
 $spacing-2: 8rpx;
@@ -15,6 +16,17 @@ $spacing-12: 48rpx;
 $spacing-16: 64rpx;
 $spacing-20: 80rpx;
 $spacing-24: 96rpx;
+
+// Semantic aliases for common use cases
+$spacing-2xs: $spacing-1;   // 4rpx
+$spacing-xs: $spacing-2;   // 8rpx
+$spacing-sm: $spacing-3;   // 12rpx
+$spacing-base: $spacing-4; // 16rpx
+$spacing-md: $spacing-5;   // 20rpx
+$spacing-lg: $spacing-6;   // 24rpx
+$spacing-xl: $spacing-10;  // 40rpx
+$spacing-2xl: $spacing-12;  // 48rpx
+$spacing-3xl: $spacing-16;  // 64rpx
 
 $page-padding-x: 24rpx;
 $page-padding-y: 24rpx;

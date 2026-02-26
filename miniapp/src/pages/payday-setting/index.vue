@@ -216,48 +216,49 @@ onMounted(() => {
   </view>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .page {
-  padding: 24rpx;
+  padding: $spacing-md;
   min-height: 100vh;
+  background: var(--bg-base);
 }
 .head {
-  margin-bottom: 24rpx;
+  margin-bottom: $spacing-md;
 }
 .title {
-  font-size: 36rpx;
-  font-weight: 600;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
   display: block;
+  color: var(--text-primary);
 }
 .tip {
   display: block;
-  margin-top: 8rpx;
-  color: #666;
-  font-size: 26rpx;
+  margin-top: $spacing-xs;
+  color: var(--text-secondary);
+  font-size: $font-size-sm;
 }
 .btn-add {
-  margin-top: 20rpx;
-  background: #07c160;
+  margin-top: $spacing-sm;
+  background: $brand-primary;
   color: #fff;
   border: none;
-  border-radius: 8rpx;
+  border-radius: $radius-sm;
 }
 .loading,
 .err,
 .empty {
-  padding: 40rpx;
+  padding: $spacing-lg;
   text-align: center;
-  color: #666;
+  color: var(--text-secondary);
 }
 .list {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: $spacing-sm;
 }
 .card {
-  background: #f8f8f8;
-  border-radius: 12rpx;
-  padding: 24rpx;
+  @include glass-card();
+  padding: $spacing-md;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -266,36 +267,38 @@ onMounted(() => {
   flex: 1;
 }
 .job-name {
-  font-weight: 600;
-  font-size: 30rpx;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-lg;
   display: block;
+  color: var(--text-primary);
 }
 .meta {
   display: block;
-  margin-top: 8rpx;
-  color: #666;
-  font-size: 26rpx;
+  margin-top: $spacing-xs;
+  color: var(--text-secondary);
+  font-size: $font-size-sm;
 }
 .salary {
   display: block;
   margin-top: 4rpx;
-  color: #07c160;
-  font-size: 26rpx;
+  color: $brand-primary;
+  font-size: $font-size-sm;
 }
 .card-actions {
   display: flex;
-  gap: 16rpx;
+  gap: $spacing-sm;
 }
 .btn-sm {
-  padding: 8rpx 20rpx;
-  font-size: 24rpx;
-  border: 1rpx solid #ccc;
-  border-radius: 8rpx;
-  background: #fff;
+  padding: $spacing-xs $spacing-sm;
+  font-size: $font-size-xs;
+  border: 1rpx solid var(--border-subtle);
+  border-radius: $radius-sm;
+  background: var(--bg-glass-subtle);
+  color: var(--text-primary);
 }
 .btn-sm.danger {
-  border-color: #e0e0e0;
-  color: #e64340;
+  border-color: var(--border-regular);
+  color: $semantic-error;
 }
 .mask {
   position: fixed;
@@ -307,53 +310,54 @@ onMounted(() => {
 }
 .form-panel {
   width: 100%;
-  background: #fff;
-  border-radius: 24rpx 24rpx 0 0;
-  padding: 32rpx;
+  background: var(--bg-glass-subtle);
+  border-radius: $radius-lg $radius-lg 0 0;
+  padding: $spacing-lg;
   max-height: 80vh;
   overflow: auto;
 }
 .form-title {
-  font-size: 32rpx;
-  font-weight: 600;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
   display: block;
-  margin-bottom: 24rpx;
+  margin-bottom: $spacing-md;
+  color: var(--text-primary);
 }
 .form-item {
-  margin-bottom: 24rpx;
+  margin-bottom: $spacing-md;
 }
 .label {
   display: block;
-  margin-bottom: 8rpx;
-  color: #666;
-  font-size: 26rpx;
+  margin-bottom: $spacing-xs;
+  color: var(--text-secondary);
+  font-size: $font-size-sm;
 }
 .input,
 .picker {
-  border: 1rpx solid #e0e0e0;
-  border-radius: 8rpx;
-  padding: 20rpx;
-  font-size: 28rpx;
+  @include glass-input();
+  padding: $spacing-sm;
+  font-size: $font-size-base;
 }
 .picker {
-  background: #fff;
+  background: var(--bg-glass-subtle);
 }
 .form-actions {
   display: flex;
-  gap: 20rpx;
-  margin-top: 32rpx;
+  gap: $spacing-sm;
+  margin-top: $spacing-lg;
 }
 .btn-cancel {
   flex: 1;
-  border: 1rpx solid #ccc;
-  border-radius: 8rpx;
-  background: #fff;
+  border: 1rpx solid var(--border-subtle);
+  border-radius: $radius-sm;
+  background: var(--bg-glass-subtle);
+  color: var(--text-primary);
 }
 .btn-ok {
   flex: 1;
-  background: #07c160;
+  background: $brand-primary;
   color: #fff;
   border: none;
-  border-radius: 8rpx;
+  border-radius: $radius-sm;
 }
 </style>

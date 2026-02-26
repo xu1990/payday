@@ -63,61 +63,60 @@ const selectTheme = async (themeId: string) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .themes-page {
-  padding: 20rpx;
-  background: #f5f5f5;
+  padding: $spacing-lg;
+  background: var(--bg-base);
   min-height: 100vh;
 }
 
 .header {
-  margin-bottom: 30rpx;
+  margin-bottom: $spacing-xl;
 }
 
 .title {
-  font-size: 48rpx;
-  font-weight: bold;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
   display: block;
 }
 
 .subtitle {
-  font-size: 28rpx;
-  color: #666;
+  font-size: $font-size-base;
+  color: var(--text-secondary);
   display: block;
-  margin-top: 10rpx;
+  margin-top: $spacing-xs;
 }
 
 .themes-list {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: $spacing-md;
 }
 
 .theme-card {
+  @include glass-card();
   display: flex;
   align-items: center;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
+  padding: $spacing-md;
   position: relative;
 }
 
 .theme-card.active {
-  border: 4rpx solid #5470c6;
+  border: 4rpx solid $brand-primary;
 }
 
 .theme-preview {
   width: 100rpx;
   height: 100rpx;
-  border-radius: 12rpx;
+  border-radius: $radius-md;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 24rpx;
+  margin-right: $spacing-md;
 }
 
 .theme-icon {
-  font-size: 48rpx;
+  font-size: $font-size-3xl;
 }
 
 .theme-info {
@@ -125,33 +124,33 @@ const selectTheme = async (themeId: string) => {
 }
 
 .theme-name {
-  font-size: 32rpx;
-  font-weight: bold;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
   display: block;
-  margin-bottom: 8rpx;
+  margin-bottom: $spacing-xs;
 }
 
 .theme-desc {
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
   display: block;
 }
 
 .theme-check {
   width: 48rpx;
   height: 48rpx;
-  background: #5470c6;
+  background: $brand-primary;
   color: #fff;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32rpx;
+  font-size: $font-size-lg;
 }
 
 .loading {
   text-align: center;
-  padding: 40rpx;
-  color: #999;
+  padding: $spacing-2xl;
+  color: var(--text-tertiary);
 }
 </style>

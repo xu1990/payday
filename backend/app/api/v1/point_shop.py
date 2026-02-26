@@ -15,6 +15,7 @@ from fastapi import APIRouter, Body, Depends, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Literal
 
 router = APIRouter(prefix="/point-shop", tags=["point-shop"])
 
@@ -29,6 +30,12 @@ class ProductCreate(BaseModel):
     image_urls: Optional[List[str]] = Field(None, max_length=6)
     category: Optional[str] = None
     sort_order: int = 0
+    has_sku: bool = False
+    product_type: Literal["physical", "virtual", "bundle"] = "physical"
+    shipping_method: Literal["express", "self_pickup", "no_shipping"] = "express"
+    shipping_template_id: Optional[str] = None
+    category_id: Optional[str] = None
+    is_active: bool = True
 
 
 class ProductUpdate(BaseModel):
@@ -41,6 +48,11 @@ class ProductUpdate(BaseModel):
     category: Optional[str] = None
     sort_order: Optional[int] = None
     is_active: Optional[bool] = None
+    has_sku: Optional[bool] = None
+    product_type: Optional[Literal["physical", "virtual", "bundle"]] = None
+    shipping_method: Optional[Literal["express", "self_pickup", "no_shipping"]] = None
+    shipping_template_id: Optional[str] = None
+    category_id: Optional[str] = None
 
 
 class OrderCreate(BaseModel):
@@ -347,6 +359,12 @@ async def admin_create_product(
         body.image_urls,
         body.category,
         body.sort_order,
+        has_sku=body.has_sku,
+        product_type=body.product_type,
+        shipping_method=body.shipping_method,
+        shipping_template_id=body.shipping_template_id,
+        category_id=body.category_id,
+        is_active=body.is_active,
     )
 
     return success_response(data={"id": product.id}, message="商品创建成功")

@@ -127,57 +127,58 @@ async function submitFeedbackWithImages(imgs: string[]) {
 
 <style scoped lang="scss">
 .feedback-page {
-  padding: 24rpx;
-  background: #f5f5f5;
+  padding: $spacing-lg;
+  background: var(--bg-base);
   min-height: 100vh;
 }
 
 .section {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 24rpx;
+  @include glass-card();
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
 }
 
 .section-title {
-  font-size: 28rpx;
-  color: #333;
-  margin-bottom: 16rpx;
-  font-weight: 600;
+  font-size: $font-size-base;
+  color: var(--text-primary);
+  margin-bottom: $spacing-sm;
+  font-weight: $font-weight-semibold;
 }
 
 .textarea {
   width: 100%;
   min-height: 200rpx;
-  padding: 16rpx;
-  border: 1rpx solid #e0e0e0;
-  border-radius: 8rpx;
-  font-size: 28rpx;
+  padding: $spacing-sm;
+  border: 1rpx solid var(--border-regular);
+  border-radius: $radius-sm;
+  font-size: $font-size-base;
+  background: var(--bg-glass-subtle);
+  color: var(--text-primary);
 }
 
 .char-count {
   text-align: right;
-  font-size: 24rpx;
-  color: #999;
-  margin-top: 8rpx;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
+  margin-top: $spacing-xs;
 }
 
 .images {
   display: flex;
   flex-wrap: wrap;
-  gap: 16rpx;
+  gap: $spacing-sm;
 }
 
 .image-item {
   position: relative;
   width: 160rpx;
   height: 160rpx;
-}
 
-.image-item image {
-  width: 100%;
-  height: 100%;
-  border-radius: 8rpx;
+  image {
+    width: 100%;
+    height: 100%;
+    border-radius: $radius-sm;
+  }
 }
 
 .remove-btn {
@@ -192,46 +193,49 @@ async function submitFeedbackWithImages(imgs: string[]) {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24rpx;
+  font-size: $font-size-sm;
 }
 
 .add-image {
   width: 160rpx;
   height: 160rpx;
-  border: 2rpx dashed #e0e0e0;
-  border-radius: 8rpx;
+  border: 2rpx dashed var(--border-regular);
+  border-radius: $radius-sm;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8rpx;
+  gap: $spacing-xs;
+  background: var(--bg-glass-subtle);
 }
 
 .plus {
-  font-size: 48rpx;
-  color: #999;
+  font-size: $font-size-3xl;
+  color: var(--text-tertiary);
 }
 
 .hint {
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 
 .input {
   width: 100%;
-  padding: 16rpx;
-  border: 1rpx solid #e0e0e0;
-  border-radius: 8rpx;
-  font-size: 28rpx;
+  padding: $spacing-sm;
+  border: 1rpx solid var(--border-regular);
+  border-radius: $radius-sm;
+  font-size: $font-size-base;
+  background: var(--bg-glass-subtle);
+  color: var(--text-primary);
 }
 
 .submit-btn {
   width: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: $gradient-brand;
   color: #fff;
   border: none;
-  border-radius: 12rpx;
-  font-size: 32rpx;
-  padding: 24rpx;
+  border-radius: $radius-md;
+  font-size: $font-size-lg;
+  padding: $spacing-lg;
 }
 </style>

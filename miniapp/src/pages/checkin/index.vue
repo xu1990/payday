@@ -177,37 +177,38 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .checkin-page {
-  padding: 20rpx;
-  background: #f5f5f5;
+  padding: $spacing-md;
+  background: var(--bg-base);
   min-height: 100vh;
 }
 
 .header {
-  margin-bottom: 30rpx;
+  margin-bottom: $spacing-lg;
 }
 
 .title {
-  font-size: 48rpx;
-  font-weight: bold;
+  font-size: $font-size-display;
+  font-weight: $font-weight-bold;
   display: block;
 }
 
 .subtitle {
-  font-size: 28rpx;
-  color: #666;
+  font-size: $font-size-base;
+  color: var(--text-secondary);
   display: block;
-  margin-top: 10rpx;
+  margin-top: $spacing-xs;
 }
 
 .stats-card {
+  @include glass-card();
   display: flex;
   justify-content: space-around;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 40rpx 20rpx;
-  margin-bottom: 30rpx;
+  background: var(--bg-glass-subtle);
+  border-radius: $radius-lg;
+  padding: $spacing-xl $spacing-md;
+  margin-bottom: $spacing-lg;
 }
 
 .stat-item {
@@ -215,84 +216,87 @@ onMounted(() => {
 }
 
 .stat-value {
-  font-size: 56rpx;
-  font-weight: bold;
-  color: #5470c6;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: $brand-primary;
   display: block;
 }
 
 .stat-label {
-  font-size: 24rpx;
-  color: #999;
-  margin-top: 10rpx;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
+  margin-top: $spacing-xs;
   display: block;
 }
 
 .today-section {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 30rpx;
+  @include glass-card();
+  background: var(--bg-glass-subtle);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
 }
 
 .today-title {
-  font-size: 32rpx;
-  font-weight: bold;
-  margin-bottom: 20rpx;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  margin-bottom: $spacing-md;
 }
 
 .checkin-btn {
   width: 100%;
   height: 100rpx;
-  background: #5470c6;
+  background: $brand-primary;
   color: #fff;
-  font-size: 36rpx;
-  border-radius: 16rpx;
+  font-size: $font-size-xl;
+  border-radius: $radius-lg;
   border: none;
-  margin-bottom: 20rpx;
+  margin-bottom: $spacing-md;
 }
 
 .checkin-btn.checked {
-  background: #ccc;
+  background: var(--text-tertiary);
 }
 
 .note-input {
+  @include glass-input();
   width: 100%;
-  padding: 20rpx;
-  border: 2rpx solid #eee;
-  border-radius: 12rpx;
-  font-size: 28rpx;
+  padding: $spacing-md;
+  border: 2rpx solid var(--border-subtle);
+  border-radius: $radius-md;
+  font-size: $font-size-base;
 }
 
 .calendar-section {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 30rpx;
+  @include glass-card();
+  background: var(--bg-glass-subtle);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
 }
 
 .calendar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20rpx;
+  margin-bottom: $spacing-md;
 }
 
 .calendar-title {
-  font-size: 32rpx;
-  font-weight: bold;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
 }
 
 .calendar-weekdays {
   display: flex;
-  margin-bottom: 10rpx;
+  margin-bottom: $spacing-xs;
 }
 
 .calendar-weekdays text {
   flex: 1;
   text-align: center;
-  font-size: 24rpx;
-  color: #999;
-  padding: 10rpx 0;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
+  padding: $spacing-xs 0;
 }
 
 .calendar-days {
@@ -306,9 +310,9 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28rpx;
-  border-radius: 8rpx;
-  margin-bottom: 10rpx;
+  font-size: $font-size-base;
+  border-radius: $radius-xs;
+  margin-bottom: $spacing-xs;
 }
 
 .calendar-day.empty {
@@ -316,11 +320,11 @@ onMounted(() => {
 }
 
 .calendar-day.checked {
-  background: #5470c6;
+  background: $brand-primary;
   color: #fff;
 }
 
 .calendar-day.today {
-  border: 2rpx solid #5470c6;
+  border: 2rpx solid $brand-primary;
 }
 </style>

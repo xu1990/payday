@@ -154,12 +154,12 @@ function goToOrders() {
 <style lang="scss" scoped>
 .point-mall-page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: var(--bg-base);
 }
 
 .balance-bar {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 30rpx 20rpx;
+  background: $gradient-brand;
+  padding: $spacing-lg $spacing-md;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -170,55 +170,55 @@ function goToOrders() {
   }
 
   .label {
-    font-size: 26rpx;
+    font-size: $font-size-xs;
     opacity: 0.9;
   }
 
   .balance {
-    font-size: 40rpx;
-    font-weight: bold;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
   }
 
   .order-btn {
     display: flex;
     align-items: center;
-    gap: 8rpx;
-    background: rgba(255, 255, 255, 0.2);
-    padding: 12rpx 20rpx;
-    border-radius: 30rpx;
+    gap: $spacing-xs;
+    background: var(--bg-glass-subtle);
+    padding: $spacing-sm $spacing-md;
+    border-radius: $radius-full;
     backdrop-filter: blur(10rpx);
 
     .order-icon {
-      font-size: 28rpx;
+      font-size: $font-size-sm;
     }
 
     .order-text {
-      font-size: 24rpx;
-      font-weight: 500;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-medium;
     }
   }
 }
 
 .category-filter {
-  background: white;
-  padding: 20rpx 0;
-  margin-bottom: 20rpx;
+  background: var(--bg-glass-standard);
+  padding: $spacing-md 0;
+  margin-bottom: $spacing-md;
 
   .category-scroll {
     white-space: nowrap;
-    padding: 0 20rpx;
+    padding: 0 $spacing-md;
 
     .category-item {
       display: inline-block;
-      padding: 10rpx 25rpx;
-      margin-right: 15rpx;
-      border-radius: 30rpx;
-      font-size: 26rpx;
-      background: #f5f5f5;
-      color: #666;
+      padding: $spacing-xs $spacing-lg;
+      margin-right: $spacing-sm;
+      border-radius: $radius-full;
+      font-size: $font-size-xs;
+      background: var(--bg-base);
+      color: var(--text-secondary);
 
       &.active {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: $gradient-brand;
         color: white;
       }
     }
@@ -228,19 +228,19 @@ function goToOrders() {
 .loading,
 .empty {
   text-align: center;
-  padding: 100rpx 0;
-  color: #999;
+  padding: $spacing-2xl 0;
+  color: var(--text-tertiary);
 }
 
 .products-list {
-  padding: 20rpx;
+  padding: $spacing-md;
 
   .product-item {
     display: flex;
-    background: white;
-    border-radius: 20rpx;
+    @include glass-card();
+    border-radius: $radius-lg;
     overflow: hidden;
-    margin-bottom: 20rpx;
+    margin-bottom: $spacing-md;
 
     .product-image {
       width: 200rpx;
@@ -248,7 +248,7 @@ function goToOrders() {
       flex-shrink: 0;
 
       &.placeholder {
-        background: #f0f0f0;
+        background: var(--bg-base);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -258,14 +258,14 @@ function goToOrders() {
 
     .product-info {
       flex: 1;
-      padding: 20rpx;
+      padding: $spacing-md;
       display: flex;
       flex-direction: column;
 
       .product-name {
-        font-size: 28rpx;
-        font-weight: bold;
-        margin-bottom: 10rpx;
+        font-size: $font-size-sm;
+        font-weight: $font-weight-bold;
+        margin-bottom: $spacing-xs;
         display: -webkit-box;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
@@ -273,8 +273,8 @@ function goToOrders() {
       }
 
       .product-desc {
-        font-size: 24rpx;
-        color: #999;
+        font-size: $font-size-xs;
+        color: var(--text-tertiary);
         margin-bottom: auto;
         display: -webkit-box;
         -webkit-box-orient: vertical;
@@ -286,40 +286,40 @@ function goToOrders() {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-top: 15rpx;
+        margin-top: $spacing-sm;
 
         .stock-info {
-          font-size: 22rpx;
+          font-size: $font-size-xs;
 
           .stock-unlimited {
-            color: #1890ff;
+            color: $brand-primary;
           }
 
           .stock-available {
-            color: #52c41a;
+            color: $semantic-success;
           }
 
           .stock-empty {
-            color: #ff4d4f;
+            color: $semantic-error;
           }
         }
 
         .price-tag {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: $gradient-brand;
           color: white;
-          padding: 8rpx 20rpx;
-          border-radius: 30rpx;
+          padding: $spacing-xs $spacing-md;
+          border-radius: $radius-full;
           display: flex;
           align-items: center;
 
           .points {
-            font-size: 28rpx;
-            font-weight: bold;
-            margin-right: 5rpx;
+            font-size: $font-size-sm;
+            font-weight: $font-weight-bold;
+            margin-right: $spacing-xs;
           }
 
           .label {
-            font-size: 20rpx;
+            font-size: $font-size-xs;
             opacity: 0.9;
           }
         }

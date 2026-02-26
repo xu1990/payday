@@ -160,7 +160,10 @@ onMounted(async () => {
 })
 
 // 更新设置
-const updateSetting = async (key: keyof UserSettingsUpdateReq, value: number | string  = null) => {
+const updateSetting = async (
+  key: keyof UserSettingsUpdateReq,
+  value: number | string = null
+) => {
   try {
     await updateUserSettings({ [key]: value })
     uni.showToast({ title: '设置已保存', icon: 'success' })
@@ -352,53 +355,54 @@ async function handleDeactivate() {
 
 <style scoped lang="scss">
 .settings-page {
-  padding: 20rpx;
-  background: #f5f5f5;
+  padding: $spacing-lg;
+  background: var(--bg-base);
   min-height: 100vh;
 }
 
 .header {
-  margin-bottom: 30rpx;
+  margin-bottom: $spacing-xl;
 }
 
 .title {
-  font-size: 48rpx;
-  font-weight: bold;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
   display: block;
+  color: var(--text-primary);
 }
 
 .section {
-  background: #fff;
-  border-radius: 16rpx;
-  margin-bottom: 30rpx;
+  @include glass-card();
+  margin-bottom: $spacing-xl;
   overflow: hidden;
 }
 
 .section-title {
-  font-size: 28rpx;
-  color: #999;
-  padding: 24rpx 24rpx 16rpx;
+  font-size: $font-size-base;
+  color: var(--text-tertiary);
+  padding: $spacing-lg $spacing-lg $spacing-sm;
 }
 
 .setting-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24rpx;
-  border-bottom: 1rpx solid #f0f0f0;
-}
+  padding: $spacing-lg;
+  border-bottom: 1rpx solid var(--border-subtle);
 
-.setting-item:last-child {
-  border-bottom: none;
+  &:last-child {
+    border-bottom: none;
+  }
 }
 
 .setting-label {
-  font-size: 30rpx;
+  font-size: $font-size-lg;
+  color: var(--text-primary);
 }
 
 .setting-arrow {
-  font-size: 48rpx;
-  color: #999;
+  font-size: $font-size-3xl;
+  color: var(--text-tertiary);
   font-weight: 300;
 }
 
@@ -408,69 +412,70 @@ async function handleDeactivate() {
     .avatar-wrapper {
       display: flex;
       align-items: center;
-      gap: 16rpx;
+      gap: $spacing-sm;
     }
 
     .avatar-image {
       width: 80rpx;
       height: 80rpx;
       border-radius: 40rpx;
-      background: #f0f0f0;
+      background: var(--bg-glass-subtle);
     }
 
     .change-hint {
-      font-size: 24rpx;
-      color: #667eea;
+      font-size: $font-size-sm;
+      color: var(--brand-primary);
     }
   }
 
   .nickname-input {
     flex: 1;
     text-align: right;
-    font-size: 28rpx;
-    color: #333;
-    padding: 8rpx 16rpx;
-    border: 1rpx solid #e0e0e0;
-    border-radius: 8rpx;
+    font-size: $font-size-base;
+    color: var(--text-primary);
+    padding: $spacing-xs $spacing-sm;
+    border: 1rpx solid var(--border-regular);
+    border-radius: $radius-sm;
     min-width: 200rpx;
+    background: var(--bg-glass-subtle);
   }
 }
 
 .loading {
   text-align: center;
-  padding: 40rpx;
-  color: #999;
+  padding: $spacing-2xl;
+  color: var(--text-tertiary);
 }
 
 .btn-logout {
   width: 100%;
-  background: #fff;
-  color: #333;
-  border: 1rpx solid #e0e0e0;
-  border-radius: 12rpx;
-  font-size: 30rpx;
-  margin-top: 16rpx;
+  background: var(--bg-glass-standard);
+  color: var(--text-primary);
+  border: 1rpx solid var(--border-regular);
+  border-radius: $radius-md;
+  font-size: $font-size-lg;
+  margin-top: $spacing-sm;
 }
 
 .danger-section {
-  margin-top: 40rpx;
+  margin-top: $spacing-2xl;
 }
 
 .btn-deactivate {
   width: 100%;
-  background: #ff4d4f;
+  background: $semantic-error;
   color: #fff;
   border: none;
-  border-radius: 12rpx;
-  font-size: 30rpx;
-  margin-top: 16rpx;
+  border-radius: $radius-md;
+  font-size: $font-size-lg;
+  margin-top: $spacing-sm;
 }
 
 .warning-text {
   display: block;
-  font-size: 24rpx;
-  color: #ff4d4f;
+  font-size: $font-size-sm;
+  color: $semantic-error;
   text-align: center;
-  margin-top: 16rpx;
+  margin-top: $spacing-sm;
 }
 </style>

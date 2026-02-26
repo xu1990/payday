@@ -350,137 +350,137 @@ function handleUnfollow(data: { targetUserId: string }) {
   </view>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .page {
   min-height: 100vh;
-  padding: 24rpx;
-  background: #f5f5f5;
+  padding: $spacing-md;
+  background: var(--bg-base);
 }
 .tip {
-  padding: 48rpx;
+  padding: $spacing-xl;
   text-align: center;
-  color: #999;
+  color: var(--text-tertiary);
+  font-size: $font-size-sm;
 }
 .card {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
+  @include glass-card();
+  padding: $spacing-md;
 }
 .author-header {
   display: flex;
   align-items: center;
-  gap: 16rpx;
-  margin-bottom: 16rpx;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-sm;
 }
 .author-info {
   display: flex;
   flex-direction: column;
-  gap: 4rpx;
+  gap: $spacing-xs;
 }
 .row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16rpx;
+  margin-bottom: $spacing-sm;
 }
 .name {
-  font-weight: 600;
-  font-size: 30rpx;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-base;
 }
 .time {
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 .author-section {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 16rpx;
+  margin-bottom: $spacing-sm;
 }
 .content {
-  font-size: 30rpx;
+  font-size: $font-size-base;
   line-height: 1.6;
-  color: #333;
+  color: var(--text-primary);
   display: block;
 }
 .imgs {
-  margin-top: 24rpx;
+  margin-top: $spacing-md;
   display: flex;
   flex-wrap: wrap;
-  gap: 12rpx;
+  gap: $spacing-xs;
 }
 .thumb {
   width: 200rpx;
-  border-radius: 8rpx;
-  background: #f0f0f0;
+  border-radius: $radius-sm;
+  background: var(--bg-glass-subtle);
 }
 .meta {
-  margin-top: 24rpx;
-  font-size: 26rpx;
-  color: #999;
+  margin-top: $spacing-md;
+  font-size: $font-size-sm;
+  color: var(--text-tertiary);
 }
 .meta-item {
-  margin-right: 24rpx;
+  margin-right: $spacing-md;
 }
 .comment-section {
-  margin-top: 32rpx;
-  padding-top: 24rpx;
-  border-top: 1rpx solid #eee;
+  margin-top: $spacing-lg;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid var(--border-subtle);
 }
 .comment-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  margin-bottom: 16rpx;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  margin-bottom: $spacing-sm;
 }
 .comment-list {
   display: flex;
   flex-direction: column;
-  gap: 24rpx;
+  gap: $spacing-md;
 }
 .comment-block {
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid #f0f0f0;
+  padding: $spacing-sm 0;
+  border-bottom: 1rpx solid var(--border-subtle);
 }
 .comment-row {
   display: flex;
   align-items: center;
-  gap: 16rpx;
-  margin-bottom: 8rpx;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-xs;
 }
 .comment-name {
-  font-size: 26rpx;
-  color: #666;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
 }
 .comment-time {
-  font-size: 22rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 .comment-content {
-  font-size: 28rpx;
+  font-size: $font-size-sm;
   line-height: 1.5;
-  color: #333;
+  color: var(--text-primary);
   display: block;
-  margin-bottom: 12rpx;
+  margin-bottom: $spacing-xs;
 }
 .comment-actions {
   display: flex;
-  gap: 24rpx;
-  font-size: 24rpx;
-  color: #999;
+  gap: $spacing-md;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 .action {
-  padding: 4rpx 0;
+  padding: $spacing-xs 0;
 }
 .action.liked {
-  color: #07c160;
+  color: $semantic-success;
 }
 .replies {
-  margin-top: 16rpx;
-  padding-left: 24rpx;
-  border-left: 4rpx solid #eee;
+  margin-top: $spacing-sm;
+  padding-left: $spacing-md;
+  border-left: 4rpx solid var(--border-subtle);
 }
 .reply-item {
-  padding: 12rpx 0;
-  border-bottom: 1rpx solid #f8f8f8;
+  padding: $spacing-xs 0;
+  border-bottom: 1rpx solid var(--border-subtle);
 }
 .reply-item:last-child {
   border-bottom: none;
@@ -492,11 +492,11 @@ function handleUnfollow(data: { targetUserId: string }) {
   bottom: 0;
   display: flex;
   align-items: center;
-  gap: 16rpx;
-  padding: 16rpx 24rpx;
-  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
-  background: #fff;
-  border-top: 1rpx solid #eee;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  padding-bottom: calc(#{$spacing-sm} + env(safe-area-inset-bottom));
+  background: var(--bg-glass-standard);
+  border-top: 1rpx solid var(--border-subtle);
   transition: transform 0.3s ease;
 }
 .bottom-bar.keyboard-up {
@@ -504,30 +504,30 @@ function handleUnfollow(data: { targetUserId: string }) {
 }
 .reply-hint {
   position: absolute;
-  left: 24rpx;
+  left: $spacing-md;
   top: -28rpx;
-  font-size: 22rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 .reply-hint .cancel {
-  margin-left: 16rpx;
-  color: #07c160;
+  margin-left: $spacing-sm;
+  color: $brand-primary;
 }
 .bottom-bar .input {
+  @include glass-input();
   flex: 1;
   height: 64rpx;
-  padding: 0 24rpx;
-  font-size: 28rpx;
-  background: #f5f5f5;
-  border-radius: 32rpx;
+  padding: 0 $spacing-md;
+  font-size: $font-size-sm;
+  border-radius: $radius-full;
 }
 .bottom-bar .btn {
-  padding: 0 32rpx;
+  padding: 0 $spacing-md;
   height: 64rpx;
   line-height: 64rpx;
-  font-size: 28rpx;
-  background: #07c160;
+  font-size: $font-size-sm;
+  background: $brand-primary;
   color: #fff;
-  border-radius: 32rpx;
+  border-radius: $radius-full;
 }
 </style>

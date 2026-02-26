@@ -305,68 +305,69 @@ async function handleSave() {
 <style lang="scss" scoped>
 .expense-tracking-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding: 20rpx;
+  background: var(--bg-base);
+  padding: $spacing-md;
   padding-bottom: 150rpx;
 }
 
 .header {
   text-align: center;
-  padding: 30rpx 0;
-  margin-bottom: 20rpx;
+  padding: $spacing-lg 0;
+  margin-bottom: $spacing-md;
 
   .title {
     display: block;
-    font-size: 36rpx;
-    font-weight: bold;
-    margin-bottom: 10rpx;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    margin-bottom: $spacing-xs;
+    color: var(--text-primary);
   }
 
   .subtitle {
-    font-size: 24rpx;
-    color: #666;
+    font-size: $font-size-sm;
+    color: var(--text-secondary);
   }
 }
 
 .section-title {
-  font-size: 28rpx;
-  font-weight: bold;
-  color: #333;
-  margin: 30rpx 0 20rpx;
-  padding-left: 10rpx;
-  border-left: 6rpx solid #1890ff;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary);
+  margin: $spacing-lg 0 $spacing-md;
+  padding-left: $spacing-xs;
+  border-left: 6rpx solid $brand-primary;
 }
 
 .saved-expenses {
-  margin-bottom: 40rpx;
+  margin-bottom: $spacing-2xl;
 }
 
 .summary-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 20rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
+  background: $gradient-brand;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
   display: flex;
   justify-content: space-around;
+  color: white;
 
   .summary-item {
     text-align: center;
 
     .label {
       display: block;
-      font-size: 24rpx;
+      font-size: $font-size-sm;
       color: rgba(255, 255, 255, 0.8);
-      margin-bottom: 10rpx;
+      margin-bottom: $spacing-xs;
     }
 
     .value {
       display: block;
-      font-size: 36rpx;
-      font-weight: bold;
-      color: white;
+      font-size: $font-size-2xl;
+      font-weight: $font-weight-bold;
 
       &.highlight {
-        font-size: 44rpx;
+        font-size: $font-size-3xl;
       }
     }
   }
@@ -374,39 +375,37 @@ async function handleSave() {
 
 .expense-list-saved {
   .saved-item {
-    background: white;
-    border-radius: 16rpx;
-    padding: 25rpx;
-    margin-bottom: 15rpx;
-    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+    @include glass-card();
+    padding: $spacing-lg;
+    margin-bottom: $spacing-sm;
 
     .item-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10rpx;
+      margin-bottom: $spacing-xs;
 
       .category {
-        font-size: 28rpx;
-        font-weight: bold;
-        color: #333;
+        font-size: $font-size-base;
+        font-weight: $font-weight-bold;
+        color: var(--text-primary);
       }
 
       .amount {
-        font-size: 32rpx;
-        font-weight: bold;
-        color: #ff4d4f;
+        font-size: $font-size-lg;
+        font-weight: $font-weight-bold;
+        color: $semantic-error;
       }
     }
 
     .item-meta {
       display: flex;
-      gap: 20rpx;
-      font-size: 24rpx;
-      color: #999;
+      gap: $spacing-md;
+      font-size: $font-size-sm;
+      color: var(--text-tertiary);
 
       .date {
-        color: #666;
+        color: var(--text-secondary);
       }
 
       .note {
@@ -420,128 +419,133 @@ async function handleSave() {
 }
 
 .new-expense-section {
-  background: white;
-  border-radius: 20rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
+  @include glass-card();
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
 }
 
 .expense-list {
   .expense-item {
-    background: #f9f9f9;
-    border-radius: 16rpx;
-    padding: 25rpx;
-    margin-bottom: 20rpx;
+    background: var(--bg-glass-subtle);
+    border-radius: $radius-md;
+    padding: $spacing-lg;
+    margin-bottom: $spacing-md;
 
     .item-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 15rpx;
+      margin-bottom: $spacing-sm;
 
       .category-picker {
         display: flex;
         align-items: center;
-        gap: 10rpx;
-        padding: 10rpx 20rpx;
-        background: white;
-        border-radius: 30rpx;
-        font-size: 28rpx;
+        gap: $spacing-xs;
+        padding: $spacing-xs $spacing-md;
+        background: var(--bg-glass-standard);
+        border-radius: $radius-xl;
+        font-size: $font-size-base;
+        color: var(--text-primary);
+        border: 1rpx solid var(--border-subtle);
 
         .arrow {
-          font-size: 20rpx;
-          color: #999;
+          font-size: $font-size-xs;
+          color: var(--text-tertiary);
         }
       }
 
       .amount-input {
         flex: 1;
         text-align: right;
-        font-size: 32rpx;
-        font-weight: bold;
-        color: #1890ff;
+        font-size: $font-size-lg;
+        font-weight: $font-weight-bold;
+        color: $brand-primary;
       }
     }
 
     .note-input {
       width: 100%;
-      padding: 15rpx;
-      background: white;
-      border-radius: 10rpx;
-      font-size: 28rpx;
-      margin-bottom: 15rpx;
+      padding: $spacing-sm;
+      background: var(--bg-glass-standard);
+      border-radius: $radius-md;
+      font-size: $font-size-base;
+      margin-bottom: $spacing-sm;
+      color: var(--text-primary);
+      border: 1rpx solid var(--border-subtle);
     }
 
     .date-picker {
       .date-display {
-        padding: 10rpx;
-        background: white;
-        border-radius: 10rpx;
+        padding: $spacing-xs;
+        background: var(--bg-glass-standard);
+        border-radius: $radius-md;
         text-align: center;
-        font-size: 26rpx;
-        color: #666;
+        font-size: $font-size-sm;
+        color: var(--text-secondary);
+        border: 1rpx solid var(--border-subtle);
       }
     }
 
     .delete-btn {
       text-align: center;
-      padding: 15rpx;
-      margin-top: 10rpx;
-      font-size: 26rpx;
-      color: #ff4d4f;
+      padding: $spacing-sm;
+      margin-top: $spacing-xs;
+      font-size: $font-size-sm;
+      color: $semantic-error;
     }
   }
 }
 
 .add-btn {
   text-align: center;
-  padding: 25rpx;
-  background: white;
-  border-radius: 16rpx;
-  margin: 20rpx 0;
-  font-size: 28rpx;
-  color: #1890ff;
+  padding: $spacing-lg;
+  background: var(--bg-glass-standard);
+  border-radius: $radius-md;
+  margin: $spacing-md 0;
+  font-size: $font-size-base;
+  color: $brand-primary;
+  border: 1rpx solid var(--border-subtle);
 }
 
 .summary {
   display: flex;
   justify-content: space-around;
-  padding: 20rpx 0;
-  border-top: 1rpx solid #eee;
+  padding: $spacing-md 0;
+  border-top: 1rpx solid var(--border-subtle);
 
   .summary-item {
     text-align: center;
 
     .label {
       display: block;
-      font-size: 24rpx;
-      color: #999;
-      margin-bottom: 10rpx;
+      font-size: $font-size-sm;
+      color: var(--text-tertiary);
+      margin-bottom: $spacing-xs;
     }
 
     .value {
       display: block;
-      font-size: 32rpx;
-      font-weight: bold;
-      color: #1890ff;
+      font-size: $font-size-lg;
+      font-weight: $font-weight-bold;
+      color: $brand-primary;
     }
   }
 }
 
 .footer {
-  padding: 20rpx 0;
+  padding: $spacing-md 0;
 
   .save-btn {
     width: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: $gradient-brand;
     color: white;
     border: none;
-    border-radius: 50rpx;
-    padding: 30rpx;
-    font-size: 32rpx;
+    border-radius: $radius-xl;
+    padding: $spacing-lg;
+    font-size: $font-size-lg;
 
     &[disabled] {
-      background: #ccc;
+      background: var(--text-disabled);
     }
   }
 }

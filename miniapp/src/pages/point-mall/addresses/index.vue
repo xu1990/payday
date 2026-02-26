@@ -173,39 +173,39 @@ async function handleDeleteAddress(address) {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .addresses-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background: var(--bg-base);
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 30rpx;
-  background-color: #fff;
-  border-bottom: 1rpx solid #eee;
+  padding: $spacing-lg;
+  background: var(--bg-glass-standard);
+  border-bottom: 1rpx solid var(--border-subtle);
 }
 
 .title {
-  font-size: 32rpx;
-  font-weight: 500;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
 }
 
 .add-btn {
   display: flex;
   align-items: center;
-  gap: 8rpx;
-  padding: 12rpx 24rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 40rpx;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-lg;
+  background: $gradient-brand;
+  border-radius: $radius-full;
   color: #fff;
-  font-size: 28rpx;
+  font-size: $font-size-sm;
 }
 
 .add-btn .icon {
-  font-size: 32rpx;
+  font-size: $font-size-base;
   line-height: 1;
 }
 
@@ -213,79 +213,79 @@ async function handleDeleteAddress(address) {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 100rpx 0;
-  color: #999;
+  padding: $spacing-2xl 0;
+  color: var(--text-tertiary);
 }
 
 .address-list {
-  padding: 20rpx;
+  padding: $spacing-md;
 }
 
 .address-item {
-  background-color: #fff;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
+  @include glass-card();
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
 }
 
 .address-content {
-  margin-bottom: 20rpx;
+  margin-bottom: $spacing-md;
 }
 
 .address-header {
   display: flex;
   align-items: center;
-  gap: 16rpx;
-  margin-bottom: 16rpx;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
 }
 
 .contact-name {
-  font-size: 32rpx;
-  font-weight: 500;
-  color: #333;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: var(--text-primary);
 }
 
 .contact-phone {
-  font-size: 28rpx;
-  color: #666;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
 }
 
 .default-badge {
-  padding: 4rpx 12rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 8rpx;
-  font-size: 22rpx;
+  padding: $spacing-xs $spacing-sm;
+  background: $gradient-brand;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
   color: #fff;
 }
 
 .address-text {
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
-  font-size: 28rpx;
-  color: #666;
+  gap: $spacing-xs;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
 .address-actions {
   display: flex;
-  gap: 20rpx;
-  padding-top: 20rpx;
-  border-top: 1rpx solid #eee;
+  gap: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1rpx solid var(--border-subtle);
 }
 
 .action-btn {
-  padding: 12rpx 24rpx;
-  border: 1rpx solid #ddd;
-  border-radius: 8rpx;
-  font-size: 26rpx;
-  color: #666;
+  padding: $spacing-sm $spacing-lg;
+  border: 1rpx solid var(--border-regular);
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
   text-align: center;
 }
 
 .action-btn.delete {
-  color: #f56c6c;
-  border-color: #f56c6c;
+  color: $semantic-error;
+  border-color: $semantic-error;
 }
 
 .empty-state {
@@ -293,25 +293,25 @@ async function handleDeleteAddress(address) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 200rpx 0;
+  padding: $spacing-2xl 0;
 }
 
 .empty-icon {
   font-size: 120rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: $spacing-md;
 }
 
 .empty-text {
-  font-size: 28rpx;
-  color: #999;
-  margin-bottom: 40rpx;
+  font-size: $font-size-sm;
+  color: var(--text-tertiary);
+  margin-bottom: $spacing-lg;
 }
 
 .empty-btn {
-  padding: 24rpx 60rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 40rpx;
+  padding: $spacing-md $spacing-xl;
+  background: $gradient-brand;
+  border-radius: $radius-full;
   color: #fff;
-  font-size: 28rpx;
+  font-size: $font-size-sm;
 }
 </style>

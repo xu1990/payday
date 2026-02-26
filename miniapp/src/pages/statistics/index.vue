@@ -71,107 +71,107 @@ onMounted(load)
   </view>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .page {
-  padding: 24rpx;
+  padding: $spacing-md;
   min-height: 100vh;
+  background: var(--bg-base);
 }
 .head {
-  margin-bottom: 24rpx;
+  margin-bottom: $spacing-md;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
 }
 .title {
-  font-size: 36rpx;
-  font-weight: 600;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
   display: block;
 }
 .tip {
   display: block;
-  margin-top: 8rpx;
-  color: #666;
-  font-size: 26rpx;
+  margin-top: $spacing-xs;
+  color: var(--text-secondary);
+  font-size: $font-size-sm;
 }
 .btn-link {
   padding: 0;
-  margin-top: 8rpx;
+  margin-top: $spacing-xs;
   background: none;
   border: none;
-  color: #07c160;
-  font-size: 26rpx;
+  color: $brand-secondary;
+  font-size: $font-size-sm;
 }
 .loading,
 .err {
-  padding: 40rpx;
+  padding: $spacing-xl;
   text-align: center;
-  color: #666;
+  color: var(--text-secondary);
 }
 .err {
-  color: #e64340;
+  color: $semantic-error;
 }
 .summary-card {
-  background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
-  border-radius: 16rpx;
-  padding: 32rpx;
+  background: $gradient-brand;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
   color: #fff;
-  margin-bottom: 32rpx;
+  margin-bottom: $spacing-lg;
 }
 .summary-label {
-  font-size: 26rpx;
+  font-size: $font-size-sm;
   opacity: 0.9;
   display: block;
 }
 .summary-amount {
-  font-size: 48rpx;
-  font-weight: 700;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
   display: block;
-  margin-top: 8rpx;
+  margin-top: $spacing-xs;
 }
 .summary-meta {
-  font-size: 24rpx;
+  font-size: $font-size-sm;
   opacity: 0.85;
   display: block;
-  margin-top: 8rpx;
+  margin-top: $spacing-xs;
 }
 .trend-section {
-  margin-top: 24rpx;
+  margin-top: $spacing-md;
 }
 .section-title {
-  font-size: 30rpx;
-  font-weight: 600;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
   display: block;
-  margin-bottom: 16rpx;
+  margin-bottom: $spacing-sm;
 }
 .empty {
-  padding: 24rpx;
-  color: #999;
-  font-size: 28rpx;
+  padding: $spacing-md;
+  color: var(--text-tertiary);
+  font-size: $font-size-base;
 }
 .trend-list {
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
+  gap: $spacing-sm;
 }
 .trend-item {
-  background: #f8f8f8;
-  border-radius: 12rpx;
-  padding: 24rpx;
+  @include glass-card();
+  padding: $spacing-md;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 .trend-month {
-  font-size: 28rpx;
-  color: #333;
+  font-size: $font-size-base;
+  color: var(--text-primary);
 }
 .trend-amount {
-  font-weight: 600;
-  font-size: 30rpx;
-  color: #07c160;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-lg;
+  color: $brand-secondary;
 }
 .trend-count {
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-size-sm;
+  color: var(--text-tertiary);
 }
 </style>

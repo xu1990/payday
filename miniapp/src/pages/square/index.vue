@@ -139,7 +139,7 @@ function handleUnfollow(data: { targetUserId: string }) {
           </view>
           <text class="time">{{ formatTime(item.created_at) }}</text>
         </view>
-        <text class="content">{{ item.content }}</text>
+        <text class="post-content">{{ item.content }}</text>
         <view v-if="item.images?.length" class="imgs">
           <image
             v-for="(img, i) in (item.images || []).slice(0, 3)"
@@ -166,92 +166,91 @@ function handleUnfollow(data: { targetUserId: string }) {
   </view>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .page {
   min-height: 100vh;
   padding: env(safe-area-inset-top) 0 120rpx;
-  background: #f5f5f5;
+  background: var(--bg-base);
 }
 .tabs {
   display: flex;
-  background: #fff;
-  padding: 0 24rpx;
-  border-bottom: 1rpx solid #eee;
+  background: var(--bg-glass-subtle);
+  padding: 0 $spacing-lg;
+  border-bottom: 1rpx solid var(--border-subtle);
 }
 .tab {
-  padding: 24rpx 32rpx;
-  font-size: 30rpx;
-  color: #666;
+  padding: $spacing-lg $spacing-md;
+  font-size: $font-size-base;
+  color: var(--text-secondary);
 }
 .tab.active {
-  color: #07c160;
-  font-weight: 600;
-  border-bottom: 4rpx solid #07c160;
+  color: $brand-primary;
+  font-weight: $font-weight-semibold;
+  border-bottom: 4rpx solid $brand-primary;
 }
 .tip {
-  padding: 48rpx;
+  padding: $spacing-xl;
   text-align: center;
-  color: #999;
-  font-size: 28rpx;
+  color: var(--text-tertiary);
+  font-size: $font-size-sm;
 }
 .list {
   height: calc(100vh - 100rpx);
 }
 .card {
-  margin: 24rpx;
-  padding: 24rpx;
-  background: #fff;
-  border-radius: 16rpx;
+  @include glass-card();
+  margin: $spacing-lg;
+  padding: $spacing-lg;
 }
 .row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16rpx;
+  margin-bottom: $spacing-base;
 }
 .author-section {
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  gap: $spacing-xs;
   flex: 1;
 }
 .name {
-  font-weight: 600;
-  font-size: 28rpx;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-sm;
 }
 .time {
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
-.content {
-  font-size: 28rpx;
-  color: #333;
+.post-content {
+  font-size: $font-size-sm;
+  color: var(--text-primary);
   line-height: 1.5;
   display: block;
 }
 .imgs {
   display: flex;
-  gap: 12rpx;
-  margin-top: 16rpx;
+  gap: $spacing-xs;
+  margin-top: $spacing-base;
 }
 .thumb {
   width: 160rpx;
   height: 160rpx;
-  border-radius: 8rpx;
-  background: #f0f0f0;
+  border-radius: $radius-sm;
+  background: var(--bg-glass-subtle);
 }
 .fab {
   position: fixed;
-  right: 32rpx;
+  right: $spacing-md;
   bottom: 120rpx;
   width: 100rpx;
   height: 100rpx;
   line-height: 100rpx;
   text-align: center;
-  background: #07c160;
+  background: $brand-primary;
   color: #fff;
   border-radius: 50%;
-  font-size: 32rpx;
-  box-shadow: 0 4rpx 16rpx rgba(7, 193, 96, 0.4);
+  font-size: $font-size-lg;
+  box-shadow: $shadow-brand;
 }
 </style>

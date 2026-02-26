@@ -23,6 +23,13 @@ async def create_product(
     image_urls: Optional[List[str]] = None,
     category: Optional[str] = None,
     sort_order: int = 0,
+    *,
+    has_sku: bool = False,
+    product_type: str = "physical",
+    shipping_method: str = "express",
+    shipping_template_id: Optional[str] = None,
+    category_id: Optional[str] = None,
+    is_active: bool = True,
 ) -> PointProduct:
     """创建商品（管理员）"""
     if points_cost <= 0:
@@ -43,7 +50,12 @@ async def create_product(
         image_urls=image_urls_json,
         category=category,
         sort_order=sort_order,
-        is_active=True,
+        is_active=is_active,
+        has_sku=has_sku,
+        product_type=product_type,
+        shipping_method=shipping_method,
+        shipping_template_id=shipping_template_id,
+        category_id=category_id,
     )
     db.add(product)
     await db.commit()

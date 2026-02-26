@@ -40,7 +40,7 @@
       </view>
 
       <view v-if="loading" class="loading">
-        <text>加载中...</text>
+        <view class="loading-spinner"></view>
       </view>
 
       <view v-else-if="invitations.length === 0" class="empty">
@@ -67,14 +67,14 @@
 
     <!-- 二维码邀请区域 -->
     <view v-if="showQRCode" class="qrcode-section">
-      <view class="section-title">
-        <text>二维码邀请</text>
-        <text class="subtitle">好友扫码即可注册</text>
+      <view class="section-header">
+        <text class="section-title">二维码邀请</text>
+        <text class="section-subtitle">好友扫码即可注册</text>
       </view>
 
       <view class="qrcode-container">
         <view v-if="generatingQRCode" class="qrcode-loading">
-          <text>生成中...</text>
+          <view class="loading-spinner"></view>
         </view>
         <image
           v-else-if="qrcodeDataUrl"
@@ -261,30 +261,30 @@ function formatTime(timeStr) {
 <style lang="scss" scoped>
 .invite-code-page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: var(--bg-base);
   padding-bottom: 150rpx;
 }
 
 .invite-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  margin: 20rpx;
-  border-radius: 30rpx;
-  padding: 40rpx;
+  background: $gradient-brand;
+  margin: $spacing-lg;
+  border-radius: $radius-xl;
+  padding: $spacing-2xl;
   color: white;
 
   .card-header {
     text-align: center;
-    margin-bottom: 40rpx;
+    margin-bottom: $spacing-2xl;
 
     .title {
       display: block;
-      font-size: 36rpx;
-      font-weight: bold;
-      margin-bottom: 10rpx;
+      font-size: $font-size-xl;
+      font-weight: $font-weight-bold;
+      margin-bottom: $spacing-xs;
     }
 
     .subtitle {
-      font-size: 24rpx;
+      font-size: $font-size-sm;
       opacity: 0.9;
     }
   }
@@ -292,30 +292,31 @@ function formatTime(timeStr) {
   .code-section {
     .code-box {
       background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10rpx);
       border: 2rpx solid rgba(255, 255, 255, 0.5);
-      border-radius: 20rpx;
-      padding: 30rpx;
+      border-radius: $radius-lg;
+      padding: $spacing-lg;
       text-align: center;
-      margin-bottom: 20rpx;
+      margin-bottom: $spacing-md;
 
       .code {
         display: block;
-        font-size: 48rpx;
-        font-weight: bold;
+        font-size: $font-size-3xl;
+        font-weight: $font-weight-bold;
         letter-spacing: 5rpx;
-        margin-bottom: 10rpx;
+        margin-bottom: $spacing-xs;
         font-family: 'Courier New', monospace;
       }
 
       .copy-btn {
-        font-size: 24rpx;
+        font-size: $font-size-sm;
         opacity: 0.9;
       }
     }
 
     .reward-tip {
       text-align: center;
-      font-size: 24rpx;
+      font-size: $font-size-sm;
       opacity: 0.9;
     }
   }
@@ -323,10 +324,9 @@ function formatTime(timeStr) {
 
 .stats-section {
   display: flex;
-  background: white;
-  margin: 20rpx;
-  border-radius: 20rpx;
-  padding: 40rpx;
+  @include glass-card();
+  margin: $spacing-lg;
+  padding: $spacing-2xl;
   align-items: center;
   justify-content: space-around;
 
@@ -336,46 +336,47 @@ function formatTime(timeStr) {
 
     .stat-value {
       display: block;
-      font-size: 48rpx;
-      font-weight: bold;
-      color: #667eea;
-      margin-bottom: 10rpx;
+      font-size: $font-size-3xl;
+      font-weight: $font-weight-bold;
+      color: var(--brand-primary);
+      margin-bottom: $spacing-xs;
     }
 
     .stat-label {
-      font-size: 24rpx;
-      color: #999;
+      font-size: $font-size-sm;
+      color: var(--text-tertiary);
     }
   }
 
   .stat-divider {
     width: 2rpx;
     height: 80rpx;
-    background: #e5e5e5;
+    background: var(--border-regular);
   }
 }
 
 .invitations-section {
-  margin: 20rpx;
+  margin: $spacing-lg;
 
   .section-title {
-    font-size: 28rpx;
-    font-weight: bold;
-    margin-bottom: 20rpx;
-    padding-left: 10rpx;
+    font-size: $font-size-base;
+    font-weight: $font-weight-bold;
+    margin-bottom: $spacing-md;
+    padding-left: $spacing-xs;
+    color: var(--text-primary);
   }
 
   .loading,
   .empty {
     text-align: center;
     padding: 80rpx 0;
-    color: #999;
-    font-size: 26rpx;
+    color: var(--text-tertiary);
+    font-size: $font-size-sm;
 
     .empty-tip {
       display: block;
-      font-size: 24rpx;
-      margin-top: 10rpx;
+      font-size: $font-size-xs;
+      margin-top: $spacing-xs;
     }
   }
 
@@ -383,23 +384,22 @@ function formatTime(timeStr) {
     .invitation-item {
       display: flex;
       align-items: center;
-      background: white;
-      border-radius: 20rpx;
-      padding: 25rpx;
-      margin-bottom: 15rpx;
+      @include glass-card();
+      padding: $spacing-lg;
+      margin-bottom: $spacing-sm;
 
       .avatar {
         width: 80rpx;
         height: 80rpx;
         border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: $gradient-brand;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
-        font-size: 28rpx;
-        font-weight: bold;
-        margin-right: 20rpx;
+        font-size: $font-size-base;
+        font-weight: $font-weight-bold;
+        margin-right: $spacing-md;
       }
 
       .info {
@@ -407,14 +407,15 @@ function formatTime(timeStr) {
 
         .name {
           display: block;
-          font-size: 28rpx;
-          font-weight: bold;
-          margin-bottom: 5rpx;
+          font-size: $font-size-base;
+          font-weight: $font-weight-bold;
+          margin-bottom: 4rpx;
+          color: var(--text-primary);
         }
 
         .time {
-          font-size: 24rpx;
-          color: #999;
+          font-size: $font-size-sm;
+          color: var(--text-tertiary);
         }
       }
 
@@ -423,14 +424,14 @@ function formatTime(timeStr) {
 
         .points {
           display: block;
-          font-size: 32rpx;
-          font-weight: bold;
-          color: #1890ff;
+          font-size: $font-size-lg;
+          font-weight: $font-weight-bold;
+          color: var(--brand-primary);
         }
 
         .label {
-          font-size: 22rpx;
-          color: #999;
+          font-size: $font-size-xs;
+          color: var(--text-tertiary);
         }
       }
     }
@@ -438,35 +439,37 @@ function formatTime(timeStr) {
 }
 
 .qrcode-section {
-  margin: 20rpx;
-  background: white;
-  border-radius: 20rpx;
-  padding: 30rpx;
+  margin: $spacing-lg;
+  @include glass-card();
+  padding: $spacing-lg;
 
-  .section-title {
+  .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 28rpx;
-    font-weight: bold;
-    margin-bottom: 20rpx;
-    padding-left: 0;
+    margin-bottom: $spacing-md;
+  }
 
-    .subtitle {
-      font-size: 24rpx;
-      color: #999;
-      font-weight: normal;
-    }
+  .section-title {
+    font-size: $font-size-base;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
+  }
+
+  .section-subtitle {
+    font-size: $font-size-sm;
+    color: var(--text-tertiary);
+    font-weight: $font-weight-normal;
   }
 
   .qrcode-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 30rpx 0;
-    background: #f8f8f8;
-    border-radius: 15rpx;
-    margin-bottom: 20rpx;
+    padding: $spacing-lg 0;
+    background: var(--bg-glass-subtle);
+    border-radius: $radius-md;
+    margin-bottom: $spacing-md;
 
     .qrcode-loading,
     .qrcode-placeholder {
@@ -475,52 +478,52 @@ function formatTime(timeStr) {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: white;
-      border-radius: 10rpx;
-      color: #999;
-      font-size: 26rpx;
+      background: var(--bg-glass-standard);
+      border-radius: $radius-sm;
+      color: var(--text-tertiary);
+      font-size: $font-size-sm;
     }
 
     .qrcode-image {
       width: 400rpx;
       height: 400rpx;
-      border-radius: 10rpx;
-      background: white;
-      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+      border-radius: $radius-sm;
+      background: var(--bg-glass-standard);
+      box-shadow: $shadow-base;
     }
 
     .qrcode-tip {
-      margin-top: 20rpx;
-      font-size: 24rpx;
-      color: #666;
+      margin-top: $spacing-md;
+      font-size: $font-size-sm;
+      color: var(--text-secondary);
       text-align: center;
       display: flex;
       flex-direction: column;
-      gap: 8rpx;
+      gap: $spacing-xs;
     }
 
     .longpress-tip {
-      font-size: 22rpx;
-      color: #ff6b6b;
-      background: #fff5f5;
-      padding: 8rpx 16rpx;
-      border-radius: 8rpx;
+      font-size: $font-size-xs;
+      color: $semantic-warning;
+      background: rgba($semantic-warning, 0.1);
+      padding: $spacing-xs $spacing-sm;
+      border-radius: $radius-sm;
     }
   }
 
   .qrcode-actions {
     display: flex;
-    gap: 15rpx;
+    gap: $spacing-sm;
 
     .action-btn {
       flex: 1;
-      background: white;
-      color: #667eea;
-      border: 1rpx solid #667eea;
-      border-radius: 12rpx;
-      padding: 20rpx;
-      font-size: 26rpx;
-      font-weight: 500;
+      background: var(--bg-glass-standard);
+      color: var(--brand-primary);
+      border: 1rpx solid var(--brand-primary);
+      border-radius: $radius-md;
+      padding: $spacing-md;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
 
       &::after {
         border: none;
@@ -534,23 +537,33 @@ function formatTime(timeStr) {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 20rpx;
-  background: white;
+  padding: $spacing-lg;
+  background: var(--bg-glass-standard);
+  backdrop-filter: blur(20rpx);
   box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.1);
 
   .share-btn {
     width: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: $gradient-brand;
     color: white;
     border: none;
-    border-radius: 50rpx;
-    padding: 25rpx;
-    font-size: 28rpx;
-    font-weight: bold;
+    border-radius: 9999rpx;
+    padding: $spacing-lg;
+    font-size: $font-size-base;
+    font-weight: $font-weight-bold;
 
     &::after {
       border: none;
     }
   }
+}
+
+.loading-spinner {
+  width: 48rpx;
+  height: 48rpx;
+  border: 4rpx solid var(--border-regular);
+  border-top-color: var(--brand-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 </style>

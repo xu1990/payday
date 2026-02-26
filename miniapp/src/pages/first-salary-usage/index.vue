@@ -393,66 +393,65 @@ const deleteRecord = async (recordId: string) => {
 <style lang="scss" scoped>
 .first-salary-usage-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 40rpx 30rpx;
+  background: $gradient-brand;
+  padding: $spacing-lg $spacing-md;
   padding-bottom: 200rpx;
 }
 
 .header {
   text-align: center;
-  margin-bottom: 60rpx;
-  padding-top: 40rpx;
+  margin-bottom: $spacing-xl;
+  padding-top: $spacing-lg;
 }
 
 .title {
   display: block;
-  font-size: 48rpx;
-  font-weight: bold;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
   color: #ffffff;
-  margin-bottom: 16rpx;
+  margin-bottom: $spacing-sm;
 }
 
 .subtitle {
   display: block;
-  font-size: 28rpx;
+  font-size: $font-size-sm;
   color: rgba(255, 255, 255, 0.8);
 }
 
 .form-section {
-  background: #ffffff;
-  border-radius: 24rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
+  @include glass-card();
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
 }
 
 .section-title {
   display: flex;
   align-items: center;
-  margin-bottom: 24rpx;
+  margin-bottom: $spacing-md;
 }
 
 .title-text {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-right: 8rpx;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary);
+  margin-right: $spacing-xs;
 }
 
 .required {
-  color: #ff4d4f;
-  font-size: 28rpx;
+  color: $semantic-error;
+  font-size: $font-size-base;
 }
 
 .optional {
-  font-size: 24rpx;
-  color: #999999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 
 // 分类网格
 .category-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16rpx;
+  gap: $spacing-sm;
 }
 
 .category-item {
@@ -460,46 +459,46 @@ const deleteRecord = async (recordId: string) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24rpx 16rpx;
-  border: 2rpx solid #e8e8e8;
-  border-radius: 16rpx;
+  padding: $spacing-md $spacing-sm;
+  border: 2rpx solid var(--border-subtle);
+  border-radius: $radius-md;
   transition: all 0.3s;
 }
 
 .category-item.active {
-  border-color: #667eea;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-color: $brand-primary;
+  background: var(--bg-glass-subtle);
 }
 
 .category-icon {
-  font-size: 48rpx;
-  margin-bottom: 8rpx;
+  font-size: $font-size-2xl;
+  margin-bottom: $spacing-xs;
 }
 
 .category-label {
-  font-size: 24rpx;
-  color: #333333;
+  font-size: $font-size-xs;
+  color: var(--text-primary);
 }
 
 // 子分类网格
 .subcategory-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 16rpx;
+  gap: $spacing-sm;
 }
 
 .subcategory-item {
-  padding: 16rpx 24rpx;
-  border: 2rpx solid #e8e8e8;
-  border-radius: 40rpx;
-  font-size: 26rpx;
-  color: #666666;
+  padding: $spacing-sm $spacing-md;
+  border: 2rpx solid var(--border-subtle);
+  border-radius: $radius-xl;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
   transition: all 0.3s;
 }
 
 .subcategory-item.active {
-  border-color: #667eea;
-  background: #667eea;
+  border-color: $brand-primary;
+  background: $brand-primary;
   color: #ffffff;
 }
 
@@ -507,34 +506,34 @@ const deleteRecord = async (recordId: string) => {
 .amount-input-wrapper {
   display: flex;
   align-items: center;
-  padding: 24rpx;
-  background: #f5f5f5;
-  border-radius: 16rpx;
+  padding: $spacing-md;
+  background: var(--bg-glass-subtle);
+  border-radius: $radius-md;
 }
 
 .currency-symbol {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #333333;
-  margin-right: 16rpx;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary);
+  margin-right: $spacing-sm;
 }
 
 .amount-input {
   flex: 1;
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #333333;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary);
 }
 
 .placeholder {
-  color: #999999;
+  color: var(--text-tertiary);
 }
 
 .error-text {
   display: block;
-  margin-top: 16rpx;
-  font-size: 24rpx;
-  color: #ff4d4f;
+  margin-top: $spacing-sm;
+  font-size: $font-size-xs;
+  color: $semantic-error;
 }
 
 // Picker
@@ -542,41 +541,42 @@ const deleteRecord = async (recordId: string) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24rpx;
-  background: #f5f5f5;
-  border-radius: 16rpx;
+  padding: $spacing-md;
+  background: var(--bg-glass-subtle);
+  border-radius: $radius-md;
 }
 
 .picker-text {
-  font-size: 30rpx;
-  color: #333333;
+  font-size: $font-size-base;
+  color: var(--text-primary);
 }
 
 .picker-text.placeholder {
-  color: #999999;
+  color: var(--text-tertiary);
 }
 
 .picker-arrow {
-  font-size: 40rpx;
-  color: #999999;
+  font-size: $font-size-xl;
+  color: var(--text-tertiary);
 }
 
 // 备注输入
 .note-input {
   width: 100%;
   min-height: 160rpx;
-  padding: 24rpx;
-  background: #f5f5f5;
-  border-radius: 16rpx;
-  font-size: 28rpx;
+  padding: $spacing-md;
+  background: var(--bg-glass-subtle);
+  border-radius: $radius-md;
+  font-size: $font-size-base;
   line-height: 1.6;
+  color: var(--text-primary);
 }
 
 .char-count {
   text-align: right;
-  margin-top: 12rpx;
-  font-size: 24rpx;
-  color: #999999;
+  margin-top: $spacing-xs;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 
 // 总金额显示
@@ -584,38 +584,38 @@ const deleteRecord = async (recordId: string) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32rpx;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 24rpx;
-  margin-bottom: 24rpx;
+  padding: $spacing-lg;
+  background: var(--bg-glass-standard);
+  border-radius: $radius-lg;
+  margin-bottom: $spacing-md;
 }
 
 .total-label {
-  font-size: 28rpx;
-  color: #666666;
-  margin-right: 16rpx;
+  font-size: $font-size-base;
+  color: var(--text-secondary);
+  margin-right: $spacing-sm;
 }
 
 .total-amount {
-  font-size: 40rpx;
-  font-weight: bold;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  background: $gradient-brand;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 // 提交按钮
 .submit-section {
-  margin-bottom: 40rpx;
+  margin-bottom: $spacing-lg;
 }
 
 .submit-btn {
   width: 100%;
   height: 96rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 48rpx;
-  font-size: 32rpx;
-  font-weight: 600;
+  background: $gradient-brand;
+  border-radius: $radius-xl;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
   color: #ffffff;
   border: none;
 }
@@ -626,70 +626,69 @@ const deleteRecord = async (recordId: string) => {
 
 // 记录列表
 .records-section {
-  background: #ffffff;
-  border-radius: 24rpx;
-  padding: 32rpx;
+  @include glass-card();
+  padding: $spacing-lg;
 }
 
 .section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24rpx;
+  margin-bottom: $spacing-md;
 }
 
 .section-title-text {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #1a1a1a;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary);
 }
 
 .record-count {
-  font-size: 24rpx;
-  color: #999999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 
 .records-list {
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
+  gap: $spacing-sm;
 }
 
 .record-item {
-  padding: 24rpx;
-  background: #f8f8f8;
-  border-radius: 16rpx;
+  padding: $spacing-md;
+  background: var(--bg-glass-subtle);
+  border-radius: $radius-md;
 }
 
 .record-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12rpx;
+  margin-bottom: $spacing-xs;
 }
 
 .record-category {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #333333;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary);
 }
 
 .record-amount {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #667eea;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $brand-primary;
 }
 
 .record-subcategory {
-  margin-bottom: 8rpx;
-  font-size: 24rpx;
-  color: #666666;
+  margin-bottom: $spacing-xs;
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
 }
 
 .record-note {
-  margin-bottom: 12rpx;
-  font-size: 26rpx;
-  color: #999999;
+  margin-bottom: $spacing-xs;
+  font-size: $font-size-sm;
+  color: var(--text-tertiary);
   line-height: 1.5;
 }
 
@@ -697,17 +696,17 @@ const deleteRecord = async (recordId: string) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 16rpx;
-  border-top: 1rpx solid #e8e8e8;
+  padding-top: $spacing-sm;
+  border-top: 1rpx solid var(--border-subtle);
 }
 
 .record-date {
-  font-size: 22rpx;
-  color: #999999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 
 .record-delete {
-  font-size: 24rpx;
-  color: #ff4d4f;
+  font-size: $font-size-xs;
+  color: $semantic-error;
 }
 </style>

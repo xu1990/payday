@@ -164,64 +164,65 @@ const viewUser = (userId: string) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .user-list-page {
-  padding: 20rpx;
-  background: #f5f5f5;
+  padding: $spacing-sm;
+  background: var(--bg-base);
   min-height: 100vh;
 }
 
 .header {
-  margin-bottom: 20rpx;
+  margin-bottom: $spacing-sm;
 }
 
 .title {
-  font-size: 48rpx;
-  font-weight: bold;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
   display: block;
+  color: var(--text-primary);
 }
 
 .tabs {
   display: flex;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 8rpx;
-  margin-bottom: 30rpx;
+  @include glass-card();
+  padding: $spacing-xs;
+  margin-bottom: $spacing-lg;
 }
 
 .tab-item {
   flex: 1;
   text-align: center;
-  padding: 20rpx;
-  border-radius: 12rpx;
+  padding: $spacing-sm;
+  border-radius: $radius-md;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8rpx;
+  gap: $spacing-xs;
+  color: var(--text-secondary);
+  font-size: $font-size-sm;
 }
 
 .tab-item.active {
-  background: #5470c6;
+  background: $gradient-brand;
   color: #fff;
 }
 
 .tab-count {
-  font-size: 24rpx;
+  font-size: $font-size-xs;
   opacity: 0.8;
 }
 
 .users-list {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: $spacing-sm;
 }
 
 .user-card {
   display: flex;
   align-items: center;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
+  @include glass-card();
+  padding: $spacing-md;
   position: relative;
 }
 
@@ -229,7 +230,7 @@ const viewUser = (userId: string) => {
   width: 96rpx;
   height: 96rpx;
   border-radius: 50%;
-  margin-right: 24rpx;
+  margin-right: $spacing-md;
 }
 
 .user-info {
@@ -237,64 +238,69 @@ const viewUser = (userId: string) => {
 }
 
 .user-name {
-  font-size: 32rpx;
-  font-weight: bold;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
   display: block;
-  margin-bottom: 8rpx;
+  margin-bottom: $spacing-xs;
+  color: var(--text-primary);
 }
 
 .user-bio {
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
   display: block;
-  margin-bottom: 12rpx;
+  margin-bottom: $spacing-sm;
 }
 
 .user-stats {
   display: flex;
-  gap: 20rpx;
+  gap: $spacing-sm;
 }
 
 .stat-item {
-  font-size: 24rpx;
-  color: #666;
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
 }
 
 .follow-btn {
   width: 120rpx;
   height: 60rpx;
-  background: #5470c6;
+  background: $gradient-brand;
   color: #fff;
-  font-size: 26rpx;
-  border-radius: 30rpx;
+  font-size: $font-size-sm;
+  border-radius: $radius-xl;
   border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .follow-btn.following {
-  background: #f5f5f5;
-  color: #666;
+  background: var(--bg-glass-subtle);
+  color: var(--text-secondary);
 }
 
 .empty {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 100rpx 0;
+  padding: $spacing-3xl 0;
 }
 
 .empty-icon {
   font-size: 120rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: $spacing-sm;
 }
 
 .empty-text {
-  font-size: 28rpx;
-  color: #999;
+  font-size: $font-size-sm;
+  color: var(--text-tertiary);
 }
 
 .loading {
   text-align: center;
-  padding: 40rpx;
-  color: #999;
+  padding: $spacing-xl;
+  color: var(--text-tertiary);
+  font-size: $font-size-sm;
 }
 </style>

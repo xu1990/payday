@@ -1,7 +1,7 @@
 <template>
   <view class="savings-goals-page">
     <view class="header">
-      <text class="title">💰 存款目标</text>
+      <text class="title">存款目标</text>
       <text class="subtitle">为实现梦想而储蓄</text>
     </view>
 
@@ -158,111 +158,112 @@ async function handleDelete(id, event) {
 <style lang="scss" scoped>
 .savings-goals-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding: 20rpx;
+  background: var(--bg-base);
+  padding: $spacing-md;
   padding-bottom: 150rpx;
 }
 
 .header {
   text-align: center;
-  padding: 40rpx 0;
+  padding: $spacing-xl 0;
 
   .title {
     display: block;
-    font-size: 36rpx;
-    font-weight: bold;
-    margin-bottom: 10rpx;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    margin-bottom: $spacing-xs;
+    color: var(--text-primary);
   }
 
   .subtitle {
-    font-size: 24rpx;
-    color: #999;
+    font-size: $font-size-sm;
+    color: var(--text-tertiary);
   }
 }
 
 .goals-list {
   .goal-card {
-    background: white;
-    border-radius: 20rpx;
-    padding: 25rpx;
-    margin-bottom: 20rpx;
+    @include glass-card();
+    padding: $spacing-lg;
+    margin-bottom: $spacing-md;
 
     .goal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20rpx;
+      margin-bottom: $spacing-md;
 
       .goal-title {
-        font-size: 32rpx;
-        font-weight: bold;
+        font-size: $font-size-lg;
+        font-weight: $font-weight-bold;
+        color: var(--text-primary);
       }
 
       .goal-status {
-        padding: 5rpx 15rpx;
-        border-radius: 20rpx;
-        font-size: 22rpx;
+        padding: 5rpx $spacing-sm;
+        border-radius: $radius-xl;
+        font-size: $font-size-xs;
 
         &.status-active {
-          background: #e6f7ff;
-          color: #1890ff;
+          background: rgba($brand-primary, 0.1);
+          color: $brand-primary;
         }
 
         &.status-completed {
-          background: #f6ffed;
-          color: #52c41a;
+          background: rgba($semantic-success, 0.1);
+          color: $semantic-success;
         }
 
         &.status-cancelled {
-          background: #f5f5f5;
-          color: #999;
+          background: var(--bg-glass-subtle);
+          color: var(--text-tertiary);
         }
 
         &.status-paused {
-          background: #fff7e6;
-          color: #fa8c16;
+          background: rgba($semantic-warning, 0.1);
+          color: $semantic-warning;
         }
       }
     }
 
     .progress-section {
-      margin-bottom: 20rpx;
+      margin-bottom: $spacing-md;
 
       .progress-info {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 10rpx;
+        margin-bottom: $spacing-xs;
 
         .current {
-          font-size: 36rpx;
-          font-weight: bold;
-          color: #1890ff;
+          font-size: $font-size-2xl;
+          font-weight: $font-weight-bold;
+          color: $brand-primary;
         }
 
         .target {
-          font-size: 24rpx;
-          color: #999;
+          font-size: $font-size-sm;
+          color: var(--text-tertiary);
         }
       }
 
       .progress-bar {
         height: 16rpx;
-        background: #f0f0f0;
-        border-radius: 8rpx;
+        background: var(--bg-glass-subtle);
+        border-radius: $radius-sm;
         overflow: hidden;
-        margin-bottom: 10rpx;
+        margin-bottom: $spacing-xs;
 
         .progress-fill {
           height: 100%;
-          background: linear-gradient(90deg, #1890ff 0%, #52c41a 100%);
-          border-radius: 8rpx;
-          transition: width 0.3s;
+          background: $gradient-brand;
+          border-radius: $radius-sm;
+          transition: width 0.3s $ease-out;
         }
       }
 
       .progress-text {
-        font-size: 24rpx;
-        color: #666;
+        font-size: $font-size-sm;
+        color: var(--text-secondary);
       }
     }
 
@@ -270,69 +271,69 @@ async function handleDelete(id, event) {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-top: 15rpx;
-      border-top: 1rpx solid #f0f0f0;
+      padding-top: $spacing-sm;
+      border-top: 1rpx solid var(--border-subtle);
 
       .remaining {
-        font-size: 24rpx;
-        color: #666;
+        font-size: $font-size-sm;
+        color: var(--text-secondary);
       }
 
       .deposit-btn {
-        background: #1890ff;
+        background: $brand-primary;
         color: white;
         border: none;
-        border-radius: 30rpx;
-        padding: 8rpx 25rpx;
-        font-size: 24rpx;
+        border-radius: $radius-xl;
+        padding: $spacing-xs $spacing-lg;
+        font-size: $font-size-sm;
       }
     }
 
     .goal-deadline {
-      margin-top: 15rpx;
-      padding-top: 15rpx;
-      border-top: 1rpx dashed #eee;
-      font-size: 24rpx;
-      color: #999;
+      margin-top: $spacing-sm;
+      padding-top: $spacing-sm;
+      border-top: 1rpx dashed var(--border-subtle);
+      font-size: $font-size-sm;
+      color: var(--text-tertiary);
     }
   }
 }
 
 .empty {
   text-align: center;
-  padding: 100rpx 0;
+  padding: $spacing-3xl 0;
 
   .empty-icon {
     display: block;
     font-size: 80rpx;
-    margin-bottom: 20rpx;
+    margin-bottom: $spacing-md;
   }
 
   .empty-text {
     display: block;
-    font-size: 28rpx;
-    color: #333;
-    margin-bottom: 10rpx;
+    font-size: $font-size-base;
+    color: var(--text-primary);
+    margin-bottom: $spacing-xs;
   }
 
   .empty-hint {
-    font-size: 24rpx;
-    color: #999;
+    font-size: $font-size-sm;
+    color: var(--text-tertiary);
   }
 }
 
 .fab {
   position: fixed;
-  right: 40rpx;
+  right: $spacing-xl;
   bottom: 100rpx;
   width: 100rpx;
   height: 100rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: $gradient-brand;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 20rpx rgba(102, 126, 234, 0.4);
+  box-shadow: $shadow-lg;
 
   .fab-icon {
     font-size: 50rpx;

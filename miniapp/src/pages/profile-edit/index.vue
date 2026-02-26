@@ -142,69 +142,68 @@ async function saveNickname(newNickname: string) {
 
 <style scoped lang="scss">
 .page {
-  padding: 24rpx;
-  background: #f5f5f5;
+  padding: $spacing-md;
+  background: var(--bg-base);
   min-height: 100vh;
 }
 
 .section {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 24rpx;
+  @include glass-card();
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
 }
 
 .section-title {
-  font-size: 28rpx;
-  color: #999;
-  margin-bottom: 16rpx;
+  font-size: $font-size-sm;
+  color: var(--text-tertiary);
+  margin-bottom: $spacing-sm;
 }
 
 .avatar-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20rpx 0;
+  padding: $spacing-sm 0;
 }
 
 .avatar-image {
   width: 160rpx;
   height: 160rpx;
-  border-radius: 80rpx;
-  background: #f0f0f0;
-  margin-bottom: 16rpx;
+  border-radius: $radius-xl;
+  background: var(--bg-glass-subtle);
+  margin-bottom: $spacing-sm;
 }
 
 .change-hint {
-  font-size: 24rpx;
-  color: #667eea;
+  font-size: $font-size-xs;
+  color: var(--brand-primary);
 }
 
 .nickname-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16rpx 0;
+  padding: $spacing-sm 0;
 }
 
 .nickname-text {
-  font-size: 30rpx;
-  color: #333;
+  font-size: $font-size-base;
+  color: var(--text-primary);
 }
 
 .arrow {
-  font-size: 48rpx;
-  color: #999;
-  font-weight: 300;
+  font-size: $font-size-3xl;
+  color: var(--text-tertiary);
+  font-weight: $font-weight-light;
 }
 
 .tips {
-  padding: 24rpx;
+  padding: $spacing-md;
 }
 
 .tips-text {
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
   text-align: center;
 }
 </style>

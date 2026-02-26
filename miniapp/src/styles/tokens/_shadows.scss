@@ -1,6 +1,8 @@
 // 阴影系统
 
+$shadow-xs: 0 1rpx 4rpx rgba(0, 0, 0, 0.03);
 $shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);  // Alias for base
 $shadow-base: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
 $shadow-lg: 0 8rpx 32rpx rgba(0, 0, 0, 0.12);
 $shadow-xl: 0 16rpx 48rpx rgba(0, 0, 0, 0.16);

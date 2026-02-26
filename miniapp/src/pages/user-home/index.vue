@@ -242,32 +242,35 @@ function goToPost(postId: string) {
   </view>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: var(--bg-base);
 }
+
 .tip {
-  padding: 48rpx;
+  padding: $spacing-2xl;
   text-align: center;
-  color: #999;
+  color: var(--text-tertiary);
 }
+
 .content {
-  padding: 24rpx;
+  padding: $spacing-md;
 }
+
 .stats-card {
   display: flex;
   justify-content: space-around;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 32rpx 0;
-  margin-bottom: 24rpx;
+  @include glass-card();
+  padding: $spacing-lg 0;
+  margin-bottom: $spacing-md;
 }
+
 .stat-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8rpx;
+  gap: $spacing-xs;
   cursor: pointer;
   transition: transform 0.1s;
 }
@@ -275,118 +278,136 @@ function goToPost(postId: string) {
 .stat-item:active {
   transform: scale(0.95);
 }
+
 .stat-value {
-  font-size: 40rpx;
-  font-weight: 600;
-  color: #333;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary);
 }
+
 .stat-label {
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
+
 .tabs {
   display: flex;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 8rpx;
-  margin-bottom: 24rpx;
+  @include glass-card();
+  padding: $spacing-xs;
+  margin-bottom: $spacing-md;
 }
+
 .tab {
   flex: 1;
   text-align: center;
-  padding: 16rpx;
-  font-size: 28rpx;
-  color: #666;
-  border-radius: 12rpx;
+  padding: $spacing-sm;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
+  border-radius: $radius-md;
 }
+
 .tab.active {
-  background: #07c160;
+  background: $gradient-brand;
   color: #fff;
-  font-weight: 500;
+  font-weight: $font-weight-medium;
 }
+
 .list {
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
+  gap: $spacing-sm;
 }
+
 .post-card {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
+  @include glass-card();
+  padding: $spacing-md;
 }
+
 .post-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12rpx;
+  margin-bottom: $spacing-sm;
 }
+
 .post-name {
-  font-size: 28rpx;
-  font-weight: 500;
-  color: #333;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--text-primary);
 }
+
 .post-time {
-  font-size: 22rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
+
 .post-content {
-  font-size: 28rpx;
+  font-size: $font-size-sm;
   line-height: 1.6;
-  color: #666;
+  color: var(--text-secondary);
   display: block;
-  margin-bottom: 16rpx;
+  margin-bottom: $spacing-sm;
 }
+
 .post-meta {
   display: flex;
-  gap: 24rpx;
-  font-size: 24rpx;
-  color: #999;
+  gap: $spacing-md;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
+
 .checkin-card {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
+  @include glass-card();
+  padding: $spacing-md;
 }
+
 .checkin-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12rpx;
+  margin-bottom: $spacing-sm;
 }
+
 .checkin-date {
-  font-size: 28rpx;
-  font-weight: 500;
-  color: #333;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--text-primary);
 }
+
 .checkin-mood {
-  font-size: 26rpx;
-  color: #666;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
 }
+
 .checkin-note {
-  font-size: 26rpx;
-  color: #666;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
   display: block;
-  margin-bottom: 12rpx;
+  margin-bottom: $spacing-sm;
   line-height: 1.5;
 }
+
 .checkin-salary {
   display: flex;
   align-items: center;
-  gap: 8rpx;
+  gap: $spacing-xs;
 }
+
 .salary-label {
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
+
 .salary-value {
-  font-size: 28rpx;
-  color: #07c160;
-  font-weight: 500;
+  font-size: $font-size-sm;
+  color: $semantic-success;
+  font-weight: $font-weight-medium;
 }
+
 .load-more {
-  padding: 32rpx;
+  padding: $spacing-lg;
   text-align: center;
-  color: #07c160;
-  font-size: 28rpx;
+  color: var(--brand-primary);
+  font-size: $font-size-sm;
 }
 </style>

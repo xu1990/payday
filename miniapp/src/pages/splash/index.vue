@@ -9,7 +9,7 @@ const showText = ref(false)
 const splashConfig = ref(null)
 const showSplash = ref(false)
 const countdown = ref(0)
-let countdownTimer: number  = null
+let countdownTimer: number = null
 
 onMounted(async () => {
   // Load splash config from backend
@@ -46,7 +46,9 @@ onMounted(async () => {
 
     // Wait for animation to complete before navigating
     const delay =
-      showSplash.value && splashConfig.value?.countdown ? splashConfig.value.countdown * 1000 : 1800
+      showSplash.value && splashConfig.value?.countdown
+        ? splashConfig.value.countdown * 1000
+        : 1800
 
     setTimeout(() => {
       navigateToNext()
@@ -125,7 +127,7 @@ function navigateToNext() {
         <text class="name-sub">记录你的发薪时刻</text>
       </view>
 
-      <!-- Loading dots -->
+      <!-- Loading dots with AI breathing effect -->
       <view class="loading-dots" :class="{ show: showText }">
         <view class="dot"></view>
         <view class="dot"></view>
@@ -144,7 +146,7 @@ function navigateToNext() {
 .splash-page {
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: $gradient-brand;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -168,36 +170,38 @@ function navigateToNext() {
     bottom: 120rpx;
     left: 0;
     right: 0;
-    padding: 0 60rpx;
+    padding: 0 $spacing-2xl;
     text-align: center;
     color: #fff;
   }
 
   .splash-controls {
     position: absolute;
-    top: calc(40rpx + env(safe-area-inset-top));
-    right: 40rpx;
+    top: calc($spacing-xl + env(safe-area-inset-top));
+    right: $spacing-xl;
     display: flex;
     align-items: center;
-    gap: 20rpx;
+    gap: $spacing-md;
     z-index: 10;
   }
 
   .countdown {
-    padding: 8rpx 20rpx;
+    padding: $spacing-xs $spacing-md;
     background: rgba(0, 0, 0, 0.5);
-    border-radius: 40rpx;
-    font-size: 24rpx;
+    backdrop-filter: blur(10rpx);
+    border-radius: 9999rpx;
+    font-size: $font-size-sm;
     color: #fff;
   }
 
   .skip-btn {
-    padding: 8rpx 24rpx;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 40rpx;
-    font-size: 26rpx;
-    color: #333;
-    font-weight: 500;
+    padding: $spacing-xs $spacing-lg;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 9999rpx;
+    font-size: $font-size-base;
+    color: var(--text-primary);
+    font-weight: $font-weight-medium;
+    backdrop-filter: blur(10rpx);
   }
 }
 
@@ -207,30 +211,31 @@ function navigateToNext() {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 0 60rpx;
+  padding: 0 $spacing-2xl;
 }
 
 // Logo
 .logo-wrapper {
-  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-  margin-bottom: 60rpx;
+  transition: transform 0.6s $ease-out;
+  margin-bottom: $spacing-2xl;
 }
 
 .logo-icon {
   width: 160rpx;
   height: 160rpx;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 40rpx;
+  backdrop-filter: blur(20rpx);
+  border-radius: $radius-xl;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+  box-shadow: $shadow-lg;
   border: 4rpx solid rgba(255, 255, 255, 0.3);
 }
 
 .logo-text {
   font-size: 100rpx;
-  font-weight: 700;
+  font-weight: $font-weight-bold;
   color: #fff;
   line-height: 1;
 }
@@ -241,8 +246,8 @@ function navigateToNext() {
   flex-direction: column;
   align-items: center;
   opacity: 0;
-  transform: translateY(20rpx);
-  transition: all 0.5s ease-out;
+  transform: translateY($spacing-md);
+  transition: all 0.5s $ease-out;
 
   &.show {
     opacity: 1;
@@ -251,26 +256,26 @@ function navigateToNext() {
 }
 
 .name-main {
-  font-size: 52rpx;
-  font-weight: 700;
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
   color: #fff;
-  margin-bottom: 16rpx;
+  margin-bottom: $spacing-sm;
   letter-spacing: 4rpx;
 }
 
 .name-sub {
-  font-size: 28rpx;
+  font-size: $font-size-base;
   color: rgba(255, 255, 255, 0.8);
-  font-weight: 400;
+  font-weight: $font-weight-normal;
 }
 
-// Loading dots
+// Loading dots with AI breathing effect
 .loading-dots {
   display: flex;
-  gap: 12rpx;
+  gap: $spacing-sm;
   margin-top: 80rpx;
   opacity: 0;
-  transition: opacity 0.3s ease-out;
+  transition: opacity 0.3s $ease-out;
 
   &.show {
     opacity: 1;
@@ -282,27 +287,18 @@ function navigateToNext() {
   height: 16rpx;
   background: rgba(255, 255, 255, 0.6);
   border-radius: 50%;
-  animation: bounce 1.4s infinite ease-in-out both;
+  animation: breathe 2s $ease-in-out infinite;
 
   &:nth-child(1) {
-    animation-delay: -0.32s;
+    animation-delay: 0s;
   }
 
   &:nth-child(2) {
-    animation-delay: -0.16s;
+    animation-delay: 0.2s;
   }
-}
 
-@keyframes bounce {
-  0%,
-  80%,
-  100% {
-    transform: scale(0.8);
-    opacity: 0.6;
-  }
-  40% {
-    transform: scale(1.2);
-    opacity: 1;
+  &:nth-child(3) {
+    animation-delay: 0.4s;
   }
 }
 
@@ -312,9 +308,9 @@ function navigateToNext() {
   bottom: 80rpx;
   left: 0;
   right: 0;
-  padding: 0 60rpx;
+  padding: 0 $spacing-2xl;
   opacity: 0;
-  transition: opacity 0.5s ease-out;
+  transition: opacity 0.5s $ease-out;
 
   &.show {
     opacity: 1;
@@ -322,9 +318,9 @@ function navigateToNext() {
 }
 
 .terms {
-  font-size: 24rpx;
+  font-size: $font-size-xs;
   color: rgba(255, 255, 255, 0.7);
   text-align: center;
-  line-height: 1.6;
+  line-height: $line-height-relaxed;
 }
 </style>

@@ -166,78 +166,77 @@ const handleCancel = async (order) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .orders-page {
-  padding: 20rpx;
-  background: #f5f5f5;
+  padding: $spacing-lg;
+  background: var(--bg-base);
   min-height: 100vh;
 }
 
 .header {
-  margin-bottom: 30rpx;
+  margin-bottom: $spacing-xl;
 }
 
 .title {
-  font-size: 48rpx;
-  font-weight: bold;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
   display: block;
 }
 
 .orders-list {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: $spacing-md;
 }
 
 .order-card {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
+  @include glass-card();
+  padding: $spacing-md;
 }
 
 .order-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20rpx;
+  margin-bottom: $spacing-md;
 }
 
 .order-id {
-  font-size: 26rpx;
-  color: #666;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
 }
 
 .order-status {
-  padding: 8rpx 16rpx;
-  border-radius: 8rpx;
-  font-size: 24rpx;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
 }
 
 .status-pending {
-  background: #fff3e0;
-  color: #ff9800;
+  background: rgba($semantic-warning, 0.15);
+  color: $semantic-warning;
 }
 
 .status-paid {
-  background: #e8f5e9;
-  color: #4caf50;
+  background: rgba($semantic-success, 0.15);
+  color: $semantic-success;
 }
 
 .status-cancelled,
 .status-refunded {
-  background: #ffebee;
-  color: #f44336;
+  background: rgba($semantic-error, 0.15);
+  color: $semantic-error;
 }
 
 .order-info {
-  margin-bottom: 20rpx;
+  margin-bottom: $spacing-md;
 }
 
 .info-row {
   display: flex;
   justify-content: space-between;
-  padding: 12rpx 0;
-  border-bottom: 1rpx solid #f5f5f5;
+  padding: $spacing-sm 0;
+  border-bottom: 1rpx solid var(--border-subtle);
 }
 
 .info-row:last-child {
@@ -245,42 +244,42 @@ const handleCancel = async (order) => {
 }
 
 .info-label {
-  font-size: 28rpx;
-  color: #666;
+  font-size: $font-size-base;
+  color: var(--text-secondary);
 }
 
 .info-value {
-  font-size: 28rpx;
-  color: #333;
+  font-size: $font-size-base;
+  color: var(--text-primary);
 }
 
 .info-value.price {
-  color: #ff6b6b;
-  font-weight: bold;
-  font-size: 32rpx;
+  color: $semantic-error;
+  font-weight: $font-weight-bold;
+  font-size: $font-size-lg;
 }
 
 .order-actions {
   display: flex;
-  gap: 20rpx;
+  gap: $spacing-md;
 }
 
 .action-btn {
   flex: 1;
   height: 72rpx;
-  border-radius: 12rpx;
-  font-size: 28rpx;
+  border-radius: $radius-md;
+  font-size: $font-size-base;
   border: none;
 }
 
 .action-btn.primary {
-  background: #5470c6;
+  background: $brand-primary;
   color: #fff;
 }
 
 .action-btn.secondary {
-  background: #f5f5f5;
-  color: #666;
+  background: var(--bg-glass-subtle);
+  color: var(--text-secondary);
 }
 
 .empty {
@@ -292,17 +291,17 @@ const handleCancel = async (order) => {
 
 .empty-icon {
   font-size: 120rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: $spacing-md;
 }
 
 .empty-text {
-  font-size: 28rpx;
-  color: #999;
+  font-size: $font-size-base;
+  color: var(--text-tertiary);
 }
 
 .loading {
   text-align: center;
-  padding: 40rpx;
-  color: #999;
+  padding: $spacing-2xl;
+  color: var(--text-tertiary);
 }
 </style>

@@ -197,41 +197,40 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .insights-page {
-  padding: 20rpx;
-  background: #f5f5f5;
+  padding: $spacing-md;
+  background: var(--bg-base);
   min-height: 100vh;
 }
 
 .header {
-  margin-bottom: 30rpx;
+  margin-bottom: $spacing-lg;
 }
 
 .title {
-  font-size: 48rpx;
-  font-weight: bold;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
   display: block;
 }
 
 .subtitle {
-  font-size: 28rpx;
-  color: #666;
+  font-size: $font-size-base;
+  color: var(--text-secondary);
   display: block;
-  margin-top: 10rpx;
+  margin-top: $spacing-xs;
 }
 
 .section {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 30rpx;
+  @include glass-card();
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
 }
 
 .section-title {
-  font-size: 32rpx;
-  font-weight: bold;
-  margin-bottom: 20rpx;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  margin-bottom: $spacing-md;
 }
 
 .chart-container {
@@ -241,7 +240,7 @@ onMounted(async () => {
 
 .loading {
   text-align: center;
-  padding: 40rpx;
-  color: #999;
+  padding: $spacing-xl;
+  color: var(--text-tertiary);
 }
 </style>

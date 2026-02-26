@@ -29,6 +29,10 @@ import {
 } from '@/api/pointSku'
 import { getCategoryTree } from '@/api/pointCategory'
 import { listShippingTemplates, type ShippingTemplate } from '@/api/shippingTemplate'
+import {
+  listSpecificationTemplates,
+  type SpecificationTemplate,
+} from '@/api/specificationTemplate'
 import adminApi from '@/api/admin'
 
 const route = useRoute()
@@ -73,17 +77,9 @@ const loadingCategories = ref(false)
 const shippingTemplates = ref<ShippingTemplate[]>([])
 const loadingTemplates = ref(false)
 
-// 预设规格模板
-const presetSpecs = [
-  { name: '颜色', values: ['红色', '蓝色', '黑色', '白色', '灰色', '绿色', '黄色', '紫色', '粉色', '橙色'] },
-  { name: '尺寸', values: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
-  { name: '尺码', values: ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'] },
-  { name: '容量', values: ['64GB', '128GB', '256GB', '512GB', '1TB'] },
-  { name: '规格', values: ['大', '中', '小', '迷你'] },
-  { name: '款式', values: ['标准款', '升级款', '豪华款', '尊享款'] },
-  { name: '套餐', values: ['单件装', '两件装', '三件装', '礼盒装'] },
-  { name: '材质', values: ['棉', '涤纶', '丝绸', '羊毛', '真皮', 'PU'] },
-]
+// 规格模板（从API加载）
+const specTemplates = ref<SpecificationTemplate[]>([])
+const loadingSpecTemplates = ref(false)
 const showPresetDialog = ref(false)
 
 // 商品类型选项
@@ -143,6 +139,19 @@ async function loadShippingTemplates() {
     ElMessage.error('加载运费模板失败')
   } finally {
     loadingTemplates.value = false
+  }
+}
+
+// 加载规格模板
+async function loadSpecTemplates() {
+  loadingSpecTemplates.value = true
+  try {
+    const res = await listSpecificationTemplates({ active_only: true })
+    specTemplates.value = res?.templates || []
+  } catch (e) {
+    ElMessage.error('加载规格模板失败')
+  } finally {
+    loadingSpecTemplates.value = false
   }
 }
 
@@ -239,6 +248,9 @@ async function loadProduct() {
       category: product.category || '',
       category_id: product.category_id,
       has_sku: product.has_sku || false,
+      product_type: product.product_type ?? 'physical',
+      shipping_method: product.shipping_method ?? 'express',
+      shipping_template_id: product.shipping_template_id ?? undefined,
       sort_order: product.sort_order,
       is_active: product.is_active,
     }
@@ -290,36 +302,36 @@ async function loadSKUs() {
   }
 }
 
-// 选择预设规格
-function selectPresetSpec(preset: { name: string; values: string[] }) {
+// 选择规格模板
+function selectSpecTemplate(template: SpecificationTemplate) {
   // 检查是否已存在同名规格
-  if (specifications.value.some(s => s.name === preset.name)) {
-    ElMessage.warning(`规格"${preset.name}"已存在`)
+  if (specifications.value.some(s => s.name === template.name)) {
+    ElMessage.warning(`规格"${template.name}"已存在`)
     return
   }
 
   if (productId) {
     // 编辑模式：调用API创建
-    addSpecificationWithValues(preset.name, preset.values)
+    addSpecificationWithValues(template.name, template.values)
   } else {
     // 新建模式：本地添加
     specifications.value.push({
       id: `temp_${Date.now()}`,
       product_id: '',
-      name: preset.name,
+      name: template.name,
       sort_order: specifications.value.length,
       created_at: new Date().toISOString(),
-      values: preset.values.map((v, i) => ({
+      values: template.values.map((v, i) => ({
         id: `temp_val_${Date.now()}_${i}`,
         specification_id: '',
         value: v,
         sort_order: i,
       })),
     })
-    newSpecValues.value[preset.name] = [...preset.values, '']
+    newSpecValues.value[template.name] = [...template.values, '']
   }
   showPresetDialog.value = false
-  ElMessage.success(`已添加规格"${preset.name}"`)
+  ElMessage.success(`已添加规格"${template.name}"`)
 }
 
 // 编辑模式下添加规格和值
@@ -580,7 +592,9 @@ async function save() {
           // 保存规格值
           const values = newSpecValues.value[spec.name] || []
           for (const value of values) {
-            await createSpecificationValue(createdSpec.data.id, { value, sort_order: 0 })
+            if (value && value.trim()) {
+              await createSpecificationValue(createdSpec.id, { value, sort_order: 0 })
+            }
           }
         }
 
@@ -598,7 +612,7 @@ async function save() {
         specs: typeof sku.specs === 'string' ? sku.specs : JSON.stringify(sku.specs),
       }))
 
-      await batchUpdateSKUs(skusToSave)
+      await batchUpdateSKUs({ skus: skusToSave })
     }
 
     ElMessage.success(productId ? '更新成功' : '创建成功')
@@ -639,7 +653,7 @@ function handleSpecValueInput(specName: string, index: number, value: string) {
 }
 
 onMounted(async () => {
-  await Promise.all([loadCategories(), loadShippingTemplates()])
+  await Promise.all([loadCategories(), loadShippingTemplates(), loadSpecTemplates()])
   if (isEdit) {
     await loadProduct()
   }
@@ -836,10 +850,10 @@ onMounted(async () => {
 
       <!-- SKU管理 -->
       <el-card v-if="form.has_sku" class="form-section" header="规格管理">
-        <!-- 预设规格选择 -->
+        <!-- 规格模板选择 -->
         <div style="margin-bottom: 15px">
-          <el-button type="success" @click="showPresetDialog = true">选择预设规格</el-button>
-          <span style="margin-left: 10px; color: #999; font-size: 12px">快速添加常用规格（颜色、尺寸等）</span>
+          <el-button type="success" @click="showPresetDialog = true">选择规格模板</el-button>
+          <span style="margin-left: 10px; color: #999; font-size: 12px">从已保存的规格模板中快速添加</span>
         </div>
 
         <div class="spec-editor">
@@ -964,19 +978,29 @@ onMounted(async () => {
       </el-card>
     </el-form>
 
-    <!-- 预设规格选择对话框 -->
-    <el-dialog v-model="showPresetDialog" title="选择预设规格" width="600px">
-      <div class="preset-specs-grid">
-        <div
-          v-for="preset in presetSpecs"
-          :key="preset.name"
-          class="preset-spec-card"
-          @click="selectPresetSpec(preset)"
-        >
-          <div class="preset-spec-name">{{ preset.name }}</div>
-          <div class="preset-spec-values">
-            <el-tag v-for="v in preset.values.slice(0, 5)" :key="v" size="small" style="margin: 2px">{{ v }}</el-tag>
-            <el-tag v-if="preset.values.length > 5" size="small" type="info" style="margin: 2px">+{{ preset.values.length - 5 }}</el-tag>
+    <!-- 规格模板选择对话框 -->
+    <el-dialog v-model="showPresetDialog" title="选择规格模板" width="600px">
+      <div v-loading="loadingSpecTemplates">
+        <div v-if="specTemplates.length === 0" class="empty-templates">
+          <el-empty description="暂无规格模板，请先在「规格模板管理」中创建模板">
+            <el-button type="primary" @click="router.push('/specification-templates')">
+              前往创建
+            </el-button>
+          </el-empty>
+        </div>
+        <div v-else class="preset-specs-grid">
+          <div
+            v-for="template in specTemplates"
+            :key="template.id"
+            class="preset-spec-card"
+            @click="selectSpecTemplate(template)"
+          >
+            <div class="preset-spec-name">{{ template.name }}</div>
+            <div v-if="template.description" class="preset-spec-desc">{{ template.description }}</div>
+            <div class="preset-spec-values">
+              <el-tag v-for="v in template.values.slice(0, 5)" :key="v" size="small" style="margin: 2px">{{ v }}</el-tag>
+              <el-tag v-if="template.values.length > 5" size="small" type="info" style="margin: 2px">+{{ template.values.length - 5 }}</el-tag>
+            </div>
           </div>
         </div>
       </div>
@@ -1215,6 +1239,11 @@ onMounted(async () => {
   gap: 16px;
 }
 
+.empty-templates {
+  padding: 40px 0;
+  text-align: center;
+}
+
 .preset-spec-card {
   border: 1px solid #e4e7ed;
   border-radius: 8px;
@@ -1226,6 +1255,12 @@ onMounted(async () => {
 .preset-spec-card:hover {
   border-color: #409eff;
   background-color: #ecf5ff;
+}
+
+.preset-spec-desc {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 8px;
 }
 
 .preset-spec-name {

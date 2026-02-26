@@ -218,220 +218,216 @@ const getTypeText = (type: string) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .search-page {
-  padding: 20rpx;
-  background: #f5f5f5;
+  padding: $spacing-md;
+  background: var(--bg-base);
   min-height: 100vh;
 }
 
 .search-header {
-  margin-bottom: 20rpx;
+  margin-bottom: $spacing-md;
 }
 
 .search-bar {
+  @include glass-card();
   display: flex;
-  gap: 20rpx;
-  padding: 20rpx;
-  background: #fff;
-  border-radius: 16rpx;
+  gap: $spacing-md;
+  padding: $spacing-md;
 }
 
 .search-input {
+  @include glass-input();
   flex: 1;
   height: 72rpx;
-  padding: 0 24rpx;
-  font-size: 28rpx;
-  border: 2rpx solid #eee;
-  border-radius: 8rpx;
+  padding: 0 $spacing-md;
+  font-size: $font-size-sm;
+  border-radius: $radius-sm;
 }
 
 .search-btn {
   width: 80rpx;
   height: 72rpx;
-  background: #5470c6;
+  background: $brand-primary;
   color: #fff;
   border: none;
-  border-radius: 8rpx;
+  border-radius: $radius-sm;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .tags-section {
-  margin-bottom: 20rpx;
+  margin-bottom: $spacing-md;
 }
 
 .section-title {
-  font-size: 32rpx;
-  font-weight: bold;
-  margin-bottom: 16rpx;
-  color: #333;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  margin-bottom: $spacing-sm;
+  color: var(--text-primary);
 }
 
 .tags-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 16rpx;
+  gap: $spacing-sm;
 }
 
 .tag-item {
-  padding: 12rpx 20rpx;
-  background: #fff;
-  border: 2rpx solid #ddd;
-  border-radius: 24rpx;
+  padding: $spacing-xs $spacing-md;
+  background: var(--bg-glass-subtle);
+  border: 2rpx solid var(--border-regular);
+  border-radius: $radius-full;
 }
 
 .tag-item.active {
-  background: #5470c6;
+  background: $brand-primary;
   color: #fff;
-  border-color: #5470c6;
+  border-color: $brand-primary;
 }
 
 .tag-text {
-  font-size: 26rpx;
+  font-size: $font-size-sm;
 }
 
 .results-section {
-  margin-top: 20rpx;
+  margin-top: $spacing-md;
 }
 
 .results-header {
+  @include glass-card();
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20rpx;
-  background: #fff;
-  border-radius: 16rpx;
-  margin-bottom: 20rpx;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
 }
 
 .results-count {
-  font-size: 28rpx;
-  color: #666;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
 }
 
 .sort-tabs {
   display: flex;
-  gap: 20rpx;
+  gap: $spacing-md;
 }
 
 .sort-tab {
-  padding: 12rpx 24rpx;
-  background: #f5f5f5;
-  border-radius: 8rpx;
-  font-size: 28rpx;
+  padding: $spacing-xs $spacing-md;
+  background: var(--bg-glass-subtle);
+  border-radius: $radius-sm;
+  font-size: $font-size-sm;
 }
 
 .sort-tab.active {
-  background: #5470c6;
+  background: $brand-primary;
   color: #fff;
 }
 
 .posts-list {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: $spacing-md;
 }
 
 .post-card {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
+  @include glass-card();
+  padding: $spacing-md;
 }
 
 .post-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16rpx;
+  margin-bottom: $spacing-sm;
 }
 
 .author-section {
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  gap: $spacing-xs;
 }
 
 .name {
-  font-size: 28rpx;
-  font-weight: bold;
-  color: #333;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary);
 }
 
 .post-time {
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 
 .post-tag {
-  padding: 4rpx 12rpx;
-  background: #f0f0f0;
-  border-radius: 8rpx;
-  font-size: 24rpx;
-  color: #666;
+  padding: $spacing-xs $spacing-sm;
+  background: var(--bg-glass-subtle);
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
 }
 
 .post-content {
-  font-size: 28rpx;
-  color: #333;
+  font-size: $font-size-sm;
+  color: var(--text-primary);
   line-height: 1.6;
-  margin-bottom: 16rpx;
+  margin-bottom: $spacing-sm;
 }
 
 .post-images {
   display: flex;
-  gap: 12rpx;
-  margin-bottom: 16rpx;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-sm;
 }
 
 .post-image {
   width: 200rpx;
   height: 200rpx;
-  border-radius: 12rpx;
+  border-radius: $radius-md;
 }
 
 .post-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 16rpx;
+  padding-top: $spacing-sm;
 }
 
 .footer-stats {
   display: flex;
-  gap: 20rpx;
+  gap: $spacing-md;
 }
 
 .stat-item {
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 
 .post-tags {
   display: flex;
-  gap: 8rpx;
+  gap: $spacing-xs;
   flex-wrap: wrap;
 }
 
 .footer-tag {
-  padding: 4rpx 12rpx;
-  background: #f0f0f0;
-  border-radius: 8rpx;
-  font-size: 24rpx;
-  color: #5470c6;
+  padding: $spacing-xs $spacing-sm;
+  background: var(--bg-glass-subtle);
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  color: $brand-primary;
 }
 
 .more-tags {
-  font-size: 24rpx;
-  color: #5470c6;
+  font-size: $font-size-xs;
+  color: $brand-primary;
 }
 
 .load-more {
   text-align: center;
-  padding: 30rpx;
-  background: #fff;
-  border-radius: 12rpx;
+  padding: $spacing-lg;
+  @include glass-card();
 }
 
 .empty {
@@ -443,17 +439,18 @@ const getTypeText = (type: string) => {
 
 .empty-icon {
   font-size: 120rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: $spacing-md;
 }
 
 .empty-text {
-  font-size: 28rpx;
-  color: #999;
+  font-size: $font-size-sm;
+  color: var(--text-tertiary);
 }
 
 .loading {
   text-align: center;
-  padding: 40rpx;
-  color: #999;
+  padding: $spacing-lg;
+  color: var(--text-tertiary);
+  font-size: $font-size-sm;
 }
 </style>

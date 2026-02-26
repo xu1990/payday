@@ -349,18 +349,18 @@ async function handleExchange() {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .product-detail-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background: var(--bg-base);
 }
 
 .loading, .error {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 200rpx 0;
-  color: #999;
+  padding: $spacing-2xl 0;
+  color: var(--text-tertiary);
 }
 
 .detail-content {
@@ -369,7 +369,7 @@ async function handleExchange() {
 
 .product-image-section {
   position: relative;
-  background-color: #fff;
+  background: var(--bg-glass-standard);
 }
 
 .product-image {
@@ -381,166 +381,166 @@ async function handleExchange() {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: $gradient-brand;
   color: #fff;
   font-size: 120rpx;
 }
 
 .product-badges {
   position: absolute;
-  top: 20rpx;
-  left: 20rpx;
+  top: $spacing-md;
+  left: $spacing-md;
   display: flex;
-  gap: 12rpx;
+  gap: $spacing-sm;
 }
 
 .badge {
-  padding: 8rpx 16rpx;
-  border-radius: 8rpx;
-  font-size: 22rpx;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
   color: #fff;
 }
 
 .badge.virtual {
-  background-color: #909399;
+  background-color: var(--text-tertiary);
 }
 
 .badge.physical {
-  background-color: #67c23a;
+  background-color: $semantic-success;
 }
 
 .badge.bundle {
-  background-color: #e6a23c;
+  background-color: $semantic-warning;
 }
 
 .badge.shipping {
-  background-color: #409eff;
+  background-color: $brand-primary;
 }
 
 .product-info-section {
-  padding: 30rpx;
-  margin-top: 20rpx;
-  background-color: #fff;
+  padding: $spacing-lg;
+  margin-top: $spacing-md;
+  @include glass-card();
 }
 
 .product-name {
-  font-size: 36rpx;
-  font-weight: 500;
-  color: #333;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-medium;
+  color: var(--text-primary);
   line-height: 1.4;
 }
 
 .product-desc {
   display: block;
-  margin-top: 20rpx;
-  font-size: 28rpx;
-  color: #666;
+  margin-top: $spacing-md;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
 .product-meta {
   display: flex;
-  gap: 20rpx;
-  margin-top: 20rpx;
+  gap: $spacing-md;
+  margin-top: $spacing-md;
 }
 
 .stock-info {
-  padding: 8rpx 16rpx;
-  background-color: #f5f5f5;
-  border-radius: 8rpx;
-  font-size: 24rpx;
+  padding: $spacing-xs $spacing-sm;
+  background: var(--bg-base);
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
 }
 
 .stock-available {
-  color: #67c23a;
+  color: $semantic-success;
 }
 
 .stock-unlimited {
-  color: #409eff;
+  color: $brand-primary;
 }
 
 .stock-empty {
-  color: #f56c6c;
+  color: $semantic-error;
 }
 
 .category {
-  padding: 8rpx 16rpx;
-  background-color: #f0f0f0;
-  border-radius: 8rpx;
-  font-size: 24rpx;
-  color: #666;
+  padding: $spacing-xs $spacing-sm;
+  background: var(--bg-base);
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
 }
 
 .price-section {
   display: flex;
   align-items: center;
-  gap: 16rpx;
-  margin-top: 30rpx;
+  gap: $spacing-md;
+  margin-top: $spacing-lg;
 }
 
 .price-label {
-  font-size: 28rpx;
-  color: #666;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
 }
 
 .price-tag {
   display: flex;
   align-items: baseline;
-  padding: 12rpx 24rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 40rpx;
+  padding: $spacing-sm $spacing-lg;
+  background: $gradient-brand;
+  border-radius: $radius-full;
 }
 
 .price-tag .points {
-  font-size: 40rpx;
-  font-weight: 500;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-medium;
   color: #fff;
 }
 
 .price-tag .label {
-  margin-left: 8rpx;
-  font-size: 24rpx;
+  margin-left: $spacing-xs;
+  font-size: $font-size-xs;
   color: #fff;
 }
 
 .my-balance {
   margin-left: auto;
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 
 /* 地址区域 */
 .address-section {
-  margin-top: 20rpx;
-  padding: 30rpx;
-  background-color: #fff;
+  margin-top: $spacing-md;
+  padding: $spacing-lg;
+  @include glass-card();
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20rpx;
+  margin-bottom: $spacing-md;
 }
 
 .section-title {
-  font-size: 30rpx;
-  font-weight: 500;
-  color: #333;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: var(--text-primary);
 }
 
 .section-action {
-  font-size: 26rpx;
-  color: #667eea;
+  font-size: $font-size-xs;
+  color: $brand-primary;
 }
 
 .selected-address {
   display: flex;
   justify-content: space-between;
-  padding: 24rpx;
-  background-color: #f8f9fa;
-  border-radius: 12rpx;
-  border: 2rpx solid #667eea;
+  padding: $spacing-md;
+  background: var(--bg-glass-subtle);
+  border-radius: $radius-md;
+  border: 2rpx solid $brand-primary;
 }
 
 .address-content {
@@ -549,32 +549,32 @@ async function handleExchange() {
 
 .address-top {
   display: flex;
-  gap: 20rpx;
-  margin-bottom: 12rpx;
+  gap: $spacing-md;
+  margin-bottom: $spacing-sm;
 }
 
 .contact-name {
-  font-size: 28rpx;
-  font-weight: 500;
-  color: #333;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--text-primary);
 }
 
 .contact-phone {
-  font-size: 26rpx;
-  color: #666;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
 }
 
 .address-detail {
-  font-size: 26rpx;
-  color: #666;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
 .default-badge {
-  padding: 8rpx 16rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 8rpx;
-  font-size: 20rpx;
+  padding: $spacing-xs $spacing-sm;
+  background: $gradient-brand;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
   color: #fff;
 }
 
@@ -583,53 +583,53 @@ async function handleExchange() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60rpx;
-  border: 2rpx dashed #ddd;
-  border-radius: 12rpx;
-  background-color: #f8f9fa;
+  padding: $spacing-xl;
+  border: 2rpx dashed var(--border-regular);
+  border-radius: $radius-md;
+  background: var(--bg-glass-subtle);
 }
 
 .no-address .icon {
   font-size: 60rpx;
-  margin-bottom: 16rpx;
+  margin-bottom: $spacing-md;
 }
 
 .no-address .text {
-  font-size: 26rpx;
-  color: #999;
+  font-size: $font-size-sm;
+  color: var(--text-tertiary);
 }
 
 /* 配送状态提示 */
 .delivery-status {
   display: flex;
   align-items: center;
-  padding: 20rpx;
-  margin-top: 16rpx;
-  border-radius: 12rpx;
-  font-size: 26rpx;
+  padding: $spacing-md;
+  margin-top: $spacing-sm;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
 }
 
 .delivery-status.can-deliver {
-  background-color: #e8f5e9;
-  border: 2rpx solid #4caf50;
+  background-color: rgba($semantic-success, 0.1);
+  border: 2rpx solid $semantic-success;
 }
 
 .delivery-status.cannot-deliver {
-  background-color: #ffebee;
-  border: 2rpx solid #f44336;
+  background-color: rgba($semantic-error, 0.1);
+  border: 2rpx solid $semantic-error;
 }
 
 .delivery-status .status-icon {
-  margin-right: 12rpx;
-  font-size: 32rpx;
+  margin-right: $spacing-sm;
+  font-size: $font-size-lg;
 }
 
 .delivery-status.can-deliver .status-icon {
-  color: #4caf50;
+  color: $semantic-success;
 }
 
 .delivery-status.cannot-deliver .status-icon {
-  color: #f44336;
+  color: $semantic-error;
 }
 
 .delivery-status .status-text {
@@ -637,24 +637,24 @@ async function handleExchange() {
 }
 
 .delivery-status.can-deliver .status-text {
-  color: #2e7d32;
+  color: darken($semantic-success, 20%);
 }
 
 .delivery-status.cannot-deliver .status-text {
-  color: #c62828;
+  color: darken($semantic-error, 20%);
 }
 
 /* 配送信息区域 */
 .shipping-section {
-  margin-top: 20rpx;
-  padding: 30rpx;
-  background-color: #fff;
+  margin-top: $spacing-md;
+  padding: $spacing-lg;
+  @include glass-card();
 }
 
 .shipping-info {
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
+  gap: $spacing-md;
 }
 
 .shipping-row {
@@ -665,19 +665,19 @@ async function handleExchange() {
 .shipping-label {
   width: 160rpx;
   flex-shrink: 0;
-  font-size: 26rpx;
-  color: #999;
+  font-size: $font-size-sm;
+  color: var(--text-tertiary);
 }
 
 .shipping-value {
   flex: 1;
-  font-size: 26rpx;
-  color: #333;
+  font-size: $font-size-sm;
+  color: var(--text-primary);
   line-height: 1.5;
 }
 
 .shipping-row.excluded .shipping-value {
-  color: #f56c6c;
+  color: $semantic-error;
 }
 
 .action-section {
@@ -685,19 +685,19 @@ async function handleExchange() {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 20rpx 30rpx;
-  background-color: #fff;
-  border-top: 1rpx solid #eee;
-  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
+  padding: $spacing-md $spacing-lg;
+  background: var(--bg-glass-standard);
+  border-top: 1rpx solid var(--border-subtle);
+  box-shadow: $shadow-sm;
 }
 
 .exchange-btn {
   width: 100%;
   height: 88rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 44rpx;
+  background: $gradient-brand;
+  border-radius: $radius-full;
   color: #fff;
-  font-size: 32rpx;
+  font-size: $font-size-base;
   line-height: 88rpx;
   text-align: center;
 }

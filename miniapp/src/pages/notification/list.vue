@@ -261,121 +261,122 @@ onShow(() => {
   </view>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: var(--bg-base);
 }
 .type-tabs {
   display: flex;
-  background: #fff;
-  padding: 16rpx 24rpx;
-  gap: 16rpx;
-  border-bottom: 1rpx solid #eee;
+  background: var(--bg-glass-standard);
+  padding: $spacing-sm $spacing-md;
+  gap: $spacing-sm;
+  border-bottom: 1rpx solid var(--border-subtle);
 }
 .type-tab {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8rpx;
-  padding: 16rpx 0;
-  border-radius: 12rpx;
+  gap: $spacing-xs;
+  padding: $spacing-sm 0;
+  border-radius: $radius-md;
   transition: background 0.2s;
 }
 .type-tab.active {
-  background: #f0f9ff;
+  background: var(--bg-glass-subtle);
 }
 .tab-icon {
-  font-size: 32rpx;
+  font-size: $font-size-lg;
 }
 .tab-label {
-  font-size: 24rpx;
-  color: #666;
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
 }
 .type-tab.active .tab-label {
-  color: #07c160;
-  font-weight: 500;
+  color: $brand-primary;
+  font-weight: $font-weight-medium;
 }
 .action-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24rpx;
-  background: #fff;
-  border-bottom: 1rpx solid #eee;
+  padding: $spacing-md;
+  background: var(--bg-glass-standard);
+  border-bottom: 1rpx solid var(--border-subtle);
 }
-.title {
-  font-size: 32rpx;
-  font-weight: 600;
+.action-bar .title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary);
 }
 .actions {
   display: flex;
-  gap: 24rpx;
+  gap: $spacing-md;
 }
 .action-btn {
-  font-size: 28rpx;
-  color: #07c160;
+  font-size: $font-size-sm;
+  color: $brand-primary;
 }
 .action-btn.cancel {
-  color: #666;
+  color: var(--text-secondary);
 }
 .action-btn.delete {
-  color: #e64340;
+  color: $semantic-error;
 }
 .action-btn.danger {
-  color: #e64340;
+  color: $semantic-error;
 }
 .loading,
 .err,
 .empty {
-  padding: 48rpx;
+  padding: $spacing-xl;
   text-align: center;
-  color: #666;
+  color: var(--text-secondary);
+  font-size: $font-size-sm;
 }
 .err {
-  color: #e64340;
+  color: $semantic-error;
 }
 .list {
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
-  padding: 24rpx;
+  gap: $spacing-sm;
+  padding: $spacing-md;
 }
 .item {
+  @include glass-card();
   display: flex;
-  gap: 16rpx;
-  background: #fff;
-  border-radius: 12rpx;
-  padding: 24rpx;
+  gap: $spacing-sm;
+  padding: $spacing-md;
 }
 .item.unread {
-  background: #f0f9ff;
+  background: var(--bg-glass-subtle);
 }
 .item.selected {
-  background: #e6f7ff;
+  background: var(--bg-glass-subtle);
 }
 .checkbox {
   display: flex;
   align-items: center;
-  padding-top: 4rpx;
+  padding-top: $spacing-xs;
 }
 .checkbox-unchecked {
   width: 36rpx;
   height: 36rpx;
-  border: 2rpx solid #ddd;
-  border-radius: 6rpx;
+  border: 2rpx solid var(--border-regular);
+  border-radius: $radius-xs;
 }
 .checkbox-checked {
   width: 36rpx;
   height: 36rpx;
-  background: #07c160;
-  border-radius: 6rpx;
+  background: $brand-primary;
+  border-radius: $radius-xs;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 24rpx;
+  font-size: $font-size-xs;
 }
 .content-wrapper {
   flex: 1;
@@ -384,15 +385,16 @@ onShow(() => {
 .row {
   display: flex;
   align-items: center;
-  gap: 12rpx;
-  margin-bottom: 8rpx;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-xs;
 }
 .type-badge {
-  font-size: 28rpx;
+  font-size: $font-size-sm;
 }
 .item .title {
-  font-size: 30rpx;
-  font-weight: 500;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: var(--text-primary);
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -400,20 +402,20 @@ onShow(() => {
   white-space: nowrap;
 }
 .time {
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
   flex-shrink: 0;
 }
 .content {
-  font-size: 28rpx;
-  color: #666;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
   display: block;
   line-height: 1.5;
 }
 .load-more {
-  padding: 24rpx;
+  padding: $spacing-md;
   text-align: center;
-  color: #999;
-  font-size: 26rpx;
+  color: var(--text-tertiary);
+  font-size: $font-size-sm;
 }
 </style>

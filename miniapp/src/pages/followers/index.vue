@@ -162,105 +162,131 @@ onLoad((options: any) => {
   </view>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .follow-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background: var(--bg-base);
 }
+
 .empty {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 120rpx;
-  color: #999;
+  padding: $spacing-3xl;
+  color: var(--text-tertiary);
+  font-size: $font-size-sm;
 }
+
 .user-list {
-  padding-bottom: 20rpx;
+  padding-bottom: $spacing-sm;
 }
+
 .user-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #fff;
-  padding: 30rpx;
+  @include glass-card();
+  padding: $spacing-lg;
   margin-bottom: 2rpx;
 }
+
 .user-info {
   display: flex;
   align-items: center;
   flex: 1;
 }
+
 .avatar,
 .avatar-placeholder {
   width: 100rpx;
   height: 100rpx;
   border-radius: 50%;
-  margin-right: 20rpx;
+  margin-right: $spacing-sm;
 }
+
 .avatar-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #07c160;
+  background: $gradient-brand;
   color: #fff;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
 }
+
 .user-details {
   flex: 1;
 }
+
 .username {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 10rpx;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  margin-bottom: $spacing-xs;
+  display: block;
+  color: var(--text-primary);
 }
+
 .stats {
   display: flex;
-  gap: 30rpx;
-  margin-top: 8rpx;
+  gap: $spacing-lg;
+  margin-top: $spacing-xs;
 }
+
 .stat {
-  font-size: 13px;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
+
 .bio {
-  font-size: 13px;
-  color: #666;
-  margin-top: 10rpx;
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
+  margin-top: $spacing-xs;
+  display: block;
 }
+
 .follow-btn {
-  margin-left: 20rpx;
+  margin-left: $spacing-sm;
 }
+
 .btn {
-  padding: 10rpx 30rpx;
-  background-color: #07c160;
-  border-radius: 8rpx;
+  padding: $spacing-xs $spacing-lg;
+  background: $gradient-brand;
+  border-radius: $radius-sm;
 }
+
 .btn text {
   color: #fff;
-  font-size: 13px;
+  font-size: $font-size-xs;
 }
+
 .btn.following {
-  background-color: #f0f0f0;
+  background: var(--bg-glass-subtle);
 }
+
 .btn.following text {
-  color: #666;
+  color: var(--text-secondary);
 }
+
 .load-more {
-  padding: 30rpx;
+  padding: $spacing-lg;
   text-align: center;
-  color: #666;
+  color: var(--text-secondary);
+  font-size: $font-size-sm;
 }
+
 .no-more {
-  padding: 30rpx;
+  padding: $spacing-lg;
   text-align: center;
-  color: #999;
+  color: var(--text-tertiary);
+  font-size: $font-size-sm;
 }
+
 .loading-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 120rpx;
-  color: #999;
+  padding: $spacing-3xl;
+  color: var(--text-tertiary);
+  font-size: $font-size-sm;
 }
 </style>

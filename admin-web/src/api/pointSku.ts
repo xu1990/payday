@@ -109,8 +109,12 @@ export interface SKUResponse {
   sort_order: number
 }
 
+export interface SKUBatchUpdateItem extends SKUUpdate {
+  id: string
+}
+
 export interface SKUBatchUpdate {
-  skus: SKUUpdate[]
+  skus: SKUBatchUpdateItem[]
 }
 
 export interface SpecificationListResult {

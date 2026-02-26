@@ -341,7 +341,7 @@ onMounted(() => {
             </view>
             <text class="time">{{ formatTime(item.created_at) }}</text>
           </view>
-          <text class="content">{{ item.content }}</text>
+          <text class="post-content">{{ item.content }}</text>
           <view v-if="item.images?.length" class="imgs">
             <image
               v-for="(img, i) in item.images.slice(0, 3)"
@@ -370,16 +370,16 @@ onMounted(() => {
   </view>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding: env(safe-area-inset-top) 0 20rpx;
+  background: var(--bg-base);
+  padding: env(safe-area-inset-top) 0 $spacing-lg;
 }
 
 .header {
-  background: #fff;
-  border-bottom: 1rpx solid #eee;
+  background: var(--bg-glass-subtle);
+  border-bottom: 1rpx solid var(--border-subtle);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -399,13 +399,13 @@ onMounted(() => {
 }
 
 .tab text {
-  font-size: 15px;
-  color: #666;
+  font-size: $font-size-base;
+  color: var(--text-secondary);
 }
 
 .tab.active text {
-  color: #07c160;
-  font-weight: 600;
+  color: $brand-primary;
+  font-weight: $font-weight-semibold;
 }
 
 .tab.active::after {
@@ -416,19 +416,19 @@ onMounted(() => {
   transform: translateX(-50%);
   width: 40rpx;
   height: 4rpx;
-  background-color: #07c160;
-  border-radius: 2rpx;
+  background-color: $brand-primary;
+  border-radius: $radius-xs;
 }
 
 .content {
-  padding-top: 20rpx;
+  padding-top: $spacing-lg;
 }
 
 .tip {
-  padding: 120rpx 60rpx;
+  padding: 120rpx $spacing-2xl;
   text-align: center;
-  color: #999;
-  font-size: 28rpx;
+  color: var(--text-tertiary);
+  font-size: $font-size-sm;
 }
 
 .list {
@@ -437,13 +437,12 @@ onMounted(() => {
 
 /* 用户卡片样式 */
 .user-card {
+  @include glass-card();
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  margin: 0 24rpx 24rpx;
-  padding: 24rpx;
-  border-radius: 16rpx;
+  margin: 0 $spacing-lg $spacing-lg;
+  padding: $spacing-lg;
 }
 
 .user-info {
@@ -457,109 +456,108 @@ onMounted(() => {
 }
 
 .username {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 10rpx;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  margin-bottom: $spacing-xs;
   display: block;
 }
 
 .stats {
   display: flex;
-  gap: 30rpx;
-  margin-top: 8rpx;
+  gap: $spacing-md;
+  margin-top: $spacing-xs;
 }
 
 .stat {
-  font-size: 13px;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 
 .bio {
-  font-size: 13px;
-  color: #666;
-  margin-top: 10rpx;
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
+  margin-top: $spacing-xs;
   display: block;
 }
 
 .follow-section {
-  margin-left: 20rpx;
+  margin-left: $spacing-base;
 }
 
 /* 帖子卡片样式 */
 .card {
-  margin: 0 24rpx 24rpx;
-  padding: 24rpx;
-  background: #fff;
-  border-radius: 16rpx;
+  @include glass-card();
+  margin: 0 $spacing-lg $spacing-lg;
+  padding: $spacing-lg;
 }
 
 .row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16rpx;
+  margin-bottom: $spacing-base;
 }
 
 .author-section {
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  gap: $spacing-xs;
   flex: 1;
 }
 
 .name {
-  font-weight: 600;
-  font-size: 28rpx;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-sm;
 }
 
 .time {
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 
-.content {
-  font-size: 28rpx;
-  color: #333;
+.post-content {
+  font-size: $font-size-sm;
+  color: var(--text-primary);
   line-height: 1.5;
   display: block;
-  margin-bottom: 16rpx;
+  margin-bottom: $spacing-base;
 }
 
 .imgs {
   display: flex;
-  gap: 12rpx;
-  margin-top: 16rpx;
+  gap: $spacing-xs;
+  margin-top: $spacing-base;
 }
 
 .thumb {
   width: 160rpx;
   height: 160rpx;
-  border-radius: 8rpx;
-  background: #f0f0f0;
+  border-radius: $radius-sm;
+  background: var(--bg-glass-subtle);
 }
 
 .post-stats {
   display: flex;
-  gap: 40rpx;
-  margin-top: 16rpx;
+  gap: $spacing-xl;
+  margin-top: $spacing-base;
 }
 
 .post-stats .stat {
-  font-size: 13px;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
 }
 
 .load-more {
-  padding: 30rpx;
+  padding: $spacing-lg;
   text-align: center;
-  color: #666;
-  font-size: 28rpx;
+  color: var(--text-secondary);
+  font-size: $font-size-sm;
 }
 
 .no-more {
-  padding: 30rpx;
+  padding: $spacing-lg;
   text-align: center;
-  color: #999;
-  font-size: 28rpx;
+  color: var(--text-tertiary);
+  font-size: $font-size-sm;
 }
 </style>

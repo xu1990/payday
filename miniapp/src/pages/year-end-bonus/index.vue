@@ -158,82 +158,83 @@ function goToAddBonus() {
 <style lang="scss" scoped>
 .year-end-bonus-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding: 20rpx;
+  background: var(--bg-base);
+  padding: $spacing-sm;
 }
 
 .header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 20rpx;
-  padding: 40rpx;
+  background: $gradient-brand;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
   text-align: center;
-  margin-bottom: 20rpx;
+  margin-bottom: $spacing-sm;
 
   .title {
     display: block;
-    font-size: 36rpx;
+    font-size: $font-size-xl;
     color: white;
-    font-weight: bold;
-    margin-bottom: 20rpx;
+    font-weight: $font-weight-bold;
+    margin-bottom: $spacing-sm;
   }
 
   .year-picker {
     display: inline-flex;
     align-items: center;
     background: rgba(255, 255, 255, 0.2);
-    padding: 10rpx 30rpx;
-    border-radius: 50rpx;
+    padding: $spacing-xs $spacing-md;
+    border-radius: $radius-xl;
     color: white;
 
     .arrow {
-      margin-left: 10rpx;
-      font-size: 20rpx;
+      margin-left: $spacing-xs;
+      font-size: $font-size-xs;
     }
   }
 }
 
 .action-bar {
-  margin-bottom: 20rpx;
+  margin-bottom: $spacing-sm;
 
   .btn-add-bonus {
     width: 100%;
-    background: linear-gradient(135deg, #fdcb6e 0%, #f39c12 100%);
+    background: $semantic-warning;
     color: white;
     border: none;
-    border-radius: 50rpx;
-    padding: 28rpx;
-    font-size: 30rpx;
-    font-weight: bold;
-    box-shadow: 0 8rpx 24rpx rgba(253, 203, 110, 0.4);
+    border-radius: $radius-xl;
+    padding: $spacing-md;
+    font-size: $font-size-base;
+    font-weight: $font-weight-bold;
+    box-shadow: $shadow-md;
   }
 }
 
 .my-bonus-card {
-  background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
-  border-radius: 20rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 4rpx 20rpx rgba(253, 203, 110, 0.3);
+  @include glass-card();
+  background: $semantic-warning;
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  margin-bottom: $spacing-sm;
+  box-shadow: $shadow-sm;
 
   &.empty-bonus {
-    background: linear-gradient(135deg, #dfe6e9 0%, #b2bec3 100%);
+    background: var(--bg-glass-subtle);
   }
 
   .my-bonus-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20rpx;
+    margin-bottom: $spacing-sm;
 
     .my-bonus-title {
-      font-size: 32rpx;
-      font-weight: bold;
-      color: #2d3436;
+      font-size: $font-size-lg;
+      font-weight: $font-weight-bold;
+      color: var(--text-primary);
     }
 
     .my-bonus-count {
-      font-size: 24rpx;
-      color: #636e72;
+      font-size: $font-size-xs;
+      color: var(--text-secondary);
     }
   }
 
@@ -241,70 +242,70 @@ function goToAddBonus() {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20rpx 0;
-    border-top: 1rpx solid rgba(255, 255, 255, 0.3);
+    padding: $spacing-sm 0;
+    border-top: 1rpx solid var(--border-subtle);
 
     .amount-label {
-      font-size: 28rpx;
-      color: #2d3436;
+      font-size: $font-size-base;
+      color: var(--text-primary);
     }
 
     .amount-value {
-      font-size: 48rpx;
-      font-weight: bold;
-      color: #d63031;
+      font-size: $font-size-2xl;
+      font-weight: $font-weight-bold;
+      color: $semantic-error;
     }
   }
 
   .my-bonus-list {
-    margin-top: 20rpx;
-    border-top: 1rpx solid rgba(255, 255, 255, 0.3);
-    padding-top: 20rpx;
+    margin-top: $spacing-sm;
+    border-top: 1rpx solid var(--border-subtle);
+    padding-top: $spacing-sm;
 
     .bonus-record-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 16rpx 0;
-      border-bottom: 1rpx solid rgba(255, 255, 255, 0.2);
+      padding: $spacing-sm 0;
+      border-bottom: 1rpx solid var(--border-subtle);
 
       &:last-child {
         border-bottom: none;
       }
 
       .record-amount {
-        font-size: 28rpx;
-        font-weight: bold;
-        color: #2d3436;
+        font-size: $font-size-base;
+        font-weight: $font-weight-bold;
+        color: var(--text-primary);
       }
 
       .record-date {
-        font-size: 24rpx;
-        color: #636e72;
+        font-size: $font-size-xs;
+        color: var(--text-secondary);
       }
     }
   }
 
   .empty-bonus-content {
     text-align: center;
-    padding: 40rpx 0;
+    padding: $spacing-lg 0;
 
     .empty-icon {
       font-size: 80rpx;
       display: block;
-      margin-bottom: 16rpx;
+      margin-bottom: $spacing-sm;
     }
 
     .empty-text {
-      font-size: 28rpx;
-      color: #2d3436;
+      font-size: $font-size-base;
+      color: var(--text-primary);
       display: block;
-      margin-bottom: 8rpx;
+      margin-bottom: $spacing-xs;
     }
 
     .empty-hint {
-      font-size: 24rpx;
-      color: #636e72;
+      font-size: $font-size-xs;
+      color: var(--text-secondary);
       display: block;
     }
   }
@@ -314,56 +315,57 @@ function goToAddBonus() {
 .empty {
   text-align: center;
   padding: 100rpx 0;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .stats-container {
   .overview-card {
     display: flex;
-    background: white;
-    border-radius: 20rpx;
-    padding: 30rpx;
-    margin-bottom: 20rpx;
-    box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+    @include glass-card();
+    border-radius: $radius-lg;
+    padding: $spacing-md;
+    margin-bottom: $spacing-sm;
+    box-shadow: $shadow-sm;
 
     .card-item {
       flex: 1;
       text-align: center;
-      padding: 20rpx 0;
+      padding: $spacing-sm 0;
 
       &.highlight {
-        background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
-        border-radius: 15rpx;
-        margin: 0 10rpx;
+        background: $semantic-warning;
+        border-radius: $radius-md;
+        margin: 0 $spacing-xs;
       }
 
       .label {
         display: block;
-        font-size: 24rpx;
-        color: #999;
-        margin-bottom: 10rpx;
+        font-size: $font-size-xs;
+        color: var(--text-tertiary);
+        margin-bottom: $spacing-xs;
       }
 
       .value {
-        font-size: 32rpx;
-        font-weight: bold;
-        color: #333;
+        font-size: $font-size-lg;
+        font-weight: $font-weight-bold;
+        color: var(--text-primary);
       }
     }
   }
 
   .section {
-    background: white;
-    border-radius: 20rpx;
-    padding: 30rpx;
-    margin-bottom: 20rpx;
+    @include glass-card();
+    border-radius: $radius-lg;
+    padding: $spacing-md;
+    margin-bottom: $spacing-sm;
 
     .section-title {
-      font-size: 28rpx;
-      font-weight: bold;
-      margin-bottom: 20rpx;
-      padding-bottom: 15rpx;
-      border-bottom: 1rpx solid #eee;
+      font-size: $font-size-base;
+      font-weight: $font-weight-bold;
+      margin-bottom: $spacing-sm;
+      padding-bottom: $spacing-sm;
+      border-bottom: 1rpx solid var(--border-subtle);
+      color: var(--text-primary);
     }
   }
 
@@ -371,25 +373,26 @@ function goToAddBonus() {
     .range-item {
       display: flex;
       align-items: center;
-      margin-bottom: 20rpx;
+      margin-bottom: $spacing-sm;
 
       .range-label {
         width: 100rpx;
-        font-size: 24rpx;
+        font-size: $font-size-xs;
+        color: var(--text-secondary);
       }
 
       .range-bar {
         flex: 1;
         height: 20rpx;
-        background: #f0f0f0;
-        border-radius: 10rpx;
-        margin: 0 15rpx;
+        background: var(--bg-glass-subtle);
+        border-radius: $radius-sm;
+        margin: 0 $spacing-sm;
         overflow: hidden;
 
         .bar-fill {
           height: 100%;
-          background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-          border-radius: 10rpx;
+          background: $gradient-brand;
+          border-radius: $radius-sm;
           transition: width 0.3s;
         }
       }
@@ -397,8 +400,8 @@ function goToAddBonus() {
       .range-value {
         width: 80rpx;
         text-align: right;
-        font-size: 24rpx;
-        color: #666;
+        font-size: $font-size-xs;
+        color: var(--text-secondary);
       }
     }
   }
@@ -406,22 +409,22 @@ function goToAddBonus() {
   .detail-row {
     display: flex;
     justify-content: space-between;
-    padding: 20rpx 0;
-    border-bottom: 1rpx solid #f0f0f0;
+    padding: $spacing-sm 0;
+    border-bottom: 1rpx solid var(--border-subtle);
 
     &:last-child {
       border-bottom: none;
     }
 
     .detail-label {
-      font-size: 28rpx;
-      color: #666;
+      font-size: $font-size-base;
+      color: var(--text-secondary);
     }
 
     .detail-value {
-      font-size: 28rpx;
-      font-weight: bold;
-      color: #333;
+      font-size: $font-size-base;
+      font-weight: $font-weight-bold;
+      color: var(--text-primary);
     }
   }
 }

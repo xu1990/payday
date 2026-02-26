@@ -236,62 +236,60 @@ async function handleSubmit() {
 <style lang="scss" scoped>
 .point-redemptions-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding: 20rpx;
+  background: var(--bg-base);
+  padding: $spacing-md;
 }
 
 .header {
   text-align: center;
-  padding: 30rpx 0;
+  padding: $spacing-lg 0;
 
   .title {
     display: block;
-    font-size: 36rpx;
-    font-weight: bold;
-    margin-bottom: 15rpx;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    margin-bottom: $spacing-sm;
   }
 
   .points-balance {
     display: inline-block;
-    padding: 10rpx 30rpx;
-    background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
-    border-radius: 50rpx;
-    font-size: 24rpx;
-    font-weight: bold;
+    padding: $spacing-xs $spacing-lg;
+    background: $gradient-brand;
+    border-radius: $radius-full;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-bold;
   }
 }
 
 .tabs {
   display: flex;
-  background: white;
-  border-radius: 20rpx;
-  padding: 10rpx;
-  margin-bottom: 20rpx;
+  @include glass-card();
+  padding: $spacing-xs;
+  margin-bottom: $spacing-md;
 
   .tab {
     flex: 1;
     text-align: center;
-    padding: 15rpx;
-    border-radius: 15rpx;
-    font-size: 28rpx;
+    padding: $spacing-sm;
+    border-radius: $radius-md;
+    font-size: $font-size-base;
 
     &.active {
-      background: #1890ff;
+      background: $brand-primary;
       color: white;
-      font-weight: bold;
+      font-weight: $font-weight-bold;
     }
   }
 }
 
 .create-section {
   .form {
-    background: white;
-    border-radius: 20rpx;
-    padding: 30rpx;
-    margin-bottom: 20rpx;
+    @include glass-card();
+    padding: $spacing-lg;
+    margin-bottom: $spacing-md;
 
     .form-item {
-      margin-bottom: 30rpx;
+      margin-bottom: $spacing-lg;
 
       &:last-child {
         margin-bottom: 0;
@@ -299,21 +297,21 @@ async function handleSubmit() {
 
       .label {
         display: block;
-        font-size: 28rpx;
-        color: #333;
-        margin-bottom: 15rpx;
-        font-weight: 500;
+        font-size: $font-size-base;
+        color: var(--text-primary);
+        margin-bottom: $spacing-sm;
+        font-weight: $font-weight-medium;
       }
 
       .input,
       .textarea,
       .picker {
         width: 100%;
-        padding: 20rpx;
-        border: 1rpx solid #e0e0e0;
-        border-radius: 10rpx;
-        font-size: 28rpx;
-        background: #fafafa;
+        padding: $spacing-md;
+        border: 1rpx solid var(--border-subtle);
+        border-radius: $radius-sm;
+        font-size: $font-size-base;
+        background: var(--bg-glass-subtle);
       }
 
       .picker {
@@ -322,8 +320,8 @@ async function handleSubmit() {
         align-items: center;
 
         .arrow {
-          font-size: 20rpx;
-          color: #999;
+          font-size: $font-size-xs;
+          color: var(--text-tertiary);
         }
       }
 
@@ -334,19 +332,19 @@ async function handleSubmit() {
   }
 
   .footer {
-    padding: 20rpx 0;
+    padding: $spacing-md 0;
 
     .submit-btn {
       width: 100%;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: $gradient-brand;
       color: white;
       border: none;
-      border-radius: 50rpx;
-      padding: 30rpx;
-      font-size: 32rpx;
+      border-radius: $radius-full;
+      padding: $spacing-lg;
+      font-size: $font-size-lg;
 
       &[disabled] {
-        background: #ccc;
+        background: var(--text-tertiary);
       }
     }
   }
@@ -356,7 +354,7 @@ async function handleSubmit() {
   .loading {
     text-align: center;
     padding: 100rpx 0;
-    color: #999;
+    color: var(--text-tertiary);
   }
 
   .empty {
@@ -366,56 +364,55 @@ async function handleSubmit() {
     .empty-icon {
       display: block;
       font-size: 80rpx;
-      margin-bottom: 20rpx;
+      margin-bottom: $spacing-md;
     }
 
     .empty-text {
-      font-size: 28rpx;
-      color: #999;
+      font-size: $font-size-base;
+      color: var(--text-tertiary);
     }
   }
 
   .redemption-list {
     .redemption-card {
-      background: white;
-      border-radius: 20rpx;
-      padding: 25rpx;
-      margin-bottom: 15rpx;
+      @include glass-card();
+      padding: $spacing-lg;
+      margin-bottom: $spacing-sm;
 
       .redemption-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20rpx;
+        margin-bottom: $spacing-md;
 
         .reward-name {
-          font-size: 32rpx;
-          font-weight: bold;
+          font-size: $font-size-lg;
+          font-weight: $font-weight-bold;
         }
 
         .status-badge {
-          padding: 5rpx 15rpx;
-          border-radius: 20rpx;
-          font-size: 22rpx;
+          padding: $spacing-2xs $spacing-sm;
+          border-radius: $radius-full;
+          font-size: $font-size-xs;
 
           &.status-pending {
             background: #fff7e6;
-            color: #fa8c16;
+            color: $semantic-warning;
           }
 
           &.status-approved {
             background: #e6f7ff;
-            color: #1890ff;
+            color: $brand-primary;
           }
 
           &.status-completed {
             background: #f6ffed;
-            color: #52c41a;
+            color: $semantic-success;
           }
 
           &.status-rejected {
             background: #fff1f0;
-            color: #ff4d4f;
+            color: $semantic-error;
           }
         }
       }
@@ -424,30 +421,30 @@ async function handleSubmit() {
         .info-row {
           display: flex;
           justify-content: space-between;
-          padding: 10rpx 0;
-          font-size: 26rpx;
+          padding: $spacing-xs 0;
+          font-size: $font-size-sm;
 
           .label {
-            color: #999;
+            color: var(--text-tertiary);
           }
 
           .value {
-            color: #333;
+            color: var(--text-primary);
 
             &.points {
-              color: #ff4d4f;
-              font-weight: bold;
+              color: $semantic-error;
+              font-weight: $font-weight-bold;
             }
           }
         }
       }
 
       .rejection-reason {
-        margin-top: 15rpx;
-        padding-top: 15rpx;
-        border-top: 1rpx dashed #eee;
-        font-size: 24rpx;
-        color: #ff4d4f;
+        margin-top: $spacing-sm;
+        padding-top: $spacing-sm;
+        border-top: 1rpx dashed var(--border-subtle);
+        font-size: $font-size-sm;
+        color: $semantic-error;
       }
     }
   }

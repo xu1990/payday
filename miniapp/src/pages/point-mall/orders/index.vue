@@ -181,30 +181,30 @@ function goToDetail(order) {
 <style lang="scss" scoped>
 .orders-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding-bottom: 20rpx;
+  background: var(--bg-base);
+  padding-bottom: $spacing-md;
 }
 
 .status-filter {
-  background: white;
-  padding: 20rpx 0;
-  margin-bottom: 20rpx;
+  background: var(--bg-glass-standard);
+  padding: $spacing-md 0;
+  margin-bottom: $spacing-md;
 
   .status-scroll {
     white-space: nowrap;
-    padding: 0 20rpx;
+    padding: 0 $spacing-md;
 
     .status-item {
       display: inline-block;
-      padding: 10rpx 25rpx;
-      margin-right: 15rpx;
-      border-radius: 30rpx;
-      font-size: 26rpx;
-      background: #f5f5f5;
-      color: #666;
+      padding: $spacing-xs $spacing-lg;
+      margin-right: $spacing-sm;
+      border-radius: $radius-full;
+      font-size: $font-size-xs;
+      background: var(--bg-base);
+      color: var(--text-secondary);
 
       &.active {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: $gradient-brand;
         color: white;
       }
     }
@@ -214,66 +214,66 @@ function goToDetail(order) {
 .loading,
 .empty {
   text-align: center;
-  padding: 100rpx 0;
-  color: #999;
+  padding: $spacing-2xl 0;
+  color: var(--text-tertiary);
 }
 
 .orders-list {
-  padding: 20rpx;
+  padding: $spacing-md;
 
   .order-item {
-    background: white;
-    border-radius: 20rpx;
+    @include glass-card();
+    border-radius: $radius-lg;
     overflow: hidden;
-    margin-bottom: 20rpx;
+    margin-bottom: $spacing-md;
 
     .order-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 20rpx;
-      border-bottom: 1rpx solid #f0f0f0;
+      padding: $spacing-md;
+      border-bottom: 1rpx solid var(--border-subtle);
 
       .order-number {
-        font-size: 24rpx;
-        color: #999;
+        font-size: $font-size-xs;
+        color: var(--text-tertiary);
       }
 
       .order-status {
-        font-size: 24rpx;
-        padding: 5rpx 15rpx;
-        border-radius: 15rpx;
+        font-size: $font-size-xs;
+        padding: $spacing-xs $spacing-sm;
+        border-radius: $radius-sm;
 
         &.status-pending {
-          background: #fff7e6;
-          color: #fa8c16;
+          background: rgba($semantic-warning, 0.15);
+          color: $semantic-warning;
         }
 
         &.status-completed {
-          background: #f6ffed;
-          color: #52c41a;
+          background: rgba($semantic-success, 0.15);
+          color: $semantic-success;
         }
 
         &.status-cancelled,
         &.status-refunded {
-          background: #f5f5f5;
-          color: #999;
+          background: var(--bg-base);
+          color: var(--text-tertiary);
         }
       }
     }
 
     .order-content {
       display: flex;
-      padding: 20rpx;
+      padding: $spacing-md;
 
       .product-image {
         width: 140rpx;
         height: 140rpx;
-        border-radius: 15rpx;
+        border-radius: $radius-md;
         flex-shrink: 0;
 
         &.placeholder {
-          background: #f0f0f0;
+          background: var(--bg-base);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -283,19 +283,19 @@ function goToDetail(order) {
 
       .product-info {
         flex: 1;
-        padding: 0 20rpx;
+        padding: 0 $spacing-md;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
 
         .product-name {
-          font-size: 28rpx;
-          font-weight: bold;
+          font-size: $font-size-sm;
+          font-weight: $font-weight-bold;
         }
 
         .order-time {
-          font-size: 24rpx;
-          color: #999;
+          font-size: $font-size-xs;
+          color: var(--text-tertiary);
         }
       }
 
@@ -304,30 +304,30 @@ function goToDetail(order) {
 
         .points {
           display: block;
-          font-size: 32rpx;
-          font-weight: bold;
-          color: #ff4d4f;
+          font-size: $font-size-base;
+          font-weight: $font-weight-bold;
+          color: $semantic-error;
         }
 
         .label {
-          font-size: 22rpx;
-          color: #999;
+          font-size: $font-size-xs;
+          color: var(--text-tertiary);
         }
       }
     }
 
     .order-actions {
-      padding: 15rpx 20rpx;
-      border-top: 1rpx solid #f0f0f0;
+      padding: $spacing-sm $spacing-md;
+      border-top: 1rpx solid var(--border-subtle);
 
       .cancel-btn {
         width: 100%;
-        background: white;
-        color: #999;
-        border: 1rpx solid #d9d9d9;
-        border-radius: 10rpx;
-        padding: 15rpx;
-        font-size: 26rpx;
+        background: var(--bg-glass-standard);
+        color: var(--text-tertiary);
+        border: 1rpx solid var(--border-regular);
+        border-radius: $radius-sm;
+        padding: $spacing-sm;
+        font-size: $font-size-xs;
 
         &::after {
           border: none;

@@ -164,48 +164,47 @@ function goToEvent(eventType) {
 <style lang="scss" scoped>
 .point-events-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding: 20rpx;
+  background: var(--bg-base);
+  padding: $spacing-md;
 }
 
 .header {
   text-align: center;
-  padding: 40rpx 0;
+  padding: $spacing-xl 0;
 
   .title {
     display: block;
-    font-size: 36rpx;
-    font-weight: bold;
-    margin-bottom: 10rpx;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    margin-bottom: $spacing-xs;
   }
 
   .subtitle {
-    font-size: 24rpx;
-    color: #999;
+    font-size: $font-size-sm;
+    color: var(--text-tertiary);
   }
 }
 
 .loading {
   text-align: center;
   padding: 100rpx 0;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .events-list {
   .event-card {
     display: flex;
     align-items: center;
-    background: white;
-    border-radius: 20rpx;
-    padding: 25rpx;
-    margin-bottom: 15rpx;
+    @include glass-card();
+    padding: $spacing-lg;
+    margin-bottom: $spacing-sm;
     position: relative;
 
     &.special-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: $gradient-brand;
 
       .event-icon {
-        filter: drop-shadow(0 2rpx 4rpx rgba(0, 0, 0, 0.1));
+        filter: drop-shadow(0 $spacing-xs $spacing-xs rgba(0, 0, 0, 0.1));
       }
 
       .event-name {
@@ -227,30 +226,30 @@ function goToEvent(eventType) {
       }
 
       .arrow {
-        font-size: 40rpx;
+        font-size: $font-size-2xl;
         color: white;
-        font-weight: 300;
-        margin-left: 10rpx;
+        font-weight: $font-weight-light;
+        margin-left: $spacing-xs;
       }
     }
 
     .event-icon {
       font-size: 50rpx;
-      margin-right: 20rpx;
+      margin-right: $spacing-md;
     }
 
     .event-info {
       flex: 1;
 
       .event-name {
-        font-size: 28rpx;
-        font-weight: bold;
-        margin-bottom: 5rpx;
+        font-size: $font-size-base;
+        font-weight: $font-weight-bold;
+        margin-bottom: $spacing-2xs;
       }
 
       .event-desc {
-        font-size: 24rpx;
-        color: #999;
+        font-size: $font-size-sm;
+        color: var(--text-tertiary);
       }
     }
 
@@ -259,22 +258,22 @@ function goToEvent(eventType) {
 
       .points {
         display: block;
-        font-size: 32rpx;
-        font-weight: bold;
-        color: #1890ff;
+        font-size: $font-size-lg;
+        font-weight: $font-weight-bold;
+        color: $brand-primary;
       }
 
       .label {
-        font-size: 22rpx;
-        color: #999;
+        font-size: $font-size-xs;
+        color: var(--text-tertiary);
       }
     }
 
     .arrow {
-      font-size: 40rpx;
-      color: #ccc;
-      font-weight: 300;
-      margin-left: 10rpx;
+      font-size: $font-size-2xl;
+      color: var(--text-tertiary);
+      font-weight: $font-weight-light;
+      margin-left: $spacing-xs;
     }
   }
 }

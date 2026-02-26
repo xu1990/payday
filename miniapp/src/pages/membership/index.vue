@@ -244,83 +244,82 @@ const selectPackage = async (pkg) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .membership-page {
-  padding: 20rpx;
-  background: #f5f5f5;
+  padding: $spacing-lg;
+  background: var(--bg-base);
   min-height: 100vh;
 }
 
 .header {
-  margin-bottom: 30rpx;
+  margin-bottom: $spacing-xl;
 }
 
 .title {
-  font-size: 48rpx;
-  font-weight: bold;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
   display: block;
 }
 
 .subtitle {
-  font-size: 28rpx;
-  color: #666;
+  font-size: $font-size-base;
+  color: var(--text-secondary);
   display: block;
-  margin-top: 10rpx;
+  margin-top: $spacing-xs;
 }
 
 .active-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 30rpx;
+  background: $gradient-brand;
+  border-radius: $radius-lg;
+  padding: $spacing-xl;
+  margin-bottom: $spacing-xl;
 }
 
 .active-info {
   display: flex;
   flex-direction: column;
-  gap: 10rpx;
+  gap: $spacing-xs;
 }
 
 .active-title {
-  font-size: 32rpx;
-  font-weight: bold;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
   color: #fff;
 }
 
 .active-date {
-  font-size: 26rpx;
+  font-size: $font-size-sm;
   color: rgba(255, 255, 255, 0.8);
 }
 
 .active-days {
-  font-size: 28rpx;
-  color: #ffd700;
-  font-weight: bold;
+  font-size: $font-size-base;
+  color: $semantic-warning;
+  font-weight: $font-weight-bold;
 }
 
 .section-title {
-  font-size: 32rpx;
-  font-weight: bold;
-  margin-bottom: 20rpx;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  margin-bottom: $spacing-md;
 }
 
 .packages-list {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: $spacing-md;
 }
 
 .package-card {
+  @include glass-card();
   position: relative;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 30rpx;
+  padding: $spacing-xl;
   text-align: center;
   border: 4rpx solid transparent;
 }
 
 .package-card.recommended {
-  border-color: #5470c6;
+  border-color: $brand-primary;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
@@ -328,67 +327,66 @@ const selectPackage = async (pkg) => {
   position: absolute;
   top: 0;
   right: 0;
-  background: #ff6b6b;
+  background: $semantic-error;
   color: #fff;
-  font-size: 20rpx;
-  padding: 8rpx 16rpx;
-  border-bottom-left-radius: 16rpx;
+  font-size: $font-size-xs;
+  padding: $spacing-xs $spacing-sm;
+  border-bottom-left-radius: $radius-lg;
 }
 
 .package-name {
-  font-size: 36rpx;
-  font-weight: bold;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
   display: block;
-  margin-bottom: 16rpx;
+  margin-bottom: $spacing-sm;
 }
 
 .package-price {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  margin-bottom: 12rpx;
+  margin-bottom: $spacing-xs;
 }
 
 .price-symbol {
-  font-size: 28rpx;
-  color: #ff6b6b;
+  font-size: $font-size-base;
+  color: $semantic-error;
   margin-right: 4rpx;
 }
 
 .price-value {
-  font-size: 56rpx;
-  font-weight: bold;
-  color: #ff6b6b;
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  color: $semantic-error;
 }
 
 .package-duration {
-  font-size: 24rpx;
-  color: #999;
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
   display: block;
-  margin-bottom: 16rpx;
+  margin-bottom: $spacing-sm;
 }
 
 .package-desc {
-  font-size: 24rpx;
-  color: #666;
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
   line-height: 1.5;
 }
 
 .benefits-section {
-  margin-top: 30rpx;
+  margin-top: $spacing-xl;
 }
 
 .benefits-list {
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
+  @include glass-card();
+  padding: $spacing-md;
 }
 
 .benefit-item {
   display: flex;
   align-items: center;
-  padding: 20rpx 0;
-  border-bottom: 1rpx solid #f0f0f0;
+  padding: $spacing-md 0;
+  border-bottom: 1rpx solid var(--border-subtle);
 }
 
 .benefit-item:last-child {
@@ -398,24 +396,24 @@ const selectPackage = async (pkg) => {
 .benefit-icon {
   width: 48rpx;
   height: 48rpx;
-  background: #91cc75;
+  background: $semantic-success;
   color: #fff;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28rpx;
-  font-weight: bold;
-  margin-right: 20rpx;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  margin-right: $spacing-md;
 }
 
 .benefit-text {
-  font-size: 28rpx;
+  font-size: $font-size-base;
 }
 
 .loading {
   text-align: center;
-  padding: 40rpx;
-  color: #999;
+  padding: $spacing-2xl;
+  color: var(--text-tertiary);
 }
 </style>

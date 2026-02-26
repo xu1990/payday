@@ -775,8 +775,8 @@ onMounted(() => {
 <style scoped lang="scss">
 .page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 24rpx;
+  background: $gradient-brand;
+  padding: $spacing-md;
   box-sizing: border-box;
   overflow-y: auto;
 }
@@ -793,7 +793,7 @@ onMounted(() => {
 .loading-icon {
   width: 60rpx;
   height: 60rpx;
-  border: 4rpx solid rgba(255, 255, 255, 0.3);
+  border: 4rpx solid var(--bg-glass-subtle);
   border-top-color: #fff;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -806,8 +806,8 @@ onMounted(() => {
 }
 
 .loading-text {
-  margin-top: 32rpx;
-  font-size: 28rpx;
+  margin-top: $spacing-lg;
+  font-size: $font-size-base;
   color: #fff;
 }
 
@@ -821,21 +821,21 @@ onMounted(() => {
 
 .error-icon {
   font-size: 80rpx;
-  margin-bottom: 24rpx;
+  margin-bottom: $spacing-md;
 }
 
 .error-text {
-  font-size: 28rpx;
+  font-size: $font-size-base;
   color: #fff;
-  margin-bottom: 40rpx;
+  margin-bottom: $spacing-2xl;
 }
 
 .retry-btn {
-  padding: 20rpx 48rpx;
-  background: rgba(255, 255, 255, 0.2);
+  padding: $spacing-md $spacing-2xl;
+  background: var(--bg-glass-subtle);
   border-radius: 48rpx;
   color: #fff;
-  font-size: 28rpx;
+  font-size: $font-size-base;
 }
 
 // Empty
@@ -848,19 +848,19 @@ onMounted(() => {
 
 .empty-icon {
   font-size: 100rpx;
-  margin-bottom: 24rpx;
+  margin-bottom: $spacing-md;
 }
 
 .empty-text {
-  font-size: 32rpx;
+  font-size: $font-size-lg;
   color: #fff;
-  font-weight: 600;
-  margin-bottom: 12rpx;
+  font-weight: $font-weight-semibold;
+  margin-bottom: $spacing-xs;
 }
 
 .empty-hint {
-  font-size: 26rpx;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: $font-size-sm;
+  color: var(--bg-glass-standard);
 }
 
 // Content
@@ -870,7 +870,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20rpx 0 40rpx;
+  padding: $spacing-md 0 $spacing-2xl;
   overflow: visible;
 }
 
@@ -891,9 +891,9 @@ onMounted(() => {
   width: 100%;
   max-width: 600rpx;
   height: 800rpx; /* 固定高度，基于 375:500 比例 */
-  border-radius: 24rpx;
-  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.2);
-  margin-bottom: 40rpx;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-lg;
+  margin-bottom: $spacing-2xl;
   background: #fff;
   display: block;
 }
@@ -903,19 +903,19 @@ onMounted(() => {
   z-index: 999;
   display: flex;
   flex-direction: row;
-  gap: 20rpx;
+  gap: $spacing-md;
   width: 100%;
   max-width: 600rpx;
   justify-content: center;
-  margin-bottom: 24rpx;
+  margin-bottom: $spacing-md;
 }
 
 .btn {
   flex: 1;
-  padding: 28rpx;
+  padding: $spacing-lg;
   border-radius: 48rpx;
-  font-size: 30rpx;
-  font-weight: 600;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
   border: none;
   text-align: center;
   position: relative;
@@ -924,12 +924,12 @@ onMounted(() => {
 
 .btn.primary {
   background: #fff;
-  color: #667eea;
-  box-shadow: 0 8rpx 24rpx rgba(255, 255, 255, 0.3);
+  color: $brand-primary;
+  box-shadow: $shadow-md;
 }
 
 .btn.secondary {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--bg-glass-subtle);
   color: #fff;
 }
 
@@ -939,7 +939,7 @@ onMounted(() => {
   position: relative;
   z-index: 999;
   flex-shrink: 0;
-  padding: 24rpx 0;
+  padding: $spacing-md 0;
 }
 
 .hint-wrapper {
@@ -948,14 +948,14 @@ onMounted(() => {
   position: relative;
   z-index: 999;
   flex-shrink: 0;
-  padding: 8rpx 0 24rpx;
+  padding: $spacing-xs 0 $spacing-md;
 }
 
 .hint {
   position: relative;
   z-index: 999;
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: $font-size-xs;
+  color: var(--bg-glass-standard);
   text-align: center;
 }
 </style>

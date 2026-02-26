@@ -165,17 +165,17 @@ function goToHistory() {
 <style lang="scss" scoped>
 .ability-points-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding: 20rpx;
+  background: var(--bg-base);
+  padding: $spacing-md;
 }
 
 .header {
   text-align: center;
-  padding: 30rpx 0;
+  padding: $spacing-lg 0;
 
   .title {
-    font-size: 36rpx;
-    font-weight: bold;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
   }
 }
 
@@ -183,34 +183,35 @@ function goToHistory() {
 .empty {
   text-align: center;
   padding: 100rpx 0;
-  color: #999;
+  color: $semantic-warning;
 }
 
 .points-container {
   .points-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 30rpx;
-    padding: 50rpx;
+    @include glass-card();
+    background: $gradient-brand;
+    border-radius: $radius-xl;
+    padding: $spacing-xl;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20rpx;
-    box-shadow: 0 10rpx 30rpx rgba(102, 126, 234, 0.3);
+    margin-bottom: $spacing-md;
+    box-shadow: $shadow-lg;
 
     .points-info {
       text-align: left;
 
       .points-value {
         display: block;
-        font-size: 72rpx;
-        font-weight: bold;
+        font-size: $font-size-display;
+        font-weight: $font-weight-bold;
         color: white;
         line-height: 1;
-        margin-bottom: 10rpx;
+        margin-bottom: $spacing-xs;
       }
 
       .points-label {
-        font-size: 24rpx;
+        font-size: $font-size-sm;
         color: rgba(255, 255, 255, 0.8);
       }
     }
@@ -225,67 +226,69 @@ function goToHistory() {
       justify-content: center;
 
       .level {
-        font-size: 32rpx;
-        font-weight: bold;
+        font-size: $font-size-lg;
+        font-weight: $font-weight-bold;
         color: white;
       }
     }
   }
 
   .stats-grid {
+    @include glass-card();
     display: flex;
-    background: white;
-    border-radius: 20rpx;
-    padding: 30rpx;
-    margin-bottom: 20rpx;
+    background: var(--bg-glass-subtle);
+    border-radius: $radius-lg;
+    padding: $spacing-lg;
+    margin-bottom: $spacing-md;
 
     .stat-item {
       flex: 1;
       text-align: center;
 
       &:not(:last-child) {
-        border-right: 1rpx solid #f0f0f0;
+        border-right: 1rpx solid var(--border-subtle);
       }
 
       .stat-value {
         display: block;
-        font-size: 36rpx;
-        font-weight: bold;
-        color: #333;
-        margin-bottom: 10rpx;
+        font-size: $font-size-xl;
+        font-weight: $font-weight-bold;
+        color: var(--text-primary);
+        margin-bottom: $spacing-xs;
       }
 
       .stat-label {
-        font-size: 24rpx;
-        color: #999;
+        font-size: $font-size-sm;
+        color: var(--text-secondary);
       }
     }
   }
 
   .level-section {
-    background: white;
-    border-radius: 20rpx;
-    padding: 30rpx;
-    margin-bottom: 20rpx;
+    @include glass-card();
+    background: var(--bg-glass-subtle);
+    border-radius: $radius-lg;
+    padding: $spacing-lg;
+    margin-bottom: $spacing-md;
 
     .level-title {
-      font-size: 28rpx;
-      font-weight: bold;
-      margin-bottom: 20rpx;
+      font-size: $font-size-base;
+      font-weight: $font-weight-bold;
+      margin-bottom: $spacing-md;
     }
 
     .level-progress {
       .progress-bar {
         height: 20rpx;
-        background: #f0f0f0;
-        border-radius: 10rpx;
+        background: var(--border-regular);
+        border-radius: $radius-sm;
         overflow: hidden;
-        margin-bottom: 15rpx;
+        margin-bottom: $spacing-sm;
 
         .progress-fill {
           height: 100%;
-          background: linear-gradient(90deg, #fbc531 0%, #e1b12c 100%);
-          border-radius: 10rpx;
+          background: $gradient-brand;
+          border-radius: $radius-sm;
           transition: width 0.3s;
         }
       }
@@ -293,8 +296,8 @@ function goToHistory() {
       .level-info {
         display: flex;
         justify-content: space-between;
-        font-size: 24rpx;
-        color: #666;
+        font-size: $font-size-sm;
+        color: var(--text-secondary);
       }
     }
   }
@@ -302,39 +305,39 @@ function goToHistory() {
   .actions {
     display: flex;
     flex-direction: column;
-    gap: 15rpx;
+    gap: $spacing-sm;
 
     .action-btn {
       width: 100%;
       border: none;
-      border-radius: 50rpx;
-      padding: 30rpx;
-      font-size: 28rpx;
-      font-weight: bold;
+      border-radius: $radius-full;
+      padding: $spacing-lg;
+      font-size: $font-size-base;
+      font-weight: $font-weight-bold;
 
       &.primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: $gradient-brand;
         color: white;
       }
 
       &.secondary {
-        background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
-        color: #333;
+        background: $gradient-brand;
+        color: white;
       }
 
       &.tertiary {
-        background: white;
-        color: #333;
-        border: 1rpx solid #e0e0e0;
+        background: var(--bg-glass-subtle);
+        color: var(--text-primary);
+        border: 1rpx solid var(--border-regular);
       }
 
       &.mall {
-        background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+        background: $gradient-brand;
         color: white;
       }
 
       &.invite {
-        background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+        background: $gradient-brand;
         color: white;
       }
     }

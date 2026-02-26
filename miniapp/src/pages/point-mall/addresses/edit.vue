@@ -91,7 +91,7 @@
         <switch
           :checked="form.is_default"
           @change="onDefaultChange"
-          color="#667eea"
+          :color="$brand-primary"
         />
       </view>
     </view>
@@ -108,7 +108,7 @@
       <view class="picker-content" @tap.stop>
         <view class="picker-header">
           <text class="picker-title">选择{{ pickerTitle }}</text>
-          <text class="picker-close" @tap="closePicker">✕</text>
+          <text class="picker-close">✕</text>
         </view>
         <scroll-view class="picker-list" scroll-y>
           <view
@@ -386,34 +386,34 @@ async function save() {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .address-edit-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background: var(--bg-base);
 }
 
 .header {
-  padding: 30rpx;
-  background-color: #fff;
-  border-bottom: 1rpx solid #eee;
+  padding: $spacing-lg;
+  background: var(--bg-glass-standard);
+  border-bottom: 1rpx solid var(--border-subtle);
   text-align: center;
 }
 
 .title {
-  font-size: 32rpx;
-  font-weight: 500;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
 }
 
 .form {
-  margin-top: 20rpx;
-  background-color: #fff;
+  margin-top: $spacing-md;
+  background: var(--bg-glass-standard);
 }
 
 .form-item {
   display: flex;
   align-items: center;
-  padding: 30rpx;
-  border-bottom: 1rpx solid #eee;
+  padding: $spacing-lg;
+  border-bottom: 1rpx solid var(--border-subtle);
 }
 
 .form-item.textarea {
@@ -427,23 +427,23 @@ async function save() {
 
 .label {
   width: 180rpx;
-  font-size: 28rpx;
-  color: #333;
+  font-size: $font-size-sm;
+  color: var(--text-primary);
   flex-shrink: 0;
 }
 
 .input {
   flex: 1;
-  font-size: 28rpx;
+  font-size: $font-size-sm;
 }
 
 .textarea {
   flex: 1;
-  margin-top: 20rpx;
-  padding: 20rpx;
-  background-color: #f5f5f5;
-  border-radius: 8rpx;
-  font-size: 28rpx;
+  margin-top: $spacing-md;
+  padding: $spacing-md;
+  background: var(--bg-base);
+  border-radius: $radius-sm;
+  font-size: $font-size-sm;
   min-height: 120rpx;
 }
 
@@ -455,30 +455,30 @@ async function save() {
 }
 
 .picker-value text {
-  font-size: 28rpx;
+  font-size: $font-size-sm;
 }
 
 .picker-value .placeholder {
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .picker-value .arrow {
   font-size: 40rpx;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .footer {
-  padding: 30rpx;
-  margin-top: 40rpx;
+  padding: $spacing-lg;
+  margin-top: $spacing-xl;
 }
 
 .save-btn {
   width: 100%;
   height: 88rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 44rpx;
+  background: $gradient-brand;
+  border-radius: $radius-full;
   color: #fff;
-  font-size: 32rpx;
+  font-size: $font-size-base;
   line-height: 88rpx;
   text-align: center;
 }
@@ -503,27 +503,27 @@ async function save() {
 .picker-content {
   width: 100%;
   max-height: 60vh;
-  background-color: #fff;
-  border-radius: 24rpx 24rpx 0 0;
+  background: var(--bg-glass-standard);
+  border-radius: $radius-lg $radius-lg 0 0;
 }
 
 .picker-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 30rpx;
-  border-bottom: 1rpx solid #eee;
+  padding: $spacing-lg;
+  border-bottom: 1rpx solid var(--border-subtle);
 }
 
 .picker-title {
-  font-size: 32rpx;
-  font-weight: 500;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
 }
 
 .picker-close {
   font-size: 40rpx;
-  color: #999;
-  padding: 10rpx;
+  color: var(--text-tertiary);
+  padding: $spacing-xs;
 }
 
 .picker-list {
@@ -531,8 +531,8 @@ async function save() {
 }
 
 .picker-option {
-  padding: 30rpx;
-  border-bottom: 1rpx solid #f5f5f5;
-  font-size: 28rpx;
+  padding: $spacing-lg;
+  border-bottom: 1rpx solid var(--bg-base);
+  font-size: $font-size-sm;
 }
 </style>

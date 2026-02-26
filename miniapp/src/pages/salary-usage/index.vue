@@ -206,67 +206,66 @@ const handleSubmit = async () => {
 
 <style scoped lang="scss">
 .salary-usage-page {
-  padding: 20rpx;
-  background: #f5f5f5;
+  padding: $spacing-sm;
+  background: var(--bg-base);
   min-height: 100vh;
 }
 
 .header {
-  padding: 20rpx 0;
+  padding: $spacing-sm 0;
   text-align: center;
 
   .title {
-    font-size: 36rpx;
-    font-weight: bold;
-    color: #333;
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
   }
 }
 
 .form {
-  background: white;
-  border-radius: 16rpx;
-  padding: 20rpx;
+  @include glass-card();
+  padding: $spacing-sm;
 }
 
 .form-item {
-  margin-bottom: 30rpx;
+  margin-bottom: $spacing-lg;
 
   .label {
     display: block;
-    font-size: 28rpx;
-    color: #333;
-    margin-bottom: 16rpx;
-    font-weight: 500;
+    font-size: $font-size-base;
+    color: var(--text-primary);
+    margin-bottom: $spacing-sm;
+    font-weight: $font-weight-medium;
   }
 }
 
 .type-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16rpx;
+  gap: $spacing-sm;
 
   .type-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20rpx;
-    border: 2rpx solid #e5e5e5;
-    border-radius: 12rpx;
+    padding: $spacing-sm;
+    border: 2rpx solid var(--border-subtle);
+    border-radius: $radius-md;
     transition: all 0.3s;
 
     &.active {
-      border-color: #9b59b6;
-      background: #f4e5f9;
+      border-color: $brand-secondary;
+      background: var(--bg-glass-subtle);
     }
 
     .type-icon {
-      font-size: 40rpx;
-      margin-bottom: 8rpx;
+      font-size: $font-size-xl;
+      margin-bottom: $spacing-xs;
     }
 
     .type-label {
-      font-size: 24rpx;
-      color: #666;
+      font-size: $font-size-xs;
+      color: var(--text-secondary);
     }
   }
 }
@@ -274,17 +273,15 @@ const handleSubmit = async () => {
 .amount-input,
 .picker,
 .desc-input {
+  @include glass-input();
   width: 100%;
-  padding: 20rpx;
-  border: 2rpx solid #e5e5e5;
-  border-radius: 8rpx;
-  font-size: 28rpx;
-  background: #fff;
-  color: #333;
+  padding: $spacing-sm;
+  font-size: $font-size-base;
+  color: var(--text-primary);
 }
 
 .placeholder {
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .desc-input {
@@ -293,14 +290,14 @@ const handleSubmit = async () => {
 
 .submit-btn {
   width: 100%;
-  padding: 28rpx;
-  background: linear-gradient(135deg, #9b59b6, #8e44ad);
+  padding: $spacing-md;
+  background: $gradient-brand;
   color: white;
   border: none;
-  border-radius: 12rpx;
-  font-size: 32rpx;
-  font-weight: bold;
-  margin-top: 20rpx;
+  border-radius: $radius-md;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  margin-top: $spacing-sm;
 
   &[disabled] {
     opacity: 0.6;
