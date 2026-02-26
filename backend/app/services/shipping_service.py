@@ -54,6 +54,7 @@ from app.schemas.shipping import (ShippingTemplateCreate, ShippingTemplateRegion
                                   ShippingTemplateRegionResponse, ShippingTemplateRegionUpdate,
                                   ShippingTemplateResponse, ShippingTemplateUpdate)
 from sqlalchemy import func, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
