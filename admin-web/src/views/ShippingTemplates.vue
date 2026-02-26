@@ -111,8 +111,9 @@ async function loadData() {
       limit: pageSize,
       offset: (currentPage.value - 1) * pageSize,
     })
-    list.value = res?.data?.items || []
-    total.value = res?.data?.total || 0
+    // axios 拦截器已经解包了响应，res 直接是 {items, total}
+    list.value = res?.items || []
+    total.value = res?.total || 0
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : '加载失败'
     ElMessage.error(errorMessage)
@@ -125,7 +126,8 @@ async function loadRegions(templateId: string) {
   regionsLoading.value = true
   try {
     const res = await listTemplateRegions(templateId)
-    regions.value = res?.data?.items || []
+    // axios 拦截器已经解包了响应，res 直接是 {items, total}
+    regions.value = res?.items || []
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : '加载区域失败'
     ElMessage.error(errorMessage)

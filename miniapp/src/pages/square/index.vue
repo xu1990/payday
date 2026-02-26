@@ -12,7 +12,7 @@ import { formatRelativeTime } from '@/utils/format'
 type Sort = 'hot' | 'latest'
 const activeTab = ref('hot')
 const list = ref([])
-const followingSet = ref>(new Set())
+const followingSet = ref<Set<string>>(new Set())
 const loading = ref(false)
 const authStore = useAuthStore()
 

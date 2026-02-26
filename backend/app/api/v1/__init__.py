@@ -39,6 +39,7 @@ from .salary_usage import router as salary_usage_router
 from .savings_goal import router as savings_goal_router
 from .share import router as share_router
 from .shipping import router as shipping_router
+from .specification_templates import router as specification_templates_router
 from .statistics import router as statistics_router
 from .storage import router as storage_router
 from .theme import router as theme_router
@@ -95,6 +96,7 @@ api_router.include_router(point_returns_router)
 api_router.include_router(admin_point_shipment_router)
 api_router.include_router(admin_shipping_router)
 api_router.include_router(user_address_router)
+api_router.include_router(specification_templates_router)
 
 
 @api_router.get("/ping")

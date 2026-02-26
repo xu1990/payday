@@ -93,6 +93,11 @@ const router = createRouter({
           name: 'ShippingTemplates',
           component: () => import('@/views/ShippingTemplates.vue'),
         },
+        {
+          path: 'specification-templates',
+          name: 'SpecificationTemplates',
+          component: () => import('@/views/SpecificationTemplates.vue'),
+        },
       ],
     },
   ],

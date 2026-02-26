@@ -255,3 +255,100 @@ async def get_usage_statistics_by_category(
         stats[usage.usage_category] = stats.get(usage.usage_category, 0) + amount
 
     return stats
+
+
+async def check_user_has_first_salary_usage(
+    db: AsyncSession,
+    user_id: str
+) -> bool:
+    """
+    检查用户是否有第一笔工资用途记录
+
+    Args:
+        db: 数据库会话
+        user_id: 用户ID
+
+    Returns:
+        是否有记录
+    """
+    query = select(func.count()).select_from(FirstSalaryUsage).where(
+        FirstSalaryUsage.user_id == user_id
+    )
+    result = await db.execute(query)
+    count = result.scalar() or 0
+    return count > 0
+
+
+async def create_first_salary_usage_records(
+    db: AsyncSession,
+    user_id: str,
+    salary_record_id: str,
+    usage_data_list: list[dict]
+) -> list[FirstSalaryUsage]:
+    """
+    批量创建第一笔工资用途记录
+
+    Args:
+        db: 数据库会话
+        user_id: 用户ID
+        salary_record_id: 薪资记录ID
+        usage_data_list: 用途数据列表
+
+    Returns:
+        创建的记录列表
+    """
+    # 验证薪资记录是否存在且属于该用户
+    salary = await db.get(SalaryRecord, salary_record_id)
+    if not salary:
+        raise NotFoundException("薪资记录不存在")
+
+    if salary.user_id != user_id:
+        raise AuthorizationException("无权操作此薪资记录")
+
+    records = []
+    for usage_data in usage_data_list:
+        encrypted_amount = _encrypt_with_salt(usage_data.get("amount", 0))
+
+        record = FirstSalaryUsage(
+            user_id=user_id,
+            salary_record_id=salary_record_id,
+            usage_category=usage_data.get("usageCategory") or usage_data.get("usage_category"),
+            usage_subcategory=usage_data.get("usageSubcategory") or usage_data.get("usage_subcategory"),
+            amount=encrypted_amount,
+            note=usage_data.get("note")
+        )
+        db.add(record)
+        records.append(record)
+
+    await db.commit()
+    for record in records:
+        await db.refresh(record)
+
+    return records
+
+
+async def get_first_salary_usage_by_salary(
+    db: AsyncSession,
+    user_id: str,
+    salary_record_id: str
+) -> list[FirstSalaryUsage]:
+    """
+    根据薪资记录ID获取用途记录列表
+
+    Args:
+        db: 数据库会话
+        user_id: 用户ID
+        salary_record_id: 薪资记录ID
+
+    Returns:
+        用途记录列表
+    """
+    query = select(FirstSalaryUsage).where(
+        and_(
+            FirstSalaryUsage.user_id == user_id,
+            FirstSalaryUsage.salary_record_id == salary_record_id
+        )
+    ).order_by(desc(FirstSalaryUsage.created_at))
+
+    result = await db.execute(query)
+    return list(result.scalars().all())

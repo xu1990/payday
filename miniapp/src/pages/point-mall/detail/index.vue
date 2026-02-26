@@ -88,6 +88,38 @@
           <text class="icon">📍</text>
           <text class="text">请选择收货地址</text>
         </view>
+
+        <!-- 配送状态提示 -->
+        <view v-if="selectedAddress && product.shipping_template && deliveryStatus" class="delivery-status" :class="{ 'can-deliver': deliveryStatus.canDeliver, 'cannot-deliver': !deliveryStatus.canDeliver }">
+          <text class="status-icon">{{ deliveryStatus.canDeliver ? '✓' : '✗' }}</text>
+          <text class="status-text">{{ deliveryStatus.message }}</text>
+        </view>
+      </view>
+
+      <!-- 配送信息（有运费模板时显示） -->
+      <view v-if="product.shipping_template" class="shipping-section">
+        <view class="section-header">
+          <text class="section-title">配送信息</text>
+        </view>
+        <view class="shipping-info">
+          <!-- 预计到达时间 -->
+          <view v-if="product.shipping_template.estimate_days_min" class="shipping-row">
+            <text class="shipping-label">预计到达</text>
+            <text class="shipping-value">
+              {{ product.shipping_template.estimate_days_min }}-{{ product.shipping_template.estimate_days_max }}天
+            </text>
+          </view>
+          <!-- 配送区域 -->
+          <view v-if="product.shipping_template.delivery_region_names?.length" class="shipping-row">
+            <text class="shipping-label">配送区域</text>
+            <text class="shipping-value">{{ product.shipping_template.delivery_region_names.join('、') }}</text>
+          </view>
+          <!-- 不配送区域 -->
+          <view v-if="product.shipping_template.excluded_region_names?.length" class="shipping-row excluded">
+            <text class="shipping-label">不配送区域</text>
+            <text class="shipping-value">{{ product.shipping_template.excluded_region_names.join('、') }}</text>
+          </view>
+        </view>
       </view>
 
       <!-- 操作按钮 -->
@@ -107,6 +139,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { getPointProduct, createPointOrder, getMyAddresses } from '@/api/pointShop'
 import { getMyPoints } from '@/api/ability-points'
 
@@ -115,6 +148,7 @@ const loading = ref(false)
 const availablePoints = ref(0)
 const productId = ref('')
 const selectedAddress = ref(null)
+const isInitialized = ref(false)
 
 // 计算属性
 const canExchange = computed(() => {
@@ -122,7 +156,8 @@ const canExchange = computed(() => {
   const hasStock = product.value.stock_unlimited || product.value.stock > 0
   const hasPoints = availablePoints.value >= product.value.points_cost
   const hasAddress = !needAddress.value || selectedAddress.value !== null
-  return hasStock && hasPoints && hasAddress
+  const canDeliver = !deliveryStatus.value || deliveryStatus.value.canDeliver
+  return hasStock && hasPoints && hasAddress && canDeliver
 })
 
 const needAddress = computed(() => {
@@ -137,6 +172,7 @@ const exchangeButtonText = computed(() => {
   if (product.value.stock === 0 && !product.value.stock_unlimited) return '已售罄'
   if (availablePoints.value < product.value.points_cost) return '积分不足'
   if (needAddress.value && !selectedAddress.value) return '请选择收货地址'
+  if (deliveryStatus.value && !deliveryStatus.value.canDeliver) return '该地址不可配送'
   return '立即兑换'
 })
 
@@ -150,6 +186,44 @@ const shippingMethodText = computed(() => {
   return methodMap[product.value.shipping_method] || ''
 })
 
+// 配送区域校验
+const deliveryStatus = computed(() => {
+  // 如果不需要地址或没有运费模板，默认可配送
+  if (!needAddress.value || !product.value?.shipping_template) {
+    return { canDeliver: true, message: '' }
+  }
+
+  // 如果没有选择地址，不校验
+  if (!selectedAddress.value) {
+    return { canDeliver: true, message: '' }
+  }
+
+  const template = product.value.shipping_template
+  const province = selectedAddress.value.province_name
+
+  // 检查是否在不配送区域
+  if (template.excluded_region_names?.length) {
+    const excluded = template.excluded_region_names.some(name =>
+      name.includes(province) || province.includes(name)
+    )
+    if (excluded) {
+      return { canDeliver: false, message: `该地址在不配送区域内（${province}）` }
+    }
+  }
+
+  // 检查是否在配送区域（如果指定了配送区域）
+  if (template.delivery_region_names?.length) {
+    const inDelivery = template.delivery_region_names.some(name =>
+      name.includes(province) || province.includes(name)
+    )
+    if (!inDelivery) {
+      return { canDeliver: false, message: `该地址不在配送区域内（${province}）` }
+    }
+  }
+
+  return { canDeliver: true, message: '该地址可配送' }
+})
+
 onMounted(() => {
   // uni-app 的 onLoad 钩子需要通过页面参数获取
   const pages = getCurrentPages()
@@ -160,6 +234,24 @@ onMounted(() => {
   if (productId.value) {
     loadData()
   }
+  isInitialized.value = true
+})
+
+// 每次页面显示时刷新地址（从地址列表页返回时自动刷新）
+onShow(() => {
+  // 只在需要地址且没有选中地址时加载默认地址
+  if (isInitialized.value && needAddress.value && !selectedAddress.value) {
+    loadDefaultAddress()
+  }
+})
+
+// 暴露给地址列表页回调的函数
+function onAddressSelected(address) {
+  selectedAddress.value = address
+}
+
+defineExpose({
+  onAddressSelected,
 })
 
 async function loadData() {
@@ -193,7 +285,7 @@ async function loadData() {
 async function loadDefaultAddress() {
   try {
     const res = await getMyAddresses(true)
-    const addresses = res.data?.items || []
+    const addresses = res.items || []
     // 找到默认地址
     const defaultAddr = addresses.find(addr => addr.is_default)
     if (defaultAddr) {
@@ -209,11 +301,6 @@ function goToAddresses() {
   uni.navigateTo({
     url: '/pages/point-mall/addresses/index?select=true',
   })
-}
-
-// 地址选择回调（由地址列表页面调用）
-window.onAddressSelected = (address) => {
-  selectedAddress.value = address
 }
 
 async function handleExchange() {
@@ -510,6 +597,87 @@ async function handleExchange() {
 .no-address .text {
   font-size: 26rpx;
   color: #999;
+}
+
+/* 配送状态提示 */
+.delivery-status {
+  display: flex;
+  align-items: center;
+  padding: 20rpx;
+  margin-top: 16rpx;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+}
+
+.delivery-status.can-deliver {
+  background-color: #e8f5e9;
+  border: 2rpx solid #4caf50;
+}
+
+.delivery-status.cannot-deliver {
+  background-color: #ffebee;
+  border: 2rpx solid #f44336;
+}
+
+.delivery-status .status-icon {
+  margin-right: 12rpx;
+  font-size: 32rpx;
+}
+
+.delivery-status.can-deliver .status-icon {
+  color: #4caf50;
+}
+
+.delivery-status.cannot-deliver .status-icon {
+  color: #f44336;
+}
+
+.delivery-status .status-text {
+  flex: 1;
+}
+
+.delivery-status.can-deliver .status-text {
+  color: #2e7d32;
+}
+
+.delivery-status.cannot-deliver .status-text {
+  color: #c62828;
+}
+
+/* 配送信息区域 */
+.shipping-section {
+  margin-top: 20rpx;
+  padding: 30rpx;
+  background-color: #fff;
+}
+
+.shipping-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.shipping-row {
+  display: flex;
+  align-items: flex-start;
+}
+
+.shipping-label {
+  width: 160rpx;
+  flex-shrink: 0;
+  font-size: 26rpx;
+  color: #999;
+}
+
+.shipping-value {
+  flex: 1;
+  font-size: 26rpx;
+  color: #333;
+  line-height: 1.5;
+}
+
+.shipping-row.excluded .shipping-value {
+  color: #f56c6c;
 }
 
 .action-section {

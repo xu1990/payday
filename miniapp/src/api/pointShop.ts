@@ -50,6 +50,19 @@ export interface ProductSKU {
 
 // ==================== 商品 ====================
 
+/** 运费模板信息 */
+export interface ShippingTemplate {
+  id: string
+  name: string
+  charge_type: string
+  free_shipping_type: string
+  excluded_regions: string[]
+  excluded_region_names: string[]
+  delivery_region_names: string[]
+  estimate_days_min?: number
+  estimate_days_max?: number
+}
+
 /** 商品项 */
 export interface PointProduct {
   id: string
@@ -66,6 +79,7 @@ export interface PointProduct {
   product_type: ProductType
   shipping_method: ShippingMethod
   shipping_template_id?: string | null
+  shipping_template?: ShippingTemplate  // 运费模板信息
   specifications?: Specification[]  // 规格列表(当has_sku=true时)
   skus?: ProductSKU[]  // SKU列表(当has_sku=true时)
 }

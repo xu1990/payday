@@ -73,6 +73,19 @@ const loadingCategories = ref(false)
 const shippingTemplates = ref<ShippingTemplate[]>([])
 const loadingTemplates = ref(false)
 
+// 预设规格模板
+const presetSpecs = [
+  { name: '颜色', values: ['红色', '蓝色', '黑色', '白色', '灰色', '绿色', '黄色', '紫色', '粉色', '橙色'] },
+  { name: '尺寸', values: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'] },
+  { name: '尺码', values: ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'] },
+  { name: '容量', values: ['64GB', '128GB', '256GB', '512GB', '1TB'] },
+  { name: '规格', values: ['大', '中', '小', '迷你'] },
+  { name: '款式', values: ['标准款', '升级款', '豪华款', '尊享款'] },
+  { name: '套餐', values: ['单件装', '两件装', '三件装', '礼盒装'] },
+  { name: '材质', values: ['棉', '涤纶', '丝绸', '羊毛', '真皮', 'PU'] },
+]
+const showPresetDialog = ref(false)
+
 // 商品类型选项
 const productTypeOptions = [
   { label: '实物商品', value: 'physical' as ProductType },
@@ -125,7 +138,7 @@ async function loadShippingTemplates() {
   loadingTemplates.value = true
   try {
     const res = await listShippingTemplates({ active_only: true, limit: 100 })
-    shippingTemplates.value = res.data?.items || []
+    shippingTemplates.value = res.items || []
   } catch (e) {
     ElMessage.error('加载运费模板失败')
   } finally {
@@ -199,7 +212,8 @@ async function loadCategories() {
   loadingCategories.value = true
   try {
     const res = await getCategoryTree()
-    categoryTree.value = res.data?.categories || []
+    // getCategoryTree 直接返回数组（已被 axios 拦截器解包）
+    categoryTree.value = Array.isArray(res) ? res : []
   } catch (e) {
     ElMessage.error('加载分类失败')
   } finally {
@@ -213,8 +227,7 @@ async function loadProduct() {
 
   loading.value = true
   try {
-    const res = await getPointProduct(productId)
-    const product = res.data
+    const product = await getPointProduct(productId)
 
     form.value = {
       name: product.name,
@@ -248,12 +261,12 @@ async function loadSpecifications() {
 
   try {
     const res = await listSpecifications(productId)
-    const specs = res.data?.specifications || []
+    const specs = res.specifications || []
 
     // 加载每个规格的值
     for (const spec of specs) {
       const valuesRes = await listSpecificationValues(spec.id)
-      spec.values = valuesRes.data?.values || []
+      spec.values = valuesRes.values || []
     }
 
     specifications.value = specs
@@ -269,11 +282,61 @@ async function loadSKUs() {
   skuLoading.value = true
   try {
     const res = await listSKUs(productId)
-    skus.value = res.data?.skus || []
+    skus.value = res.skus || []
   } catch (e) {
     ElMessage.error('加载SKU失败')
   } finally {
     skuLoading.value = false
+  }
+}
+
+// 选择预设规格
+function selectPresetSpec(preset: { name: string; values: string[] }) {
+  // 检查是否已存在同名规格
+  if (specifications.value.some(s => s.name === preset.name)) {
+    ElMessage.warning(`规格"${preset.name}"已存在`)
+    return
+  }
+
+  if (productId) {
+    // 编辑模式：调用API创建
+    addSpecificationWithValues(preset.name, preset.values)
+  } else {
+    // 新建模式：本地添加
+    specifications.value.push({
+      id: `temp_${Date.now()}`,
+      product_id: '',
+      name: preset.name,
+      sort_order: specifications.value.length,
+      created_at: new Date().toISOString(),
+      values: preset.values.map((v, i) => ({
+        id: `temp_val_${Date.now()}_${i}`,
+        specification_id: '',
+        value: v,
+        sort_order: i,
+      })),
+    })
+    newSpecValues.value[preset.name] = [...preset.values, '']
+  }
+  showPresetDialog.value = false
+  ElMessage.success(`已添加规格"${preset.name}"`)
+}
+
+// 编辑模式下添加规格和值
+async function addSpecificationWithValues(name: string, values: string[]) {
+  try {
+    const specRes = await createSpecification(productId!, { name, sort_order: specifications.value.length })
+    const specId = specRes.id
+
+    // 添加规格值
+    for (const value of values) {
+      await createSpecificationValue(specId, { value, sort_order: 0 })
+    }
+
+    await loadSpecifications()
+    ElMessage.success('添加规格成功')
+  } catch (e) {
+    ElMessage.error('添加规格失败')
   }
 }
 
@@ -501,7 +564,7 @@ async function save() {
     } else {
       // 新建模式
       const res = await createPointProduct(form.value)
-      savedProductId = res.data?.id
+      savedProductId = res.id
     }
 
     // 如果是SKU商品，保存规格和SKU
@@ -773,6 +836,12 @@ onMounted(async () => {
 
       <!-- SKU管理 -->
       <el-card v-if="form.has_sku" class="form-section" header="规格管理">
+        <!-- 预设规格选择 -->
+        <div style="margin-bottom: 15px">
+          <el-button type="success" @click="showPresetDialog = true">选择预设规格</el-button>
+          <span style="margin-left: 10px; color: #999; font-size: 12px">快速添加常用规格（颜色、尺寸等）</span>
+        </div>
+
         <div class="spec-editor">
           <div v-for="(spec, index) in specifications" :key="spec.id" class="spec-item">
             <div class="spec-header">
@@ -894,6 +963,27 @@ onMounted(async () => {
         </el-table>
       </el-card>
     </el-form>
+
+    <!-- 预设规格选择对话框 -->
+    <el-dialog v-model="showPresetDialog" title="选择预设规格" width="600px">
+      <div class="preset-specs-grid">
+        <div
+          v-for="preset in presetSpecs"
+          :key="preset.name"
+          class="preset-spec-card"
+          @click="selectPresetSpec(preset)"
+        >
+          <div class="preset-spec-name">{{ preset.name }}</div>
+          <div class="preset-spec-values">
+            <el-tag v-for="v in preset.values.slice(0, 5)" :key="v" size="small" style="margin: 2px">{{ v }}</el-tag>
+            <el-tag v-if="preset.values.length > 5" size="small" type="info" style="margin: 2px">+{{ preset.values.length - 5 }}</el-tag>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="showPresetDialog = false">取消</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -1116,5 +1206,38 @@ onMounted(async () => {
 .spec-hint {
   color: #999;
   font-size: 12px;
+}
+
+/* 预设规格选择 */
+.preset-specs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.preset-spec-card {
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.preset-spec-card:hover {
+  border-color: #409eff;
+  background-color: #ecf5ff;
+}
+
+.preset-spec-name {
+  font-weight: 500;
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: #303133;
+}
+
+.preset-spec-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 </style>

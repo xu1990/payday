@@ -133,7 +133,7 @@ export interface SKUListResult {
 /** 获取商品规格列表 */
 export function listSpecifications(productId: string) {
   return request<SpecificationListResult>({
-    url: `${PREFIX}/point-products/${productId}/specifications`,
+    url: `${PREFIX}/${productId}/specifications`,
     method: 'GET',
   })
 }
@@ -141,7 +141,7 @@ export function listSpecifications(productId: string) {
 /** 创建商品规格 */
 export function createSpecification(productId: string, data: SpecificationCreate) {
   return request<{ id: string }>({
-    url: `${PREFIX}/point-products/${productId}/specifications`,
+    url: `${PREFIX}/${productId}/specifications`,
     method: 'POST',
     data,
   })
@@ -207,7 +207,7 @@ export function listSKUs(productId: string, activeOnly: boolean = false) {
   const q = new URLSearchParams()
   q.set('active_only', String(activeOnly))
   return request<SKUListResult>({
-    url: `${PREFIX}/point-products/${productId}/skus?${q.toString()}`,
+    url: `${PREFIX}/${productId}/skus?${q.toString()}`,
     method: 'GET',
   })
 }
@@ -215,7 +215,7 @@ export function listSKUs(productId: string, activeOnly: boolean = false) {
 /** 创建SKU */
 export function createSKU(productId: string, data: SKUCreate) {
   return request<{ id: string }>({
-    url: `${PREFIX}/point-products/${productId}/skus`,
+    url: `${PREFIX}/${productId}/skus`,
     method: 'POST',
     data,
   })

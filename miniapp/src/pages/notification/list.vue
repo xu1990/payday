@@ -37,7 +37,7 @@ const typeTabs: { key; label: string; icon: string }[] = [
 
 // 批量操作
 const isEditMode = ref(false)
-const selectedIds = ref>(new Set())
+const selectedIds = ref<Set<string>>(new Set())
 const hasSelection = computed(() => selectedIds.value.size > 0)
 
 async function loadUnreadCount() {

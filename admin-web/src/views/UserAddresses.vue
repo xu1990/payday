@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { StarFilled } from '@element-plus/icons-vue'
 import {
@@ -41,19 +41,16 @@ function formatRegion(item: UserAddress): string {
 }
 
 async function loadData() {
-  if (!searchUserId.value && !searchPhone.value) {
-    ElMessage.warning('请输入用户ID或手机号进行搜索')
-    return
-  }
-
   loading.value = true
   try {
     const params: { user_id?: string; phone?: string } = {}
+    // 只有输入了搜索条件才带上，否则查询所有
     if (searchUserId.value) params.user_id = searchUserId.value
     if (searchPhone.value) params.phone = searchPhone.value
 
-    const res = await listAddresses(params)
-    list.value = res?.data || []
+    const res = await listAddresses(Object.keys(params).length > 0 ? params : undefined)
+    // request 函数已直接返回解包后的数据
+    list.value = res || []
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : '加载失败'
     ElMessage.error(errorMessage)
@@ -70,7 +67,7 @@ function handleSearch() {
 function handleReset() {
   searchUserId.value = ''
   searchPhone.value = ''
-  list.value = []
+  loadData()
 }
 
 function openEdit(item: UserAddress) {
@@ -159,6 +156,11 @@ async function handleToggleActive(item: UserAddress) {
     ElMessage.error(errorMessage)
   }
 }
+
+// 页面加载时自动加载数据
+onMounted(() => {
+  loadData()
+})
 </script>
 
 <template>

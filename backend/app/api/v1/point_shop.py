@@ -149,6 +149,37 @@ async def get_product_detail(
         data["specifications"] = specifications
         data["skus"] = [sku.model_dump() for sku in skus_data]
 
+    # 如果商品有运费模板，加载运费模板信息
+    if product.shipping_template_id:
+        from app.services.shipping_service import ShippingTemplateService
+        service = ShippingTemplateService(db)
+        template = await service.get_template(str(product.shipping_template_id))
+        if template:
+            # 获取不配送区域
+            excluded_regions = template.excluded_regions or []
+
+            # 获取模板区域配置中的不配送区域
+            regions = await service.list_regions(str(product.shipping_template_id))
+            excluded_region_names = []
+            delivery_region_names = []
+            for region in regions:
+                if region.is_excluded:
+                    excluded_region_names.append(region.region_names)
+                else:
+                    delivery_region_names.append(region.region_names)
+
+            data["shipping_template"] = {
+                "id": str(template.id),
+                "name": template.name,
+                "charge_type": template.charge_type,
+                "free_shipping_type": template.free_shipping_type,
+                "excluded_regions": excluded_regions,
+                "excluded_region_names": excluded_region_names,
+                "delivery_region_names": delivery_region_names,
+                "estimate_days_min": template.estimate_days_min,
+                "estimate_days_max": template.estimate_days_max,
+            }
+
     return success_response(data=data)
 
 
@@ -319,6 +350,46 @@ async def admin_create_product(
     )
 
     return success_response(data={"id": product.id}, message="商品创建成功")
+
+
+@router.get("/admin/products/{product_id}")
+async def admin_get_product(
+    product_id: str,
+    current_admin: User = Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """获取单个商品详情（管理员）"""
+    product = await get_product(db, product_id)
+
+    # 解析图片URLs
+    image_urls = []
+    if product.image_urls:
+        try:
+            image_urls = json.loads(product.image_urls)
+        except:
+            pass
+
+    data = {
+        "id": product.id,
+        "name": product.name,
+        "description": product.description,
+        "image_urls": image_urls,
+        "image_url": image_urls[0] if image_urls else None,
+        "points_cost": product.points_cost,
+        "stock": product.stock,
+        "stock_unlimited": product.stock_unlimited,
+        "category": product.category,
+        "category_id": product.category_id,
+        "has_sku": product.has_sku,
+        "product_type": product.product_type,
+        "shipping_method": product.shipping_method,
+        "shipping_template_id": product.shipping_template_id,
+        "is_active": product.is_active,
+        "sort_order": product.sort_order,
+        "created_at": product.created_at.isoformat(),
+    }
+
+    return success_response(data=data)
 
 
 @router.put("/admin/products/{product_id}")

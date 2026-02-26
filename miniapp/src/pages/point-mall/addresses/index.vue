@@ -58,11 +58,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { getMyAddresses, deleteAddress, setDefaultAddress } from '@/api/pointShop'
 
 const loading = ref(false)
 const addresses = ref([])
 const selectMode = ref(false) // 是否为选择模式
+const isInitialized = ref(false)
 
 onMounted(() => {
   const pages = getCurrentPages()
@@ -71,13 +73,21 @@ onMounted(() => {
   selectMode.value = options.select === 'true'
 
   loadAddresses()
+  isInitialized.value = true
+})
+
+// 每次页面显示时刷新列表（从编辑页返回时自动刷新）
+onShow(() => {
+  if (isInitialized.value) {
+    loadAddresses()
+  }
 })
 
 async function loadAddresses() {
   try {
     loading.value = true
     const res = await getMyAddresses(true)
-    addresses.value = res.data?.items || []
+    addresses.value = res.items || []
   } catch (err) {
     console.error('Failed to load addresses:', err)
     uni.showToast({

@@ -122,7 +122,8 @@ async function loadTree() {
   treeLoading.value = true
   try {
     const res = await getCategoryTree({ active_only: false })
-    treeData.value = res?.data || []
+    // getCategoryTree 直接返回数组（已被 axios 拦截器解包）
+    treeData.value = Array.isArray(res) ? res : []
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : '加载失败'
     ElMessage.error(errorMessage)

@@ -98,7 +98,7 @@ const formData = ref({
 })
 
 const loading = ref(false)
-const salaryRecords = ref>([])
+const salaryRecords = ref<any[]>([])
 
 const usageTypes = [
   { value: 'housing' as UsageType, label: '住房', icon: '🏠' },

@@ -51,6 +51,54 @@ class UserAddressService:
         return list(addresses)
 
     @staticmethod
+    async def create_address(
+        db: AsyncSession,
+        user_id: str,
+        data: "UserAddressCreate"
+    ) -> UserAddress:
+        """
+        创建新地址
+
+        Args:
+            db: 数据库会话
+            user_id: 用户ID
+            data: 地址创建数据
+
+        Returns:
+            新创建的地址对象
+        """
+        # 如果设置为默认地址，先取消其他默认地址
+        if data.is_default:
+            await db.execute(
+                update(UserAddress)
+                .where(UserAddress.user_id == user_id, UserAddress.is_default == True)
+                .values(is_default=False)
+            )
+
+        # 创建新地址
+        address = UserAddress(
+            user_id=user_id,
+            province_code=data.province_code,
+            province_name=data.province_name,
+            city_code=data.city_code,
+            city_name=data.city_name,
+            district_code=data.district_code,
+            district_name=data.district_name,
+            detailed_address=data.detailed_address,
+            postal_code=data.postal_code,
+            contact_name=data.contact_name,
+            contact_phone=data.contact_phone,
+            is_default=data.is_default,
+            is_active=True,
+        )
+
+        db.add(address)
+        await db.commit()
+        await db.refresh(address)
+
+        return address
+
+    @staticmethod
     async def get_address(
         db: AsyncSession,
         address_id: str
@@ -82,7 +130,7 @@ class UserAddressService:
     async def update_address(
         db: AsyncSession,
         address_id: str,
-        **kwargs
+        data: "UserAddressUpdate"
     ) -> UserAddress:
         """
         更新地址信息
@@ -90,7 +138,7 @@ class UserAddressService:
         Args:
             db: 数据库会话
             address_id: 地址ID
-            **kwargs: 要更新的字段（contact_name, contact_phone, detailed_address等）
+            data: 地址更新数据
 
         Returns:
             更新后的地址对象
@@ -101,9 +149,10 @@ class UserAddressService:
         # 先获取地址
         address = await UserAddressService.get_address(db, address_id)
 
-        # 更新字段
-        for key, value in kwargs.items():
-            if hasattr(address, key) and value is not None:
+        # 更新字段（只更新非None的字段）
+        update_data = data.model_dump(exclude_unset=True, exclude_none=True)
+        for key, value in update_data.items():
+            if hasattr(address, key):
                 setattr(address, key, value)
 
         # 提交更改
@@ -111,6 +160,30 @@ class UserAddressService:
         await db.refresh(address)
 
         return address
+
+    @staticmethod
+    async def delete_address(
+        db: AsyncSession,
+        address_id: str
+    ) -> None:
+        """
+        删除地址（软删除）
+
+        Args:
+            db: 数据库会话
+            address_id: 地址ID
+
+        Raises:
+            NotFoundException: 地址不存在
+        """
+        # 先获取地址
+        address = await UserAddressService.get_address(db, address_id)
+
+        # 软删除：设置 is_active = False
+        address.is_active = False
+
+        # 提交更改
+        await db.commit()
 
     @staticmethod
     async def set_default_address(

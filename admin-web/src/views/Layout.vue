@@ -63,6 +63,7 @@
           <el-menu-item index="/point-returns" aria-label="退货管理">退货管理</el-menu-item>
           <el-menu-item index="/couriers" aria-label="物流公司">物流公司</el-menu-item>
           <el-menu-item index="/shipping-templates" aria-label="运费模板">运费模板</el-menu-item>
+          <el-menu-item index="/specification-templates" aria-label="规格模板">规格模板</el-menu-item>
           <el-menu-item index="/user-addresses" aria-label="用户地址">用户地址</el-menu-item>
         </el-sub-menu>
 

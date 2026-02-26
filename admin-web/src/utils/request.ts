@@ -13,25 +13,36 @@ export interface RequestConfig extends AxiosRequestConfig {
 
 /**
  * 统一请求函数
+ * 返回解包后的数据（axios 拦截器已经处理了 response.data 的解包）
  */
-export function request<T>(config: RequestConfig) {
+export async function request<T>(config: RequestConfig): Promise<T> {
   const { url, method, data, params, ...rest } = config
 
   // 根据 method 选择对应的 axios 方法
+  // adminApi 的响应拦截器已经将 response.data 解包为实际数据
+  let response: { data: T }
+
   switch (method) {
     case 'GET':
-      return adminApi.get<T>(url, { params, ...rest })
+      response = await adminApi.get<T>(url, { params, ...rest })
+      break
     case 'POST':
-      return adminApi.post<T>(url, data, rest)
+      response = await adminApi.post<T>(url, data, rest)
+      break
     case 'PUT':
-      return adminApi.put<T>(url, data, rest)
+      response = await adminApi.put<T>(url, data, rest)
+      break
     case 'DELETE':
-      return adminApi.delete<T>(url, { params, ...rest })
+      response = await adminApi.delete<T>(url, { params, ...rest })
+      break
     case 'PATCH':
-      return adminApi.patch<T>(url, data, rest)
+      response = await adminApi.patch<T>(url, data, rest)
+      break
     default:
       throw new Error(`Unsupported method: ${method}`)
   }
+
+  return response.data
 }
 
 // 导出 adminApi 实例供直接使用

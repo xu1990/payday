@@ -191,7 +191,7 @@ const formData = ref({
 
 const amountError = ref('')
 const submitting = ref(false)
-const salaryRecords = ref>([])
+const salaryRecords = ref<any[]>([])
 
 const store = useFirstSalaryUsageStore()
 const myRecords = computed(() => store.records)

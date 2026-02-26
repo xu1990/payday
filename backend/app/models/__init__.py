@@ -21,6 +21,7 @@ from .point_order import PointOrder
 from .point_product import PointProduct
 from .point_return import PointReturn
 from .point_sku import PointProductSKU, PointSpecification, PointSpecificationValue
+from .specification_template import SpecificationTemplate
 from .post import Post
 from .product import Product, ProductCategory
 from .push import PushNotification
@@ -80,6 +81,7 @@ __all__ = [
     "PointSpecificationValue",
     "PointProductSKU",
     "PointReturn",
+    "SpecificationTemplate",
     "WorkRecord",
     "ProductCategory",
     "Product",

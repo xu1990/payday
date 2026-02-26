@@ -25,8 +25,9 @@ async function loadData() {
       limit: pageSize,
       offset: (currentPage.value - 1) * pageSize,
     })
-    list.value = res?.data?.products || []
-    total.value = res?.data?.total || 0
+    // request 函数已直接返回解包后的数据
+    list.value = res?.products || []
+    total.value = res?.total || 0
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : '加载失败'
     ElMessage.error(errorMessage)
