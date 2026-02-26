@@ -1,0 +1,66 @@
+// 液态玻璃效果 Mixins
+
+@mixin glass-card($prominent: false) {
+  background: if($prominent, var(--bg-glass-prominent), var(--bg-glass-standard));
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
+  border: 1rpx solid var(--border-regular);
+  border-top-color: var(--border-glow);
+  border-radius: 16rpx;
+}
+
+@mixin glass-nav {
+  background: var(--bg-glass-prominent);
+  backdrop-filter: blur(30rpx);
+  -webkit-backdrop-filter: blur(30rpx);
+  border-bottom: 1rpx solid var(--border-subtle);
+}
+
+@mixin semantic-glass($color) {
+  background: $color;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+}
+
+@mixin glass-button {
+  @include glass-card();
+  backdrop-filter: blur(10rpx);
+  color: var(--text-primary);
+  padding: 20rpx 40rpx;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  transition: all 0.2s;
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+@mixin glass-input {
+  background: var(--bg-glass-standard);
+  backdrop-filter: blur(10rpx);
+  -webkit-backdrop-filter: blur(10rpx);
+  border: 1rpx solid var(--border-regular);
+  border-radius: 12rpx;
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+  color: var(--text-primary);
+  transition: border-color 0.2s;
+
+  &:focus {
+    border-color: var(--brand-primary);
+  }
+
+  &::placeholder {
+    color: var(--text-tertiary);
+  }
+}

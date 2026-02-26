@@ -1,0 +1,58 @@
+// 智能液态界面设计系统 - 色彩规范 v2.0.6
+
+// 品牌核心色
+$brand-primary: #4A6CF7;
+$brand-secondary: #9D7BFF;
+$brand-primary-strong: #2A4AF0;
+
+// 渐变
+$gradient-brand: linear-gradient(135deg, $brand-primary 0%, $brand-secondary 100%);
+$gradient-ai-core: linear-gradient(135deg, #4A6CF7 0%, #9D7BFF 50%, #FFB443 100%);
+
+// 语义色 (WCAG 2.2)
+$semantic-success: #00C48C;
+$semantic-error: #FF5C5C;
+$semantic-warning: #FFB443;
+$semantic-info: #54A0FF;
+
+// 动态功能色
+$accent-cyan: #00C4CC;
+$accent-gold: #FFD966;
+
+// 浅色模式 - 背景
+$bg-base: #FFFFFF;
+$bg-glass-subtle: rgba(0, 0, 0, 0.02);
+$bg-glass-standard: rgba(255, 255, 255, 0.4);
+$bg-glass-prominent: rgba(255, 255, 255, 0.7);
+
+// 浅色模式 - 文字
+$text-primary: rgba(0, 0, 0, 0.9);
+$text-secondary: rgba(0, 0, 0, 0.6);
+$text-tertiary: rgba(0, 0, 0, 0.35);
+$text-disabled: rgba(0, 0, 0, 0.12);
+
+// 浅色模式 - 边框
+$border-subtle: rgba(0, 0, 0, 0.1);
+$border-regular: rgba(0, 0, 0, 0.2);
+$border-glow: rgba(255, 255, 255, 0.5);
+
+// 暗黑模式 - 背景
+$bg-base-dark: #0A0C14;
+$bg-glass-subtle-dark: rgba(255, 255, 255, 0.02);
+$bg-glass-standard-dark: rgba(20, 25, 40, 0.7);
+$bg-glass-prominent-dark: rgba(10, 15, 30, 0.85);
+
+// 暗黑模式 - 文字
+$text-primary-dark: rgba(255, 255, 255, 0.92);
+$text-secondary-dark: rgba(255, 255, 255, 0.65);
+$text-tertiary-dark: rgba(255, 255, 255, 0.4);
+$text-disabled-dark: rgba(255, 255, 255, 0.15);
+
+// 暗黑模式 - 边框
+$border-subtle-dark: rgba(255, 255, 255, 0.08);
+$border-regular-dark: rgba(255, 255, 255, 0.15);
+$border-glow-dark: rgba(255, 255, 255, 0.1);
+
+// 暗黑模式 - 品牌色明度提升
+$brand-primary-dark: #5E7EF8;
+$brand-secondary-dark: #AD8FFF;

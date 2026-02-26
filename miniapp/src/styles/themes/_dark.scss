@@ -1,0 +1,25 @@
+// 暗黑主题变量
+
+:root,
+.theme-dark {
+  --bg-base: #{$bg-base-dark};
+  --bg-glass-subtle: #{$bg-glass-subtle-dark};
+  --bg-glass-standard: #{$bg-glass-standard-dark};
+  --bg-glass-prominent: #{$bg-glass-prominent-dark};
+
+  --text-primary: #{$text-primary-dark};
+  --text-secondary: #{$text-secondary-dark};
+  --text-tertiary: #{$text-tertiary-dark};
+  --text-disabled: #{$text-disabled-dark};
+
+  --border-subtle: #{$border-subtle-dark};
+  --border-regular: #{$border-regular-dark};
+  --border-glow: #{$border-glow-dark};
+
+  --brand-primary: #{$brand-primary-dark};
+  --brand-secondary: #{$brand-secondary-dark};
+
+  --shadow-sm: #{$shadow-sm-dark};
+  --shadow-base: #{$shadow-base-dark};
+  --shadow-lg: #{$shadow-lg-dark};
+}

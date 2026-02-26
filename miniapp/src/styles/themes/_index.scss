@@ -1,0 +1,9 @@
+// 主题切换系统
+
+@import 'light';
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light) {
+    @import 'dark';
+  }
+}

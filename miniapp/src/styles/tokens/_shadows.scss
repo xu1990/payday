@@ -1,0 +1,14 @@
+// 阴影系统
+
+$shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+$shadow-base: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 8rpx 32rpx rgba(0, 0, 0, 0.12);
+$shadow-xl: 0 16rpx 48rpx rgba(0, 0, 0, 0.16);
+$shadow-inner: inset 0 2rpx 4rpx rgba(0, 0, 0, 0.06);
+$shadow-glass: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+$shadow-brand: 0 4rpx 16rpx rgba(#4A6CF7, 0.3);
+$shadow-brand-lg: 0 8rpx 32rpx rgba(#4A6CF7, 0.25);
+
+$shadow-sm-dark: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
+$shadow-base-dark: 0 4rpx 16rpx rgba(0, 0, 0, 0.4);
+$shadow-lg-dark: 0 8rpx 32rpx rgba(0, 0, 0, 0.5);

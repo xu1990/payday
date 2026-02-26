@@ -1,0 +1,28 @@
+// 设计系统全局样式入口
+
+@import 'tokens';
+@import 'themes';
+@import 'glass';
+@import 'utilities';
+
+page {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: $font-family-base;
+  font-size: $font-size-base;
+  line-height: $line-height-base;
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.scroll-container {
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}

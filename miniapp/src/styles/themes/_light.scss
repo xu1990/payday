@@ -1,0 +1,25 @@
+// 浅色主题变量
+
+:root,
+.theme-light {
+  --bg-base: #{$bg-base};
+  --bg-glass-subtle: #{$bg-glass-subtle};
+  --bg-glass-standard: #{$bg-glass-standard};
+  --bg-glass-prominent: #{$bg-glass-prominent};
+
+  --text-primary: #{$text-primary};
+  --text-secondary: #{$text-secondary};
+  --text-tertiary: #{$text-tertiary};
+  --text-disabled: #{$text-disabled};
+
+  --border-subtle: #{$border-subtle};
+  --border-regular: #{$border-regular};
+  --border-glow: #{$border-glow};
+
+  --brand-primary: #{$brand-primary};
+  --brand-secondary: #{$brand-secondary};
+
+  --shadow-sm: #{$shadow-sm};
+  --shadow-base: #{$shadow-base};
+  --shadow-lg: #{$shadow-lg};
+}
