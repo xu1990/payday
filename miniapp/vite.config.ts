@@ -11,6 +11,14 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        additionalData: `@use "@/styles/_glass.scss" as *;`,
+        api: 'modern-compiler',
+      },
+    },
+  },
   plugins: [
     // https://uni-helper.js.org/vite-plugin-uni-components
     Components({

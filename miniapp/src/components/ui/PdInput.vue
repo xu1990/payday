@@ -76,8 +76,6 @@ function handleBlur(event: Event) {
 </script>
 
 <style lang="scss">
-@import '@/styles/glass';
-
 .pd-input-wrapper {
   display: flex;
   align-items: center;

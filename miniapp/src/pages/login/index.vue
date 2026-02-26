@@ -376,8 +376,6 @@ function goToPrivacyPolicy() {
 </script>
 
 <style scoped lang="scss">
-@import '@/styles/glass';
-
 .login-page {
   min-height: 100vh;
   background: $gradient-brand;

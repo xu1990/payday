@@ -54,8 +54,6 @@ function handleClick(event: MouseEvent) {
 </script>
 
 <style lang="scss">
-@import '@/styles/glass';
-
 .pd-btn {
   display: inline-flex;
   align-items: center;

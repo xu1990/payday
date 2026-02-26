@@ -52,8 +52,6 @@ function handleBack() {
 </script>
 
 <style lang="scss">
-@import '@/styles/glass';
-
 .pd-navbar {
   @include glass-nav();
   position: sticky;

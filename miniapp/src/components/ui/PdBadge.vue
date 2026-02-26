@@ -31,8 +31,6 @@ const badgeClasses = computed(() => [
 </script>
 
 <style lang="scss">
-@import '@/styles/glass';
-
 .pd-badge {
   display: inline-flex;
   align-items: center;

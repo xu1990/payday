@@ -487,8 +487,6 @@ function createPostWithTopic(topicId: string, topicName: string) {
 </template>
 
 <style scoped lang="scss">
-@import '@/styles/glass';
-
 .root-container {
   padding: calc(5rpx + env(safe-area-inset-top)) 2.5rem;
   text-align: center;

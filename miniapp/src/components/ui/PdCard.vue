@@ -39,8 +39,6 @@ function handleClick(event: MouseEvent) {
 </script>
 
 <style lang="scss">
-@import '@/styles/glass';
-
 .pd-card {
   transition: all $transition-base $ease-out;
 

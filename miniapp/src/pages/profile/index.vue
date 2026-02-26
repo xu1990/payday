@@ -224,8 +224,6 @@ onMounted(load)
 </template>
 
 <style scoped lang="scss">
-@import '@/styles/glass';
-
 .page {
   padding: calc(24rpx + env(safe-area-inset-top)) 24rpx calc(24rpx + env(safe-area-inset-bottom));
   min-height: 100vh;

@@ -52,8 +52,6 @@ function handleClick(event: MouseEvent) {
 </script>
 
 <style lang="scss">
-@import '@/styles/glass';
-
 .pd-avatar {
   display: flex;
   align-items: center;
