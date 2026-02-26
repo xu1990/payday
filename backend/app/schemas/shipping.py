@@ -25,6 +25,12 @@ from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 
+# ==================== Type Aliases ====================
+
+FreeShippingType = Literal["none", "amount", "quantity", "seller"]
+ChargeType = Literal["weight", "quantity", "fixed", "volume"]
+
+
 class ShipmentCreate(BaseModel):
     """创建发货记录请求"""
     courier_code: str = Field(..., min_length=1, max_length=20, description="物流公司代码")
@@ -171,12 +177,16 @@ class ShippingTemplateCreate(BaseModel):
     """创建运费模板请求"""
     name: str = Field(..., min_length=1, max_length=100, description="模板名称")
     description: Optional[str] = Field(None, max_length=200, description="模板描述")
-    charge_type: Literal["weight", "quantity", "fixed"] = Field(..., description="计费方式")
-    default_first_unit: int = Field(..., gt=0, description="首件/首重")
-    default_first_cost: int = Field(..., ge=0, description="首件运费(分)")
-    default_continue_unit: int = Field(..., gt=0, description="续件/续重")
-    default_continue_cost: int = Field(..., ge=0, description="续件运费(分)")
+    charge_type: ChargeType = Field(..., description="计费方式")
+    default_first_unit: Optional[int] = Field(None, gt=0, description="首件/首重")
+    default_first_cost: Optional[int] = Field(None, ge=0, description="首件运费(分)")
+    default_continue_unit: Optional[int] = Field(None, gt=0, description="续件/续重")
+    default_continue_cost: Optional[int] = Field(None, ge=0, description="续件运费(分)")
     free_threshold: Optional[int] = Field(None, ge=0, description="包邮门槛(分)")
+    free_shipping_type: FreeShippingType = Field("none", description="包邮类型")
+    free_quantity: Optional[int] = Field(None, ge=1, description="满件数包邮阈值")
+    excluded_regions: Optional[List[Dict[str, str]]] = Field(None, description="不配送区域 [{code, name}]")
+    volume_unit: Optional[int] = Field(None, gt=0, description="体积单位(cm³)")
     estimate_days_min: Optional[int] = Field(None, gt=0, description="预计到达最少天数")
     estimate_days_max: Optional[int] = Field(None, gt=0, description="预计到达最多天数")
 
@@ -194,12 +204,16 @@ class ShippingTemplateUpdate(BaseModel):
     """更新运费模板请求"""
     name: Optional[str] = Field(None, min_length=1, max_length=100, description="模板名称")
     description: Optional[str] = Field(None, max_length=200, description="模板描述")
-    charge_type: Optional[Literal["weight", "quantity", "fixed"]] = Field(None, description="计费方式")
+    charge_type: Optional[ChargeType] = Field(None, description="计费方式")
     default_first_unit: Optional[int] = Field(None, gt=0, description="首件/首重")
     default_first_cost: Optional[int] = Field(None, ge=0, description="首件运费(分)")
     default_continue_unit: Optional[int] = Field(None, gt=0, description="续件/续重")
     default_continue_cost: Optional[int] = Field(None, ge=0, description="续件运费(分)")
     free_threshold: Optional[int] = Field(None, ge=0, description="包邮门槛(分)")
+    free_shipping_type: Optional[FreeShippingType] = Field(None, description="包邮类型")
+    free_quantity: Optional[int] = Field(None, ge=1, description="满件数包邮阈值")
+    excluded_regions: Optional[List[Dict[str, str]]] = Field(None, description="不配送区域 [{code, name}]")
+    volume_unit: Optional[int] = Field(None, gt=0, description="体积单位(cm³)")
     estimate_days_min: Optional[int] = Field(None, gt=0, description="预计到达最少天数")
     estimate_days_max: Optional[int] = Field(None, gt=0, description="预计到达最多天数")
     is_active: Optional[bool] = Field(None, description="是否启用")
@@ -220,11 +234,15 @@ class ShippingTemplateResponse(BaseModel):
     name: str
     description: Optional[str] = None
     charge_type: str
-    default_first_unit: int
-    default_first_cost: int
-    default_continue_unit: int
-    default_continue_cost: int
+    default_first_unit: Optional[int] = None
+    default_first_cost: Optional[int] = None
+    default_continue_unit: Optional[int] = None
+    default_continue_cost: Optional[int] = None
     free_threshold: Optional[int] = None
+    free_shipping_type: str = "none"
+    free_quantity: Optional[int] = None
+    excluded_regions: Optional[List[Dict[str, str]]] = None
+    volume_unit: Optional[int] = None
     estimate_days_min: Optional[int] = None
     estimate_days_max: Optional[int] = None
     is_active: bool
@@ -243,6 +261,8 @@ class ShippingTemplateRegionCreate(BaseModel):
     continue_unit: int = Field(..., gt=0, description="续件/续重")
     continue_cost: int = Field(..., ge=0, description="续件运费(分)")
     free_threshold: Optional[int] = Field(None, ge=0, description="包邮门槛(分)")
+    free_quantity: Optional[int] = Field(None, ge=1, description="满件数包邮阈值")
+    is_excluded: bool = Field(False, description="是否为不配送区域")
 
     @field_validator("region_codes", "region_names")
     @classmethod
@@ -262,6 +282,8 @@ class ShippingTemplateRegionUpdate(BaseModel):
     continue_unit: Optional[int] = Field(None, gt=0, description="续件/续重")
     continue_cost: Optional[int] = Field(None, ge=0, description="续件运费(分)")
     free_threshold: Optional[int] = Field(None, ge=0, description="包邮门槛(分)")
+    free_quantity: Optional[int] = Field(None, ge=1, description="满件数包邮阈值")
+    is_excluded: Optional[bool] = Field(None, description="是否为不配送区域")
     is_active: Optional[bool] = Field(None, description="是否启用")
 
     @field_validator("region_codes", "region_names")
@@ -284,7 +306,30 @@ class ShippingTemplateRegionResponse(BaseModel):
     continue_unit: int
     continue_cost: int
     free_threshold: Optional[int] = None
+    free_quantity: Optional[int] = None
+    is_excluded: bool = False
     is_active: bool
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ==================== Helper Functions ====================
+
+def formatChargeType(charge_type: str) -> str:
+    """
+    Format charge type to Chinese display text.
+
+    Args:
+        charge_type: One of 'weight', 'quantity', 'fixed', 'volume'
+
+    Returns:
+        Chinese display text for the charge type
+    """
+    charge_type_map = {
+        "weight": "按重量",
+        "quantity": "按件数",
+        "fixed": "固定运费",
+        "volume": "按体积",
+    }
+    return charge_type_map.get(charge_type, charge_type)
