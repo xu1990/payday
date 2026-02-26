@@ -436,6 +436,32 @@ function formatFirstUnit(region: ShippingTemplateRegion): string {
   return unit ? `${region.first_unit}${unit}` : `${region.first_unit}`
 }
 
+// ==================== Excluded Regions & Free Shipping Helpers ====================
+function handleExcludedProvinceChange() {
+  const selected = PROVINCES.filter(p => excludedProvinces.value.includes(p.code))
+  form.value.excluded_regions = selected.map(p => ({ code: p.code, name: p.name }))
+}
+
+function removeExcludedProvince(code: string) {
+  excludedProvinces.value = excludedProvinces.value.filter(c => c !== code)
+  handleExcludedProvinceChange()
+}
+
+function getProvinceName(code: string): string {
+  const province = PROVINCES.find(p => p.code === code)
+  return province?.name || code
+}
+
+function handleFreeShippingTypeChange() {
+  form.value.free_shipping_type = freeShippingType.value
+  if (freeShippingType.value !== 'amount') {
+    form.value.free_threshold = null
+  }
+  if (freeShippingType.value !== 'quantity') {
+    form.value.free_quantity = null
+  }
+}
+
 onMounted(() => {
   loadData()
 })
@@ -539,32 +565,32 @@ onMounted(() => {
                 <el-option label="按重量" value="weight" />
                 <el-option label="按件数" value="quantity" />
                 <el-option label="固定运费" value="fixed" />
+                <el-option label="按体积" value="volume" />
               </el-select>
             </el-form-item>
-            <el-form-item label="默认首件/首重" required>
-              <el-input-number v-model="form.default_first_unit" :min="1" :max="999999" />
-              <span style="margin-left: 10px">{{ chargeTypeUnit }}</span>
-            </el-form-item>
-            <el-form-item label="默认首件运费" required>
+            <template v-if="showPricingFields">
+              <el-form-item label="默认首件/首重" required>
+                <el-input-number v-model="form.default_first_unit" :min="1" :max="999999" />
+                <span style="margin-left: 10px">{{ chargeTypeUnit }}</span>
+              </el-form-item>
+              <el-form-item label="默认首件运费" required>
+                <el-input-number v-model="form.default_first_cost" :min="0" :max="999999" />
+                <span style="margin-left: 10px">分 ({{ formatCost(form.default_first_cost) }})</span>
+              </el-form-item>
+              <el-form-item label="默认续件/续重" required>
+                <el-input-number v-model="form.default_continue_unit" :min="1" :max="999999" />
+                <span style="margin-left: 10px">{{ chargeTypeUnit }}</span>
+              </el-form-item>
+              <el-form-item label="默认续件运费" required>
+                <el-input-number v-model="form.default_continue_cost" :min="0" :max="999999" />
+                <span style="margin-left: 10px"
+                  >分 ({{ formatCost(form.default_continue_cost) }})</span
+                >
+              </el-form-item>
+            </template>
+            <el-form-item v-if="!showPricingFields" label="固定运费" required>
               <el-input-number v-model="form.default_first_cost" :min="0" :max="999999" />
-              <span style="margin-left: 10px">分 ({{ formatCost(form.default_first_cost) }})</span>
-            </el-form-item>
-            <el-form-item label="默认续件/续重" required>
-              <el-input-number v-model="form.default_continue_unit" :min="1" :max="999999" />
-              <span style="margin-left: 10px">{{ chargeTypeUnit }}</span>
-            </el-form-item>
-            <el-form-item label="默认续件运费" required>
-              <el-input-number v-model="form.default_continue_cost" :min="0" :max="999999" />
-              <span style="margin-left: 10px"
-                >分 ({{ formatCost(form.default_continue_cost) }})</span
-              >
-            </el-form-item>
-            <el-form-item label="包邮门槛">
-              <el-input-number v-model="form.free_threshold" :min="0" :max="999999" />
-              <span style="margin-left: 10px">分</span>
-              <span style="margin-left: 10px; color: #999; font-size: 12px"
-                >订单金额满此金额包邮</span
-              >
+              <span style="margin-left: 10px">分 ({{ formatCost(form.default_first_cost || 0) }})</span>
             </el-form-item>
             <el-form-item label="预计送达天数">
               <el-input-number
@@ -656,6 +682,60 @@ onMounted(() => {
             description="暂无区域配置，点击上方按钮添加"
             :image-size="80"
           />
+        </el-tab-pane>
+
+        <!-- Excluded Regions Tab -->
+        <el-tab-pane label="不配送区域" name="excluded" :disabled="dialogMode === 'create'">
+          <div style="margin-bottom: 15px">
+            <el-select
+              v-model="excludedProvinces"
+              multiple
+              placeholder="选择不配送的省份"
+              style="width: 100%"
+              @change="handleExcludedProvinceChange"
+            >
+              <el-option
+                v-for="province in PROVINCES"
+                :key="province.code"
+                :label="province.name"
+                :value="province.code"
+              />
+            </el-select>
+          </div>
+          <div v-if="excludedProvinces.length > 0">
+            <el-tag
+              v-for="code in excludedProvinces"
+              :key="code"
+              closable
+              style="margin: 5px"
+              @close="removeExcludedProvince(code)"
+            >
+              {{ getProvinceName(code) }}
+            </el-tag>
+          </div>
+          <el-empty v-else description="暂无不配送区域" :image-size="80" />
+        </el-tab-pane>
+
+        <!-- Free Shipping Rules Tab -->
+        <el-tab-pane label="包邮规则" name="free-shipping" :disabled="dialogMode === 'create'">
+          <el-form label-width="100px">
+            <el-form-item label="包邮类型">
+              <el-radio-group v-model="freeShippingType" @change="handleFreeShippingTypeChange">
+                <el-radio value="none">不包邮</el-radio>
+                <el-radio value="amount">满金额包邮</el-radio>
+                <el-radio value="quantity">满件数包邮</el-radio>
+                <el-radio value="seller">卖家承担运费</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item v-if="freeShippingType === 'amount'" label="满金额">
+              <el-input-number v-model="form.free_threshold" :min="0" :max="99999999" />
+              <span style="margin-left: 10px">分 ({{ form.free_threshold ? formatCost(form.free_threshold) : '¥0.00' }})</span>
+            </el-form-item>
+            <el-form-item v-if="freeShippingType === 'quantity'" label="满件数">
+              <el-input-number v-model="form.free_quantity" :min="1" :max="9999" />
+              <span style="margin-left: 10px">件</span>
+            </el-form-item>
+          </el-form>
         </el-tab-pane>
       </el-tabs>
 
