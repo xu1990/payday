@@ -7,14 +7,14 @@ import InputEntry from '@/components/InputEntry.vue'
 import { listPayday } from '@/api/payday'
 import { getPointProducts } from '@/api/pointShop'
 import { getMyPoints } from '@/api/ability-points'
-import { getActiveTopics, type Topic } from '@/api/topic'
+import { getActiveTopics } from '@/api/topic'
 import type { MoodType } from '@/api/salary'
 import { useAuthStore } from '@/stores/auth'
 import { useUserStore } from '@/stores/user'
 import { handleQRCodeLaunch } from '@/utils/qrcode'
 
 const MOOD_STORAGE_KEY = 'payday_home_mood'
-const moodOptions: { value: MoodType; label: string }[] = [
+const moodOptions: { value; label: string }[] = [
   { value: 'happy', label: '开心' },
   { value: 'relief', label: '续命' },
   { value: 'sad', label: '崩溃' },
@@ -66,20 +66,20 @@ function monthProgress(): { passed: number; total: number; ratio: number } {
 }
 
 const loading = ref(true)
-const daysToPayday = ref<number | null>(null)
+const daysToPayday = ref(null)
 const hasPaydayConfig = ref(false)
-const selectedMood = ref<MoodType>('happy')
+const selectedMood = ref('happy')
 const progress = ref(monthProgress())
 
 // 积分商品相关
-const products = ref<any[]>([])
+const products = ref([])
 const productsLoading = ref(false)
 
 // 用户剩余积分
 const availablePoints = ref(0)
 
 // 热门话题
-const topics = ref<Topic[]>([])
+const topics = ref([])
 const topicsLoading = ref(false)
 
 // 快捷入口
@@ -234,7 +234,7 @@ if (isLoggedIn.value) {
   loading.value = false
 }
 
-function setMood(mood: MoodType) {
+function setMood(mood) {
   selectedMood.value = mood
   try {
     uni.setStorageSync(MOOD_STORAGE_KEY, mood)

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
 import { getMyLikes } from '@/api/like'
-import { getMyFollowers, getMyFollowing, checkBatchFollowStatus, type UserItem } from '@/api/follow'
+import { getMyFollowers, getMyFollowing, checkBatchFollowStatus } from '@/api/follow'
 import { useAuthStore } from '@/stores/auth'
 import FollowButton from '@/components/FollowButton.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
@@ -10,10 +10,10 @@ import { formatRelativeTime } from '@/utils/format'
 const authStore = useAuthStore()
 
 // Tab: 'following' | 'likes' | 'followers'
-const currentTab = ref<'following' | 'likes' | 'followers'>('following')
+const currentTab = ref('following')
 
 // 用户列表数据（我的关注 / 关注我的）
-const users = ref<UserItem[]>([])
+const users = ref([])
 const userLoading = ref(false)
 const userTotal = ref(0)
 const currentUserPage = ref(1)
@@ -21,7 +21,7 @@ const userPageSize = 20
 const hasMoreUsers = ref(true)
 
 // 帖子列表数据（我的点赞）
-const posts = ref<any[]>([])
+const posts = ref([])
 const postLoading = ref(false)
 const postTotal = ref(0)
 const currentPostPage = ref(1)

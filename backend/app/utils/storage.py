@@ -2,6 +2,8 @@
 统一存储服务 - 抽象层，支持腾讯云 COS 和阿里云 OSS
 根据配置自动选择存储服务提供商
 """
+import asyncio
+from pathlib import Path
 from typing import Optional
 
 from app.core.config import settings
@@ -92,18 +94,54 @@ class UnifiedStorageService:
         Raises:
             Exception: 上传失败或服务未启用
         """
-        if not self.enabled:
-            raise Exception(
-                f"存储服务未启用，当前配置: {self._provider}，"
-                f"请检查对应服务的配置信息"
-            )
+        if self.enabled:
+            if self._provider == "oss" and _oss_service.enabled:
+                logger.info(f"使用阿里云 OSS 上传: {key}")
+                return await _oss_service.upload_bytes(data, key, content_type)
+            else:
+                logger.info(f"使用腾讯云 COS 上传: {key}")
+                return await _cos_service.upload_bytes(data, key, content_type)
 
-        if self._provider == "oss" and _oss_service.enabled:
-            logger.info(f"使用阿里云 OSS 上传: {key}")
-            return await _oss_service.upload_bytes(data, key, content_type)
-        else:
-            logger.info(f"使用腾讯云 COS 上传: {key}")
-            return await _cos_service.upload_bytes(data, key, content_type)
+        # 开发环境本地存储回退
+        logger.warning(f"云存储未启用，使用本地存储: {key}")
+        return await self._upload_to_local(data, key, content_type)
+
+    async def _upload_to_local(
+        self,
+        data: bytes,
+        key: str,
+        content_type: str = "image/jpeg",
+    ) -> str:
+        """
+        本地存储回退（开发环境使用）
+
+        Args:
+            data: 文件二进制数据
+            key: 对象键
+            content_type: MIME 类型
+
+        Returns:
+            文件访问 URL（本地文件路径）
+        """
+        # 创建本地存储目录
+        local_storage_dir = Path("local_storage")
+        local_storage_dir.mkdir(exist_ok=True)
+
+        # 构建文件路径
+        file_path = local_storage_dir / key
+
+        # 确保父目录存在
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # 异步写入文件
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, file_path.write_bytes, data)
+
+        # 返回本地访问 URL
+        # 注意：这只是开发环境的临时方案，生产环境必须使用云存储
+        url = f"http://127.0.0.1:8000/local_storage/{key}"
+        logger.info(f"文件已保存到本地: {file_path}")
+        return url
 
     async def upload_file(
         self,

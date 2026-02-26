@@ -75,7 +75,7 @@ const stats = ref({
 })
 
 const note = ref('')
-const calendar = ref<CalendarItem[]>([])
+const calendar = ref([])
 const currentYear = ref(new Date().getFullYear())
 const currentMonth = ref(new Date().getMonth() + 1)
 

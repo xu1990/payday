@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { getPostList, type PostItem } from '@/api/post'
+import { getPostList } from '@/api/post'
 import { checkBatchFollowStatus } from '@/api/follow'
 import { useDebounceFn } from '@/composables/useDebounce'
 import { useAuthStore } from '@/stores/auth'
@@ -10,9 +10,9 @@ import UserAvatar from '@/components/UserAvatar.vue'
 import { formatRelativeTime } from '@/utils/format'
 
 type Sort = 'hot' | 'latest'
-const activeTab = ref<Sort>('hot')
-const list = ref<PostItem[]>([])
-const followingSet = ref<Set<string>>(new Set())
+const activeTab = ref('hot')
+const list = ref([])
+const followingSet = ref>(new Set())
 const loading = ref(false)
 const authStore = useAuthStore()
 

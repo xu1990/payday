@@ -17,6 +17,7 @@ from app.utils.sentry import init_on_startup
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -363,6 +364,16 @@ app.include_router(api_router)
 
 # 设置全局异常处理器
 setup_exception_handlers(app)
+
+# 挂载本地存储目录（开发环境使用云存储回退）
+# SECURITY: 生产环境应该使用云存储，不应该依赖本地存储
+import os
+local_storage_dir = "local_storage"
+if os.path.exists(local_storage_dir):
+    app.mount("/local_storage", StaticFiles(directory=local_storage_dir), name="local_storage")
+    logger.info(f"本地存储目录已挂载: /local_storage -> {local_storage_dir}")
+else:
+    logger.warning(f"本地存储目录不存在: {local_storage_dir}，云存储回退可能无法工作")
 
 
 @app.get("/")

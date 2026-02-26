@@ -131,15 +131,15 @@ import {
   getAddress,
   createAddress,
   updateAddress,
-  type AddressCreate,
-  type UserAddress,
+  AddressCreate,
+  UserAddress,
 } from '@/api/pointShop'
 
 const isEdit = ref(false)
 const addressId = ref('')
 const saving = ref(false)
 
-const form = ref<AddressCreate>({
+const form = ref({
   province_code: '',
   province_name: '',
   city_code: '',
@@ -155,9 +155,9 @@ const form = ref<AddressCreate>({
 
 // 地区选择器
 const showPicker = ref(false)
-const pickerType = ref<'province' | 'city' | 'district'>('province')
+const pickerType = ref('province')
 const pickerTitle = ref('')
-const pickerOptions = ref<{ code: string; name: string }[]>([])
+const pickerOptions = ref([])
 
 // 简化的地区数据（实际应用中应该从API获取）
 const regionData = {
@@ -224,7 +224,7 @@ onMounted(() => {
 async function loadAddress() {
   try {
     const res = await getAddress(addressId.value)
-    const address = res as UserAddress
+    const address = res
 
     form.value = {
       province_code: address.province_code,
@@ -252,7 +252,7 @@ function onDefaultChange(e) {
   form.value.is_default = e.detail.value
 }
 
-function showRegionPicker(type: 'province' | 'city' | 'district') {
+function showRegionPicker(type) {
   pickerType.value = type
 
   if (type === 'province') {
@@ -287,7 +287,7 @@ function closePicker() {
   showPicker.value = false
 }
 
-function selectOption(item: { code: string; name: string }) {
+function selectOption(item) {
   const type = pickerType.value
 
   if (type === 'province') {

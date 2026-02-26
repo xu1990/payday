@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getSummary, getTrend, type MonthSummary, type TrendItem } from '@/api/statistics'
+import { getSummary, getTrend } from '@/api/statistics'
 
 const loading = ref(true)
 const errMsg = ref('')
-const summary = ref<MonthSummary | null>(null)
-const trendList = ref<TrendItem[]>([])
+const summary = ref(null)
+const trendList = ref([])
 
 function nowYearMonth() {
   const d = new Date()
@@ -29,7 +29,7 @@ async function load() {
   }
 }
 
-function monthLabel(item: TrendItem) {
+function monthLabel(item) {
   return `${item.year}年${item.month}月`
 }
 

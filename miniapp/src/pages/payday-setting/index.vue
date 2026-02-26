@@ -9,13 +9,13 @@ import {
   type PaydayConfigCreate,
 } from '@/api/payday'
 
-const list = ref<PaydayConfig[]>([])
+const list = ref([])
 const loading = ref(false)
 const errMsg = ref('')
 
 // 表单（新增/编辑）
-const formMode = ref<'add' | 'edit'>('add')
-const editId = ref<string | null>(null)
+const formMode = ref('add')
+const editId = ref(null)
 const showForm = ref(false)
 /** 表单里预估工资用「元」展示和输入，提交时转为分 */
 const form = ref<{
@@ -65,7 +65,7 @@ function openAdd() {
   showForm.value = true
 }
 
-function openEdit(item: PaydayConfig) {
+function openEdit(item) {
   formMode.value = 'edit'
   editId.value = item.id
   form.value = {
@@ -88,7 +88,7 @@ async function submitForm() {
     return
   }
   const yuan = form.value.estimated_salaryYuan
-  const payload: PaydayConfigCreate = {
+  const payload= {
     job_name: form.value.job_name.trim(),
     payday: form.value.payday,
     calendar_type: form.value.calendar_type,
@@ -110,7 +110,7 @@ async function submitForm() {
   }
 }
 
-function doDelete(item: PaydayConfig) {
+function doDelete(item) {
   uni.showModal({
     title: '确认删除',
     content: `删除「${item.job_name}」的发薪日配置？`,

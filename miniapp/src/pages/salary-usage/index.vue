@@ -77,8 +77,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { listSalary, type SalaryRecord } from '@/api/salary'
-import { createSalaryUsage, type UsageType } from '@/api/salary-usage'
+import { listSalary } from '@/api/salary'
+import { createSalaryUsage } from '@/api/salary-usage'
 import { showSuccess, showError } from '@/utils/toast'
 
 interface FormData {
@@ -89,7 +89,7 @@ interface FormData {
   description: string
 }
 
-const formData = ref<FormData>({
+const formData = ref({
   usage_type: '',
   amount: '',
   usage_date: '',
@@ -98,7 +98,7 @@ const formData = ref<FormData>({
 })
 
 const loading = ref(false)
-const salaryRecords = ref<Array<{ id: string; label: string }>>([])
+const salaryRecords = ref>([])
 
 const usageTypes = [
   { value: 'housing' as UsageType, label: '住房', icon: '🏠' },
@@ -126,7 +126,7 @@ onMounted(() => {
   loadSalaryRecords()
 })
 
-const selectType = (type: UsageType) => {
+const selectType = (type) => {
   formData.value.usage_type = type
 }
 

@@ -46,7 +46,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getInsights, type DistributionItem } from '@/api/insights'
+import { getInsights } from '@/api/insights'
 
 const loading = ref(true)
 const industryData = ref({ series: [] })
@@ -142,7 +142,7 @@ onMounted(async () => {
       industryData.value = {
         series: [
           {
-            data: res.industry_distribution.distribution.map((item: DistributionItem) => ({
+            data: res.industry_distribution.distribution.map((item) => ({
               name: item.label,
               value: item.count,
             })),
@@ -153,11 +153,11 @@ onMounted(async () => {
 
     if (res.city_distribution) {
       cityData.value = {
-        categories: res.city_distribution.distribution.map((item: DistributionItem) => item.label),
+        categories: res.city_distribution.distribution.map((item) => item.label),
         series: [
           {
             name: '用户数',
-            data: res.city_distribution.distribution.map((item: DistributionItem) => item.count),
+            data: res.city_distribution.distribution.map((item) => item.count),
           },
         ],
       }
@@ -167,7 +167,7 @@ onMounted(async () => {
       salaryRangeData.value = {
         series: [
           {
-            data: res.salary_range_distribution.distribution.map((item: DistributionItem) => ({
+            data: res.salary_range_distribution.distribution.map((item) => ({
               name: item.label,
               value: item.count,
             })),
@@ -179,12 +179,12 @@ onMounted(async () => {
     if (res.payday_distribution) {
       paydayData.value = {
         categories: res.payday_distribution.distribution.map(
-          (item: DistributionItem) => item.label
+          (item) => item.label
         ),
         series: [
           {
             name: '人数',
-            data: res.payday_distribution.distribution.map((item: DistributionItem) => item.count),
+            data: res.payday_distribution.distribution.map((item) => item.count),
           },
         ],
       }

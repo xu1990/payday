@@ -52,7 +52,8 @@ class PointProductSKU(Base):
     stock_unlimited = Column(Boolean, default=False,
                              nullable=False, comment="库存无限")
     points_cost = Column(Integer, nullable=False, comment="积分价格")
-    image_url = Column(String(500), nullable=True, comment="SKU专属图片")
+    image_url = Column(String(500), nullable=True, comment="SKU专属图片（兼容旧版）")
+    image_urls = Column(Text, nullable=True, comment="SKU图片URLs (JSON数组)")
 
     is_active = Column(Boolean, default=True, nullable=False, comment="是否启用")
     sort_order = Column(Integer, default=0, nullable=False, comment="排序权重")

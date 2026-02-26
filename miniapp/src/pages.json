@@ -293,6 +293,27 @@
         "navigationBarTitleText": "兑换订单",
         "navigationStyle": "default"
       }
+    },
+    {
+      "path": "pages/point-mall/orders/detail",
+      "style": {
+        "navigationBarTitleText": "订单详情",
+        "navigationStyle": "default"
+      }
+    },
+    {
+      "path": "pages/point-mall/addresses/index",
+      "style": {
+        "navigationBarTitleText": "收货地址",
+        "navigationStyle": "default"
+      }
+    },
+    {
+      "path": "pages/point-mall/addresses/edit",
+      "style": {
+        "navigationBarTitleText": "编辑地址",
+        "navigationStyle": "default"
+      }
     }
   ],
   "globalStyle": {

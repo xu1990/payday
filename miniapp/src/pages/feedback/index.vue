@@ -4,7 +4,7 @@ import { submitFeedback } from '@/api/user'
 import { uploadImages } from '@/utils/upload'
 
 const content = ref('')
-const images = ref<string[]>([])
+const images = ref([])
 const contact = ref('')
 const uploading = ref(false)
 

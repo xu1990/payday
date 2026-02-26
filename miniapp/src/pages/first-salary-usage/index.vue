@@ -163,7 +163,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { listSalary, type SalaryRecord } from '@/api/salary'
+import { listSalary } from '@/api/salary'
 import {
   createFirstSalaryUsage,
   deleteFirstSalaryUsage,
@@ -181,7 +181,7 @@ interface FormData {
   note: string
 }
 
-const formData = ref<FormData>({
+const formData = ref({
   usage_category: '',
   usage_subcategory: null,
   amount: '',
@@ -191,13 +191,13 @@ const formData = ref<FormData>({
 
 const amountError = ref('')
 const submitting = ref(false)
-const salaryRecords = ref<Array<{ id: string; label: string }>>([])
+const salaryRecords = ref>([])
 
 const store = useFirstSalaryUsageStore()
 const myRecords = computed(() => store.records)
 
 // 用途分类选项
-const usageCategories: Array<{ value: UsageCategory; label: string; icon: string }> = [
+const usageCategories: Array<{ value; label: string; icon: string }> = [
   { value: '存起来', label: '存起来', icon: '💰' },
   { value: '交家里', label: '交家里', icon: '🏠' },
   { value: '买东西', label: '买东西', icon: '🛍️' },
@@ -208,7 +208,7 @@ const usageCategories: Array<{ value: UsageCategory; label: string; icon: string
 ]
 
 // 子分类映射
-const subcategoryMap: Record<UsageCategory, Array<{ value: UsageSubcategory; label: string }>> = {
+const subcategoryMap: Record<UsageCategory, Array<{ value; label: string }>> = {
   存起来: [
     { value: '银行存款', label: '银行存款' },
     { value: '理财', label: '理财' },
@@ -294,12 +294,12 @@ const loadMyRecords = async () => {
   }
 }
 
-const selectCategory = (category: UsageCategory) => {
+const selectCategory = (category) => {
   formData.value.usage_category = category
   formData.value.usage_subcategory = null // 重置子分类
 }
 
-const selectSubcategory = (subcategory: UsageSubcategory | null) => {
+const selectSubcategory = (subcategory = null) => {
   formData.value.usage_subcategory = subcategory
 }
 

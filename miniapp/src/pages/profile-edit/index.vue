@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { updateCurrentUser, type UserInfo } from '@/api/user'
+import { updateCurrentUser } from '@/api/user'
 import { useUserStore } from '@/stores/user'
 import { baseURL } from '@/utils/request'
 

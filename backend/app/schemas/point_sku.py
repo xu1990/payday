@@ -82,7 +82,8 @@ class SKUCreate(BaseModel):
     stock: int = Field(..., ge=0, description="库存数量")
     points_cost: int = Field(..., gt=0, description="积分价格")
     stock_unlimited: bool = Field(False, description="库存无限")
-    image_url: Optional[str] = Field(None, max_length=500, description="SKU专属图片")
+    image_url: Optional[str] = Field(None, max_length=500, description="SKU专属图片（兼容旧版）")
+    image_urls: Optional[List[str]] = Field(None, max_length=6, description="SKU图片URLs列表")
     sort_order: int = Field(0, description="排序权重")
 
 
@@ -93,7 +94,8 @@ class SKUUpdate(BaseModel):
     stock: Optional[int] = Field(None, ge=0, description="库存数量")
     points_cost: Optional[int] = Field(None, gt=0, description="积分价格")
     stock_unlimited: Optional[bool] = Field(None, description="库存无限")
-    image_url: Optional[str] = Field(None, max_length=500, description="SKU专属图片")
+    image_url: Optional[str] = Field(None, max_length=500, description="SKU专属图片（兼容旧版）")
+    image_urls: Optional[List[str]] = Field(None, max_length=6, description="SKU图片URLs列表")
     is_active: Optional[bool] = Field(None, description="是否启用")
     sort_order: Optional[int] = Field(None, description="排序权重")
 
@@ -107,7 +109,8 @@ class SKUResponse(BaseModel):
     stock: int
     stock_unlimited: bool
     points_cost: int
-    image_url: Optional[str]
+    image_url: Optional[str]  # 兼容旧版
+    image_urls: Optional[List[str]]  # 多图支持
     is_active: bool
     sort_order: int
     created_at: str
@@ -126,6 +129,18 @@ class SKUResponse(BaseModel):
         except:
             specs_dict = {}
 
+        # 解析image_urls JSON
+        image_urls = None
+        if hasattr(sku, 'image_urls') and sku.image_urls:
+            try:
+                image_urls = json.loads(sku.image_urls) if isinstance(sku.image_urls, str) else sku.image_urls
+            except:
+                image_urls = None
+
+        # 兼容旧版：如果没有image_urls但有image_url，转换为列表
+        if not image_urls and sku.image_url:
+            image_urls = [sku.image_url]
+
         return cls(
             id=sku.id,
             product_id=sku.product_id,
@@ -134,7 +149,8 @@ class SKUResponse(BaseModel):
             stock=sku.stock,
             stock_unlimited=sku.stock_unlimited,
             points_cost=sku.points_cost,
-            image_url=sku.image_url,
+            image_url=sku.image_url,  # 保留兼容性
+            image_urls=image_urls,
             is_active=sku.is_active,
             sort_order=sku.sort_order,
             created_at=sku.created_at.isoformat(),

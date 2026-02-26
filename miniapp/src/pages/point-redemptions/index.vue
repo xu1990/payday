@@ -201,7 +201,7 @@ async function handleSubmit() {
   try {
     uni.showLoading({ title: '提交中...' })
 
-    const data: PointRedemptionCreate = {
+    const data= {
       rewardName: form.value.rewardName,
       rewardType: form.value.rewardType || '其他',
       pointsCost,

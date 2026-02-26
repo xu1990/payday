@@ -75,12 +75,12 @@ import {
   type UserItem,
 } from '@/api/follow'
 
-const activeTab = ref<'followers' | 'following'>('followers')
-const users = ref<UserItem[]>([])
+const activeTab = ref('followers')
+const users = ref([])
 const followerCount = ref(0)
 const followingCount = ref(0)
 const loading = ref(true)
-const userId = ref<string | null>(null) // 如果有值，则查看某用户的列表
+const userId = ref(null) // 如果有值，则查看某用户的列表
 
 const pageTitle = computed(() => {
   if (userId.value) {
@@ -138,7 +138,7 @@ const switchTab = (tab: 'followers' | 'following') => {
   loadUsers()
 }
 
-const toggleFollow = async (user: UserItem) => {
+const toggleFollow = async (user) => {
   if (user.allow_follow === 0) {
     uni.showToast({ title: '该用户不允许被关注', icon: 'none' })
     return

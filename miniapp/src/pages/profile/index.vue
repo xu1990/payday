@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { listSalary, type SalaryRecord } from '@/api/salary'
-import { listPayday, type PaydayConfig } from '@/api/payday'
+import { listSalary } from '@/api/salary'
+import { listPayday } from '@/api/payday'
 import { useUserStore } from '@/stores/user'
 import { useAbilityPointsStore } from '@/stores/ability-points'
 import { useNotificationUnread } from '@/composables/useNotificationUnread'
@@ -12,8 +12,8 @@ const pointsStore = useAbilityPointsStore()
 const loading = ref(true)
 const { unreadCount: notificationUnread, startPolling } = useNotificationUnread()
 const errMsg = ref('')
-const recordList = ref<SalaryRecord[]>([])
-const paydayList = ref<PaydayConfig[]>([])
+const recordList = ref([])
+const paydayList = ref([])
 
 // 用户信息
 const userInfo = computed(() => userStore.userInfo)

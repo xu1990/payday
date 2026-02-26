@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { listPayday, type PaydayConfig } from '@/api/payday'
+import { listPayday } from '@/api/payday'
 import {
   listSalary,
   createSalary,
@@ -13,18 +13,18 @@ import {
   type MoodType,
 } from '@/api/salary'
 
-const paydayList = ref<PaydayConfig[]>([])
-const recordList = ref<SalaryRecord[]>([])
+const paydayList = ref([])
+const recordList = ref([])
 const loading = ref(false)
 const errMsg = ref('')
 
-const salaryTypeOptions: { value: SalaryType; label: string }[] = [
+const salaryTypeOptions: { value; label: string }[] = [
   { value: 'normal', label: '工资' },
   { value: 'bonus', label: '奖金' },
   { value: 'allowance', label: '补贴' },
   { value: 'other', label: '其他' },
 ]
-const moodOptions: { value: MoodType; label: string }[] = [
+const moodOptions: { value; label: string }[] = [
   { value: 'happy', label: '开心' },
   { value: 'relief', label: '续命' },
   { value: 'sad', label: '崩溃' },
@@ -33,11 +33,11 @@ const moodOptions: { value: MoodType; label: string }[] = [
 ]
 const sourceOptions = ['公司', '工厂', '兼职', '其他']
 
-const formMode = ref<'add' | 'edit'>('add')
-const editId = ref<string | null>(null)
+const formMode = ref('add')
+const editId = ref(null)
 const showForm = ref(false)
 const showAdvanced = ref(false)
-const initialSalaryType = ref<SalaryType>('normal')
+const initialSalaryType = ref('normal')
 const form = ref<{
   config_id: string
   amount: string
@@ -45,7 +45,7 @@ const form = ref<{
   tax_amount: string
   payday_date: string
   salary_type: SalaryType
-  mood: MoodType
+  mood
   salary_source: string
   delay_days: string
   delay_reason: string
@@ -135,17 +135,17 @@ function openAdd() {
   showForm.value = true
 }
 
-function openEdit(item: SalaryRecord) {
+function openEdit(item) {
   formMode.value = 'edit'
   editId.value = item.id
   form.value = {
     config_id: item.config_id,
-    amount: String(item.amount),
+    amount: item.amount,
     before_tax: item.before_tax ? String(item.before_tax) : '',
     tax_amount: item.tax_amount ? String(item.tax_amount) : '',
     payday_date: item.payday_date,
-    salary_type: item.salary_type as SalaryType,
-    mood: item.mood as MoodType,
+    salary_type: item.salary_type,
+    mood: item.mood,
     salary_source: item.salary_source || '',
     delay_days: item.delay_days ? String(item.delay_days) : '',
     delay_reason: item.delay_reason || '',
@@ -199,7 +199,7 @@ async function submitForm() {
     return
   }
 
-  const payload: SalaryRecordCreate = {
+  const payload= {
     config_id: form.value.config_id,
     amount,
     before_tax,
@@ -235,7 +235,7 @@ function goExpenseTracking(id: string) {
   uni.navigateTo({ url: `/pages/expense-tracking/index?recordId=${id}` })
 }
 
-function doDelete(item: SalaryRecord) {
+function doDelete(item) {
   uni.showModal({
     title: '确认删除',
     content: `删除这条工资记录？`,

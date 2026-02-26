@@ -1,25 +1,25 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, getCurrentInstance, nextTick } from 'vue'
 import { onLoad, onShareAppMessage } from '@dcloudio/uni-app'
-import { listPayday, type PaydayConfig } from '@/api/payday'
-import { getSalary, listSalary, type SalaryRecord, type MoodType } from '@/api/salary'
-import { getPostDetail, type PostItem } from '@/api/post'
+import { listPayday } from '@/api/payday'
+import { getSalary, listSalary } from '@/api/salary'
+import { getPostDetail } from '@/api/post'
 import { formatDate } from '@/utils/format'
 import { baseURL, request } from '@/utils/request'
 
 // 获取当前组件实例，用于 Canvas 查询
 const instance = getCurrentInstance()
 
-const recordId = ref<string>('')
-const postId = ref<string>('')
-const record = ref<SalaryRecord | null>(null)
-const post = ref<PostItem | null>(null)
-const paydayList = ref<PaydayConfig[]>([])
+const recordId = ref('')
+const postId = ref('')
+const record = ref(null)
+const post = ref(null)
+const paydayList = ref([])
 const loading = ref(true)
 const errMsg = ref('')
 const saving = ref(false)
 const posterUrl = ref('')
-const posterType = ref<'salary' | 'post'>('salary') // 'salary' for salary records, 'post' for posts
+const posterType = ref('salary') // 'salary' for salary records, 'post' for posts
 
 const moodText: Record<MoodType, string> = {
   happy: '开心',
@@ -218,7 +218,7 @@ function drawSalaryPoster(): Promise<void> {
  * Draw salary record poster with QR code
  */
 function drawSalaryPosterWithQR(
-  r: SalaryRecord,
+  record: SalaryRecord,
   qrDataUrl: string | null,
   resolve: (value: void | PromiseLike<void>) => void,
   reject: (reason?: any) => void
@@ -446,7 +446,7 @@ function drawPostPoster(): Promise<void> {
  * Draw post poster with QR code
  */
 function drawPostPosterWithQR(
-  p: PostItem,
+  post: Post,
   qrDataUrl: string | null,
   resolve: (value: void | PromiseLike<void>) => void,
   reject: (reason?: any) => void

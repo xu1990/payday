@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { getPostList, type PostItem } from '@/api/post'
-import { getCheckinList, type CheckinItem } from '@/api/checkin'
+import { getPostList } from '@/api/post'
+import { getCheckinList } from '@/api/checkin'
 import { getUserProfile, getFollowStatus } from '@/api/user'
 import { useAuthStore } from '@/stores/auth'
 import FollowButton from '@/components/FollowButton.vue'
@@ -11,12 +11,12 @@ import { formatDate as format } from '@/utils/format'
 const targetUserId = ref('')
 const authStore = useAuthStore()
 const loading = ref(true)
-const error = ref<string | null>(null)
-const posts = ref<PostItem[]>([])
-const checkins = ref<CheckinItem[]>([])
+const error = ref(null)
+const posts = ref([])
+const checkins = ref([])
 const followerCount = ref(0)
 const followingCount = ref(0)
-const currentTab = ref<'posts' | 'checkins'>('posts')
+const currentTab = ref('posts')
 const postPage = ref({ limit: 20, offset: 0 })
 const checkinPage = ref({ limit: 30, offset: 0 })
 const hasMore = ref(true)

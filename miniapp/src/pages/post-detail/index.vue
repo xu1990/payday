@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { onLoad, onShareAppMessage } from '@dcloudio/uni-app'
-import { getPostDetail, type PostItem } from '@/api/post'
-import { getCommentList, createComment, type CommentItem } from '@/api/comment'
+import { getPostDetail } from '@/api/post'
+import { getCommentList, createComment } from '@/api/comment'
 import { likePost, unlikePost } from '@/api/like'
 import { likeComment, unlikeComment } from '@/api/like'
 import { sanitizePost, isValidImageUrl } from '@/utils/sanitize'
@@ -14,14 +14,14 @@ import UserAvatar from '@/components/UserAvatar.vue'
 import { formatDateTime } from '@/utils/format'
 
 const id = ref('')
-const post = ref<PostItem | null>(null)
+const post = ref(null)
 const loading = ref(true)
-const comments = ref<CommentItem[]>([])
+const comments = ref([])
 const commentLoading = ref(false)
 const postLiked = ref(false)
-const commentLikedSet = ref<Set<string>>(new Set())
+const commentLikedSet = ref>(new Set())
 const replyInput = ref('')
-const replyingTo = ref<{ id: string; name: string } | null>(null)
+const replyingTo = ref(null)
 const commentContent = ref('')
 const submitLoading = ref(false)
 const keyboardHeight = ref(0)
@@ -148,7 +148,7 @@ async function onPostLike() {
   }
 }
 
-async function onCommentLike(c: CommentItem) {
+async function onCommentLike(c) {
   try {
     const key = c.id
     if (commentLikedSet.value.has(key)) {
@@ -165,11 +165,11 @@ async function onCommentLike(c: CommentItem) {
   }
 }
 
-function isCommentLiked(c: CommentItem) {
+function isCommentLiked(c) {
   return commentLikedSet.value.has(c.id)
 }
 
-function startReply(c: CommentItem) {
+function startReply(c) {
   replyingTo.value = { id: c.id, name: c.anonymous_name }
   replyInput.value = ''
 }

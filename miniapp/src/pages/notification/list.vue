@@ -13,7 +13,7 @@ import { formatRelativeTime } from '@/utils/format'
 
 const loading = ref(true)
 const errMsg = ref('')
-const list = ref<NotificationItem[]>([])
+const list = ref([])
 const unreadCount = ref(0)
 const total = ref(0)
 const hasMore = ref(true)
@@ -26,8 +26,8 @@ const hasMounted = ref(false)
 
 // 类型过滤
 type NotificationType = 'all' | 'comment' | 'reply' | 'like' | 'system'
-const currentType = ref<NotificationType>('all')
-const typeTabs: { key: NotificationType; label: string; icon: string }[] = [
+const currentType = ref('all')
+const typeTabs: { key; label: string; icon: string }[] = [
   { key: 'all', label: '全部', icon: '📬' },
   { key: 'comment', label: '评论', icon: '💬' },
   { key: 'reply', label: '回复', icon: '↩️' },
@@ -37,7 +37,7 @@ const typeTabs: { key: NotificationType; label: string; icon: string }[] = [
 
 // 批量操作
 const isEditMode = ref(false)
-const selectedIds = ref<Set<string>>(new Set())
+const selectedIds = ref>(new Set())
 const hasSelection = computed(() => selectedIds.value.size > 0)
 
 async function loadUnreadCount() {
@@ -84,7 +84,7 @@ function loadMore() {
   load(true)
 }
 
-async function onItemTap(item: NotificationItem) {
+async function onItemTap(item) {
   if (isEditMode.value) {
     toggleSelection(item.id)
     return
@@ -111,7 +111,7 @@ async function markAllRead() {
   } catch (_) {}
 }
 
-function switchType(type: NotificationType) {
+function switchType(type) {
   if (currentType.value === type) return
   currentType.value = type
   offset = 0

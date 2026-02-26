@@ -116,9 +116,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getPointOrderDetail, cancelPointOrder, type PointOrderDetail } from '@/api/pointShop'
+import { getPointOrderDetail, cancelPointOrder } from '@/api/pointShop'
 
-const order = ref<PointOrderDetail | null>(null)
+const order = ref(null)
 const loading = ref(false)
 const orderId = ref('')
 

@@ -40,7 +40,7 @@
           <view v-if="!address.is_default" class="action-btn" @tap="setDefault(address)">
             <text>设为默认</text>
           </view>
-          <view class="action-btn delete" @tap="deleteAddress(address)">
+          <view class="action-btn delete" @tap="handleDeleteAddress(address)">
             <text>删除</text>
           </view>
         </view>
@@ -58,10 +58,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getMyAddresses, deleteAddress, setDefaultAddress, type UserAddress } from '@/api/pointShop'
+import { getMyAddresses, deleteAddress, setDefaultAddress } from '@/api/pointShop'
 
 const loading = ref(false)
-const addresses = ref<UserAddress[]>([])
+const addresses = ref([])
 const selectMode = ref(false) // 是否为选择模式
 
 onMounted(() => {
@@ -95,13 +95,13 @@ function goToAdd() {
   })
 }
 
-function editAddress(address: UserAddress) {
+function editAddress(address) {
   uni.navigateTo({
     url: `/pages/point-mall/addresses/edit?id=${address.id}`,
   })
 }
 
-function selectAddress(address: UserAddress) {
+function selectAddress(address) {
   if (!selectMode.value) return
 
   // 返回选中的地址
@@ -113,7 +113,7 @@ function selectAddress(address: UserAddress) {
   uni.navigateBack()
 }
 
-async function setDefault(address: UserAddress) {
+async function setDefault(address) {
   try {
     uni.showLoading({ title: '设置中...' })
     await setDefaultAddress(address.id)
@@ -134,7 +134,7 @@ async function setDefault(address: UserAddress) {
   }
 }
 
-async function deleteAddress(address: UserAddress) {
+async function handleDeleteAddress(address) {
   const result = await uni.showModal({
     title: '确认删除',
     content: '确定要删除这个地址吗？',

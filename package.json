@@ -18,6 +18,8 @@
     "test:admin:coverage": "cd admin-web && npm run test:coverage",
     "test:miniapp": "cd miniapp && npm run test:run",
     "test:miniapp:coverage": "cd miniapp && npm run test:coverage",
+    "test:miniapp:e2e": "cd miniapp && npm run build:test",
+    "test:miniapp:e2e:ui": "cd miniapp && npm run test:e2e:ui",
     "test:all": "npm run test",
     "test:ci": "npm run test:backend:coverage && npm run test:admin:coverage && npm run test:miniapp:coverage"
   },

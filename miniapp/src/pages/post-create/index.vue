@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { createPost, type PostCreateParams, type PostType } from '@/api/post'
-import { getActiveTopics, type Topic } from '@/api/topic'
+import { createPost } from '@/api/post'
+import { getActiveTopics } from '@/api/topic'
 import { VALIDATION_PATTERNS, VALIDATION_LIMITS, VALIDATION_ERRORS } from '@/constants/validation'
 import {
   VISIBILITY_OPTIONS,
@@ -11,25 +11,25 @@ import {
   SALARY_RANGE_OPTIONS,
 } from '@/constants/post'
 
-const typeOptions: { value: PostType; label: string }[] = [
+const typeOptions: { value; label: string }[] = [
   { value: 'complaint', label: '吐槽' },
   { value: 'sharing', label: '分享' },
   { value: 'question', label: '提问' },
 ]
 
-const type = ref<PostType>('complaint')
+const type = ref('complaint')
 const content = ref('')
-const images = ref<string[]>([])
+const images = ref([])
 const salary_range = ref('')
 const industry = ref('')
 const city = ref('')
-const visibility = ref<PostVisibility>('public')
+const visibility = ref('public')
 const submitting = ref(false)
 
 // 话题相关（@提及）
-const topics = ref<Topic[]>([])
+const topics = ref([])
 const showTopicPicker = ref(false)
-const mentionTopics = ref<{ id: string; name: string; position: number }[]>([])
+const mentionTopics = ref([])
 const atPosition = ref(-1) // @ 符号的位置
 const filterKeyword = ref('') // 过滤关键词
 
@@ -93,7 +93,7 @@ function onContentInput(e: any) {
 }
 
 // 选择话题
-function selectTopic(topic: Topic) {
+function selectTopic(topic) {
   if (atPosition.value === -1) return
 
   // 获取 @ 之前的内容
@@ -226,12 +226,12 @@ async function submit() {
 
   // 验证内容
   if (!text) {
-    uni.showToast({ title: VALIDATION_ERRORS.CONTENT_REQUIRED, icon: 'none' })
+    uni.showToast({ title: ERRORS.CONTENT_REQUIRED, icon: 'none' })
     return
   }
 
   if (text.length > VALIDATION_LIMITS.MAX_CONTENT_LENGTH) {
-    uni.showToast({ title: VALIDATION_ERRORS.CONTENT_TOO_LONG, icon: 'none' })
+    uni.showToast({ title: ERRORS.CONTENT_TOO_LONG, icon: 'none' })
     return
   }
 
@@ -240,7 +240,7 @@ async function submit() {
     // 从内容中提取话题 ID
     const topicIds = extractTopicIds()
 
-    const data: PostCreateParams = {
+    const data= {
       content: text,
       type: type.value,
       images: images.value.length > 0 ? images.value : undefined,

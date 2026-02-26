@@ -34,10 +34,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getThemes, getUserSettings, updateUserSettings, type ThemeItem } from '@/api/theme'
+import { getThemes, getUserSettings, updateUserSettings } from '@/api/theme'
 
-const themes = ref<ThemeItem[]>([])
-const currentThemeId = ref<string | null>(null)
+const themes = ref([])
+const currentThemeId = ref(null)
 const loading = ref(true)
 
 onMounted(async () => {

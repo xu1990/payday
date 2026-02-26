@@ -6,10 +6,10 @@ import request from '@/utils/request'
 const authStore = useAuthStore()
 const logoScale = ref(0)
 const showText = ref(false)
-const splashConfig = ref<any>(null)
+const splashConfig = ref(null)
 const showSplash = ref(false)
 const countdown = ref(0)
-let countdownTimer: number | null = null
+let countdownTimer: number  = null
 
 onMounted(async () => {
   // Load splash config from backend

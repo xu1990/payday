@@ -85,8 +85,8 @@ import {
 } from '@/api/membership'
 import { createPayment, requestWeChatPayment, verifyPayment } from '@/api/payment'
 
-const packages = ref<MembershipItem[]>([])
-const activeMembership = ref<ActiveMembership | null>(null)
+const packages = ref([])
+const activeMembership = ref(null)
 const loading = ref(true)
 const submitting = ref(false) // 防止重复提交
 
@@ -148,7 +148,7 @@ const formatDate = (dateStr: string) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
-const selectPackage = async (pkg: MembershipItem) => {
+const selectPackage = async (pkg) => {
   // 防止重复提交
   if (submitting.value) {
     uni.showToast({ title: '请稍候，正在处理...', icon: 'none' })

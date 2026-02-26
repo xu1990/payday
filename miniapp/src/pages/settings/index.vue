@@ -122,7 +122,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { getUserSettings, updateUserSettings, type UserSettings } from '@/api/theme'
+import { getUserSettings, updateUserSettings } from '@/api/theme'
 import { updateCurrentUser, deactivateAccount, logout, submitFeedback } from '@/api/user'
 import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/stores/auth'
@@ -130,7 +130,7 @@ import { useAuthStore } from '@/stores/auth'
 const userStore = useUserStore()
 const authStore = useAuthStore()
 
-const settings = ref<UserSettings>({
+const settings = ref({
   theme_id: null,
   privacy_profile: 0,
   allow_stranger_notice: 1,
@@ -160,7 +160,7 @@ onMounted(async () => {
 })
 
 // 更新设置
-const updateSetting = async (key: keyof UserSettingsUpdateReq, value: number | string | null) => {
+const updateSetting = async (key: keyof UserSettingsUpdateReq, value: number | string  = null) => {
   try {
     await updateUserSettings({ [key]: value })
     uni.showToast({ title: '设置已保存', icon: 'success' })

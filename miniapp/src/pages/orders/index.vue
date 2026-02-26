@@ -64,10 +64,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getMyOrders, cancelOrder, type MembershipOrderItem } from '@/api/membership'
+import { getMyOrders, cancelOrder } from '@/api/membership'
 import { createPayment, requestWeChatPayment } from '@/api/payment'
 
-const orders = ref<MembershipOrderItem[]>([])
+const orders = ref([])
 const loading = ref(true)
 
 onMounted(async () => {
@@ -111,7 +111,7 @@ const formatDateTime = (dateStr: string) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
-const handlePay = async (order: MembershipOrderItem) => {
+const handlePay = async (order) => {
   try {
     // 1. 创建支付参数
     const payRes = await createPayment({ order_id: order.id })
@@ -139,7 +139,7 @@ const handlePay = async (order: MembershipOrderItem) => {
   }
 }
 
-const handleCancel = async (order: MembershipOrderItem) => {
+const handleCancel = async (order) => {
   uni.showModal({
     title: '取消订单',
     content: '确认取消该订单？',

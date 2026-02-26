@@ -10,7 +10,7 @@ import {
 } from '@/api/user'
 import { followUser, unfollowUser } from '@/api/user'
 
-const list = ref<UserInfo[]>([])
+const list = ref([])
 const loading = ref(false)
 const total = ref(0)
 const currentPage = ref(1)
@@ -18,9 +18,9 @@ const pageSize = 20
 const hasMore = ref(true)
 
 // 类型: 'followers' | 'following'
-const type = ref<'followers' | 'following'>('followers')
+const type = ref('followers')
 // 目标用户ID（查看其他用户的粉丝/关注时使用）
-const targetUserId = ref<string | null>(null)
+const targetUserId = ref(null)
 
 async function loadData() {
   loading.value = true
@@ -74,7 +74,7 @@ function loadMore() {
   loadData()
 }
 
-async function handleFollow(user: UserInfo) {
+async function handleFollow(user) {
   try {
     await followUser(user.id)
     user.is_following = true
@@ -85,7 +85,7 @@ async function handleFollow(user: UserInfo) {
   }
 }
 
-async function handleUnfollow(user: UserInfo) {
+async function handleUnfollow(user) {
   try {
     await unfollowUser(user.id)
     user.is_following = false
@@ -96,7 +96,7 @@ async function handleUnfollow(user: UserInfo) {
   }
 }
 
-function goToProfile(user: UserInfo) {
+function goToProfile(user) {
   uni.navigateTo({
     url: '/pages/profile/index?id=' + user.id,
   })

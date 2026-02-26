@@ -10,6 +10,44 @@ export type ProductType = 'virtual' | 'physical' | 'bundle'
 export type ShippingMethod = 'express' | 'self_pickup' | 'no_shipping'
 export type OrderStatus = 'pending' | 'completed' | 'cancelled' | 'refunded'
 
+// ==================== SKU相关类型 ====================
+
+/** 规格值 */
+export interface SpecificationValue {
+  id: string
+  specification_id: string
+  value: string
+  sort_order: number
+  created_at: string
+}
+
+/** 规格定义 */
+export interface Specification {
+  id: string
+  product_id: string
+  name: string
+  sort_order: number
+  created_at: string
+  values: SpecificationValue[]
+}
+
+/** SKU规格 */
+export interface ProductSKU {
+  id: string
+  product_id: string
+  sku_code: string
+  specs: { [key: string]: string }  // {"颜色": "红色", "尺寸": "L"}
+  stock: number
+  stock_unlimited: boolean
+  points_cost: number
+  image_url: string | null  // 兼容旧版
+  image_urls?: string[]  // SKU多图列表
+  is_active: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
 // ==================== 商品 ====================
 
 /** 商品项 */
@@ -24,10 +62,12 @@ export interface PointProduct {
   stock_unlimited: boolean
   category: string | null
   category_id?: string
-  has_sku?: boolean
+  has_sku: boolean
   product_type: ProductType
   shipping_method: ShippingMethod
   shipping_template_id?: string | null
+  specifications?: Specification[]  // 规格列表(当has_sku=true时)
+  skus?: ProductSKU[]  // SKU列表(当has_sku=true时)
 }
 
 /** 商品列表响应 */

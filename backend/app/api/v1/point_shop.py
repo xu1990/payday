@@ -112,7 +112,42 @@ async def get_product_detail(
         "stock": product.stock if not product.stock_unlimited else 999,
         "stock_unlimited": product.stock_unlimited,
         "category": product.category,
+        "category_id": str(product.category_id) if product.category_id else None,
+        "has_sku": product.has_sku,
+        "product_type": product.product_type,
+        "shipping_method": product.shipping_method,
+        "shipping_template_id": str(product.shipping_template_id) if product.shipping_template_id else None,
     }
+
+    # 如果商品启用SKU管理,加载SKU列表和规格列表
+    if product.has_sku:
+        from app.services.point_sku_service import list_skus, list_specifications
+
+        # 加载规格列表
+        specs = await list_specifications(db, product_id)
+        from app.schemas.point_sku import SpecificationResponse
+        specifications = []
+        for spec in specs:
+            # 加载每个规格的值列表
+            from app.services.point_sku_service import list_specification_values
+            from app.schemas.point_sku import SpecificationValueResponse
+
+            spec_values = await list_specification_values(db, spec.id)
+            values_data = [SpecificationValueResponse.from_db(v) for v in spec_values]
+
+            spec_data = SpecificationResponse.from_db(spec)
+            specifications.append({
+                **spec_data.model_dump(),
+                "values": [v.model_dump() for v in values_data]
+            })
+
+        # 加载SKU列表
+        skus = await list_skus(db, product_id, active_only=True)
+        from app.schemas.point_sku import SKUResponse
+        skus_data = [SKUResponse.from_db(sku) for sku in skus]
+
+        data["specifications"] = specifications
+        data["skus"] = [sku.model_dump() for sku in skus_data]
 
     return success_response(data=data)
 

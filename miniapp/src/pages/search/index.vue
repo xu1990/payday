@@ -114,21 +114,21 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { searchPosts, type PostItem } from '@/api/search'
+import { searchPosts } from '@/api/search'
 import UserAvatar from '@/components/UserAvatar.vue'
 
 const keyword = ref('')
-const selectedTags = ref<string[]>([])
-const sortBy = ref<'hot' | 'latest'>('hot')
-const results = ref<PostItem[]>([])
+const selectedTags = ref([])
+const sortBy = ref('hot')
+const results = ref([])
 const hasSearched = ref(false)
 const loading = ref(false)
 const hasMore = ref(false)
 const offset = ref(0)
 const limit = 20
 
-const commonTags = ref<string[]>(['找工作', '工资拖欠', '加班', '年终奖', '离职', '吐槽', '分享'])
-const searchHistory = ref<string[]>([])
+const commonTags = ref(['找工作', '工资拖欠', '加班', '年终奖', '离职', '吐槽', '分享'])
+const searchHistory = ref([])
 
 onMounted(() => {
   const savedHistory = uni.getStorageSync('search_history') || '[]'
