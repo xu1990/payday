@@ -809,11 +809,26 @@ class ShippingTemplateService:
     async def create_template(self, template_data: ShippingTemplateCreate) -> ShippingTemplate:
         """创建运费模板"""
         # 验证charge_type
-        valid_charge_types = ["weight", "quantity", "fixed"]
+        valid_charge_types = ["weight", "quantity", "fixed", "volume"]
         if template_data.charge_type not in valid_charge_types:
             raise ValidationException(
                 f"计费方式必须是: {', '.join(valid_charge_types)}",
                 code="INVALID_CHARGE_TYPE"
+            )
+
+        # 验证free_shipping_type
+        valid_free_shipping_types = ["none", "amount", "quantity", "seller"]
+        if template_data.free_shipping_type not in valid_free_shipping_types:
+            raise ValidationException(
+                f"包邮类型必须是: {', '.join(valid_free_shipping_types)}",
+                code="INVALID_FREE_SHIPPING_TYPE"
+            )
+
+        # 验证free_shipping_type与相关字段的一致性
+        if template_data.free_shipping_type == "quantity" and not template_data.free_quantity:
+            raise ValidationException(
+                "包邮类型为按件数时，必须设置满件数包邮阈值",
+                code="FREE_QUANTITY_REQUIRED"
             )
 
         template = ShippingTemplate(
@@ -825,6 +840,10 @@ class ShippingTemplateService:
             default_continue_unit=template_data.default_continue_unit,
             default_continue_cost=template_data.default_continue_cost,
             free_threshold=template_data.free_threshold,
+            free_shipping_type=template_data.free_shipping_type,
+            free_quantity=template_data.free_quantity,
+            excluded_regions=template_data.excluded_regions,
+            volume_unit=template_data.volume_unit,
             estimate_days_min=template_data.estimate_days_min,
             estimate_days_max=template_data.estimate_days_max,
             is_active=template_data.is_active if hasattr(template_data, 'is_active') else True
@@ -866,12 +885,30 @@ class ShippingTemplateService:
 
         # 验证charge_type
         if update_data.charge_type:
-            valid_charge_types = ["weight", "quantity", "fixed"]
+            valid_charge_types = ["weight", "quantity", "fixed", "volume"]
             if update_data.charge_type not in valid_charge_types:
                 raise ValidationException(
                     f"计费方式必须是: {', '.join(valid_charge_types)}",
                     code="INVALID_CHARGE_TYPE"
                 )
+
+        # 验证free_shipping_type
+        if update_data.free_shipping_type:
+            valid_free_shipping_types = ["none", "amount", "quantity", "seller"]
+            if update_data.free_shipping_type not in valid_free_shipping_types:
+                raise ValidationException(
+                    f"包邮类型必须是: {', '.join(valid_free_shipping_types)}",
+                    code="INVALID_FREE_SHIPPING_TYPE"
+                )
+
+        # 验证free_shipping_type与相关字段的一致性
+        new_free_shipping_type = update_data.free_shipping_type or template.free_shipping_type
+        new_free_quantity = update_data.free_quantity if update_data.free_quantity is not None else template.free_quantity
+        if new_free_shipping_type == "quantity" and not new_free_quantity:
+            raise ValidationException(
+                "包邮类型为按件数时，必须设置满件数包邮阈值",
+                code="FREE_QUANTITY_REQUIRED"
+            )
 
         # 更新字段
         update_dict = update_data.model_dump(exclude_unset=True)
@@ -926,6 +963,8 @@ class ShippingTemplateService:
             continue_unit=region_data.continue_unit,
             continue_cost=region_data.continue_cost,
             free_threshold=region_data.free_threshold,
+            free_quantity=region_data.free_quantity,
+            is_excluded=region_data.is_excluded if hasattr(region_data, 'is_excluded') else False,
             is_active=region_data.is_active if hasattr(region_data, 'is_active') else True
         )
 
@@ -1016,12 +1055,45 @@ class ShippingTemplateService:
         region_code: Optional[str] = None,
         weight: Optional[int] = None,
         quantity: Optional[int] = None,
+        volume: Optional[int] = None,
         total_amount: Optional[int] = None
     ) -> dict:
-        """计算运费"""
+        """
+        计算运费
+
+        Args:
+            template_id: 运费模板ID
+            region_code: 区域代码
+            weight: 重量(克)
+            quantity: 数量
+            volume: 体积(cm3)
+            total_amount: 订单总金额(分)
+
+        Returns:
+            dict: 包含运费、是否包邮、是否可配送等信息
+        """
         template = await self.get_template(template_id)
 
-        # 查找匹配的区域配置
+        # 1. 检查模板级别的不配送区域
+        excluded_regions = template.excluded_regions or []
+        excluded_codes = [r.get('code') for r in excluded_regions if isinstance(r, dict)]
+        if region_code and region_code in excluded_codes:
+            # 查找该区域的名称
+            region_name = region_code
+            for r in excluded_regions:
+                if isinstance(r, dict) and r.get('code') == region_code:
+                    region_name = r.get('name', region_code)
+                    break
+            return {
+                "deliverable": False,
+                "reason": "该地区不支持配送",
+                "shipping_cost": 0,
+                "free_shipping": False,
+                "region_name": region_name,
+                "region_code": region_code
+            }
+
+        # 2. 查找匹配的区域配置
         region = None
         if region_code:
             result = await self.db.execute(
@@ -1034,32 +1106,82 @@ class ShippingTemplateService:
             )
             region = result.scalar_one_or_none()
 
-        # 使用默认配置
+        # 3. 检查区域级别的不配送标志
+        if region and region.is_excluded:
+            return {
+                "deliverable": False,
+                "reason": "该地区不支持配送",
+                "shipping_cost": 0,
+                "free_shipping": False,
+                "region_name": region.region_names,
+                "region_code": region_code
+            }
+
+        # 4. 检查卖家承担运费（全场包邮）
+        if template.free_shipping_type == "seller":
+            return {
+                "deliverable": True,
+                "shipping_cost": 0,
+                "free_shipping": True,
+                "free_shipping_reason": "seller",
+                "region_name": region.region_names if region else "默认区域",
+                "region_code": region_code,
+                "estimate_days_min": template.estimate_days_min,
+                "estimate_days_max": template.estimate_days_max
+            }
+
+        # 5. 检查满件数包邮
+        free_qty = None
+        if region and region.free_quantity is not None:
+            free_qty = region.free_quantity
+        elif template.free_quantity is not None:
+            free_qty = template.free_quantity
+
+        if template.free_shipping_type == "quantity" and quantity and free_qty:
+            if quantity >= free_qty:
+                return {
+                    "deliverable": True,
+                    "shipping_cost": 0,
+                    "free_shipping": True,
+                    "free_shipping_reason": "quantity",
+                    "region_name": region.region_names if region else "默认区域",
+                    "region_code": region_code,
+                    "estimate_days_min": template.estimate_days_min,
+                    "estimate_days_max": template.estimate_days_max
+                }
+
+        # 6. 检查满金额包邮
+        free_threshold = region.free_threshold if region and region.free_threshold is not None else template.free_threshold
+        if free_threshold and total_amount and total_amount >= free_threshold:
+            return {
+                "deliverable": True,
+                "shipping_cost": 0,
+                "free_shipping": True,
+                "free_shipping_reason": "amount",
+                "region_name": region.region_names if region else "默认区域",
+                "region_code": region_code,
+                "estimate_days_min": template.estimate_days_min,
+                "estimate_days_max": template.estimate_days_max
+            }
+
+        # 7. 使用区域配置或默认配置
         if not region:
             first_unit = template.default_first_unit
             first_cost = template.default_first_cost
             continue_unit = template.default_continue_unit
             continue_cost = template.default_continue_cost
-            free_threshold = template.free_threshold
         else:
             first_unit = region.first_unit
             first_cost = region.first_cost
             continue_unit = region.continue_unit
             continue_cost = region.continue_cost
-            free_threshold = region.free_threshold
 
-        # 检查包邮
-        if free_threshold and total_amount and total_amount >= free_threshold:
-            return {
-                "shipping_cost": 0,
-                "free_shipping": True,
-                "region_name": region.region_names if region else "默认区域",
-                "region_code": region_code
-            }
-
-        # 根据计费方式计算运费
+        # 8. 根据计费方式计算运费
         shipping_cost = 0
-        if template.charge_type == "weight" and weight:
+        charge_type = template.charge_type
+
+        if charge_type == "weight" and weight:
+            # 按重量计费
             if weight <= first_unit:
                 shipping_cost = first_cost
             else:
@@ -1067,7 +1189,8 @@ class ShippingTemplateService:
                 if (weight - first_unit) % continue_unit > 0:
                     extra_units += 1
                 shipping_cost = first_cost + extra_units * continue_cost
-        elif template.charge_type == "quantity" and quantity:
+        elif charge_type == "quantity" and quantity:
+            # 按件数计费
             if quantity <= first_unit:
                 shipping_cost = first_cost
             else:
@@ -1075,17 +1198,33 @@ class ShippingTemplateService:
                 if (quantity - first_unit) % continue_unit > 0:
                     extra_units += 1
                 shipping_cost = first_cost + extra_units * continue_cost
-        elif template.charge_type == "fixed":
+        elif charge_type == "volume" and volume:
+            # 按体积计费
+            volume_unit = template.volume_unit or 1  # 默认体积单位为1cm3
+            if volume <= first_unit * volume_unit:
+                shipping_cost = first_cost
+            else:
+                # 按体积单位计算续费
+                extra_volume = volume - first_unit * volume_unit
+                extra_units = extra_volume // (continue_unit * volume_unit)
+                if extra_volume % (continue_unit * volume_unit) > 0:
+                    extra_units += 1
+                shipping_cost = first_cost + extra_units * continue_cost
+        elif charge_type == "fixed":
+            # 固定运费
             shipping_cost = first_cost
 
         return {
+            "deliverable": True,
             "shipping_cost": shipping_cost,
             "free_shipping": False,
             "region_name": region.region_names if region else "默认区域",
             "region_code": region_code,
-            "charge_type": template.charge_type,
+            "charge_type": charge_type,
             "first_unit": first_unit,
             "first_cost": first_cost,
             "continue_unit": continue_unit,
-            "continue_cost": continue_cost
+            "continue_cost": continue_cost,
+            "estimate_days_min": template.estimate_days_min,
+            "estimate_days_max": template.estimate_days_max
         }
