@@ -14,8 +14,7 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
-        additionalData: `@use "@/styles/_glass.scss" as *;`,
-        api: 'modern-compiler',
+        additionalData: `@import "@/styles/_glass.scss";`,
       },
     },
   },
