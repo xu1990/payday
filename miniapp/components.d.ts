@@ -11,6 +11,7 @@ declare module 'vue' {
     AppLogos: typeof import('./src/components/AppLogos.vue')['default']
     EmptyState: typeof import('./src/components/EmptyState.vue')['default']
     FollowButton: typeof import('./src/components/FollowButton.vue')['default']
+    GlassTabBar: typeof import('./src/components/GlassTabBar.vue')['default']
     ImageCarousel: typeof import('./src/components/ImageCarousel.vue')['default']
     InputEntry: typeof import('./src/components/InputEntry.vue')['default']
     LazyImage: typeof import('./src/components/LazyImage.vue')['default']

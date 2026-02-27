@@ -258,7 +258,7 @@ function drawSalaryPosterWithQR(
         const padding = 24
 
         // 判断工资类型
-        const isBonus = r.salary_type === 'bonus'
+        const isBonus = record.salary_type === 'bonus'
         const titleText = isBonus ? '年终奖' : '发薪日'
         const gradientStart = isBonus ? '#fdcb6e' : '#667eea'
         const gradientEnd = isBonus ? '#f39c12' : '#764ba2'
@@ -271,7 +271,7 @@ function drawSalaryPosterWithQR(
           ', dpr:',
           dpr,
           ', type:',
-          r.salary_type
+          record.salary_type
         )
 
         // 清空画布
@@ -303,19 +303,19 @@ function drawSalaryPosterWithQR(
         ctx.fillStyle = '#fff'
         ctx.font = '48px sans-serif'
         ctx.textAlign = 'center'
-        ctx.fillText(`¥${r.amount}`, w / 2, 145)
+        ctx.fillText(`¥${record.amount}`, w / 2, 145)
 
         // 发薪日期
         ctx.fillStyle = 'rgba(255,255,255,0.9)'
         ctx.font = '14px sans-serif'
         ctx.textAlign = 'center'
-        ctx.fillText(r.payday_date, w / 2, 185)
+        ctx.fillText(record.payday_date, w / 2, 185)
 
         // 工作名
         ctx.fillStyle = 'rgba(255,255,255,0.8)'
         ctx.font = '13px sans-serif'
         ctx.textAlign = 'center'
-        ctx.fillText(jobName.value(r.config_id), w / 2, 210)
+        ctx.fillText(jobName.value(record.config_id), w / 2, 210)
 
         // 分隔线
         ctx.strokeStyle = 'rgba(255,255,255,0.2)'
@@ -333,7 +333,7 @@ function drawSalaryPosterWithQR(
         ctx.fillStyle = '#fff'
         ctx.font = '14px sans-serif'
         ctx.textAlign = 'center'
-        ctx.fillText(moodText[r.mood] || r.mood, w / 2, 282)
+        ctx.fillText(moodText[record.mood] || record.mood, w / 2, 282)
 
         // 二维码
         if (qrDataUrl) {

@@ -4,6 +4,7 @@ import { getPostList } from '@/api/post'
 import { checkBatchFollowStatus } from '@/api/follow'
 import { useDebounceFn } from '@/composables/useDebounce'
 import { useAuthStore } from '@/stores/auth'
+import GlassTabBar from '@/components/GlassTabBar.vue'
 import PostActionBar from '@/components/PostActionBar.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
@@ -163,6 +164,9 @@ function handleUnfollow(data: { targetUserId: string }) {
       </view>
     </scroll-view>
     <view class="fab" @click="goCreate">发帖</view>
+
+    <!-- 液态玻璃 TabBar -->
+    <GlassTabBar />
   </view>
 </template>
 

@@ -61,9 +61,6 @@
         <button class="action-btn invite" @tap="goToInvite">
           <text>✨ 邀请好友</text>
         </button>
-        <button class="action-btn secondary" @tap="goToRedemptions">
-          <text>🎁 兑换中心</text>
-        </button>
         <button class="action-btn tertiary" @tap="goToHistory">
           <text>📜 积分明细</text>
         </button>
@@ -110,13 +107,14 @@ async function fetchPoints() {
     loading.value = true
     error.value = null
     const data = await getMyPoints()
-    // 确保 NaN 值被转换为 0
+    // 后端返回 snake_case 字段，前端需要映射到 camelCase
+    // 同时确保 NaN 值被转换为 0
     points.value = {
       ...data,
-      availablePoints: safeNumber(data.availablePoints, 0),
-      totalEarned: safeNumber(data.totalEarned, 0),
-      totalSpent: safeNumber(data.totalSpent, 0),
-      totalPoints: safeNumber(data.totalPoints, 0),
+      availablePoints: safeNumber(data.available_points ?? data.availablePoints, 0),
+      totalEarned: safeNumber(data.total_earned ?? data.totalEarned, 0),
+      totalSpent: safeNumber(data.total_spent ?? data.totalSpent, 0),
+      totalPoints: safeNumber(data.total_points ?? data.totalPoints, 0),
       level: safeNumber(data.level, 1),
     }
   } catch (err) {
@@ -146,12 +144,6 @@ function goToMall() {
 function goToInvite() {
   uni.navigateTo({
     url: '/pages/invite-code/index',
-  })
-}
-
-function goToRedemptions() {
-  uni.navigateTo({
-    url: '/pages/point-redemptions/index',
   })
 }
 

@@ -265,7 +265,8 @@ async function loadData() {
     ])
 
     product.value = productRes
-    availablePoints.value = pointsRes.availablePoints || 0
+    // 后端返回 snake_case 字段，需要兼容
+    availablePoints.value = pointsRes.available_points ?? pointsRes.availablePoints ?? 0
 
     // 如果需要地址，加载默认地址
     if (needAddress.value) {

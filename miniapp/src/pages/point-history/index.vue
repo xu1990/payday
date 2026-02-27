@@ -64,7 +64,14 @@ async function fetchTransactions() {
     loading.value = true
     error.value = null
     const response = await getMyTransactions()
-    transactions.value = response.transactions || []
+    // 后端返回 snake_case 字段，前端需要映射到 camelCase
+    transactions.value = (response.transactions || []).map(item => ({
+      ...item,
+      transactionType: item.transaction_type ?? item.transactionType,
+      eventType: item.event_type ?? item.eventType,
+      createdAt: item.created_at ?? item.createdAt,
+      balanceAfter: item.balance_after ?? item.balanceAfter,
+    }))
   } catch (err) {
     console.error('Failed to fetch transactions:', err)
     error.value = err.message || '加载失败'
@@ -78,10 +85,12 @@ async function fetchTransactions() {
 }
 
 function getTransactionTitle(item) {
-  if (item.transactionType === 'earn' && item.eventType) {
-    return transactionTitles[item.eventType] || item.eventType
+  const transactionType = item.transaction_type ?? item.transactionType
+  const eventType = item.event_type ?? item.eventType
+  if (transactionType === 'earn' && eventType) {
+    return transactionTitles[eventType] || eventType
   }
-  return transactionTitles[item.transactionType] || item.transactionType
+  return transactionTitles[transactionType] || transactionType
 }
 
 function formatDateTime(dateStr) {

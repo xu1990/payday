@@ -5,6 +5,7 @@ import { listPayday } from '@/api/payday'
 import { useUserStore } from '@/stores/user'
 import { useAbilityPointsStore } from '@/stores/ability-points'
 import { useNotificationUnread } from '@/composables/useNotificationUnread'
+import GlassTabBar from '@/components/GlassTabBar.vue'
 
 const userStore = useUserStore()
 const pointsStore = useAbilityPointsStore()
@@ -133,71 +134,102 @@ onMounted(load)
 
 <template>
   <view class="page">
-    <!-- 用户头部 -->
-    <view class="user-header" @click="goProfileEdit">
-      <image class="user-avatar" :src="avatarUrl" mode="aspectFill" />
-      <text class="user-name">{{ displayName }}</text>
-      <view class="user-info-row">
-        <view class="user-points-badge">
-          <text class="points-value">{{ availablePoints }}</text>
-          <text class="points-label">积分</text>
+    <!-- 用户头部卡片 -->
+    <view class="user-header">
+      <view class="header-top">
+        <view class="user-info-left" @click="goProfileEdit">
+          <image class="user-avatar" :src="avatarUrl" mode="aspectFill" />
+          <view class="user-text">
+            <text class="user-name">{{ displayName }}</text>
+            <view class="user-points-inline">
+              <text class="points-value">{{ availablePoints }}</text>
+              <text class="points-label">积分</text>
+            </view>
+          </view>
         </view>
-        <view v-if="userInfo?.phone_number" class="user-phone-badge">
-          <text class="phone-icon">📱</text>
-          <text class="phone-number">{{ userInfo.phone_number }}</text>
-          <text v-if="userInfo.phone_verified" class="verified-badge">✓</text>
+        <view class="header-actions">
+          <view class="msg-icon" @click="goNotification">
+            <text class="icon-bell">🔔</text>
+            <text v-if="notificationUnread > 0" class="msg-badge">{{
+              notificationUnread > 99 ? '99+' : notificationUnread
+            }}</text>
+          </view>
+          <view class="setting-icon" @click="goSettings">
+            <text>⚙️</text>
+          </view>
         </view>
+      </view>
+      <view v-if="userInfo?.phone_number" class="user-phone-row">
+        <text class="phone-icon">📱</text>
+        <text class="phone-number">{{ userInfo.phone_number }}</text>
+        <text v-if="userInfo.phone_verified" class="verified-badge">✓ 已验证</text>
       </view>
     </view>
 
     <!-- 统计摘要 -->
     <view class="summary-row">
-      <view class="summary-item">
+      <view class="summary-item" @click="goSalaryRecord">
         <text class="summary-num">{{ recordList.length }}</text>
         <text class="summary-label">发薪次数</text>
       </view>
-      <view class="summary-item">
+      <view class="summary-item" @click="goPaydaySetting">
         <text class="summary-num">{{ paydayList.length }}</text>
         <text class="summary-label">发薪日配置</text>
       </view>
     </view>
 
-    <!-- 操作按钮 -->
-    <view class="entry-row">
-      <button class="btn-primary" @click="goSalaryRecord">记工资</button>
-      <button class="btn-outline" @click="goPaydaySetting">发薪日设置</button>
-    </view>
-    <view class="entry-row entry-single">
-      <view class="entry-item" @click="goNotification">
-        <text class="entry-label">消息</text>
-        <text v-if="notificationUnread > 0" class="badge">{{
-          notificationUnread > 99 ? '99+' : notificationUnread
-        }}</text>
+    <!-- 常用功能 - 统一样式 -->
+    <view class="section-card">
+      <view class="section-title">常用功能</view>
+      <view class="feature-grid-main">
+        <view class="feature-card-main" @click="goSalaryRecord">
+          <view class="feature-icon-main bg-blue">💵</view>
+          <text class="feature-name-main">记工资</text>
+        </view>
+        <view class="feature-card-main" @click="goPaydaySetting">
+          <view class="feature-icon-main bg-purple">📅</view>
+          <text class="feature-name-main">发薪日设置</text>
+        </view>
       </view>
     </view>
 
-    <view class="section-title-alt">更多功能</view>
-    <view class="entry-row">
-      <button class="btn-outline" @click="goCheckIn">每日签到</button>
-      <button class="btn-outline" @click="goSettings">设置</button>
+    <!-- 更多功能 - 统一在一个卡片中 -->
+    <view class="section-card">
+      <view class="section-title">更多功能</view>
+      <view class="feature-grid">
+        <view class="feature-item" @click="goCheckIn">
+          <view class="feature-icon">✅</view>
+          <text class="feature-name">每日签到</text>
+        </view>
+        <view class="feature-item" @click="goAbilityPoints">
+          <view class="feature-icon">⭐</view>
+          <text class="feature-name">我的积分</text>
+        </view>
+        <view class="feature-item" @click="goPointMall">
+          <view class="feature-icon">🛒</view>
+          <text class="feature-name">积分商城</text>
+        </view>
+        <view class="feature-item" @click="goSavingsGoals">
+          <view class="feature-icon">💰</view>
+          <text class="feature-name">存款目标</text>
+        </view>
+        <view class="feature-item" @click="goYearEndBonus">
+          <view class="feature-icon">🎊</view>
+          <text class="feature-name">年终奖</text>
+        </view>
+        <view class="feature-item" @click="goExpenseTracking">
+          <view class="feature-icon">📊</view>
+          <text class="feature-name">支出记录</text>
+        </view>
+        <view class="feature-item" @click="goInviteCode">
+          <view class="feature-icon">✨</view>
+          <text class="feature-name">邀请好友</text>
+        </view>
+      </view>
     </view>
 
-    <!-- Sprint 4.2-4.6 新功能 -->
-    <view class="section-title-alt">我的资产</view>
-    <view class="entry-row">
-      <button class="btn-outline" @click="goAbilityPoints">⭐ 积分</button>
-      <button class="btn-outline" @click="goPointMall">🛒 积分商城</button>
-    </view>
-    <view class="entry-row">
-      <button class="btn-outline" @click="goInviteCode">✨ 邀请好友</button>
-      <button class="btn-outline" @click="goSavingsGoals">💰 存款目标</button>
-    </view>
-    <view class="entry-row">
-      <button class="btn-outline" @click="goYearEndBonus">🎊 年终奖</button>
-      <button class="btn-outline" @click="goExpenseTracking">📊 支出记录</button>
-    </view>
-
-    <view class="section">
+    <!-- 最近记录 -->
+    <view class="section-card">
       <text class="section-title">最近记录</text>
       <view v-if="loading" class="loading">加载中...</view>
       <view v-else-if="errMsg" class="err">{{ errMsg }}</view>
@@ -206,7 +238,7 @@ onMounted(load)
         <view
           v-for="item in recordList"
           :key="item.id"
-          class="card"
+          class="record-card"
           @click="generatePoster(item.id)"
         >
           <view class="card-content">
@@ -220,59 +252,67 @@ onMounted(load)
         </view>
       </view>
     </view>
+
+    <!-- TabBar 占位 -->
+    <view class="tabbar-placeholder" />
+
+    <!-- 液态玻璃 TabBar -->
+    <GlassTabBar />
   </view>
 </template>
 
 <style scoped lang="scss">
 .page {
-  padding: calc(24rpx + env(safe-area-inset-top)) 24rpx calc(24rpx + env(safe-area-inset-bottom));
+  padding: 0 24rpx calc(24rpx + env(safe-area-inset-bottom));
+  padding-top: calc(24rpx + env(safe-area-inset-top));
   min-height: 100vh;
-  background: var(--bg-base);
+  background: linear-gradient(180deg, #f5f7fa 0%, #ffffff 100%);
 }
 
-// 用户头部
+// 用户头部卡片
 .user-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 40rpx 24rpx;
-  margin-bottom: 24rpx;
   background: $gradient-brand;
   border-radius: 16rpx;
+  padding: 32rpx 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(74, 108, 247, 0.25);
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-info-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
 }
 
 .user-avatar {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 60rpx;
-  background: rgba(255, 255, 255, 0.2);
-  border: 4rpx solid rgba(255, 255, 255, 0.3);
-  margin-bottom: 16rpx;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 48rpx;
+  border: 3rpx solid rgba(255, 255, 255, 0.4);
+}
+
+.user-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
 }
 
 .user-name {
   font-size: 32rpx;
   font-weight: 600;
   color: #fff;
-  margin-bottom: 12rpx;
 }
 
-.user-info-row {
+.user-points-inline {
   display: flex;
-  gap: 12rpx;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.user-points-badge {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1rpx solid rgba(255, 255, 255, 0.3);
-  border-radius: 30rpx;
-  padding: 8rpx 20rpx;
-  backdrop-filter: blur(10rpx);
+  align-items: baseline;
+  gap: 6rpx;
 }
 
 .points-value {
@@ -282,69 +322,87 @@ onMounted(load)
 }
 
 .points-label {
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.8);
 }
 
-.user-phone-badge {
+.header-actions {
   display: flex;
   align-items: center;
-  gap: 6rpx;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1rpx solid rgba(255, 255, 255, 0.3);
-  border-radius: 30rpx;
-  padding: 8rpx 16rpx;
-  backdrop-filter: blur(10rpx);
+  gap: 20rpx;
+}
+
+.msg-icon,
+.setting-icon {
+  position: relative;
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  font-size: 32rpx;
+}
+
+.msg-badge {
+  position: absolute;
+  top: -4rpx;
+  right: -4rpx;
+  background: $semantic-error;
+  color: #fff;
+  font-size: 18rpx;
+  padding: 2rpx 8rpx;
+  border-radius: 16rpx;
+  min-width: 28rpx;
+  text-align: center;
+  font-weight: 600;
+}
+
+.user-phone-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid rgba(255, 255, 255, 0.15);
 }
 
 .phone-icon {
-  font-size: 22rpx;
+  font-size: 24rpx;
 }
 
 .phone-number {
   font-size: 24rpx;
   color: rgba(255, 255, 255, 0.9);
-  font-weight: 500;
 }
 
 .verified-badge {
   font-size: 20rpx;
   color: $semantic-success;
-  font-weight: bold;
+  margin-left: auto;
 }
 
-.head {
-  margin-bottom: 24rpx;
-}
-.title {
-  font-size: 36rpx;
-  font-weight: 600;
-  display: block;
-}
-.tip {
-  display: block;
-  margin-top: 8rpx;
-  color: var(--text-secondary);
-  font-size: 26rpx;
-}
-
+// 统计摘要
 .summary-row {
   display: flex;
-  gap: 24rpx;
-  margin-bottom: 24rpx;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
 }
 
 .summary-item {
   flex: 1;
-  @include glass-card();
+  background: #fff;
   padding: 24rpx;
   text-align: center;
+  border-radius: 12rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
 }
 
 .summary-num {
   font-size: 40rpx;
-  font-weight: 600;
-  color: var(--brand-primary);
+  font-weight: 700;
+  color: $brand-primary;
   display: block;
 }
 
@@ -355,69 +413,13 @@ onMounted(load)
   margin-top: 8rpx;
 }
 
-.entry-row {
-  display: flex;
-  gap: 20rpx;
-  margin-bottom: 24rpx;
-}
-
-.btn-primary {
-  flex: 1;
-  background: $gradient-brand;
-  color: #fff;
-  border: none;
-  border-radius: 12rpx;
-  font-size: 28rpx;
-  font-weight: 500;
-}
-
-.btn-outline {
-  flex: 1;
-  @include glass-card();
-  color: var(--brand-primary);
-  font-size: 28rpx;
-  font-weight: 500;
-}
-
-.entry-single {
-  margin-top: 0;
-}
-
-.entry-item {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12rpx;
-  padding: 20rpx;
-  @include glass-card();
-}
-
-.entry-label {
-  font-size: 28rpx;
-  color: var(--text-primary);
-}
-
-.badge {
-  background: $semantic-error;
-  color: #fff;
-  font-size: 20rpx;
-  padding: 4rpx 12rpx;
-  border-radius: 20rpx;
-  min-width: 32rpx;
-  text-align: center;
-}
-
-.section-title-alt {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 24rpx 0 16rpx;
-}
-
-.section {
-  @include glass-card();
+// 区块卡片
+.section-card {
+  background: #fff;
+  border-radius: 16rpx;
   padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
 }
 
 .section-title {
@@ -425,9 +427,92 @@ onMounted(load)
   font-weight: 600;
   color: var(--text-primary);
   display: block;
-  margin-bottom: 16rpx;
+  margin-bottom: 20rpx;
 }
 
+// 常用功能 - 横向排列
+.feature-grid-main {
+  display: flex;
+  gap: 20rpx;
+}
+
+.feature-card-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  padding: 24rpx 16rpx;
+  background: #f8fafc;
+  border-radius: 12rpx;
+  transition: transform 0.2s;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.feature-icon-main {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16rpx;
+  font-size: 36rpx;
+
+  &.bg-blue {
+    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  }
+
+  &.bg-purple {
+    background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+  }
+}
+
+.feature-name-main {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+// 更多功能 - 网格布局
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24rpx 16rpx;
+}
+
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+  transition: transform 0.2s;
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.feature-icon {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+}
+
+.feature-name {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+// 最近记录
 .loading,
 .err,
 .empty {
@@ -443,19 +528,18 @@ onMounted(load)
   gap: 16rpx;
 }
 
-.card {
+.record-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 20rpx;
-  background: var(--bg-glass-standard);
-  border-radius: 8rpx;
-  cursor: pointer;
+  background: #f8fafc;
+  border-radius: 12rpx;
   transition: background 0.2s;
-}
 
-.card:active {
-  background: var(--bg-glass-prominent);
+  &:active {
+    background: #f1f5f9;
+  }
 }
 
 .card-content {
@@ -475,7 +559,7 @@ onMounted(load)
   font-size: 24rpx;
   color: var(--text-tertiary);
   display: block;
-  margin-top: 8rpx;
+  margin-top: 6rpx;
 }
 
 .poster-btn {
@@ -483,9 +567,9 @@ onMounted(load)
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 12rpx 16rpx;
+  padding: 12rpx 20rpx;
   background: $gradient-brand;
-  border-radius: 8rpx;
+  border-radius: 10rpx;
   margin-left: 16rpx;
   min-width: 80rpx;
 }
@@ -499,5 +583,10 @@ onMounted(load)
   font-size: 22rpx;
   color: #fff;
   font-weight: 500;
+}
+
+/* TabBar 占位 */
+.tabbar-placeholder {
+  height: calc(140rpx + env(safe-area-inset-bottom));
 }
 </style>

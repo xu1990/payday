@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
+import router from '@/router'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 
@@ -99,6 +100,7 @@ adminApi.interceptors.response.use(
     if (refreshRetryCount >= MAX_REFRESH_RETRIES) {
       console.error('[adminApi] Max refresh retries reached')
       authStore.logout()
+      router.replace('/login')
       return Promise.reject(error)
     }
 
@@ -145,6 +147,7 @@ adminApi.interceptors.response.use(
         // 刷新失败，清除token并处理队列
         processQueue(refreshError, null)
         authStore.logout()
+        router.replace('/login')
 
         // 重置状态
         refreshRetryCount = 0
@@ -386,4 +389,29 @@ export interface AdminStatistics {
 export async function getStatistics(): Promise<AdminStatistics> {
   const res = await adminApi.get('/admin/statistics')
   return res.data
+}
+
+// ==================== 管理员个人信息 ====================
+
+export interface AdminProfile {
+  id: string
+  username: string
+  role: string
+  created_at: string
+}
+
+export interface ChangePasswordRequest {
+  old_password: string
+  new_password: string
+}
+
+/** 获取当前管理员信息 */
+export async function getAdminProfile(): Promise<AdminProfile> {
+  const res = await adminApi.get('/admin/profile')
+  return res.data
+}
+
+/** 修改密码 */
+export async function changeAdminPassword(data: ChangePasswordRequest): Promise<void> {
+  await adminApi.put('/admin/password', data)
 }

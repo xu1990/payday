@@ -26,6 +26,21 @@ export function getMyPoints() {
   return request<AbilityPointResponse>({
     url: `${PREFIX}/my`,
     method: 'GET',
+  }).then(data => {
+    // 后端返回 snake_case 字段，映射到 camelCase
+    if (data) {
+      return {
+        ...data,
+        availablePoints: data.available_points ?? data.availablePoints,
+        totalPoints: data.total_points ?? data.totalPoints,
+        totalEarned: data.total_earned ?? data.totalEarned,
+        totalSpent: data.total_spent ?? data.totalSpent,
+        userId: data.user_id ?? data.userId,
+        createdAt: data.created_at ?? data.createdAt,
+        updatedAt: data.updated_at ?? data.updatedAt,
+      } as AbilityPointResponse
+    }
+    return data
   })
 }
 
@@ -54,6 +69,22 @@ export function getMyTransactions(limit = 50, offset = 0) {
   return request<TransactionsListResponse>({
     url: `${PREFIX}/my/transactions?limit=${limit}&offset=${offset}`,
     method: 'GET',
+  }).then(res => {
+    // 后端返回 snake_case 字段，映射到 camelCase
+    if (res && res.transactions) {
+      return {
+        ...res,
+        transactions: res.transactions.map((item: any) => ({
+          ...item,
+          transactionType: item.transaction_type ?? item.transactionType,
+          eventType: item.event_type ?? item.eventType,
+          createdAt: item.created_at ?? item.createdAt,
+          balanceAfter: item.balance_after ?? item.balanceAfter,
+          userId: item.user_id ?? item.userId,
+        }))
+      }
+    }
+    return res
   })
 }
 

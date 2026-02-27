@@ -3,6 +3,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { getMyLikes } from '@/api/like'
 import { getMyFollowers, getMyFollowing, checkBatchFollowStatus } from '@/api/follow'
 import { useAuthStore } from '@/stores/auth'
+import GlassTabBar from '@/components/GlassTabBar.vue'
 import FollowButton from '@/components/FollowButton.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { formatRelativeTime } from '@/utils/format'
@@ -367,6 +368,9 @@ onMounted(() => {
         </view>
       </scroll-view>
     </view>
+
+    <!-- 液态玻璃 TabBar -->
+    <GlassTabBar />
   </view>
 </template>
 

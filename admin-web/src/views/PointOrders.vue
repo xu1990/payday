@@ -28,8 +28,8 @@ async function loadData() {
       limit: pageSize,
       offset: (currentPage.value - 1) * pageSize,
     })
-    list.value = res?.data?.orders || []
-    total.value = res?.data?.total || 0
+    list.value = res?.orders || []
+    total.value = res?.total || 0
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : '加载失败'
     ElMessage.error(errorMessage)

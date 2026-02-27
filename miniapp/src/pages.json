@@ -326,6 +326,7 @@
     "navigationBarTitleText": "薪日 PayDay"
   },
   "tabBar": {
+    "custom": true,
     "color": "#999999",
     "selectedColor": "#667eea",
     "backgroundColor": "#ffffff",

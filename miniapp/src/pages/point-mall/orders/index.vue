@@ -181,14 +181,15 @@ function goToDetail(order) {
 <style lang="scss" scoped>
 .orders-page {
   min-height: 100vh;
-  background: var(--bg-base);
+  background: linear-gradient(180deg, #f5f7fa 0%, #ffffff 100%);
   padding-bottom: $spacing-md;
 }
 
 .status-filter {
-  background: var(--bg-glass-standard);
+  background: #fff;
   padding: $spacing-md 0;
   margin-bottom: $spacing-md;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
 
   .status-scroll {
     white-space: nowrap;
@@ -200,12 +201,14 @@ function goToDetail(order) {
       margin-right: $spacing-sm;
       border-radius: $radius-full;
       font-size: $font-size-xs;
-      background: var(--bg-base);
+      background: #f1f5f9;
       color: var(--text-secondary);
+      transition: all 0.2s;
 
       &.active {
         background: $gradient-brand;
         color: white;
+        box-shadow: 0 4rpx 12rpx rgba(74, 108, 247, 0.3);
       }
     }
   }
@@ -216,23 +219,28 @@ function goToDetail(order) {
   text-align: center;
   padding: $spacing-2xl 0;
   color: var(--text-tertiary);
+  background: #fff;
+  margin: 0 $spacing-md;
+  border-radius: $radius-lg;
 }
 
 .orders-list {
-  padding: $spacing-md;
+  padding: 0 $spacing-md;
 
   .order-item {
-    @include glass-card();
+    background: #fff;
     border-radius: $radius-lg;
     overflow: hidden;
     margin-bottom: $spacing-md;
+    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
 
     .order-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: $spacing-md;
-      border-bottom: 1rpx solid var(--border-subtle);
+      background: #f8fafc;
+      border-bottom: 1rpx solid #e5e7eb;
 
       .order-number {
         font-size: $font-size-xs;
@@ -243,21 +251,22 @@ function goToDetail(order) {
         font-size: $font-size-xs;
         padding: $spacing-xs $spacing-sm;
         border-radius: $radius-sm;
+        font-weight: 500;
 
         &.status-pending {
-          background: rgba($semantic-warning, 0.15);
-          color: $semantic-warning;
+          background: rgba(255, 180, 67, 0.15);
+          color: #d97706;
         }
 
         &.status-completed {
-          background: rgba($semantic-success, 0.15);
-          color: $semantic-success;
+          background: rgba(0, 196, 140, 0.15);
+          color: #059669;
         }
 
         &.status-cancelled,
         &.status-refunded {
-          background: var(--bg-base);
-          color: var(--text-tertiary);
+          background: #f1f5f9;
+          color: #94a3b8;
         }
       }
     }
@@ -265,15 +274,17 @@ function goToDetail(order) {
     .order-content {
       display: flex;
       padding: $spacing-md;
+      background: #fff;
 
       .product-image {
         width: 140rpx;
         height: 140rpx;
         border-radius: $radius-md;
         flex-shrink: 0;
+        background: #f1f5f9;
 
         &.placeholder {
-          background: var(--bg-base);
+          background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -291,11 +302,12 @@ function goToDetail(order) {
         .product-name {
           font-size: $font-size-sm;
           font-weight: $font-weight-bold;
+          color: var(--text-primary);
         }
 
         .order-time {
           font-size: $font-size-xs;
-          color: var(--text-tertiary);
+          color: #94a3b8;
         }
       }
 
@@ -306,31 +318,36 @@ function goToDetail(order) {
           display: block;
           font-size: $font-size-base;
           font-weight: $font-weight-bold;
-          color: $semantic-error;
+          color: $brand-primary;
         }
 
         .label {
           font-size: $font-size-xs;
-          color: var(--text-tertiary);
+          color: #94a3b8;
         }
       }
     }
 
     .order-actions {
       padding: $spacing-sm $spacing-md;
-      border-top: 1rpx solid var(--border-subtle);
+      border-top: 1rpx solid #f1f5f9;
+      background: #fafbfc;
 
       .cancel-btn {
         width: 100%;
-        background: var(--bg-glass-standard);
-        color: var(--text-tertiary);
-        border: 1rpx solid var(--border-regular);
+        background: #fff;
+        color: #64748b;
+        border: 1rpx solid #e2e8f0;
         border-radius: $radius-sm;
         padding: $spacing-sm;
         font-size: $font-size-xs;
 
         &::after {
           border: none;
+        }
+
+        &:active {
+          background: #f8fafc;
         }
       }
     }

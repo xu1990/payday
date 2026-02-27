@@ -252,10 +252,13 @@ onMounted(() => {
   border-radius: $radius-lg;
   border: none;
   margin-bottom: $spacing-md;
+  transition: all 0.3s ease;
 }
 
 .checkin-btn.checked {
-  background: var(--text-tertiary);
+  background: var(--bg-glass-standard);
+  color: var(--text-tertiary);
+  border: 2rpx solid var(--border-subtle);
 }
 
 .note-input {

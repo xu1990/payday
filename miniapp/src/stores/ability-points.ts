@@ -43,8 +43,18 @@ export const useAbilityPointsStore = defineStore('abilityPoints', () => {
       isLoading.value = true
       error.value = null
       const data = await pointsApi.getMyPoints()
-      points.value = data
-      return data
+      // 后端返回 snake_case 字段，需要映射到 camelCase
+      points.value = {
+        ...data,
+        availablePoints: data.available_points ?? data.availablePoints ?? 0,
+        totalPoints: data.total_points ?? data.totalPoints ?? 0,
+        totalEarned: data.total_earned ?? data.totalEarned ?? 0,
+        totalSpent: data.total_spent ?? data.totalSpent ?? 0,
+        userId: data.user_id ?? data.userId,
+        createdAt: data.created_at ?? data.createdAt,
+        updatedAt: data.updated_at ?? data.updatedAt,
+      }
+      return points.value
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : '获取积分信息失败'
       return null
@@ -61,8 +71,16 @@ export const useAbilityPointsStore = defineStore('abilityPoints', () => {
       isLoading.value = true
       error.value = null
       const response = await pointsApi.getMyTransactions(limit, offset)
-      transactions.value = response.transactions
-      return response.transactions
+      // 后端返回 snake_case 字段，需要映射到 camelCase
+      transactions.value = (response.transactions || []).map((item: any) => ({
+        ...item,
+        transactionType: item.transaction_type ?? item.transactionType,
+        eventType: item.event_type ?? item.eventType,
+        createdAt: item.created_at ?? item.createdAt,
+        balanceAfter: item.balance_after ?? item.balanceAfter,
+        userId: item.user_id ?? item.userId,
+      }))
+      return transactions.value
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : '获取积分流水失败'
       return []
@@ -79,8 +97,21 @@ export const useAbilityPointsStore = defineStore('abilityPoints', () => {
       isLoading.value = true
       error.value = null
       const response = await pointsApi.getMyRedemptions(status)
-      redemptions.value = response.redemptions
-      return response.redemptions
+      // 后端返回 snake_case 字段，需要映射到 camelCase
+      redemptions.value = (response.redemptions || []).map((item: any) => ({
+        ...item,
+        rewardName: item.reward_name ?? item.rewardName,
+        rewardType: item.reward_type ?? item.rewardType,
+        pointsCost: item.points_cost ?? item.pointsCost,
+        deliveryInfo: item.delivery_info ?? item.deliveryInfo,
+        adminId: item.admin_id ?? item.adminId,
+        processedAt: item.processed_at ?? item.processedAt,
+        rejectionReason: item.rejection_reason ?? item.rejectionReason,
+        userId: item.user_id ?? item.userId,
+        createdAt: item.created_at ?? item.createdAt,
+        updatedAt: item.updated_at ?? item.updatedAt,
+      }))
+      return redemptions.value
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : '获取兑换记录失败'
       return []
@@ -97,8 +128,12 @@ export const useAbilityPointsStore = defineStore('abilityPoints', () => {
       isLoading.value = true
       error.value = null
       const response = await pointsApi.getPointEvents()
-      events.value = response.events
-      return response.events
+      // 后端返回 snake_case 字段，需要映射到 camelCase
+      events.value = (response.events || []).map((item: any) => ({
+        ...item,
+        eventType: item.event_type ?? item.eventType,
+      }))
+      return events.value
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : '获取积分事件失败'
       return []

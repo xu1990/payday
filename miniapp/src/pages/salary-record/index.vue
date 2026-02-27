@@ -556,18 +556,20 @@ onMounted(async () => {
 .mask {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.25);
   display: flex;
   align-items: flex-end;
   z-index: 100;
 }
 .form-panel {
   width: 100%;
-  background: var(--bg-glass-subtle);
+  background: #fff;
   border-radius: $radius-lg $radius-lg 0 0;
   padding: $spacing-lg;
   max-height: 80vh;
-  overflow: auto;
+  overflow-y: auto;
+  box-shadow: 0 -16rpx 48rpx rgba(0, 0, 0, 0.15);
+  border-top: 1rpx solid rgba(255, 255, 255, 0.8);
 }
 .form-title {
   font-size: $font-size-lg;
@@ -628,9 +630,9 @@ onMounted(async () => {
   @include glass-input();
   padding: $spacing-sm;
   font-size: $font-size-base;
+  background: var(--bg-glass-standard);
 }
 .picker {
-  background: var(--bg-glass-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -670,9 +672,9 @@ onMounted(async () => {
 }
 .btn-cancel {
   flex: 1;
-  border: 1rpx solid var(--border-subtle);
+  border: 1rpx solid var(--border-regular);
   border-radius: $radius-sm;
-  background: var(--bg-glass-subtle);
+  background: var(--bg-glass-standard);
   color: var(--text-primary);
 }
 .btn-ok {

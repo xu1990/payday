@@ -5,7 +5,8 @@ from typing import Optional
 
 from app.core.database import get_db
 from app.core.deps import get_current_admin, require_permission, verify_csrf_token
-from app.core.exceptions import AuthenticationException, NotFoundException, success_response
+from app.core.exceptions import AuthenticationException, BusinessException, NotFoundException, success_response
+from app.core.security import hash_password, verify_password
 from app.models.admin import AdminUser
 from app.schemas.admin import (AdminCommentListItem, AdminCommentListResponse,
                                AdminCommentUpdateRiskRequest, AdminLoginRequest, AdminPostListItem,
@@ -489,3 +490,53 @@ async def admin_upload_image(
     url = await storage_service.upload_bytes(content, key, file.content_type or 'image/jpeg')
 
     return success_response(data={"url": url}, message="图片上传成功")
+
+
+# ----- 管理员个人信息 -----
+
+
+class AdminProfileResponse(BaseModel):
+    id: str
+    username: str
+    role: str
+    created_at: str
+
+
+class AdminChangePasswordRequest(BaseModel):
+    old_password: str = Field(..., min_length=6, description="旧密码")
+    new_password: str = Field(..., min_length=6, description="新密码")
+
+
+@router.get("/profile")
+async def get_admin_profile(
+    admin: AdminUser = Depends(get_current_admin),
+):
+    """获取当前登录管理员信息"""
+    return success_response(
+        data=AdminProfileResponse(
+            id=admin.id,
+            username=admin.username,
+            role=admin.role,
+            created_at=admin.created_at.isoformat() if admin.created_at else "",
+        ).model_dump(),
+        message="获取管理员信息成功"
+    )
+
+
+@router.put("/password")
+async def change_admin_password(
+    body: AdminChangePasswordRequest,
+    admin: AdminUser = Depends(get_current_admin),
+    _csrf: bool = Depends(verify_csrf_token),
+    db: AsyncSession = Depends(get_db),
+):
+    """修改当前管理员密码（需要 CSRF token）"""
+    # 验证旧密码
+    if not verify_password(body.old_password, admin.password_hash):
+        raise BusinessException("旧密码错误", code="INVALID_OLD_PASSWORD")
+
+    # 更新密码
+    admin.password_hash = hash_password(body.new_password)
+    await db.commit()
+
+    return success_response(message="密码修改成功")

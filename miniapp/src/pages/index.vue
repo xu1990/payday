@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { onShow, onLaunch } from '@dcloudio/uni-app'
+import GlassTabBar from '@/components/GlassTabBar.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import AppLogos from '@/components/AppLogos.vue'
 import InputEntry from '@/components/InputEntry.vue'
@@ -186,7 +187,8 @@ async function loadPointProducts() {
 async function loadUserPoints() {
   try {
     const res = await getMyPoints()
-    availablePoints.value = res.availablePoints || 0
+    // 后端返回 snake_case 字段，需要兼容
+    availablePoints.value = res.available_points ?? res.availablePoints ?? 0
   } catch (error) {
     console.error('[index] loadUserPoints error:', error)
     // 静默失败
@@ -483,6 +485,12 @@ function createPostWithTopic(topicId: string, topicName: string) {
         <text>暂无可兑换商品</text>
       </view>
     </view>
+
+    <!-- 底部安全区域 -->
+    <view class="tabbar-placeholder" />
+
+    <!-- 液态玻璃 TabBar -->
+    <GlassTabBar />
   </view>
 </template>
 
@@ -491,6 +499,7 @@ function createPostWithTopic(topicId: string, topicName: string) {
   padding: calc(5rpx + env(safe-area-inset-top)) 2.5rem;
   text-align: center;
   min-height: 100vh;
+  background: linear-gradient(180deg, #f5f7fa 0%, #ffffff 100%);
 }
 
 /* 用户信息栏 */
@@ -498,7 +507,9 @@ function createPostWithTopic(topicId: string, topicName: string) {
   display: flex;
   align-items: center;
   padding: 1rem;
-  @include glass-card();
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
   margin-bottom: 1rem;
 }
 
@@ -507,6 +518,7 @@ function createPostWithTopic(topicId: string, topicName: string) {
   height: 64rpx;
   border-radius: 50%;
   margin-right: 16rpx;
+  border: 2rpx solid rgba(74, 108, 247, 0.2);
 }
 
 .user-info {
@@ -525,7 +537,7 @@ function createPostWithTopic(topicId: string, topicName: string) {
 
 .user-points {
   font-size: 24rpx;
-  color: $semantic-error;
+  color: $brand-primary;
   font-weight: 600;
   text-align: left;
 }
@@ -537,20 +549,25 @@ function createPostWithTopic(topicId: string, topicName: string) {
 
 .payday-card {
   margin: 1rem 0;
-  padding: 1rem;
-  @include glass-card();
+  padding: 1.5rem 1rem;
+  background: $gradient-brand;
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 16rpx rgba(74, 108, 247, 0.25);
 }
 
 .payday-title {
   font-weight: 600;
   display: block;
-  color: var(--text-primary);
+  color: #fff;
+  font-size: 28rpx;
 }
 
 .payday-desc {
   display: block;
   margin-top: 0.5rem;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 32rpx;
+  font-weight: 600;
 }
 
 .entry-row {
@@ -587,13 +604,26 @@ function createPostWithTopic(topicId: string, topicName: string) {
   padding: 0.25rem 0;
   background: none;
   border: none;
-  color: var(--brand-primary);
+  color: #fff;
   font-size: 0.9rem;
+  text-decoration: underline;
 }
 
-.mood-section,
+.mood-section {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+  text-align: left;
+}
+
 .progress-section {
-  margin: 1rem 0;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 16rpx;
+  border: 1rpx solid rgba(0, 0, 0, 0.06);
   text-align: left;
 }
 
@@ -601,7 +631,7 @@ function createPostWithTopic(topicId: string, topicName: string) {
   font-weight: 600;
   font-size: 0.95rem;
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
   color: var(--text-primary);
 }
 
@@ -614,15 +644,16 @@ function createPostWithTopic(topicId: string, topicName: string) {
 .mood-item {
   padding: 0.4rem 0.8rem;
   border-radius: 999px;
-  border: 1rpx solid var(--border-regular);
-  background: var(--bg-glass-standard);
+  border: 2rpx solid #e5e7eb;
+  background: #f9fafb;
   color: var(--text-primary);
+  transition: all 0.2s;
 }
 
 .mood-item.active {
-  border-color: var(--brand-primary);
-  background: var(--bg-glass-prominent);
-  color: var(--brand-primary);
+  border-color: $brand-primary;
+  background: rgba(74, 108, 247, 0.1);
+  color: $brand-primary;
 }
 
 .mood-label {
@@ -630,23 +661,23 @@ function createPostWithTopic(topicId: string, topicName: string) {
 }
 
 .progress-bar {
-  height: 8px;
-  background: var(--bg-glass-standard);
-  border-radius: 4px;
+  height: 12rpx;
+  background: #e5e7eb;
+  border-radius: 6rpx;
   overflow: hidden;
 }
 
 .progress-inner {
   height: 100%;
   background: $gradient-brand;
-  border-radius: 4px;
+  border-radius: 6rpx;
   transition: width 0.2s;
 }
 
 .progress-desc {
   font-size: 0.85rem;
   color: var(--text-secondary);
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
   display: block;
 }
 
@@ -673,6 +704,8 @@ function createPostWithTopic(topicId: string, topicName: string) {
 .products-empty {
   text-align: center;
   padding: 2rem;
+  background: #f8fafc;
+  border-radius: 16rpx;
   color: var(--text-tertiary);
   font-size: 0.9rem;
 }
@@ -687,14 +720,16 @@ function createPostWithTopic(topicId: string, topicName: string) {
 .product-item {
   flex-shrink: 0;
   width: 200rpx;
-  @include glass-card();
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
   overflow: hidden;
 }
 
 .product-image {
   width: 200rpx;
   height: 200rpx;
-  background: var(--bg-glass-subtle);
+  background: #f1f5f9;
 
   &.placeholder {
     display: flex;
@@ -706,6 +741,7 @@ function createPostWithTopic(topicId: string, topicName: string) {
 
 .product-info {
   padding: 0.75rem;
+  background: #fff;
 }
 
 .product-name {
@@ -728,7 +764,7 @@ function createPostWithTopic(topicId: string, topicName: string) {
 .product-points {
   font-size: 0.9rem;
   font-weight: 600;
-  color: $semantic-error;
+  color: $brand-primary;
 }
 
 .product-out-of-stock {
@@ -739,6 +775,10 @@ function createPostWithTopic(topicId: string, topicName: string) {
 /* 快捷入口区域 */
 .quick-entry-section {
   margin: 1.5rem 0;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
 }
 
 .quick-entry-grid {
@@ -758,12 +798,13 @@ function createPostWithTopic(topicId: string, topicName: string) {
 .quick-entry-icon {
   width: 88rpx;
   height: 88rpx;
-  @include glass-card();
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%);
+  border-radius: 20rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 40rpx;
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .quick-entry-item:active .quick-entry-icon {
@@ -785,6 +826,8 @@ function createPostWithTopic(topicId: string, topicName: string) {
 .topics-empty {
   text-align: center;
   padding: 2rem;
+  background: #f8fafc;
+  border-radius: 16rpx;
   color: var(--text-tertiary);
   font-size: 0.9rem;
 }
@@ -800,7 +843,9 @@ function createPostWithTopic(topicId: string, topicName: string) {
   align-items: center;
   justify-content: space-between;
   padding: 1rem;
-  @include glass-card();
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
 }
 
 .topic-info {
@@ -834,5 +879,10 @@ function createPostWithTopic(topicId: string, topicName: string) {
 
 .topic-btn::after {
   border: none;
+}
+
+/* TabBar 占位 */
+.tabbar-placeholder {
+  height: calc(120rpx + env(safe-area-inset-bottom));
 }
 </style>
