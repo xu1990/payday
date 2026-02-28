@@ -360,11 +360,13 @@ async def create_order(
         except:
             pass
 
-    # 根据支付模式设置订单支付状态
+    # 根据支付模式设置订单支付状态和订单状态
     if payment_mode == "points_only":
         payment_status = "paid"  # 纯积分模式，直接为已支付
+        order_status = "completed"  # 纯积分模式无需额外支付，直接完成
     else:
         payment_status = "unpaid"  # 需要现金支付
+        order_status = "pending"  # 等待支付
 
     order = PointOrder(
         user_id=user_id,
@@ -381,7 +383,7 @@ async def create_order(
         delivery_info=delivery_info,
         notes=notes,
         address_id=address_id,
-        status="pending",
+        status=order_status,
     )
     db.add(order)
 

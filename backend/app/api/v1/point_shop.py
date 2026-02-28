@@ -1021,12 +1021,37 @@ async def admin_list_orders(
     result = await db.execute(query)
     orders = result.scalars().unique().all()
 
+    # 批量查询所有需要的地址
+    address_ids = [o.address_id for o in orders if o.address_id]
+    address_map = {}
+    if address_ids:
+        addr_result = await db.execute(
+            select(UserAddress).where(UserAddress.id.in_(address_ids))
+        )
+        for addr in addr_result.scalars().all():
+            address_map[str(addr.id)] = addr
+
     data = []
     for o in orders:
         # 获取商品的发货相关信息
         product = o.product
         product_type = product.product_type if product else None
         shipping_method = product.shipping_method if product else None
+
+        # 获取收货地址信息
+        address = None
+        if o.address_id and str(o.address_id) in address_map:
+            addr = address_map[str(o.address_id)]
+            address = {
+                "id": str(addr.id),
+                "contact_name": addr.contact_name,
+                "contact_phone": addr.contact_phone,
+                "province_name": addr.province_name,
+                "city_name": addr.city_name,
+                "district_name": addr.district_name,
+                "detailed_address": addr.detailed_address,
+                "full_address": f"{addr.province_name or ''}{addr.city_name or ''}{addr.district_name or ''}{addr.detailed_address or ''}",
+            }
 
         data.append({
             "id": o.id,
@@ -1038,6 +1063,9 @@ async def admin_list_orders(
             "product_type": product_type,
             "shipping_method": shipping_method,
             "shipment_id": str(o.shipment_id) if o.shipment_id else None,
+            "address": address,
+            "delivery_info": o.delivery_info,
+            "notes": o.notes,
             "created_at": o.created_at.isoformat(),
             "processed_at": o.processed_at.isoformat() if o.processed_at else None,
         })

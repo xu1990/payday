@@ -298,6 +298,7 @@ async def handle_point_payment_notify(
 
         # 更新订单状态
         order.payment_status = "paid"
+        order.status = "completed"  # 支付成功后订单状态更新为已完成
         order.transaction_id = transaction_id
         order.payment_method = "wechat"
 

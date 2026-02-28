@@ -218,6 +218,22 @@ onMounted(() => {
         <template #default="{ row }"> {{ row.points_cost }} 积分 </template>
       </el-table-column>
       <el-table-column prop="user_id" label="用户ID" width="180" />
+      <el-table-column label="收货信息" width="220">
+        <template #default="{ row }">
+          <div v-if="row.address" class="address-cell">
+            <div class="address-contact">
+              {{ row.address.contact_name }} {{ row.address.contact_phone }}
+            </div>
+            <div class="address-detail" :title="row.address.full_address">
+              {{ row.address.full_address }}
+            </div>
+          </div>
+          <span v-else-if="row.product_type === 'virtual'" style="color: #999; font-size: 12px">
+            虚拟商品
+          </span>
+          <span v-else style="color: #999; font-size: 12px">-</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="status" label="状态" width="100">
         <template #default="{ row }">
           <el-tag :type="getStatusType(row.status)" size="small">
@@ -289,6 +305,16 @@ onMounted(() => {
       <div v-if="currentShipOrder" class="ship-order-info">
         <p><strong>订单号：</strong>{{ currentShipOrder.order_number }}</p>
         <p><strong>商品名称：</strong>{{ currentShipOrder.product_name }}</p>
+        <!-- 收货信息 -->
+        <div v-if="currentShipOrder.address" class="ship-address-info">
+          <p class="address-title"><strong>收货信息：</strong></p>
+          <p class="address-contact">
+            {{ currentShipOrder.address.contact_name }}
+            {{ currentShipOrder.address.contact_phone }}
+          </p>
+          <p class="address-detail">{{ currentShipOrder.address.full_address }}</p>
+        </div>
+        <p v-if="currentShipOrder.notes"><strong>备注：</strong>{{ currentShipOrder.notes }}</p>
       </div>
       <el-form ref="shipFormRef" :model="shipForm" :rules="shipFormRules" label-width="100px">
         <el-form-item label="物流公司" prop="courier_code">
@@ -341,6 +367,26 @@ onMounted(() => {
   justify-content: flex-end;
 }
 
+/* 订单列表收货信息样式 */
+.address-cell {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.address-contact {
+  font-weight: 500;
+  color: #303133;
+}
+
+.address-detail {
+  color: #606266;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+/* 发货弹窗收货信息样式 */
 .ship-order-info {
   padding: 12px;
   background-color: #f5f7fa;
@@ -351,5 +397,30 @@ onMounted(() => {
 .ship-order-info p {
   margin: 4px 0;
   font-size: 14px;
+}
+
+.ship-address-info {
+  margin-top: 8px;
+  padding: 8px;
+  background-color: #fff;
+  border-radius: 4px;
+  border: 1px solid #e4e7ed;
+}
+
+.ship-address-info .address-title {
+  margin-bottom: 4px;
+}
+
+.ship-address-info .address-contact {
+  color: #409eff;
+  font-size: 14px;
+}
+
+.ship-address-info .address-detail {
+  color: #606266;
+  font-size: 13px;
+  white-space: normal;
+  word-break: break-all;
+  max-width: 100%;
 }
 </style>

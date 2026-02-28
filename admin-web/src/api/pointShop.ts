@@ -176,6 +176,17 @@ export function offShelfProduct(productId: string, reason: string) {
 }
 
 // ==================== 订单管理 ====================
+export interface OrderAddress {
+  id: string
+  contact_name: string
+  contact_phone: string
+  province_name: string | null
+  city_name: string | null
+  district_name: string | null
+  detailed_address: string | null
+  full_address: string
+}
+
 export interface PointOrder {
   id: string
   order_number: string
@@ -191,6 +202,10 @@ export interface PointOrder {
   product_type?: ProductType
   shipping_method?: ShippingMethod
   shipment_id?: string | null
+  // 收货信息
+  address?: OrderAddress | null
+  delivery_info?: string | null
+  notes?: string | null
 }
 
 export interface PointOrderListResult {
