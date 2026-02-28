@@ -52,6 +52,12 @@ class PointProductSKU(Base):
     stock_unlimited = Column(Boolean, default=False,
                              nullable=False, comment="库存无限")
     points_cost = Column(Integer, nullable=False, comment="积分价格")
+
+    # 支付价格（新增）
+    cash_price = Column(Integer, nullable=True, comment="现金价格（分）- 覆盖商品默认")
+    mixed_points_cost = Column(Integer, nullable=True, comment="混合支付时的积分价格")
+    mixed_cash_price = Column(Integer, nullable=True, comment="混合支付时的现金价格（分）")
+
     sold = Column(Integer, nullable=False, default=0, comment="已售数量")
     image_url = Column(String(500), nullable=True, comment="SKU专属图片（兼容旧版）")
 

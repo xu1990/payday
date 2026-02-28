@@ -154,6 +154,222 @@ async def spend_points(
     return points
 
 
+async def lock_points(
+    db: AsyncSession,
+    user_id: str,
+    amount: int,
+    reference_id: Optional[str] = None,
+    reference_type: Optional[str] = None,
+    description: Optional[str] = None,
+) -> AbilityPoint:
+    """
+    锁定积分（用于混合支付场景）
+
+    将可用积分转移到锁定状态，防止在支付等待期间被其他操作使用。
+    支付成功后通过 confirm_locked_points 确认消费，
+    支付失败/取消后通过 unlock_points 释放。
+
+    Args:
+        db: 数据库会话
+        user_id: 用户ID
+        amount: 锁定积分数量
+        reference_id: 关联ID（如订单ID）
+        reference_type: 关联类型
+        description: 描述
+
+    Returns:
+        更新后的积分账户
+
+    Raises:
+        ValidationException: 参数错误
+        BusinessException: 积分不足
+    """
+    if amount <= 0:
+        raise ValidationException("锁定积分数量必须大于0")
+
+    # 使用行级锁防止并发
+    result = await db.execute(
+        select(AbilityPoint)
+        .where(AbilityPoint.user_id == user_id)
+        .with_for_update()
+    )
+    points = result.scalar_one_or_none()
+
+    if not points:
+        raise BusinessException("积分账户不存在", code="POINTS_ACCOUNT_NOT_FOUND")
+
+    if points.available_points < amount:
+        raise BusinessException(
+            f"积分不足，需要{amount}积分，当前可用{points.available_points}积分",
+            code="INSUFFICIENT_POINTS"
+        )
+
+    # 从可用积分转移到锁定积分
+    points.available_points -= amount
+    points.locked_points = (points.locked_points or 0) + amount
+
+    # 创建锁定记录
+    transaction = AbilityPointTransaction(
+        user_id=user_id,
+        amount=-amount,  # 负数表示从可用中扣除
+        balance_after=points.available_points,
+        transaction_type="lock",
+        event_type="points_locked",
+        reference_id=reference_id,
+        reference_type=reference_type,
+        description=description or f"锁定积分: {amount}",
+    )
+    db.add(transaction)
+
+    await db.commit()
+    await db.refresh(points)
+    return points
+
+
+async def unlock_points(
+    db: AsyncSession,
+    user_id: str,
+    amount: int,
+    reference_id: Optional[str] = None,
+    reference_type: Optional[str] = None,
+    description: Optional[str] = None,
+) -> AbilityPoint:
+    """
+    解锁积分（支付失败/取消时使用）
+
+    将锁定积分返还到可用状态。
+
+    Args:
+        db: 数据库会话
+        user_id: 用户ID
+        amount: 解锁积分数量
+        reference_id: 关联ID
+        reference_type: 关联类型
+        description: 描述
+
+    Returns:
+        更新后的积分账户
+
+    Raises:
+        ValidationException: 参数错误
+        BusinessException: 锁定积分不足
+    """
+    if amount <= 0:
+        raise ValidationException("解锁积分数量必须大于0")
+
+    # 使用行级锁防止并发
+    result = await db.execute(
+        select(AbilityPoint)
+        .where(AbilityPoint.user_id == user_id)
+        .with_for_update()
+    )
+    points = result.scalar_one_or_none()
+
+    if not points:
+        raise BusinessException("积分账户不存在", code="POINTS_ACCOUNT_NOT_FOUND")
+
+    locked = points.locked_points or 0
+    if locked < amount:
+        raise BusinessException(
+            f"锁定积分不足，需要解锁{amount}，当前锁定{locked}",
+            code="INSUFFICIENT_LOCKED_POINTS"
+        )
+
+    # 从锁定积分返还到可用积分
+    points.locked_points = locked - amount
+    points.available_points += amount
+
+    # 创建解锁记录
+    transaction = AbilityPointTransaction(
+        user_id=user_id,
+        amount=amount,  # 正数表示返还到可用
+        balance_after=points.available_points,
+        transaction_type="unlock",
+        event_type="points_unlocked",
+        reference_id=reference_id,
+        reference_type=reference_type,
+        description=description or f"解锁积分: {amount}",
+    )
+    db.add(transaction)
+
+    await db.commit()
+    await db.refresh(points)
+    return points
+
+
+async def confirm_locked_points(
+    db: AsyncSession,
+    user_id: str,
+    amount: int,
+    reference_id: Optional[str] = None,
+    reference_type: Optional[str] = None,
+    description: Optional[str] = None,
+) -> AbilityPoint:
+    """
+    确认锁定积分消费（支付成功时使用）
+
+    将锁定积分正式扣除，不再返还。
+
+    Args:
+        db: 数据库会话
+        user_id: 用户ID
+        amount: 确认消费的积分数量
+        reference_id: 关联ID
+        reference_type: 关联类型
+        description: 描述
+
+    Returns:
+        更新后的积分账户
+
+    Raises:
+        ValidationException: 参数错误
+        BusinessException: 锁定积分不足
+    """
+    if amount <= 0:
+        raise ValidationException("确认积分数量必须大于0")
+
+    # 使用行级锁防止并发
+    result = await db.execute(
+        select(AbilityPoint)
+        .where(AbilityPoint.user_id == user_id)
+        .with_for_update()
+    )
+    points = result.scalar_one_or_none()
+
+    if not points:
+        raise BusinessException("积分账户不存在", code="POINTS_ACCOUNT_NOT_FOUND")
+
+    locked = points.locked_points or 0
+    if locked < amount:
+        raise BusinessException(
+            f"锁定积分不足，需要确认{amount}，当前锁定{locked}",
+            code="INSUFFICIENT_LOCKED_POINTS"
+        )
+
+    # 从锁定积分中扣除，并更新消费统计
+    points.locked_points = locked - amount
+    points.total_spent += amount
+    # 注意：total_points 也需要减少，因为积分被消费了
+    points.total_points -= amount
+
+    # 创建确认消费记录
+    transaction = AbilityPointTransaction(
+        user_id=user_id,
+        amount=-amount,  # 负数表示消费
+        balance_after=points.available_points,
+        transaction_type="spend",
+        event_type="locked_points_confirmed",
+        reference_id=reference_id,
+        reference_type=reference_type,
+        description=description or f"确认消费锁定积分: {amount}",
+    )
+    db.add(transaction)
+
+    await db.commit()
+    await db.refresh(points)
+    return points
+
+
 async def get_user_transactions(
     db: AsyncSession,
     user_id: str,

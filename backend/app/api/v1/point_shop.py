@@ -1,23 +1,26 @@
 """积分商品API - Sprint 4.7 商品兑换系统"""
 import json
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from app.core.database import get_db
 from app.core.deps import get_current_admin_user, get_current_user, rate_limit_point_order
 from app.core.exceptions import BusinessException, NotFoundException, success_response
 from app.models.address import UserAddress
+from app.models.point_order import PointOrder
 from app.models.point_sku import PointProductSKU, PointSpecification, PointSpecificationValue
 from app.models.user import User
 from app.schemas.point_product import PointProductUpdate as ProductUpdate
-from app.services.point_product_service import (cancel_order, create_order,  # 商品管理; 订单管理
+from app.services.point_product_service import (cancel_order, create_order, calculate_order_price,  # 商品管理; 订单管理
                                                 create_product, delete_product, get_order,
                                                 get_product, list_all_orders, list_my_orders,
                                                 list_products, process_order, update_product)
 from app.utils.distributed_lock import CombinedLock
-from fastapi import APIRouter, Body, Depends, Query
+from app.utils.client_ip import get_client_ip
+from fastapi import APIRouter, Body, Depends, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 from typing import Literal
 
 router = APIRouter(prefix="/point-shop", tags=["point-shop"])
@@ -354,17 +357,22 @@ async def calculate_shipping_cost(
 @router.post("/orders")
 async def create_user_order(
     body: OrderCreate,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     _rate_limit: bool = Depends(rate_limit_point_order),  # 请求频率限制：5次/分钟
 ):
-    """下单
+    """下单 - 支持混合支付
 
     支持以下保护机制：
     - 请求频率限制：5次/分钟
     - 幂等性检查：防止重复提交（60秒内）
     - 分布式锁：防止并发下单
     - 行级锁：库存安全扣减
+
+    返回字段：
+    - need_payment: 是否需要支付（纯积分时为false）
+    - payment_id: 支付ID（需要支付时返回）
     """
     from app.models.point_product import PointProduct
     from app.models.point_sku import PointProductSKU
@@ -410,8 +418,7 @@ async def create_user_order(
         if not product.is_active:
             raise BusinessException("商品已下架", code="PRODUCT_INACTIVE")
 
-        # 2. 确定积分价格和库存检查
-        points_cost = product.points_cost
+        # 2. 确定SKU和价格
         sku = None
         if body.sku_id:
             # SKU商品：查询SKU信息（加行级锁）
@@ -427,25 +434,26 @@ async def create_user_order(
                 raise BusinessException("SKU已下架", code="SKU_INACTIVE")
             if not sku.stock_unlimited and sku.stock <= 0:
                 raise BusinessException("SKU库存不足", code="INSUFFICIENT_STOCK")
-            points_cost = sku.points_cost
         else:
             # 非SKU商品：检查商品库存
             if not product.stock_unlimited and product.stock <= 0:
                 raise BusinessException("商品库存不足", code="INSUFFICIENT_STOCK")
 
-        # 3. 检查积分是否足够
-        user_points_record = await get_or_create_user_points(db, current_user.id)
-        user_points = user_points_record.available_points
-        if user_points < points_cost:
-            raise BusinessException(
-                f"积分不足，当前积分{user_points}，需要{points_cost}积分",
-                code="INSUFFICIENT_POINTS"
-            )
+        # 3. 计算订单价格（根据支付模式）
+        price_info = calculate_order_price(product, sku)
+        points_cost = price_info["points_cost"]
 
-        # 4. 配送区域校验
-        # 判断是否需要收货地址：
-        # - 只有虚拟商品不需要地址
-        # - 实物商品和套餐商品需要快递或自提时，需要地址
+        # 4. 检查积分是否足够（如果需要积分）
+        if points_cost > 0:
+            user_points_record = await get_or_create_user_points(db, current_user.id)
+            user_points = user_points_record.available_points
+            if user_points < points_cost:
+                raise BusinessException(
+                    f"积分不足，当前积分{user_points}，需要{points_cost}积分",
+                    code="INSUFFICIENT_POINTS"
+                )
+
+        # 5. 配送区域校验
         need_address = (
             product.product_type != 'virtual' and
             product.shipping_method != 'no_shipping'
@@ -455,7 +463,6 @@ async def create_user_order(
             if not body.address_id:
                 raise BusinessException("请选择收货地址", code="ADDRESS_REQUIRED")
 
-            # 查询地址
             result = await db.execute(
                 select(UserAddress).where(UserAddress.id == body.address_id)
             )
@@ -463,14 +470,11 @@ async def create_user_order(
             if not address:
                 raise NotFoundException("地址不存在", code="ADDRESS_NOT_FOUND")
 
-            # 检查配送区域
             if product.shipping_template_id:
                 service = ShippingTemplateService(db)
                 template = await service.get_template(str(product.shipping_template_id))
                 if template:
                     province = address.province_name
-
-                    # 检查不配送区域
                     regions = await service.list_regions(str(product.shipping_template_id))
                     excluded_region_names = []
                     for region in regions:
@@ -488,8 +492,8 @@ async def create_user_order(
                                 code="DELIVERY_NOT_AVAILABLE"
                             )
 
-        # 5. 创建订单（在事务中完成库存扣减和积分扣除）
-        order = await create_order(
+        # 6. 创建订单（在事务中完成库存扣减）
+        order, order_price_info = await create_order(
             db,
             current_user.id,
             body.product_id,
@@ -499,16 +503,42 @@ async def create_user_order(
             body.sku_id,
         )
 
+        need_payment = order_price_info["need_payment"]
+
         data = {
             "id": order.id,
             "order_number": order.order_number,
             "product_name": order.product_name,
+            "payment_mode": order.payment_mode,
             "points_cost": order.points_cost,
+            "cash_amount": order.cash_amount,
+            "need_payment": need_payment,
             "status": order.status,
             "created_at": order.created_at.isoformat(),
         }
 
-        return success_response(data=data, message="下单成功")
+        # 7. 如果需要支付，创建支付流水
+        if need_payment:
+            from app.services.point_payment_service import create_point_payment
+            client_ip = get_client_ip(request)
+
+            try:
+                payment, payment_params = await create_point_payment(
+                    db,
+                    order.id,
+                    current_user.id,
+                    current_user.openid,
+                    client_ip,
+                    idempotency_key=f"payment:{order.id}",
+                )
+                data["payment_id"] = payment.id
+                data["payment_params"] = payment_params
+            except Exception as e:
+                # 支付创建失败，订单仍然有效，用户可以稍后重试支付
+                pass
+
+        message = "下单成功" if not need_payment else "下单成功，请完成支付"
+        return success_response(data=data, message=message)
 
 
 @router.get("/orders")
@@ -1026,3 +1056,110 @@ async def admin_process_order(
     """处理订单（管理员）"""
     order = await process_order(db, order_id, current_admin.id, action, notes)
     return success_response(message=f"订单已{action}d")
+
+
+# ============== 支付相关接口 ==============
+
+class CreatePaymentRequest(BaseModel):
+    """创建支付请求"""
+    order_id: str = Field(..., description="订单ID")
+    idempotency_key: Optional[str] = Field(None, description="幂等性键")
+
+
+@router.post("/payments/create")
+async def create_payment(
+    body: CreatePaymentRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """创建支付
+
+    为需要现金支付的订单创建微信支付
+    """
+    from app.services.point_payment_service import create_point_payment
+
+    client_ip = get_client_ip(request)
+
+    payment, payment_params = await create_point_payment(
+        db,
+        body.order_id,
+        current_user.id,
+        current_user.openid,
+        client_ip,
+        idempotency_key=body.idempotency_key,
+    )
+
+    return success_response(data={
+        "payment_id": payment.id,
+        "out_trade_no": payment.out_trade_no,
+        "cash_amount": payment.cash_amount,
+        "points_amount": payment.points_amount,
+        "payment_params": payment_params,
+    })
+
+
+@router.get("/payments/{payment_id}")
+async def get_payment_status(
+    payment_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """查询支付状态"""
+    from app.services.point_payment_service import query_payment_status
+
+    payment = await query_payment_status(db, payment_id, current_user.id)
+    if not payment:
+        raise NotFoundException("支付记录不存在", code="PAYMENT_NOT_FOUND")
+
+    return success_response(data={
+        "payment_id": payment.id,
+        "order_id": payment.order_id,
+        "out_trade_no": payment.out_trade_no,
+        "status": payment.status,
+        "cash_amount": payment.cash_amount,
+        "points_amount": payment.points_amount,
+        "payment_method": payment.payment_method,
+        "transaction_id": payment.transaction_id,
+        "paid_at": payment.paid_at.isoformat() if payment.paid_at else None,
+        "fail_code": payment.fail_code,
+        "fail_message": payment.fail_message,
+        "created_at": payment.created_at.isoformat(),
+    })
+
+
+@router.post("/payments/notify/wechat")
+async def wechat_payment_notify(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """微信支付回调通知
+
+    注意：此接口不需要认证，由微信服务器调用
+    """
+    from app.utils.wechat_pay import parse_payment_notify
+    from app.services.point_payment_service import (
+        handle_point_payment_notify,
+        generate_payment_response,
+    )
+
+    # 读取原始数据
+    raw_body = await request.body()
+
+    try:
+        # 解析并验证签名
+        notify_data = parse_payment_notify(raw_body)
+
+        if not notify_data:
+            return generate_payment_response("FAIL", "签名验证失败")
+
+        # 处理回调
+        success = await handle_point_payment_notify(db, notify_data)
+
+        if success:
+            return generate_payment_response("SUCCESS", "OK")
+        else:
+            return generate_payment_response("FAIL", "处理失败")
+
+    except Exception as e:
+        return generate_payment_response("FAIL", str(e))

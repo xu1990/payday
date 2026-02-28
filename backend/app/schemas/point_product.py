@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from app.models.point_product import PointProduct
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class PointProductBase(BaseModel):
@@ -12,6 +12,13 @@ class PointProductBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="商品名称")
     description: Optional[str] = Field(None, description="商品描述")
     points_cost: int = Field(..., gt=0, description="积分价格")
+
+    # 支付模式（新增）
+    payment_mode: str = Field("points_only", description="支付模式: points_only=纯积分, cash_only=纯现金, mixed=混合支付")
+    cash_price: Optional[int] = Field(None, ge=0, description="现金价格（分）- 纯现金模式")
+    mixed_points_cost: Optional[int] = Field(None, ge=0, description="混合支付时的积分价格")
+    mixed_cash_price: Optional[int] = Field(None, ge=0, description="混合支付时的现金价格（分）")
+
     stock: int = Field(..., ge=0, description="库存数量")
     stock_unlimited: bool = Field(False, description="库存无限")
     category: Optional[str] = Field(None, description="商品分类")
@@ -21,14 +28,47 @@ class PointProductBase(BaseModel):
     shipping_method: str = Field("express", description="物流方式: express=快递, self_pickup=自提, no_shipping=无需快递")
     shipping_template_id: Optional[str] = Field(None, description="运费模板ID")
 
-    @validator('stock')
-    def validate_stock(cls, v, values):
+    @field_validator('stock')
+    @classmethod
+    def validate_stock(cls, v, info):
         """验证库存"""
-        if values.get('stock_unlimited', False):
+        if info.data.get('stock_unlimited', False):
             return 0
         return v
 
-    @validator('product_type')
+    @field_validator('payment_mode')
+    @classmethod
+    def validate_payment_mode(cls, v):
+        """验证支付模式"""
+        valid_modes = ['points_only', 'cash_only', 'mixed']
+        if v not in valid_modes:
+            raise ValueError(f"支付模式必须是以下之一: {', '.join(valid_modes)}")
+        return v
+
+    @field_validator('cash_price')
+    @classmethod
+    def validate_cash_price(cls, v, info):
+        """验证现金价格"""
+        payment_mode = info.data.get('payment_mode', 'points_only')
+        if payment_mode == 'cash_only' and v is None:
+            raise ValueError("纯现金模式下必须设置现金价格")
+        return v
+
+    @field_validator('mixed_points_cost', 'mixed_cash_price')
+    @classmethod
+    def validate_mixed_prices(cls, v, info):
+        """验证混合支付价格"""
+        payment_mode = info.data.get('payment_mode', 'points_only')
+        if payment_mode == 'mixed':
+            field_name = info.field_name
+            if field_name == 'mixed_points_cost' and v is None:
+                raise ValueError("混合支付模式下必须设置积分价格")
+            if field_name == 'mixed_cash_price' and v is None:
+                raise ValueError("混合支付模式下必须设置现金价格")
+        return v
+
+    @field_validator('product_type')
+    @classmethod
     def validate_product_type(cls, v):
         """验证商品类型"""
         valid_types = ['virtual', 'physical', 'bundle']
@@ -36,7 +76,8 @@ class PointProductBase(BaseModel):
             raise ValueError(f"商品类型必须是以下之一: {', '.join(valid_types)}")
         return v
 
-    @validator('shipping_method')
+    @field_validator('shipping_method')
+    @classmethod
     def validate_shipping_method(cls, v):
         """验证物流方式"""
         valid_methods = ['express', 'self_pickup', 'no_shipping']
@@ -49,7 +90,8 @@ class PointProductCreate(PointProductBase):
     """创建商品Schema"""
     image_urls: Optional[List[str]] = Field(None, max_length=6, description="商品图片URLs")
 
-    @validator('image_urls')
+    @field_validator('image_urls')
+    @classmethod
     def validate_image_urls(cls, v):
         """验证图片URLs"""
         if v and len(v) > 6:
@@ -81,6 +123,13 @@ class PointProductUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = None
     points_cost: Optional[int] = Field(None, gt=0)
+
+    # 支付模式（新增）
+    payment_mode: Optional[str] = Field(None, description="支付模式")
+    cash_price: Optional[int] = Field(None, ge=0, description="现金价格（分）")
+    mixed_points_cost: Optional[int] = Field(None, ge=0, description="混合支付时的积分价格")
+    mixed_cash_price: Optional[int] = Field(None, ge=0, description="混合支付时的现金价格（分）")
+
     stock: Optional[int] = Field(None, ge=0)
     stock_unlimited: Optional[bool] = None
     category: Optional[str] = None
@@ -96,14 +145,26 @@ class PointProductUpdate(BaseModel):
     specifications: Optional[List[SpecificationInput]] = None
     skus: Optional[List[SKUInput]] = None
 
-    @validator('image_urls')
+    @field_validator('payment_mode')
+    @classmethod
+    def validate_payment_mode(cls, v):
+        """验证支付模式"""
+        if v is not None:
+            valid_modes = ['points_only', 'cash_only', 'mixed']
+            if v not in valid_modes:
+                raise ValueError(f"支付模式必须是以下之一: {', '.join(valid_modes)}")
+        return v
+
+    @field_validator('image_urls')
+    @classmethod
     def validate_image_urls(cls, v):
         """验证图片URLs"""
         if v and len(v) > 6:
             raise ValueError("最多支持6张图片")
         return v
 
-    @validator('product_type')
+    @field_validator('product_type')
+    @classmethod
     def validate_product_type(cls, v):
         """验证商品类型"""
         if v is not None:
@@ -112,7 +173,8 @@ class PointProductUpdate(BaseModel):
                 raise ValueError(f"商品类型必须是以下之一: {', '.join(valid_types)}")
         return v
 
-    @validator('shipping_method')
+    @field_validator('shipping_method')
+    @classmethod
     def validate_shipping_method(cls, v):
         """验证物流方式"""
         if v is not None:
@@ -130,7 +192,8 @@ class PointProductResponse(PointProductBase):
     created_at: datetime
     updated_at: datetime
 
-    @validator('image_urls', pre=True)
+    @field_validator('image_urls', mode='before')
+    @classmethod
     def parse_image_urls(cls, v):
         """解析图片URLs JSON字符串"""
         if isinstance(v, str):
@@ -152,6 +215,13 @@ class PointProductListResponse(BaseModel):
     image_urls: Optional[List[str]]
     image_url: Optional[str]  # 兼容旧版
     points_cost: int
+
+    # 支付模式（新增）
+    payment_mode: str = "points_only"
+    cash_price: Optional[int] = None
+    mixed_points_cost: Optional[int] = None
+    mixed_cash_price: Optional[int] = None
+
     stock: int
     stock_unlimited: bool
     category: Optional[str]
@@ -162,7 +232,8 @@ class PointProductListResponse(BaseModel):
     shipping_template_id: Optional[str]
     created_at: datetime
 
-    @validator('image_urls', pre=True)
+    @field_validator('image_urls', mode='before')
+    @classmethod
     def parse_image_urls(cls, v):
         """解析图片URLs JSON字符串"""
         if isinstance(v, str):
@@ -172,12 +243,13 @@ class PointProductListResponse(BaseModel):
                 return []
         return v
 
-    @validator('image_url', pre=True)
-    def parse_image_url(cls, v, values):
+    @field_validator('image_url', mode='before')
+    @classmethod
+    def parse_image_url(cls, v, info):
         """解析主图片URL"""
         if v:
             return v
-        image_urls = values.get('image_urls', [])
+        image_urls = info.data.get('image_urls', [])
         return image_urls[0] if image_urls else None
 
     class Config:

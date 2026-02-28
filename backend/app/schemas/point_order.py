@@ -15,11 +15,31 @@ class PointOrderStatus(str, Enum):
     REFUNDED = "refunded"
 
 
+class PaymentMode(str, Enum):
+    """支付模式枚举"""
+    POINTS_ONLY = "points_only"
+    CASH_ONLY = "cash_only"
+    MIXED = "mixed"
+
+
+class PaymentStatus(str, Enum):
+    """支付状态枚举"""
+    UNPAID = "unpaid"
+    PAYING = "paying"
+    PAID = "paid"
+    REFUNDED = "refunded"
+    FAILED = "failed"
+
+
 class PointOrderCreate(BaseModel):
     """创建订单Schema"""
     product_id: str = Field(..., description="商品ID")
+    sku_id: Optional[str] = Field(None, description="SKU ID")
+    address_id: Optional[str] = Field(None, description="收货地址ID")
     delivery_info: Optional[str] = Field(None, description="收货信息")
     notes: Optional[str] = Field(None, description="备注")
+    idempotency_key: Optional[str] = Field(None, description="幂等性键（防重复提交）")
+    payment_mode: Optional[str] = Field(None, description="支付模式（可选，默认使用商品设置）")
 
 
 class PointOrderUpdate(BaseModel):
@@ -39,6 +59,21 @@ class PointOrderResponse(BaseModel):
     product_name: str
     product_image: Optional[str]
     points_cost: int
+
+    # 支付信息（新增）
+    payment_mode: PaymentMode
+    points_deducted: bool = False
+    cash_amount: Optional[int] = None
+    payment_status: PaymentStatus = PaymentStatus.UNPAID
+    payment_method: Optional[str] = None
+    transaction_id: Optional[str] = None
+
+    # 退款信息（新增）
+    refund_status: Optional[str] = None
+    refund_amount: Optional[int] = None
+    refund_transaction_id: Optional[str] = None
+    refunded_at: Optional[datetime] = None
+
     delivery_info: Optional[str]
     sku_id: Optional[str]
     address_id: Optional[str]
@@ -63,6 +98,12 @@ class PointOrderListResponse(BaseModel):
     product_name: str
     product_image: Optional[str]
     points_cost: int
+
+    # 支付信息（新增）
+    payment_mode: PaymentMode
+    cash_amount: Optional[int] = None
+    payment_status: PaymentStatus = PaymentStatus.UNPAID
+
     status: PointOrderStatus
     created_at: datetime
     processed_at: Optional[datetime]

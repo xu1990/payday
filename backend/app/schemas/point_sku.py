@@ -81,6 +81,12 @@ class SKUCreate(BaseModel):
     specs: Dict[str, str] = Field(..., description="规格组合（如：{\"颜色\": \"红色\", \"尺寸\": \"L\"}）")
     stock: int = Field(..., ge=0, description="库存数量")
     points_cost: int = Field(..., gt=0, description="积分价格")
+
+    # 支付价格（新增）
+    cash_price: Optional[int] = Field(None, ge=0, description="现金价格（分）- 覆盖商品默认")
+    mixed_points_cost: Optional[int] = Field(None, ge=0, description="混合支付时的积分价格")
+    mixed_cash_price: Optional[int] = Field(None, ge=0, description="混合支付时的现金价格（分）")
+
     stock_unlimited: bool = Field(False, description="库存无限")
     image_url: Optional[str] = Field(None, max_length=500, description="SKU专属图片")
     sort_order: int = Field(0, description="排序权重")
@@ -92,6 +98,12 @@ class SKUUpdate(BaseModel):
     specs: Optional[Dict[str, str]] = Field(None, description="规格组合")
     stock: Optional[int] = Field(None, ge=0, description="库存数量")
     points_cost: Optional[int] = Field(None, gt=0, description="积分价格")
+
+    # 支付价格（新增）
+    cash_price: Optional[int] = Field(None, ge=0, description="现金价格（分）")
+    mixed_points_cost: Optional[int] = Field(None, ge=0, description="混合支付时的积分价格")
+    mixed_cash_price: Optional[int] = Field(None, ge=0, description="混合支付时的现金价格（分）")
+
     stock_unlimited: Optional[bool] = Field(None, description="库存无限")
     image_url: Optional[str] = Field(None, max_length=500, description="SKU专属图片")
     is_active: Optional[bool] = Field(None, description="是否启用")
@@ -107,6 +119,12 @@ class SKUResponse(BaseModel):
     stock: int
     stock_unlimited: bool
     points_cost: int
+
+    # 支付价格（新增）
+    cash_price: Optional[int] = None
+    mixed_points_cost: Optional[int] = None
+    mixed_cash_price: Optional[int] = None
+
     sold: int = 0
     image_url: Optional[str] = None
     is_active: bool
@@ -135,6 +153,9 @@ class SKUResponse(BaseModel):
             stock=sku.stock,
             stock_unlimited=sku.stock_unlimited,
             points_cost=sku.points_cost,
+            cash_price=sku.cash_price,
+            mixed_points_cost=sku.mixed_points_cost,
+            mixed_cash_price=sku.mixed_cash_price,
             sold=sku.sold or 0,
             image_url=sku.image_url,
             is_active=sku.is_active,

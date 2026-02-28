@@ -21,6 +21,21 @@ class PointProduct(Base):
 
     # 价格与库存
     points_cost = Column(Integer, nullable=False, comment="积分价格")
+
+    # 支付模式（新增）
+    payment_mode = Column(
+        String(20),
+        default="points_only",
+        nullable=False,
+        comment="支付模式: points_only=纯积分, cash_only=纯现金, mixed=混合支付"
+    )
+    # 纯现金模式价格（单位：分）
+    cash_price = Column(Integer, nullable=True, comment="现金价格（分）- 0表示免费，null表示不适用")
+    # 混合支付时的积分价格
+    mixed_points_cost = Column(Integer, nullable=True, comment="混合支付时的积分价格")
+    # 混合支付时的现金价格（单位：分）
+    mixed_cash_price = Column(Integer, nullable=True, comment="混合支付时的现金价格（分）")
+
     stock = Column(Integer, nullable=False, default=0, comment="库存数量")
     stock_unlimited = Column(Boolean, default=False, nullable=False, comment="库存无限")
     sold = Column(Integer, nullable=False, default=0, comment="已售数量")

@@ -18,6 +18,8 @@ from .payday import PaydayConfig
 from .phone_lookup import PhoneLookup, hash_phone_number
 from .point_category import PointCategory
 from .point_order import PointOrder
+from .point_payment import PointPayment
+from .point_payment_notify import PointPaymentNotify
 from .point_product import PointProduct
 from .point_return import PointReturn
 from .point_sku import PointProductSKU, PointSpecification, PointSpecificationValue
@@ -76,6 +78,8 @@ __all__ = [
     "UserInvitation",
     "PointProduct",
     "PointOrder",
+    "PointPayment",
+    "PointPaymentNotify",
     "PointCategory",
     "PointSpecification",
     "PointSpecificationValue",

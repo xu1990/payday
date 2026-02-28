@@ -1,7 +1,7 @@
 """积分订单模型 - Sprint 4.7 商品兑换系统"""
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from .base import Base
@@ -22,6 +22,31 @@ class PointOrder(Base):
     product_name = Column(String(100), nullable=False, comment="商品名称（快照）")
     product_image = Column(String(500), nullable=True, comment="商品图片（快照）")
     points_cost = Column(Integer, nullable=False, comment="消耗积分（快照）")
+
+    # 支付信息（新增）
+    payment_mode = Column(
+        String(20),
+        nullable=False,
+        comment="支付模式: points_only, cash_only, mixed"
+    )
+    points_deducted = Column(Boolean, default=False, nullable=False, comment="积分是否已扣除")
+    cash_amount = Column(Integer, nullable=True, comment="现金金额（分）- 0表示免费，null表示不适用")
+
+    # 支付状态（新增）
+    payment_status = Column(
+        Enum("unpaid", "paying", "paid", "refunded", "failed", name="point_order_payment_status"),
+        default="unpaid",
+        nullable=False,
+        comment="支付状态"
+    )
+    payment_method = Column(String(20), nullable=True, comment="支付方式: wechat")
+    transaction_id = Column(String(100), nullable=True, comment="微信支付交易ID")
+
+    # 退款相关（新增）
+    refund_status = Column(String(20), nullable=True, comment="退款状态: pending, processing, completed, failed")
+    refund_amount = Column(Integer, nullable=True, comment="退款金额（分）")
+    refund_transaction_id = Column(String(100), nullable=True, comment="退款交易ID")
+    refunded_at = Column(DateTime, nullable=True, comment="退款时间")
 
     # 收货信息
     delivery_info = Column(Text, nullable=True, comment="收货信息 JSON")
@@ -54,3 +79,4 @@ class PointOrder(Base):
     user = None  # relationship("User", back_populates="point_orders")
     product = relationship("PointProduct", foreign_keys=[product_id])
     admin = None  # relationship("AdminUser", back_populates="processed_point_orders")
+    payments = relationship("PointPayment", back_populates="order")

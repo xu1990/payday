@@ -1,7 +1,7 @@
 """积分商品服务 - Sprint 4.7 商品兑换系统"""
 import json
 from datetime import datetime
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from app.core.exceptions import BusinessException, NotFoundException, ValidationException
 from app.models.point_order import PointOrder
@@ -11,6 +11,70 @@ from app.services.ability_points_service import add_points, spend_points
 from app.utils.order_number import generate_order_number, is_order_number_exists
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+
+def calculate_order_price(
+    product: PointProduct,
+    sku: Optional[PointProductSKU] = None,
+) -> Dict:
+    """
+    计算订单价格
+
+    返回:
+    {
+        "payment_mode": "points_only" | "cash_only" | "mixed",
+        "points_cost": int,
+        "cash_amount": int | None,
+        "need_payment": bool
+    }
+    """
+    payment_mode = product.payment_mode or "points_only"
+
+    if payment_mode == "points_only":
+        # 纯积分模式
+        points_cost = sku.points_cost if sku and sku.points_cost else product.points_cost
+        return {
+            "payment_mode": "points_only",
+            "points_cost": points_cost,
+            "cash_amount": None,
+            "need_payment": False
+        }
+
+    elif payment_mode == "cash_only":
+        # 纯现金模式
+        if sku and sku.cash_price is not None:
+            cash_amount = sku.cash_price
+        else:
+            cash_amount = product.cash_price or 0
+        return {
+            "payment_mode": "cash_only",
+            "points_cost": 0,
+            "cash_amount": cash_amount,
+            "need_payment": cash_amount > 0
+        }
+
+    elif payment_mode == "mixed":
+        # 混合模式
+        if sku:
+            points_cost = sku.mixed_points_cost if sku.mixed_points_cost is not None else product.mixed_points_cost or 0
+            cash_amount = sku.mixed_cash_price if sku.mixed_cash_price is not None else product.mixed_cash_price or 0
+        else:
+            points_cost = product.mixed_points_cost or 0
+            cash_amount = product.mixed_cash_price or 0
+        return {
+            "payment_mode": "mixed",
+            "points_cost": points_cost,
+            "cash_amount": cash_amount,
+            "need_payment": cash_amount > 0
+        }
+
+    # 默认返回纯积分
+    return {
+        "payment_mode": "points_only",
+        "points_cost": product.points_cost,
+        "cash_amount": None,
+        "need_payment": False
+    }
 
 # ============== 商品管理（管理员） ==============
 
@@ -171,16 +235,26 @@ async def create_order(
     notes: Optional[str] = None,
     address_id: Optional[str] = None,
     sku_id: Optional[str] = None,
-) -> PointOrder:
+) -> Tuple[PointOrder, Dict]:
     """
-    创建订单（用户下单）
+    创建订单（用户下单）- 支持混合支付
 
     核心逻辑：
     1. 查询商品并锁定行
     2. 检查库存
-    3. 扣除积分
-    4. 扣减库存、增加销量
-    5. 创建订单
+    3. 计算订单价格（根据支付模式）
+    4. 如果是纯积分模式：直接扣除积分
+    5. 如果是混合模式：预检查积分余额（不扣除）
+    6. 扣减库存、增加销量
+    7. 创建订单
+
+    返回: (订单对象, 价格信息字典)
+    价格信息: {
+        "payment_mode": str,
+        "points_cost": int,
+        "cash_amount": int | None,
+        "need_payment": bool
+    }
 
     并发安全：使用行级锁防止超卖
     """
@@ -215,24 +289,45 @@ async def create_order(
             raise BusinessException("SKU已下架", code="SKU_INACTIVE")
         if not sku.stock_unlimited and sku.stock <= 0:
             raise BusinessException("SKU库存不足", code="INSUFFICIENT_STOCK")
-        points_cost = sku.points_cost
     else:
         # 2. 检查商品库存（非SKU商品）
         if not product.stock_unlimited and product.stock <= 0:
             raise BusinessException("商品库存不足", code="INSUFFICIENT_STOCK")
-        points_cost = product.points_cost
 
-    # 3. 扣除积分（会检查余额）
-    await spend_points(
-        db,
-        user_id,
-        points_cost,
-        reference_id=product_id,
-        reference_type="point_order",
-        description=f"购买商品: {product.name}"
-    )
+    # 3. 计算订单价格（根据支付模式）
+    price_info = calculate_order_price(product, sku)
+    payment_mode = price_info["payment_mode"]
+    points_cost = price_info["points_cost"]
+    cash_amount = price_info["cash_amount"]
+    need_payment = price_info["need_payment"]
 
-    # 4. 扣减库存、增加销量
+    # 4. 根据支付模式处理积分
+    points_deducted = False
+    if payment_mode == "points_only":
+        # 纯积分模式：直接扣除积分
+        await spend_points(
+            db,
+            user_id,
+            points_cost,
+            reference_id=product_id,
+            reference_type="point_order",
+            description=f"购买商品: {product.name}"
+        )
+        points_deducted = True
+    elif payment_mode == "mixed":
+        # 混合模式：锁定积分（防止支付等待期间被其他操作使用）
+        from app.services.ability_points_service import lock_points
+        await lock_points(
+            db,
+            user_id,
+            points_cost,
+            reference_id=product_id,
+            reference_type="point_order",
+            description=f"购买商品（锁定）: {product.name}"
+        )
+        # 注意：此时 points_deducted = False，等支付成功后再确认扣除
+
+    # 5. 扣减库存、增加销量
     if sku:
         # SKU商品：扣减SKU库存和销量
         if not sku.stock_unlimited:
@@ -244,7 +339,7 @@ async def create_order(
             product.stock -= 1
         product.sold = (product.sold or 0) + 1
 
-    # 5. 生成唯一订单号
+    # 6. 生成唯一订单号
     max_attempts = 10
     order_number = None
     for _ in range(max_attempts):
@@ -255,7 +350,7 @@ async def create_order(
     else:
         raise BusinessException("生成订单号失败，请重试", code="ORDER_NUMBER_GENERATION_FAILED")
 
-    # 6. 创建订单（保存第一张图片作为快照）
+    # 7. 创建订单（保存第一张图片作为快照）
     first_image_url = None
     if product.image_urls:
         try:
@@ -265,6 +360,12 @@ async def create_order(
         except:
             pass
 
+    # 根据支付模式设置订单支付状态
+    if payment_mode == "points_only":
+        payment_status = "paid"  # 纯积分模式，直接为已支付
+    else:
+        payment_status = "unpaid"  # 需要现金支付
+
     order = PointOrder(
         user_id=user_id,
         product_id=product_id,
@@ -273,6 +374,10 @@ async def create_order(
         product_name=product.name,
         product_image=first_image_url,
         points_cost=points_cost,
+        payment_mode=payment_mode,
+        points_deducted=points_deducted,
+        cash_amount=cash_amount,
+        payment_status=payment_status,
         delivery_info=delivery_info,
         notes=notes,
         address_id=address_id,
@@ -283,7 +388,7 @@ async def create_order(
     await db.commit()
     await db.refresh(order)
 
-    return order
+    return order, price_info
 
 
 async def list_my_orders(
@@ -331,11 +436,12 @@ async def cancel_order(
 
     逻辑：
     1. 检查订单状态（只有pending可以取消）
-    2. 退还积分
+    2. 退还/解锁积分（根据支付模式）
     3. 恢复库存、扣减销量
     4. 更新订单状态
     """
     from app.models.point_sku import PointProductSKU
+    from app.services.ability_points_service import unlock_points
 
     result = await db.execute(
         select(PointOrder).where(
@@ -350,16 +456,30 @@ async def cancel_order(
     if order.status != "pending":
         raise BusinessException("只有待处理订单可以取消", code="ORDER_CANNOT_CANCEL")
 
-    # 退还积分
-    await add_points(
-        db,
-        user_id,
-        order.points_cost,
-        event_type="order_cancelled",
-        reference_id=order_id,
-        reference_type="point_order",
-        description=f"取消订单退款: {order.product_name}"
-    )
+    # 根据支付模式处理积分退还
+    if order.points_cost > 0:
+        if order.payment_mode == "points_only" and order.points_deducted:
+            # 纯积分模式且已扣除：退还积分
+            await add_points(
+                db,
+                user_id,
+                order.points_cost,
+                event_type="order_cancelled",
+                reference_id=order_id,
+                reference_type="point_order",
+                description=f"取消订单退款: {order.product_name}"
+            )
+        elif order.payment_mode == "mixed" and not order.points_deducted:
+            # 混合模式且未确认扣除：解锁积分
+            await unlock_points(
+                db,
+                user_id,
+                order.points_cost,
+                reference_id=order_id,
+                reference_type="point_order",
+                description=f"取消订单，解锁积分: {order.product_name}"
+            )
+            order.points_deducted = False  # 标记积分已解锁
 
     # 恢复库存、扣减销量
     if order.sku_id:
@@ -430,6 +550,7 @@ async def process_order(
         action: "complete"（完成）或 "cancel"（取消/拒绝）
     """
     from app.models.point_sku import PointProductSKU
+    from app.services.ability_points_service import unlock_points
 
     result = await db.execute(
         select(PointOrder).where(PointOrder.id == order_id).with_for_update()
@@ -449,16 +570,30 @@ async def process_order(
         order.processed_at = datetime.utcnow()
         order.notes_admin = notes
     elif action == "cancel":
-        # 取消订单，退还积分
-        await add_points(
-            db,
-            order.user_id,
-            order.points_cost,
-            event_type="order_cancelled_by_admin",
-            reference_id=order_id,
-            reference_type="point_order",
-            description=f"订单被取消，退款: {order.product_name}"
-        )
+        # 根据支付模式处理积分退还
+        if order.points_cost > 0:
+            if order.payment_mode == "points_only" and order.points_deducted:
+                # 纯积分模式且已扣除：退还积分
+                await add_points(
+                    db,
+                    order.user_id,
+                    order.points_cost,
+                    event_type="order_cancelled_by_admin",
+                    reference_id=order_id,
+                    reference_type="point_order",
+                    description=f"订单被取消，退款: {order.product_name}"
+                )
+            elif order.payment_mode == "mixed" and not order.points_deducted:
+                # 混合模式且未确认扣除：解锁积分
+                await unlock_points(
+                    db,
+                    order.user_id,
+                    order.points_cost,
+                    reference_id=order_id,
+                    reference_type="point_order",
+                    description=f"管理员取消订单，解锁积分: {order.product_name}"
+                )
+                order.points_deducted = False  # 标记积分已解锁
 
         # 恢复库存、扣减销量
         if order.sku_id:

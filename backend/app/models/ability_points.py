@@ -17,6 +17,7 @@ class AbilityPoint(Base):
     # 积分与等级
     total_points = Column(Integer, nullable=False, default=0, comment="总积分")
     available_points = Column(Integer, nullable=False, default=0, comment="可用积分（未兑换的）")
+    locked_points = Column(Integer, nullable=False, default=0, comment="锁定积分（支付中）")
     level = Column(Integer, nullable=False, default=1, comment="等级")
 
     # 统计
