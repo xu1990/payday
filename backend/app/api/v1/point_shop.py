@@ -3,17 +3,20 @@ import json
 from typing import List, Optional
 
 from app.core.database import get_db
-from app.core.deps import get_current_admin_user, get_current_user
-from app.core.exceptions import success_response
+from app.core.deps import get_current_admin_user, get_current_user, rate_limit_point_order
+from app.core.exceptions import BusinessException, NotFoundException, success_response
 from app.models.address import UserAddress
+from app.models.point_sku import PointProductSKU, PointSpecification, PointSpecificationValue
 from app.models.user import User
+from app.schemas.point_product import PointProductUpdate as ProductUpdate
 from app.services.point_product_service import (cancel_order, create_order,  # 商品管理; 订单管理
                                                 create_product, delete_product, get_order,
                                                 get_product, list_all_orders, list_my_orders,
                                                 list_products, process_order, update_product)
+from app.utils.distributed_lock import CombinedLock
 from fastapi import APIRouter, Body, Depends, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Literal
 
@@ -36,6 +39,7 @@ class ProductCreate(BaseModel):
     shipping_template_id: Optional[str] = None
     category_id: Optional[str] = None
     is_active: bool = True
+    fake_sold: int = Field(0, ge=0, description="注水销量（虚拟销量）")
     # SKU相关数据，创建时一起提交
     specifications: Optional[List[dict]] = Field(None, description="规格列表，如 [{'name': '颜色', 'values': ['红', '蓝']}]")
     skus: Optional[List[dict]] = Field(None, description="SKU列表，如 [{'specs': {'颜色': '红'}, 'stock': 10, 'points_cost': 100}]")
@@ -56,13 +60,21 @@ class ProductUpdate(BaseModel):
     shipping_method: Optional[Literal["express", "self_pickup", "no_shipping"]] = None
     shipping_template_id: Optional[str] = None
     category_id: Optional[str] = None
+    fake_sold: Optional[int] = Field(None, ge=0, description="注水销量")
+    off_shelf_reason: Optional[str] = Field(None, max_length=255, description="下架原因")
+
+
+class OffShelfRequest(BaseModel):
+    reason: str = Field(..., min_length=1, max_length=255, description="下架/删除原因")
 
 
 class OrderCreate(BaseModel):
     product_id: str
+    sku_id: Optional[str] = None  # SKU ID（多规格商品时需要）
     address_id: Optional[str] = None
     delivery_info: Optional[str] = None
     notes: Optional[str] = None
+    idempotency_key: Optional[str] = None  # 幂等性键（防止重复提交，建议客户端生成UUID）
 
 
 # ============== 用户端接口 ==============
@@ -77,6 +89,21 @@ async def get_products(
 
     products = await list_products(db, active_only=True, category=category)
 
+    # 获取所有商品的ID
+    product_ids = [p.id for p in products]
+
+    # 批量查询SKU库存信息（用于SKU商品的库存判断）
+    sku_stock_result = await db.execute(
+        select(
+            PointProductSKU.product_id,
+            func.sum(PointProductSKU.stock).label('total_stock'),
+        ).where(
+            PointProductSKU.product_id.in_(product_ids),
+            PointProductSKU.is_active == True
+        ).group_by(PointProductSKU.product_id)
+    )
+    sku_stock_map = {row.product_id: row.total_stock for row in sku_stock_result.fetchall()}
+
     # 批量查询所有需要的分类
     category_ids = [p.category_id for p in products if p.category_id]
     category_map = {}
@@ -89,6 +116,21 @@ async def get_products(
 
     data = []
     for p in products:
+        # 检查库存：过滤掉无库存的商品
+        if p.has_sku:
+            # SKU商品：检查是否有SKU库存
+            total_sku_stock = sku_stock_map.get(p.id, 0) or 0
+            if total_sku_stock <= 0:
+                continue  # 跳过无库存的SKU商品
+            stock = total_sku_stock
+            stock_unlimited = False
+        else:
+            # 非SKU商品：检查商品库存
+            if not p.stock_unlimited and p.stock <= 0:
+                continue  # 跳过无库存的商品
+            stock = p.stock
+            stock_unlimited = p.stock_unlimited
+
         # 解析图片URLs
         image_urls = []
         if p.image_urls:
@@ -109,9 +151,12 @@ async def get_products(
             "image_urls": image_urls,
             "image_url": image_urls[0] if image_urls else None,  # 兼容旧版
             "points_cost": p.points_cost,
-            "stock": p.stock if not p.stock_unlimited else 999,
-            "stock_unlimited": p.stock_unlimited,
+            "stock": stock if not stock_unlimited else 999,
+            "stock_unlimited": stock_unlimited,
             "category": category_name,
+            "has_sku": p.has_sku,
+            "sold": p.sold or 0,
+            "total_sold": (p.sold or 0) + (p.fake_sold or 0),  # 总销量 = 实际销量 + 注水销量
         })
 
     return success_response(data={"products": data, "total": len(data)})
@@ -149,6 +194,9 @@ async def get_product_detail(
         "product_type": product.product_type,
         "shipping_method": product.shipping_method,
         "shipping_template_id": str(product.shipping_template_id) if product.shipping_template_id else None,
+        "sold": product.sold or 0,
+        "fake_sold": product.fake_sold or 0,
+        "total_sold": (product.sold or 0) + (product.fake_sold or 0),  # 总销量
     }
 
     # 如果商品启用SKU管理,加载SKU列表和规格列表
@@ -220,27 +268,159 @@ async def create_user_order(
     body: OrderCreate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    _rate_limit: bool = Depends(rate_limit_point_order),  # 请求频率限制：5次/分钟
 ):
-    """下单"""
-    order = await create_order(
-        db,
-        current_user.id,
-        body.product_id,
-        body.delivery_info,
-        body.notes,
-        body.address_id,
-    )
+    """下单
 
-    data = {
-        "id": order.id,
-        "order_number": order.order_number,
-        "product_name": order.product_name,
-        "points_cost": order.points_cost,
-        "status": order.status,
-        "created_at": order.created_at.isoformat(),
-    }
+    支持以下保护机制：
+    - 请求频率限制：5次/分钟
+    - 幂等性检查：防止重复提交（60秒内）
+    - 分布式锁：防止并发下单
+    - 行级锁：库存安全扣减
+    """
+    from app.models.point_product import PointProduct
+    from app.models.point_sku import PointProductSKU
+    from app.models.address import UserAddress
+    from app.services.ability_points_service import get_or_create_user_points
+    from app.services.shipping_service import ShippingTemplateService
 
-    return success_response(data=data, message="下单成功")
+    # 生成幂等性键和锁键
+    idempotency_key = body.idempotency_key or f"order:{current_user.id}:{body.product_id}:{body.sku_id or 'default'}"
+    lock_key = f"order:{current_user.id}:{body.product_id}"
+
+    # 使用组合锁（幂等性检查 + 分布式锁）
+    async with CombinedLock(
+        idempotency_key=idempotency_key,
+        lock_key=lock_key,
+        idempotency_ttl=60,
+        lock_timeout=30,
+    ) as combined_lock:
+        # 幂等性检查
+        if combined_lock.is_duplicate:
+            raise BusinessException(
+                "订单正在处理中，请勿重复提交",
+                code="DUPLICATE_REQUEST"
+            )
+
+        # 分布式锁检查
+        if not combined_lock.lock_acquired:
+            raise BusinessException(
+                "订单正在处理中，请稍后再试",
+                code="ORDER_PROCESSING"
+            )
+
+        # 1. 查询商品信息（加行级锁）
+        from app.models.point_product import PointProduct
+        result = await db.execute(
+            select(PointProduct)
+            .where(PointProduct.id == body.product_id)
+            .with_for_update()
+        )
+        product = result.scalar_one_or_none()
+        if not product:
+            raise NotFoundException("商品不存在", code="PRODUCT_NOT_FOUND")
+        if not product.is_active:
+            raise BusinessException("商品已下架", code="PRODUCT_INACTIVE")
+
+        # 2. 确定积分价格和库存检查
+        points_cost = product.points_cost
+        sku = None
+        if body.sku_id:
+            # SKU商品：查询SKU信息（加行级锁）
+            result = await db.execute(
+                select(PointProductSKU)
+                .where(PointProductSKU.id == body.sku_id)
+                .with_for_update()
+            )
+            sku = result.scalar_one_or_none()
+            if not sku:
+                raise NotFoundException("SKU不存在", code="SKU_NOT_FOUND")
+            if not sku.is_active:
+                raise BusinessException("SKU已下架", code="SKU_INACTIVE")
+            if not sku.stock_unlimited and sku.stock <= 0:
+                raise BusinessException("SKU库存不足", code="INSUFFICIENT_STOCK")
+            points_cost = sku.points_cost
+        else:
+            # 非SKU商品：检查商品库存
+            if not product.stock_unlimited and product.stock <= 0:
+                raise BusinessException("商品库存不足", code="INSUFFICIENT_STOCK")
+
+        # 3. 检查积分是否足够
+        user_points_record = await get_or_create_user_points(db, current_user.id)
+        user_points = user_points_record.available_points
+        if user_points < points_cost:
+            raise BusinessException(
+                f"积分不足，当前积分{user_points}，需要{points_cost}积分",
+                code="INSUFFICIENT_POINTS"
+            )
+
+        # 4. 配送区域校验
+        # 判断是否需要收货地址：
+        # - 只有虚拟商品不需要地址
+        # - 实物商品和套餐商品需要快递或自提时，需要地址
+        need_address = (
+            product.product_type != 'virtual' and
+            product.shipping_method != 'no_shipping'
+        )
+
+        if need_address:
+            if not body.address_id:
+                raise BusinessException("请选择收货地址", code="ADDRESS_REQUIRED")
+
+            # 查询地址
+            result = await db.execute(
+                select(UserAddress).where(UserAddress.id == body.address_id)
+            )
+            address = result.scalar_one_or_none()
+            if not address:
+                raise NotFoundException("地址不存在", code="ADDRESS_NOT_FOUND")
+
+            # 检查配送区域
+            if product.shipping_template_id:
+                service = ShippingTemplateService(db)
+                template = await service.get_template(str(product.shipping_template_id))
+                if template:
+                    province = address.province_name
+
+                    # 检查不配送区域
+                    regions = await service.list_regions(str(product.shipping_template_id))
+                    excluded_region_names = []
+                    for region in regions:
+                        if region.no_delivery:
+                            excluded_region_names.append(region.region_name)
+
+                    if excluded_region_names:
+                        is_excluded = any(
+                            name in province or province in name
+                            for name in excluded_region_names
+                        )
+                        if is_excluded:
+                            raise BusinessException(
+                                f"该地址不在配送范围内（{province}）",
+                                code="DELIVERY_NOT_AVAILABLE"
+                            )
+
+        # 5. 创建订单（在事务中完成库存扣减和积分扣除）
+        order = await create_order(
+            db,
+            current_user.id,
+            body.product_id,
+            body.delivery_info,
+            body.notes,
+            body.address_id,
+            body.sku_id,
+        )
+
+        data = {
+            "id": order.id,
+            "order_number": order.order_number,
+            "product_name": order.product_name,
+            "points_cost": order.points_cost,
+            "status": order.status,
+            "created_at": order.created_at.isoformat(),
+        }
+
+        return success_response(data=data, message="下单成功")
 
 
 @router.get("/orders")
@@ -328,13 +508,40 @@ async def cancel_user_order(
 @router.get("/admin/products")
 async def admin_list_products(
     active_only: bool = Query(False),
+    category_id: Optional[str] = Query(None, description="分类ID筛选"),
+    product_type: Optional[str] = Query(None, description="商品类型筛选: virtual/physical/bundle"),
+    is_active: Optional[bool] = Query(None, description="上架状态筛选"),
+    keyword: Optional[str] = Query(None, description="关键词搜索（商品名称）"),
     current_admin: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """获取所有商品（管理员）"""
+    """获取所有商品（管理员）- 支持筛选"""
     from app.models.point_category import PointCategory
+    from app.models.point_product import PointProduct
+    from app.models.point_sku import PointProductSKU
+    from sqlalchemy import func
+    from sqlalchemy.orm import joinedload
 
-    products = await list_products(db, active_only=active_only)
+    # 构建查询
+    query = select(PointProduct)
+
+    # 应用筛选条件
+    if active_only:
+        query = query.where(PointProduct.is_active == True)
+    if is_active is not None:
+        query = query.where(PointProduct.is_active == is_active)
+    if category_id:
+        query = query.where(PointProduct.category_id == category_id)
+    if product_type:
+        query = query.where(PointProduct.product_type == product_type)
+    if keyword:
+        query = query.where(PointProduct.name.contains(keyword))
+
+    # 按排序权重和创建时间排序
+    query = query.order_by(PointProduct.sort_order.desc(), PointProduct.created_at.desc())
+
+    result = await db.execute(query)
+    products = result.scalars().all()
 
     # 批量查询所有需要的分类
     category_ids = [p.category_id for p in products if p.category_id]
@@ -345,6 +552,27 @@ async def admin_list_products(
         )
         for cat in result.scalars().all():
             category_map[str(cat.id)] = cat.name
+
+    # 批量查询所有SKU商品的库存和销量汇总
+    product_ids = [p.id for p in products if p.has_sku]
+    sku_aggregates = {}
+    if product_ids:
+        result = await db.execute(
+            select(
+                PointProductSKU.product_id,
+                func.sum(PointProductSKU.stock).label('total_stock'),
+                func.sum(PointProductSKU.sold).label('total_sold'),
+                func.sum(func.coalesce(PointProductSKU.stock_unlimited, False)).label('any_unlimited')
+            ).where(
+                PointProductSKU.product_id.in_(product_ids)
+            ).group_by(PointProductSKU.product_id)
+        )
+        for row in result.all():
+            sku_aggregates[row.product_id] = {
+                'stock': row.total_stock or 0,
+                'sold': row.total_sold or 0,
+                'stock_unlimited': row.any_unlimited > 0
+            }
 
     data = []
     for p in products:
@@ -361,6 +589,19 @@ async def admin_list_products(
         if p.category_id and str(p.category_id) in category_map:
             category_name = category_map[str(p.category_id)]
 
+        # 获取库存和销量（SKU商品从SKU汇总，否则从商品本身）
+        if p.has_sku and p.id in sku_aggregates:
+            stock = sku_aggregates[p.id]['stock']
+            sold = sku_aggregates[p.id]['sold']
+            stock_unlimited = sku_aggregates[p.id]['stock_unlimited']
+        else:
+            stock = p.stock
+            sold = p.sold or 0
+            stock_unlimited = p.stock_unlimited
+
+        # 总销量 = 实际销量 + 注水销量
+        total_sold = sold + (p.fake_sold or 0)
+
         data.append({
             "id": p.id,
             "name": p.name,
@@ -368,8 +609,11 @@ async def admin_list_products(
             "image_urls": image_urls,
             "image_url": image_urls[0] if image_urls else None,  # 兼容旧版
             "points_cost": p.points_cost,
-            "stock": p.stock,
-            "stock_unlimited": p.stock_unlimited,
+            "stock": stock,
+            "stock_unlimited": stock_unlimited,
+            "sold": sold,
+            "fake_sold": p.fake_sold or 0,
+            "total_sold": total_sold,
             "category": category_name,
             "category_id": str(p.category_id) if p.category_id else None,
             "has_sku": p.has_sku,
@@ -377,6 +621,7 @@ async def admin_list_products(
             "shipping_method": p.shipping_method,
             "shipping_template_id": str(p.shipping_template_id) if p.shipping_template_id else None,
             "is_active": p.is_active,
+            "off_shelf_reason": p.off_shelf_reason,
             "sort_order": p.sort_order,
             "created_at": p.created_at.isoformat(),
         })
@@ -411,6 +656,7 @@ async def admin_create_product(
         shipping_template_id=body.shipping_template_id,
         category_id=body.category_id,
         is_active=body.is_active,
+        fake_sold=body.fake_sold,
     )
 
     # 如果是SKU商品，一起创建规格和SKU
@@ -455,8 +701,9 @@ async def admin_create_product(
             if not specs_dict:
                 continue
 
-            # 生成SKU编码
-            sku_code = sku_data.get("sku_code") or f"SKU-{product.id[:8]}-{idx+1}"
+            # 生成SKU编码 - 始终使用产品ID前缀确保全局唯一
+            # 格式: SKU-{product_id前8位}-{序号}
+            sku_code = f"SKU-{product.id[:8]}-{idx+1}"
 
             # 创建SKU
             sku = PointProductSKU(
@@ -525,17 +772,110 @@ async def admin_update_product(
     db: AsyncSession = Depends(get_db),
 ):
     """更新商品（管理员）"""
-    await update_product(db, product_id, **body.model_dump(exclude_unset=True))
+    # 获取排除SKU相关字段的更新数据
+    update_data = body.model_dump(exclude_unset=True, exclude={'specifications', 'skus'})
+    await update_product(db, product_id, **update_data)
+
+    # 处理SKU同步
+    if body.has_sku and body.specifications is not None and body.skus is not None:
+        # 1. 删除旧的规格和SKU
+        # 先删除SKU
+        await db.execute(
+            delete(PointProductSKU).where(PointProductSKU.product_id == product_id)
+        )
+        # 再删除规格值
+        spec_ids_result = await db.execute(
+            select(PointSpecification.id).where(PointSpecification.product_id == product_id)
+        )
+        spec_ids = [row[0] for row in spec_ids_result.fetchall()]
+        if spec_ids:
+            await db.execute(
+                delete(PointSpecificationValue).where(PointSpecificationValue.specification_id.in_(spec_ids))
+            )
+        # 最后删除规格
+        await db.execute(
+            delete(PointSpecification).where(PointSpecification.product_id == product_id)
+        )
+
+        # 2. 创建新的规格和SKU
+        spec_id_map = {}  # 规格名 -> 规格ID
+
+        for spec_data in body.specifications:
+            spec_name = spec_data.name
+            spec_values = spec_data.values
+
+            if not spec_name:
+                continue
+
+            # 创建规格
+            spec = PointSpecification(
+                product_id=product_id,
+                name=spec_name,
+                sort_order=0,
+            )
+            db.add(spec)
+            await db.flush()
+            spec_id_map[spec_name] = spec.id
+
+            # 创建规格值
+            for idx, value in enumerate(spec_values):
+                if not value or not str(value).strip():
+                    continue
+                spec_value = PointSpecificationValue(
+                    specification_id=spec.id,
+                    value=str(value).strip(),
+                    sort_order=idx,
+                )
+                db.add(spec_value)
+
+        # 创建SKU
+        for idx, sku_data in enumerate(body.skus):
+            specs_dict = sku_data.specs
+            if not specs_dict:
+                continue
+
+            # 生成SKU编码 - 始终使用产品ID前缀确保全局唯一
+            # 格式: SKU-{product_id前8位}-{序号}
+            sku_code = f"SKU-{product_id[:8]}-{idx+1}"
+
+            # 创建SKU
+            sku = PointProductSKU(
+                product_id=product_id,
+                sku_code=sku_code,
+                specs=json.dumps(specs_dict, ensure_ascii=False),
+                points_cost=sku_data.points_cost or body.points_cost or 0,
+                stock=sku_data.stock,
+                stock_unlimited=sku_data.stock_unlimited,
+                image_url=sku_data.image_url,
+                sort_order=sku_data.sort_order or idx,
+                is_active=sku_data.is_active,
+            )
+            db.add(sku)
+
+        await db.commit()
+
     return success_response(message="商品更新成功")
 
 
 @router.delete("/admin/products/{product_id}")
 async def admin_delete_product(
     product_id: str,
+    body: Optional[OffShelfRequest] = None,
     current_admin: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     """删除商品（管理员，软删除）"""
+    # 更新下架原因
+    if body and body.reason:
+        from app.models.point_product import PointProduct as ProductModel
+        result = await db.execute(
+            select(ProductModel).where(ProductModel.id == product_id)
+        )
+        product = result.scalar_one_or_none()
+        if product:
+            product.off_shelf_reason = body.reason
+            await db.commit()
+
     await delete_product(db, product_id)
     return success_response(message="商品已删除")
 

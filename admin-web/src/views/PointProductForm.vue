@@ -52,6 +52,7 @@ const form = ref<PointProductCreate>({
   points_cost: 0,
   stock: 0,
   stock_unlimited: false,
+  fake_sold: 0,
   category: '',
   category_id: undefined,
   has_sku: false,
@@ -245,6 +246,7 @@ async function loadProduct() {
       points_cost: product.points_cost,
       stock: product.stock,
       stock_unlimited: product.stock_unlimited,
+      fake_sold: product.fake_sold || 0,
       category: product.category || '',
       category_id: product.category_id,
       has_sku: product.has_sku || false,
@@ -449,6 +451,23 @@ async function removeSpecValue(spec: PointSpecification, value: string) {
   }
 }
 
+// 编辑模式下添加规格值
+async function addSpecValueInEditMode(spec: PointSpecification) {
+  const value = newSpecValues.value[spec.name]
+  if (!value?.trim()) {
+    return
+  }
+
+  try {
+    await createSpecificationValue(spec.id, { value: value.trim(), sort_order: (spec.values?.length || 0) })
+    newSpecValues.value[spec.name] = ''
+    await loadSpecifications()
+    ElMessage.success('添加规格值成功')
+  } catch (e) {
+    ElMessage.error('添加规格值失败')
+  }
+}
+
 // 生成SKU组合
 function generateSKUCombinations() {
   if (specifications.value.length === 0) {
@@ -487,11 +506,36 @@ function generateSKUCombinations() {
 
   const combinations = cartesian(allValues)
 
+  // 创建一个映射，用于查找现有SKU数据
+  const existingSkuMap = new Map<string, typeof skus.value[0]>()
+  for (const sku of skus.value) {
+    try {
+      const specsObj = typeof sku.specs === 'string' ? JSON.parse(sku.specs) : sku.specs
+      const key = JSON.stringify(specsObj, Object.keys(specsObj).sort())
+      existingSkuMap.set(key, sku)
+    } catch {
+      // ignore parse errors
+    }
+  }
+
   skus.value = combinations.map((combo, index) => {
     const specs: Record<string, string> = {}
     combo.forEach(c => {
       specs[c.name] = c.value
     })
+
+    // 查找是否存在相同规格的SKU
+    const key = JSON.stringify(specs, Object.keys(specs).sort())
+    const existingSku = existingSkuMap.get(key)
+
+    if (existingSku) {
+      // 保留现有SKU的数据，只更新specs
+      return {
+        ...existingSku,
+        specs: JSON.stringify(specs),
+        sort_order: index,
+      }
+    }
 
     return {
       id: `temp_sku_${Date.now()}_${index}`,
@@ -825,6 +869,11 @@ onMounted(async () => {
           </el-form-item>
         </template>
 
+        <el-form-item label="注水销量">
+          <el-input-number v-model="form.fake_sold" :min="0" :max="999999" />
+          <span style="margin-left: 10px; color: #999; font-size: 12px">前台显示销量 = 实际销量 + 注水销量</span>
+        </el-form-item>
+
         <el-form-item label="排序权重">
           <el-input-number v-model="form.sort_order" :min="0" :max="9999" />
           <span style="margin-left: 10px; color: #999; font-size: 12px">数值越大越靠前</span>
@@ -860,6 +909,15 @@ onMounted(async () => {
                 >
                   {{ value.value }}
                 </el-tag>
+                <!-- 添加新规格值的输入 -->
+                <el-input
+                  v-if="!newSpecValues[spec.name]"
+                  v-model="newSpecValues[spec.name]"
+                  placeholder="输入后按回车"
+                  size="small"
+                  style="width: 100px"
+                  @keyup.enter="addSpecValueInEditMode(spec)"
+                />
               </template>
               <template v-else>
                 <!-- 新建模式：显示输入的规格值 -->
@@ -911,19 +969,22 @@ onMounted(async () => {
                 </el-button>
               </div>
               <div v-else class="spec-hint">
-                <span style="color: #999; font-size: 12px">编辑模式下，请保存后重新生成SKU</span>
+                <span style="color: #999; font-size: 12px">修改规格后点击"生成SKU组合"更新SKU列表</span>
               </div>
             </div>
           </div>
 
           <el-button
-            v-if="specifications.length > 0 && !productId"
+            v-if="specifications.length > 0"
             type="success"
             @click="generateSKUCombinations"
             style="margin-top: 15px"
           >
             生成SKU组合
           </el-button>
+          <span v-if="productId && skus.length > 0" style="margin-left: 10px; color: #e6a23c; font-size: 12px">
+            重新生成将覆盖现有SKU数据
+          </span>
         </div>
       </el-card>
 

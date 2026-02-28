@@ -23,6 +23,8 @@ class PointProduct(Base):
     points_cost = Column(Integer, nullable=False, comment="积分价格")
     stock = Column(Integer, nullable=False, default=0, comment="库存数量")
     stock_unlimited = Column(Boolean, default=False, nullable=False, comment="库存无限")
+    sold = Column(Integer, nullable=False, default=0, comment="已售数量")
+    fake_sold = Column(Integer, nullable=False, default=0, comment="注水销量（虚拟销量）")
 
     # 分类与排序
     category = Column(String(50), nullable=True, comment="商品分类")
@@ -59,6 +61,7 @@ class PointProduct(Base):
 
     # 状态
     is_active = Column(Boolean, default=True, nullable=False, comment="是否上架")
+    off_shelf_reason = Column(String(255), nullable=True, comment="下架/删除原因")
 
     # 时间戳
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

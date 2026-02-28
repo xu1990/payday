@@ -138,3 +138,6 @@ RATE_LIMIT_POST = RateLimiter(times=60, max_requests=10)
 
 # 评论 API: 20次/分钟
 RATE_LIMIT_COMMENT = RateLimiter(times=60, max_requests=20)
+
+# 积分商城下单 API: 5次/分钟
+RATE_LIMIT_POINT_ORDER = RateLimiter(times=60, max_requests=5)

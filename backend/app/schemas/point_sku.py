@@ -107,6 +107,7 @@ class SKUResponse(BaseModel):
     stock: int
     stock_unlimited: bool
     points_cost: int
+    sold: int = 0
     image_url: Optional[str] = None
     is_active: bool
     sort_order: int
@@ -134,6 +135,7 @@ class SKUResponse(BaseModel):
             stock=sku.stock,
             stock_unlimited=sku.stock_unlimited,
             points_cost=sku.points_cost,
+            sold=sku.sold or 0,
             image_url=sku.image_url,
             is_active=sku.is_active,
             sort_order=sku.sort_order,

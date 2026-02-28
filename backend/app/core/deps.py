@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .csrf import CSRFException, csrf_manager
 from .database import get_db
 from .rate_limit import (RATE_LIMIT_COMMENT, RATE_LIMIT_GENERAL, RATE_LIMIT_LOGIN, RATE_LIMIT_POST,
-                         RateLimiter, get_client_identifier)
+                         RATE_LIMIT_POINT_ORDER, RateLimiter, get_client_identifier)
 from .security import decode_token
 from .signature import verify_signature, verify_timestamp
 
@@ -380,6 +380,17 @@ async def rate_limit_comment(request: Request) -> bool:
     return True
 
 
+async def rate_limit_point_order(request: Request) -> bool:
+    """
+    积分商城下单 API 速率限制：5次/分钟
+
+    防止恶意刷单
+    """
+    identifier = await get_client_identifier(request)
+    await RATE_LIMIT_POINT_ORDER.check(identifier, request)
+    return True
+
+
 __all__ = [
     "get_db",
     "get_current_user",
@@ -393,6 +404,7 @@ __all__ = [
     "rate_limit_login",
     "rate_limit_post",
     "rate_limit_comment",
+    "rate_limit_point_order",
 ]
 
 # Alias for backwards compatibility

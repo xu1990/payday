@@ -106,6 +106,7 @@ export interface SKUResponse {
   stock: number
   stock_unlimited: boolean
   points_cost: number
+  sold: number
   image_url?: string
   is_active: boolean
   sort_order: number

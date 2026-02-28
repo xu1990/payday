@@ -57,6 +57,25 @@ class PointProductCreate(PointProductBase):
         return v
 
 
+class SpecificationInput(BaseModel):
+    """规格输入"""
+    name: str = Field(..., min_length=1, max_length=50, description="规格名称")
+    values: List[str] = Field(default_factory=list, description="规格值列表")
+
+
+class SKUInput(BaseModel):
+    """SKU输入"""
+    id: Optional[str] = Field(None, description="SKU ID（更新时需要）")
+    sku_code: Optional[str] = Field(None, max_length=50, description="SKU编码")
+    specs: dict = Field(default_factory=dict, description="规格组合")
+    stock: int = Field(0, ge=0, description="库存")
+    stock_unlimited: bool = Field(False, description="无限库存")
+    points_cost: int = Field(0, gt=0, description="积分价格")
+    image_url: Optional[str] = Field(None, max_length=500, description="SKU图片")
+    sort_order: int = Field(0, ge=0, description="排序")
+    is_active: bool = Field(True, description="是否启用")
+
+
 class PointProductUpdate(BaseModel):
     """更新商品Schema"""
     name: Optional[str] = Field(None, min_length=1, max_length=100)
@@ -65,6 +84,7 @@ class PointProductUpdate(BaseModel):
     stock: Optional[int] = Field(None, ge=0)
     stock_unlimited: Optional[bool] = None
     category: Optional[str] = None
+    category_id: Optional[str] = None
     sort_order: Optional[int] = Field(None, ge=0)
     is_active: Optional[bool] = None
     image_urls: Optional[List[str]] = Field(None, max_length=6)
@@ -72,6 +92,9 @@ class PointProductUpdate(BaseModel):
     product_type: Optional[str] = None
     shipping_method: Optional[str] = None
     shipping_template_id: Optional[str] = None
+    # SKU相关字段
+    specifications: Optional[List[SpecificationInput]] = None
+    skus: Optional[List[SKUInput]] = None
 
     @validator('image_urls')
     def validate_image_urls(cls, v):

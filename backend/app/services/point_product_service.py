@@ -6,6 +6,7 @@ from typing import List, Optional
 from app.core.exceptions import BusinessException, NotFoundException, ValidationException
 from app.models.point_order import PointOrder
 from app.models.point_product import PointProduct
+from app.models.point_sku import PointProductSKU
 from app.services.ability_points_service import add_points, spend_points
 from app.utils.order_number import generate_order_number, is_order_number_exists
 from sqlalchemy import and_, select
@@ -111,13 +112,32 @@ async def list_products(
     category: Optional[str] = None,
 ) -> List[PointProduct]:
     """获取商品列表"""
+    from app.models.point_category import PointCategory
+    from sqlalchemy import or_
+
     query = select(PointProduct)
 
     if active_only:
         query = query.where(PointProduct.is_active == True)
 
     if category:
-        query = query.where(PointProduct.category == category)
+        # 尝试通过分类名称查找分类ID
+        category_result = await db.execute(
+            select(PointCategory.id).where(PointCategory.name == category).limit(1)
+        )
+        category_row = category_result.first()
+        category_id = str(category_row[0]) if category_row else None
+
+        # 同时匹配 category 名称或 category_id
+        if category_id:
+            query = query.where(
+                or_(
+                    PointProduct.category == category,
+                    PointProduct.category_id == category_id
+                )
+            )
+        else:
+            query = query.where(PointProduct.category == category)
 
     query = query.order_by(
         PointProduct.sort_order.desc(),
@@ -150,6 +170,7 @@ async def create_order(
     delivery_info: Optional[str] = None,
     notes: Optional[str] = None,
     address_id: Optional[str] = None,
+    sku_id: Optional[str] = None,
 ) -> PointOrder:
     """
     创建订单（用户下单）
@@ -158,11 +179,13 @@ async def create_order(
     1. 查询商品并锁定行
     2. 检查库存
     3. 扣除积分
-    4. 扣减库存
+    4. 扣减库存、增加销量
     5. 创建订单
 
     并发安全：使用行级锁防止超卖
     """
+    from app.models.point_sku import PointProductSKU
+
     # 1. 查询商品并加行级锁（防止并发问题）
     result = await db.execute(
         select(PointProduct)
@@ -177,23 +200,49 @@ async def create_order(
     if not product.is_active:
         raise BusinessException("商品已下架", code="PRODUCT_INACTIVE")
 
-    # 2. 检查库存
-    if not product.stock_unlimited and product.stock <= 0:
-        raise BusinessException("商品库存不足", code="INSUFFICIENT_STOCK")
+    # 如果指定了SKU，检查SKU库存
+    sku = None
+    if sku_id:
+        result = await db.execute(
+            select(PointProductSKU)
+            .where(PointProductSKU.id == sku_id)
+            .with_for_update()
+        )
+        sku = result.scalar_one_or_none()
+        if not sku:
+            raise NotFoundException("SKU不存在", code="SKU_NOT_FOUND")
+        if not sku.is_active:
+            raise BusinessException("SKU已下架", code="SKU_INACTIVE")
+        if not sku.stock_unlimited and sku.stock <= 0:
+            raise BusinessException("SKU库存不足", code="INSUFFICIENT_STOCK")
+        points_cost = sku.points_cost
+    else:
+        # 2. 检查商品库存（非SKU商品）
+        if not product.stock_unlimited and product.stock <= 0:
+            raise BusinessException("商品库存不足", code="INSUFFICIENT_STOCK")
+        points_cost = product.points_cost
 
     # 3. 扣除积分（会检查余额）
     await spend_points(
         db,
         user_id,
-        product.points_cost,
+        points_cost,
         reference_id=product_id,
         reference_type="point_order",
         description=f"购买商品: {product.name}"
     )
 
-    # 4. 扣减库存
-    if not product.stock_unlimited:
-        product.stock -= 1
+    # 4. 扣减库存、增加销量
+    if sku:
+        # SKU商品：扣减SKU库存和销量
+        if not sku.stock_unlimited:
+            sku.stock -= 1
+        sku.sold = (sku.sold or 0) + 1
+    else:
+        # 非SKU商品：扣减商品库存和销量
+        if not product.stock_unlimited:
+            product.stock -= 1
+        product.sold = (product.sold or 0) + 1
 
     # 5. 生成唯一订单号
     max_attempts = 10
@@ -219,10 +268,11 @@ async def create_order(
     order = PointOrder(
         user_id=user_id,
         product_id=product_id,
+        sku_id=sku_id,
         order_number=order_number,
         product_name=product.name,
         product_image=first_image_url,
-        points_cost=product.points_cost,
+        points_cost=points_cost,
         delivery_info=delivery_info,
         notes=notes,
         address_id=address_id,
@@ -282,9 +332,11 @@ async def cancel_order(
     逻辑：
     1. 检查订单状态（只有pending可以取消）
     2. 退还积分
-    3. 恢复库存
+    3. 恢复库存、扣减销量
     4. 更新订单状态
     """
+    from app.models.point_sku import PointProductSKU
+
     result = await db.execute(
         select(PointOrder).where(
             and_(PointOrder.id == order_id, PointOrder.user_id == user_id)
@@ -309,15 +361,31 @@ async def cancel_order(
         description=f"取消订单退款: {order.product_name}"
     )
 
-    # 恢复库存
-    product_result = await db.execute(
-        select(PointProduct)
-        .where(PointProduct.id == order.product_id)
-        .with_for_update()
-    )
-    product = product_result.scalar_one_or_none()
-    if product and not product.stock_unlimited:
-        product.stock += 1
+    # 恢复库存、扣减销量
+    if order.sku_id:
+        # SKU订单：恢复SKU库存和销量
+        sku_result = await db.execute(
+            select(PointProductSKU)
+            .where(PointProductSKU.id == order.sku_id)
+            .with_for_update()
+        )
+        sku = sku_result.scalar_one_or_none()
+        if sku:
+            if not sku.stock_unlimited:
+                sku.stock += 1
+            sku.sold = max(0, (sku.sold or 0) - 1)
+    else:
+        # 非SKU订单：恢复商品库存和销量
+        product_result = await db.execute(
+            select(PointProduct)
+            .where(PointProduct.id == order.product_id)
+            .with_for_update()
+        )
+        product = product_result.scalar_one_or_none()
+        if product:
+            if not product.stock_unlimited:
+                product.stock += 1
+            product.sold = max(0, (product.sold or 0) - 1)
 
     # 更新订单状态
     order.status = "cancelled"
@@ -361,6 +429,8 @@ async def process_order(
     Args:
         action: "complete"（完成）或 "cancel"（取消/拒绝）
     """
+    from app.models.point_sku import PointProductSKU
+
     result = await db.execute(
         select(PointOrder).where(PointOrder.id == order_id).with_for_update()
     )
@@ -390,15 +460,31 @@ async def process_order(
             description=f"订单被取消，退款: {order.product_name}"
         )
 
-        # 恢复库存
-        product_result = await db.execute(
-            select(PointProduct)
-            .where(PointProduct.id == order.product_id)
-            .with_for_update()
-        )
-        product = product_result.scalar_one_or_none()
-        if product and not product.stock_unlimited:
-            product.stock += 1
+        # 恢复库存、扣减销量
+        if order.sku_id:
+            # SKU订单：恢复SKU库存和销量
+            sku_result = await db.execute(
+                select(PointProductSKU)
+                .where(PointProductSKU.id == order.sku_id)
+                .with_for_update()
+            )
+            sku = sku_result.scalar_one_or_none()
+            if sku:
+                if not sku.stock_unlimited:
+                    sku.stock += 1
+                sku.sold = max(0, (sku.sold or 0) - 1)
+        else:
+            # 非SKU订单：恢复商品库存和销量
+            product_result = await db.execute(
+                select(PointProduct)
+                .where(PointProduct.id == order.product_id)
+                .with_for_update()
+            )
+            product = product_result.scalar_one_or_none()
+            if product:
+                if not product.stock_unlimited:
+                    product.stock += 1
+                product.sold = max(0, (product.sold or 0) - 1)
 
         order.status = "cancelled"
         order.admin_id = admin_id

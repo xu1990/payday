@@ -19,6 +19,9 @@ export interface PointProduct {
   points_cost: number
   stock: number
   stock_unlimited: boolean
+  sold: number
+  fake_sold: number // 注水销量
+  total_sold: number // 总销量（实际+注水）
   category: string | null
   category_id: string | null
   has_sku: boolean
@@ -26,6 +29,7 @@ export interface PointProduct {
   shipping_method: ShippingMethod
   shipping_template_id: string | null
   is_active: boolean
+  off_shelf_reason: string | null // 下架/删除原因
   sort_order: number
   created_at: string
 }
@@ -53,6 +57,7 @@ export interface PointProductCreate {
   points_cost: number
   stock: number
   stock_unlimited?: boolean
+  fake_sold?: number // 注水销量
   category?: string | null
   category_id?: string | null
   has_sku?: boolean
@@ -73,6 +78,7 @@ export interface PointProductUpdate {
   points_cost?: number
   stock?: number
   stock_unlimited?: boolean
+  fake_sold?: number // 注水销量
   category?: string | null
   category_id?: string | null
   has_sku?: boolean
@@ -81,6 +87,10 @@ export interface PointProductUpdate {
   shipping_method?: ShippingMethod
   shipping_template_id?: string | null
   sort_order?: number
+  off_shelf_reason?: string // 下架/删除原因
+  // SKU相关数据， 更新时一起提交
+  specifications?: SpecificationInput[]
+  skus?: SKUInput[]
 }
 
 export interface PointProductListResult {
@@ -91,12 +101,28 @@ export interface PointProductListResult {
 /** 商品列表 */
 export function listPointProducts(params?: {
   active_only?: boolean
+  category_id?: string
+  is_active?: boolean
+  keyword?: string
+  product_type?: string
   limit?: number
   offset?: number
 }) {
-  const { active_only = false, limit = 20, offset = 0 } = params ?? {}
+  const {
+    active_only,
+    category_id,
+    is_active,
+    keyword,
+    product_type,
+    limit = 20,
+    offset = 0,
+  } = params ?? {}
   const q = new URLSearchParams()
-  q.set('active_only', String(active_only))
+  if (active_only !== undefined) q.set('active_only', String(active_only))
+  if (category_id) q.set('category_id', category_id)
+  if (is_active !== undefined) q.set('is_active', String(is_active))
+  if (keyword) q.set('keyword', keyword)
+  if (product_type) q.set('product_type', product_type)
   q.set('limit', String(limit))
   q.set('offset', String(offset))
   return request<PointProductListResult>({
@@ -132,10 +158,20 @@ export function updatePointProduct(productId: string, data: PointProductUpdate) 
 }
 
 /** 删除商品（软删除） */
-export function deletePointProduct(productId: string) {
+export function deletePointProduct(productId: string, reason?: string) {
   return request({
     url: `${PREFIX}/products/${productId}`,
     method: 'DELETE',
+    data: reason ? { reason } : undefined,
+  })
+}
+
+/** 下架商品 */
+export function offShelfProduct(productId: string, reason: string) {
+  return request({
+    url: `${PREFIX}/products/${productId}`,
+    method: 'PUT',
+    data: { is_active: false, off_shelf_reason: reason },
   })
 }
 

@@ -12,9 +12,9 @@
       <!-- 商品图片 -->
       <view class="product-image-section">
         <image
-          v-if="product.image_url"
+          v-if="displayImageUrl"
           class="product-image"
-          :src="product.image_url"
+          :src="displayImageUrl"
           mode="aspectFill"
         />
         <view v-else class="product-image placeholder">
@@ -40,9 +40,9 @@
 
         <view class="product-meta">
           <view class="stock-info">
-            <text v-if="product.stock_unlimited" class="stock-unlimited">库存无限</text>
-            <text v-else-if="product.stock > 0" class="stock-available"
-              >剩余{{ product.stock }}件</text
+            <text v-if="displayStockUnlimited" class="stock-unlimited">库存无限</text>
+            <text v-else-if="displayStock > 0" class="stock-available"
+              >剩余{{ displayStock }}件</text
             >
             <text v-else class="stock-empty">已售罄</text>
           </view>
@@ -54,10 +54,37 @@
         <view class="price-section">
           <text class="price-label">兑换所需</text>
           <view class="price-tag">
-            <text class="points">{{ product.points_cost }}</text>
+            <text class="points">{{ displayPointsCost }}</text>
             <text class="label">积分</text>
           </view>
           <text class="my-balance">我的积分：{{ availablePoints }}</text>
+        </view>
+      </view>
+
+      <!-- SKU选择区域（仅SKU商品显示） -->
+      <view v-if="product.has_sku && product.specifications" class="sku-section">
+        <view class="section-header">
+          <text class="section-title">规格选择</text>
+          <text v-if="selectedSku" class="section-hint">已选：{{ selectedSkuSpecsText }}</text>
+        </view>
+
+        <!-- 规格选择 -->
+        <view v-for="spec in product.specifications" :key="spec.id" class="spec-group">
+          <text class="spec-name">{{ spec.name }}</text>
+          <view class="spec-values">
+            <view
+              v-for="value in spec.values"
+              :key="value.id"
+              class="spec-value"
+              :class="{
+                active: selectedSpecs[spec.name] === value.value,
+                disabled: !isSpecValueAvailable(spec.name, value.value)
+              }"
+              @tap="selectSpec(spec.name, value.value)"
+            >
+              <text>{{ value.value }}</text>
+            </view>
+          </view>
         </view>
       </view>
 
@@ -96,8 +123,8 @@
         </view>
       </view>
 
-      <!-- 配送信息（有运费模板时显示） -->
-      <view v-if="product.shipping_template" class="shipping-section">
+      <!-- 配送信息（实物商品且有运费模板时显示） -->
+      <view v-if="product.shipping_template && needAddress" class="shipping-section">
         <view class="section-header">
           <text class="section-title">配送信息</text>
         </view>
@@ -138,7 +165,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getPointProduct, createPointOrder, getMyAddresses } from '@/api/pointShop'
 import { getMyPoints } from '@/api/ability-points'
@@ -150,11 +177,149 @@ const productId = ref('')
 const selectedAddress = ref(null)
 const isInitialized = ref(false)
 
+// SKU相关状态
+const selectedSpecs = reactive({}) // { "颜色": "红色", "尺寸": "L" }
+const selectedSku = ref(null)
+
+// 计算属性 - 显示的图片URL（优先使用选中的SKU图片）
+const displayImageUrl = computed(() => {
+  if (selectedSku.value?.image_url) {
+    return selectedSku.value.image_url
+  }
+  return product.value?.image_url
+})
+
+// 计算属性 - 显示的库存（根据选中的SKU或商品本身）
+const displayStock = computed(() => {
+  if (product.value?.has_sku && selectedSku.value) {
+    return selectedSku.value.stock_unlimited ? 999 : selectedSku.value.stock
+  }
+  return product.value?.stock_unlimited ? 999 : (product.value?.stock || 0)
+})
+
+// 计算属性 - 显示的库存是否无限
+const displayStockUnlimited = computed(() => {
+  if (product.value?.has_sku && selectedSku.value) {
+    return selectedSku.value.stock_unlimited
+  }
+  return product.value?.stock_unlimited
+})
+
+// 计算属性 - 显示的积分价格（根据选中的SKU或商品本身）
+const displayPointsCost = computed(() => {
+  if (product.value?.has_sku && selectedSku.value) {
+    return selectedSku.value.points_cost
+  }
+  return product.value?.points_cost || 0
+})
+
+// 计算属性 - 选中SKU的规格文本
+const selectedSkuSpecsText = computed(() => {
+  if (!selectedSku.value) return ''
+  const specs = selectedSku.value.specs
+  if (typeof specs === 'string') {
+    try {
+      const parsed = JSON.parse(specs)
+      return Object.entries(parsed).map(([k, v]) => `${k}:${v}`).join(' ')
+    } catch {
+      return ''
+    }
+  }
+  if (typeof specs === 'object') {
+    return Object.entries(specs).map(([k, v]) => `${k}:${v}`).join(' ')
+  }
+  return ''
+})
+
+// 检查规格值是否可用（是否有对应的SKU且有库存）
+function isSpecValueAvailable(specName, specValue) {
+  if (!product.value?.skus) return true
+
+  // 构建临时规格选择，用于检查
+  const tempSpecs = { ...selectedSpecs, [specName]: specValue }
+
+  // 查找是否有匹配此规格组合的SKU
+  const matchingSku = product.value.skus.find(sku => {
+    const skuSpecs = typeof sku.specs === 'string' ? JSON.parse(sku.specs) : sku.specs
+    // 检查所有规格是否匹配
+    for (const [key, value] of Object.entries(tempSpecs)) {
+      if (skuSpecs[key] !== value) {
+        return false
+      }
+    }
+    // 如果还有未选择的规格，只检查已选择的部分
+    for (const [key, value] of Object.entries(skuSpecs)) {
+      if (tempSpecs[key] !== undefined && tempSpecs[key] !== value) {
+        return false
+      }
+    }
+    return true
+  })
+
+  // 如果找到匹配的SKU，检查是否有库存
+  if (matchingSku) {
+    return matchingSku.stock_unlimited || matchingSku.stock > 0
+  }
+
+  // 如果没有找到匹配的SKU，可能是规格组合不存在
+  return true // 允许选择，让用户看到最终结果
+}
+
+// 选择规格
+function selectSpec(specName, specValue) {
+  selectedSpecs[specName] = specValue
+  updateSelectedSku()
+}
+
+// 更新选中的SKU
+function updateSelectedSku() {
+  if (!product.value?.has_sku || !product.value?.skus) {
+    selectedSku.value = null
+    return
+  }
+
+  // 检查是否所有规格都已选择
+  const specNames = product.value.specifications?.map(s => s.name) || []
+  const allSpecsSelected = specNames.every(name => selectedSpecs[name])
+
+  if (!allSpecsSelected) {
+    selectedSku.value = null
+    return
+  }
+
+  // 查找匹配的SKU
+  const matchingSku = product.value.skus.find(sku => {
+    const skuSpecs = typeof sku.specs === 'string' ? JSON.parse(sku.specs) : sku.specs
+    for (const [key, value] of Object.entries(selectedSpecs)) {
+      if (skuSpecs[key] !== value) {
+        return false
+      }
+    }
+    return true
+  })
+
+  selectedSku.value = matchingSku || null
+}
+
 // 计算属性
 const canExchange = computed(() => {
   if (!product.value) return false
-  const hasStock = product.value.stock_unlimited || product.value.stock > 0
-  const hasPoints = availablePoints.value >= product.value.points_cost
+
+  // SKU商品必须选择完整的规格
+  if (product.value.has_sku && !selectedSku.value) return false
+
+  // SKU商品检查SKU库存
+  let hasStock = false
+  if (product.value.has_sku && selectedSku.value) {
+    hasStock = selectedSku.value.stock_unlimited || selectedSku.value.stock > 0
+  } else {
+    hasStock = product.value.stock_unlimited || product.value.stock > 0
+  }
+
+  const displayCost = product.value.has_sku && selectedSku.value
+    ? selectedSku.value.points_cost
+    : product.value.points_cost
+  const hasPoints = availablePoints.value >= displayCost
   const hasAddress = !needAddress.value || selectedAddress.value !== null
   const canDeliver = !deliveryStatus.value || deliveryStatus.value.canDeliver
   return hasStock && hasPoints && hasAddress && canDeliver
@@ -162,15 +327,35 @@ const canExchange = computed(() => {
 
 const needAddress = computed(() => {
   if (!product.value) return false
-  // 实物商品且需要快递或自提时，需要地址
-  return product.value.product_type === 'physical' &&
+  // 只有虚拟商品不需要地址
+  // 实物和套餐商品需要快递或自提时，需要地址
+  return product.value.product_type !== 'virtual' &&
          product.value.shipping_method !== 'no_shipping'
 })
 
 const exchangeButtonText = computed(() => {
   if (!product.value) return '加载中...'
-  if (product.value.stock === 0 && !product.value.stock_unlimited) return '已售罄'
-  if (availablePoints.value < product.value.points_cost) return '积分不足'
+
+  // SKU商品必须选择完整规格
+  if (product.value.has_sku && !selectedSku.value) {
+    return '请选择规格'
+  }
+
+  // 检查库存
+  let stockEmpty = false
+  if (product.value.has_sku && selectedSku.value) {
+    stockEmpty = !selectedSku.value.stock_unlimited && selectedSku.value.stock <= 0
+  } else {
+    stockEmpty = !product.value.stock_unlimited && product.value.stock <= 0
+  }
+  if (stockEmpty) return '已售罄'
+
+  // 检查积分
+  const displayCost = product.value.has_sku && selectedSku.value
+    ? selectedSku.value.points_cost
+    : product.value.points_cost
+  if (availablePoints.value < displayCost) return '积分不足'
+
   if (needAddress.value && !selectedAddress.value) return '请选择收货地址'
   if (deliveryStatus.value && !deliveryStatus.value.canDeliver) return '该地址不可配送'
   return '立即兑换'
@@ -304,13 +489,25 @@ function goToAddresses() {
   })
 }
 
+// 生成幂等性键（防止重复提交）
+function generateIdempotencyKey() {
+  // 使用时间戳 + 随机字符串生成唯一键
+  const timestamp = Date.now().toString(36)
+  const randomStr = Math.random().toString(36).substring(2, 11)
+  return `order_${timestamp}_${randomStr}`
+}
+
 async function handleExchange() {
   if (!canExchange.value || !product.value) return
+
+  const displayCost = product.value.has_sku && selectedSku.value
+    ? selectedSku.value.points_cost
+    : product.value.points_cost
 
   try {
     const result = await uni.showModal({
       title: '确认兑换',
-      content: `确定要消耗${product.value.points_cost}积分兑换"${product.value.name}"吗？`,
+      content: `确定要消耗${displayCost}积分兑换"${product.value.name}"吗？`,
     })
 
     if (!result.confirm) return
@@ -319,11 +516,17 @@ async function handleExchange() {
 
     const orderData = {
       product_id: productId.value,
+      idempotency_key: generateIdempotencyKey(), // 幂等性键，防止重复提交
     }
 
     // 如果需要地址，添加地址ID
     if (needAddress.value && selectedAddress.value) {
       orderData.address_id = selectedAddress.value.id
+    }
+
+    // 如果是SKU商品，添加SKU ID
+    if (product.value.has_sku && selectedSku.value) {
+      orderData.sku_id = selectedSku.value.id
     }
 
     await createPointOrder(orderData)
@@ -422,6 +625,61 @@ async function handleExchange() {
   padding: $spacing-lg;
   margin-top: $spacing-md;
   @include glass-card();
+}
+
+/* SKU选择区域 */
+.sku-section {
+  margin-top: $spacing-md;
+  padding: $spacing-lg;
+  @include glass-card();
+}
+
+.section-hint {
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
+}
+
+.spec-group {
+  margin-top: $spacing-md;
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+.spec-name {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--text-primary);
+  margin-bottom: $spacing-sm;
+}
+
+.spec-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.spec-value {
+  padding: $spacing-sm $spacing-md;
+  background: var(--bg-glass-subtle);
+  border: 2rpx solid var(--border-regular);
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+
+  &.active {
+    background: $gradient-brand;
+    border-color: $brand-primary;
+    color: #fff;
+  }
+
+  &.disabled {
+    opacity: 0.4;
+    text-decoration: line-through;
+  }
 }
 
 .product-name {

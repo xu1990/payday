@@ -224,6 +224,7 @@ export interface PointOrderCreate {
   address_id?: string
   delivery_info?: string
   notes?: string
+  idempotency_key?: string  // 幂等性键（防止重复提交，建议生成UUID）
 }
 
 /** 订单项 */
