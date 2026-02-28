@@ -52,7 +52,7 @@ async def get_product_specifications(
     """获取商品的规格列表（管理员）"""
     specs = await list_specifications(db, product_id)
 
-    data = [SpecificationResponse.from_db(spec) for spec in specs]
+    data = [SpecificationResponse.from_db(spec).model_dump() for spec in specs]
 
     return success_response(data={"specifications": data, "total": len(data)})
 
@@ -120,7 +120,7 @@ async def get_specification_values(
 
     values = await list_specification_values(db, specification_id)
 
-    data = [SpecificationValueResponse.from_db(v) for v in values]
+    data = [SpecificationValueResponse.from_db(v).model_dump() for v in values]
 
     return success_response(data={"values": data, "total": len(data)})
 
@@ -169,7 +169,7 @@ async def get_product_skus(
     """获取商品的SKU列表（管理员）"""
     skus = await list_skus(db, product_id, active_only=active_only)
 
-    data = [SKUResponse.from_db(sku) for sku in skus]
+    data = [SKUResponse.from_db(sku).model_dump() for sku in skus]
 
     return success_response(data={"skus": data, "total": len(data)})
 

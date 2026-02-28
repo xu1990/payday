@@ -36,6 +36,9 @@ class ProductCreate(BaseModel):
     shipping_template_id: Optional[str] = None
     category_id: Optional[str] = None
     is_active: bool = True
+    # SKU相关数据，创建时一起提交
+    specifications: Optional[List[dict]] = Field(None, description="规格列表，如 [{'name': '颜色', 'values': ['红', '蓝']}]")
+    skus: Optional[List[dict]] = Field(None, description="SKU列表，如 [{'specs': {'颜色': '红'}, 'stock': 10, 'points_cost': 100}]")
 
 
 class ProductUpdate(BaseModel):
@@ -70,7 +73,19 @@ async def get_products(
     db: AsyncSession = Depends(get_db),
 ):
     """获取商品列表"""
+    from app.models.point_category import PointCategory
+
     products = await list_products(db, active_only=True, category=category)
+
+    # 批量查询所有需要的分类
+    category_ids = [p.category_id for p in products if p.category_id]
+    category_map = {}
+    if category_ids:
+        result = await db.execute(
+            select(PointCategory).where(PointCategory.id.in_(category_ids))
+        )
+        for cat in result.scalars().all():
+            category_map[str(cat.id)] = cat.name
 
     data = []
     for p in products:
@@ -82,6 +97,11 @@ async def get_products(
             except:
                 pass
 
+        # 获取分类名称：优先使用分类表中的名称，其次使用商品自身的category字段
+        category_name = p.category
+        if p.category_id and str(p.category_id) in category_map:
+            category_name = category_map[str(p.category_id)]
+
         data.append({
             "id": p.id,
             "name": p.name,
@@ -91,7 +111,7 @@ async def get_products(
             "points_cost": p.points_cost,
             "stock": p.stock if not p.stock_unlimited else 999,
             "stock_unlimited": p.stock_unlimited,
-            "category": p.category,
+            "category": category_name,
         })
 
     return success_response(data={"products": data, "total": len(data)})
@@ -312,7 +332,19 @@ async def admin_list_products(
     db: AsyncSession = Depends(get_db),
 ):
     """获取所有商品（管理员）"""
+    from app.models.point_category import PointCategory
+
     products = await list_products(db, active_only=active_only)
+
+    # 批量查询所有需要的分类
+    category_ids = [p.category_id for p in products if p.category_id]
+    category_map = {}
+    if category_ids:
+        result = await db.execute(
+            select(PointCategory).where(PointCategory.id.in_(category_ids))
+        )
+        for cat in result.scalars().all():
+            category_map[str(cat.id)] = cat.name
 
     data = []
     for p in products:
@@ -324,6 +356,11 @@ async def admin_list_products(
             except:
                 pass
 
+        # 获取分类名称：优先使用分类表中的名称，其次使用商品自身的category字段
+        category_name = p.category
+        if p.category_id and str(p.category_id) in category_map:
+            category_name = category_map[str(p.category_id)]
+
         data.append({
             "id": p.id,
             "name": p.name,
@@ -333,7 +370,12 @@ async def admin_list_products(
             "points_cost": p.points_cost,
             "stock": p.stock,
             "stock_unlimited": p.stock_unlimited,
-            "category": p.category,
+            "category": category_name,
+            "category_id": str(p.category_id) if p.category_id else None,
+            "has_sku": p.has_sku,
+            "product_type": p.product_type,
+            "shipping_method": p.shipping_method,
+            "shipping_template_id": str(p.shipping_template_id) if p.shipping_template_id else None,
             "is_active": p.is_active,
             "sort_order": p.sort_order,
             "created_at": p.created_at.isoformat(),
@@ -348,7 +390,11 @@ async def admin_create_product(
     current_admin: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """创建商品（管理员）"""
+    """创建商品（管理员）- 支持一起提交SKU信息"""
+    import uuid
+    from app.models.point_sku import PointProductSKU, PointSpecification, PointSpecificationValue
+
+    # 创建商品
     product = await create_product(
         db,
         body.name,
@@ -366,6 +412,67 @@ async def admin_create_product(
         category_id=body.category_id,
         is_active=body.is_active,
     )
+
+    # 如果是SKU商品，一起创建规格和SKU
+    if body.has_sku and body.specifications and body.skus:
+        # 创建规格和规格值
+        spec_id_map = {}  # 规格名 -> 规格ID
+        spec_value_id_map = {}  # (规格名, 规格值) -> 规格值ID
+
+        for spec_data in body.specifications:
+            spec_name = spec_data.get("name", "")
+            spec_values = spec_data.get("values", [])
+
+            if not spec_name:
+                continue
+
+            # 创建规格
+            spec = PointSpecification(
+                product_id=product.id,
+                name=spec_name,
+                sort_order=spec_data.get("sort_order", 0),
+            )
+            db.add(spec)
+            await db.flush()
+            spec_id_map[spec_name] = spec.id
+
+            # 创建规格值
+            for idx, value in enumerate(spec_values):
+                if not value or not str(value).strip():
+                    continue
+                spec_value = PointSpecificationValue(
+                    specification_id=spec.id,
+                    value=str(value).strip(),
+                    sort_order=idx,
+                )
+                db.add(spec_value)
+                await db.flush()
+                spec_value_id_map[(spec_name, str(value).strip())] = spec_value.id
+
+        # 创建SKU
+        for idx, sku_data in enumerate(body.skus):
+            specs_dict = sku_data.get("specs", {})
+            if not specs_dict:
+                continue
+
+            # 生成SKU编码
+            sku_code = sku_data.get("sku_code") or f"SKU-{product.id[:8]}-{idx+1}"
+
+            # 创建SKU
+            sku = PointProductSKU(
+                product_id=product.id,
+                sku_code=sku_code,
+                specs=json.dumps(specs_dict, ensure_ascii=False),
+                points_cost=sku_data.get("points_cost", body.points_cost),
+                stock=sku_data.get("stock", 0),
+                stock_unlimited=sku_data.get("stock_unlimited", False),
+                image_url=sku_data.get("image_url"),
+                sort_order=sku_data.get("sort_order", idx),
+                is_active=sku_data.get("is_active", True),
+            )
+            db.add(sku)
+
+        await db.commit()
 
     return success_response(data={"id": product.id}, message="商品创建成功")
 

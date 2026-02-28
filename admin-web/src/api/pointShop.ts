@@ -30,6 +30,22 @@ export interface PointProduct {
   created_at: string
 }
 
+export interface SpecificationInput {
+  name: string
+  values: string[]
+}
+
+export interface SKUInput {
+  sku_code?: string
+  specs: Record<string, string>
+  stock: number
+  stock_unlimited?: boolean
+  points_cost: number
+  image_url?: string
+  sort_order?: number
+  is_active?: boolean
+}
+
 export interface PointProductCreate {
   name: string
   description?: string | null
@@ -44,6 +60,10 @@ export interface PointProductCreate {
   shipping_method?: ShippingMethod
   shipping_template_id?: string | null
   sort_order?: number
+  is_active?: boolean
+  // SKU相关数据，创建时一起提交
+  specifications?: SpecificationInput[]
+  skus?: SKUInput[]
 }
 
 export interface PointProductUpdate {

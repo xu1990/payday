@@ -20,9 +20,9 @@ async function loadData() {
   loading.value = true
   try {
     const res = await getSplashConfig()
-    if (res.data) {
-      form.value = res.data
-      imageUrl.value = res.data.image_url || ''
+    if (res) {
+      form.value = res
+      imageUrl.value = res.image_url || ''
     }
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : '加载失败'

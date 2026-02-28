@@ -50,46 +50,58 @@ def _address_to_dict(address: UserAddress) -> dict:
 async def list_addresses(
     user_id: Optional[str] = Query(None, description="用户ID过滤"),
     phone: Optional[str] = Query(None, description="手机号过滤"),
+    contact_name: Optional[str] = Query(None, description="联系人姓名过滤"),
     active_only: bool = Query(False, description="只返回有效地址"),
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(20, ge=1, le=100, description="每页数量"),
     current_admin: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
     获取地址列表（管理员）
 
-    支持按user_id和phone过滤
+    支持按user_id、phone、contact_name过滤，支持分页
+    默认查询所有用户地址
     """
-    # 如果有user_id，直接使用UserAddressService.list_addresses
+    from sqlalchemy import func, select
+
+    # 构建基础查询
+    query = select(UserAddress)
+    count_query = select(func.count()).select_from(UserAddress)
+
+    # 应用过滤条件
     if user_id:
-        addresses = await UserAddressService.list_addresses(
-            db, user_id, active_only=active_only
-        )
-        # 如果还有phone过滤，在内存中过滤（因为phone字段在地址表中）
-        if phone:
-            addresses = [addr for addr in addresses if addr.contact_phone == phone]
-    else:
-        # 如果没有user_id，需要查询所有地址（暂时只支持user_id过滤）
-        # 实际应用中可能需要更复杂的查询逻辑
-        if phone:
-            # 通过phone查询，需要先通过phone找user，这里简化处理
-            from sqlalchemy import select
+        query = query.where(UserAddress.user_id == user_id)
+        count_query = count_query.where(UserAddress.user_id == user_id)
 
-            query = select(UserAddress).where(
-                UserAddress.contact_phone == phone
-            )
-            if active_only:
-                query = query.where(UserAddress.is_active == True)
+    if phone:
+        query = query.where(UserAddress.contact_phone.ilike(f"%{phone}%"))
+        count_query = count_query.where(UserAddress.contact_phone.ilike(f"%{phone}%"))
 
-            query = query.order_by(UserAddress.created_at.desc())
-            result = await db.execute(query)
-            addresses = list(result.scalars().all())
-        else:
-            # 不带任何过滤，返回空列表（避免返回所有地址）
-            addresses = []
+    if contact_name:
+        query = query.where(UserAddress.contact_name.ilike(f"%{contact_name}%"))
+        count_query = count_query.where(UserAddress.contact_name.ilike(f"%{contact_name}%"))
+
+    if active_only:
+        query = query.where(UserAddress.is_active == True)
+        count_query = count_query.where(UserAddress.is_active == True)
+
+    # 获取总数
+    total = (await db.execute(count_query)).scalar() or 0
+
+    # 排序和分页
+    query = query.order_by(UserAddress.created_at.desc())
+    query = query.offset((page - 1) * page_size).limit(page_size)
+
+    result = await db.execute(query)
+    addresses = list(result.scalars().all())
 
     items = [_address_to_dict(addr) for addr in addresses]
 
-    return success_response(data=items, message="获取地址列表成功")
+    return success_response(
+        data={"items": items, "total": total, "page": page, "page_size": page_size},
+        message="获取地址列表成功"
+    )
 
 
 # IMPORTANT: This route must be defined BEFORE /{address_id} to avoid route conflicts

@@ -18,16 +18,20 @@ const baseURL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
  */
 let isRefreshing = false
 let refreshPromise: Promise<boolean> | null = null
-// 存储等待重试的请求
-let failedQueue: Array<(token: string) => void> = []
+// 存储等待重试的请求：成功时调用 resolve，失败时调用 reject
+let failedQueue: Array<{ resolve: (token: string) => void; reject: (error: any) => void }> = []
 // 刷新重试计数器，防止无限重试
 let refreshRetryCount = 0
 const MAX_REFRESH_RETRIES = 3
 
 const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach(prom => {
+  failedQueue.forEach(({ resolve, reject }) => {
     try {
-      prom(error || token)
+      if (error) {
+        reject(error)
+      } else if (token) {
+        resolve(token)
+      }
     } catch (err) {
       console.error('[adminApi] Error processing queue item:', err)
     }
@@ -91,6 +95,14 @@ adminApi.interceptors.response.use(
     }
 
     // 以下是401错误的处理逻辑
+    // 如果是刷新token请求本身失败，直接登出，不重试
+    if (originalRequest.url === '/admin/auth/refresh') {
+      console.error('[adminApi] Refresh token request failed with 401')
+      authStore.logout()
+      router.replace('/login')
+      return Promise.reject(error)
+    }
+
     // 如果已经重试过，直接拒绝
     if (originalRequest._retry) {
       return Promise.reject(error)
@@ -106,13 +118,16 @@ adminApi.interceptors.response.use(
 
     // 如果正在刷新，将请求加入队列
     if (isRefreshing) {
-      return new Promise(resolve => {
-        failedQueue.push((token: string) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`
-          resolve(adminApi(originalRequest))
+      return new Promise((resolve, reject) => {
+        failedQueue.push({
+          resolve: (token: string) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`
+            resolve(adminApi(originalRequest))
+          },
+          reject: (err: any) => {
+            reject(err)
+          },
         })
-      }).catch(err => {
-        return Promise.reject(err)
       })
     }
 

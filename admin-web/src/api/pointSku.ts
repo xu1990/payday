@@ -4,7 +4,9 @@
  */
 import { request } from '@/utils/request'
 
-const PREFIX = '/admin/point-products'
+// API路径前缀
+const ADMIN_PREFIX = '/admin'
+const PRODUCT_PREFIX = '/admin/point-products'
 
 // ==================== Type Definitions ====================
 
@@ -137,7 +139,7 @@ export interface SKUListResult {
 /** 获取商品规格列表 */
 export function listSpecifications(productId: string) {
   return request<SpecificationListResult>({
-    url: `${PREFIX}/${productId}/specifications`,
+    url: `${PRODUCT_PREFIX}/${productId}/specifications`,
     method: 'GET',
   })
 }
@@ -145,7 +147,7 @@ export function listSpecifications(productId: string) {
 /** 创建商品规格 */
 export function createSpecification(productId: string, data: SpecificationCreate) {
   return request<{ id: string }>({
-    url: `${PREFIX}/${productId}/specifications`,
+    url: `${PRODUCT_PREFIX}/${productId}/specifications`,
     method: 'POST',
     data,
   })
@@ -154,7 +156,7 @@ export function createSpecification(productId: string, data: SpecificationCreate
 /** 更新规格 */
 export function updateSpecification(specId: string, data: SpecificationUpdate) {
   return request({
-    url: `${PREFIX}/specifications/${specId}`,
+    url: `${ADMIN_PREFIX}/specifications/${specId}`,
     method: 'PUT',
     data,
   })
@@ -163,7 +165,7 @@ export function updateSpecification(specId: string, data: SpecificationUpdate) {
 /** 删除规格 */
 export function deleteSpecification(specId: string) {
   return request({
-    url: `${PREFIX}/specifications/${specId}`,
+    url: `${ADMIN_PREFIX}/specifications/${specId}`,
     method: 'DELETE',
   })
 }
@@ -173,7 +175,7 @@ export function deleteSpecification(specId: string) {
 /** 获取规格的值列表 */
 export function listSpecificationValues(specificationId: string) {
   return request<SpecificationValueListResult>({
-    url: `${PREFIX}/specifications/${specificationId}/values`,
+    url: `${ADMIN_PREFIX}/specifications/${specificationId}/values`,
     method: 'GET',
   })
 }
@@ -181,7 +183,7 @@ export function listSpecificationValues(specificationId: string) {
 /** 创建规格值 */
 export function createSpecificationValue(specificationId: string, data: SpecificationValueCreate) {
   return request<{ id: string }>({
-    url: `${PREFIX}/specifications/${specificationId}/values`,
+    url: `${ADMIN_PREFIX}/specifications/${specificationId}/values`,
     method: 'POST',
     data,
   })
@@ -190,7 +192,7 @@ export function createSpecificationValue(specificationId: string, data: Specific
 /** 更新规格值 */
 export function updateSpecificationValue(valueId: string, data: SpecificationValueUpdate) {
   return request({
-    url: `${PREFIX}/specification-values/${valueId}`,
+    url: `${ADMIN_PREFIX}/specification-values/${valueId}`,
     method: 'PUT',
     data,
   })
@@ -199,7 +201,7 @@ export function updateSpecificationValue(valueId: string, data: SpecificationVal
 /** 删除规格值 */
 export function deleteSpecificationValue(valueId: string) {
   return request({
-    url: `${PREFIX}/specification-values/${valueId}`,
+    url: `${ADMIN_PREFIX}/specification-values/${valueId}`,
     method: 'DELETE',
   })
 }
@@ -211,7 +213,7 @@ export function listSKUs(productId: string, activeOnly: boolean = false) {
   const q = new URLSearchParams()
   q.set('active_only', String(activeOnly))
   return request<SKUListResult>({
-    url: `${PREFIX}/${productId}/skus?${q.toString()}`,
+    url: `${PRODUCT_PREFIX}/${productId}/skus?${q.toString()}`,
     method: 'GET',
   })
 }
@@ -219,7 +221,7 @@ export function listSKUs(productId: string, activeOnly: boolean = false) {
 /** 创建SKU */
 export function createSKU(productId: string, data: SKUCreate) {
   return request<{ id: string }>({
-    url: `${PREFIX}/${productId}/skus`,
+    url: `${PRODUCT_PREFIX}/${productId}/skus`,
     method: 'POST',
     data,
   })
@@ -228,7 +230,7 @@ export function createSKU(productId: string, data: SKUCreate) {
 /** 更新SKU */
 export function updateSKU(skuId: string, data: SKUUpdate) {
   return request({
-    url: `${PREFIX}/skus/${skuId}`,
+    url: `${ADMIN_PREFIX}/skus/${skuId}`,
     method: 'PUT',
     data,
   })
@@ -237,7 +239,7 @@ export function updateSKU(skuId: string, data: SKUUpdate) {
 /** 删除SKU */
 export function deleteSKU(skuId: string) {
   return request({
-    url: `${PREFIX}/skus/${skuId}`,
+    url: `${ADMIN_PREFIX}/skus/${skuId}`,
     method: 'DELETE',
   })
 }
@@ -245,7 +247,7 @@ export function deleteSKU(skuId: string) {
 /** 批量更新SKU */
 export function batchUpdateSKUs(data: SKUBatchUpdate) {
   return request({
-    url: `${PREFIX}/skus/batch-update`,
+    url: `${ADMIN_PREFIX}/skus/batch-update`,
     method: 'POST',
     data,
   })

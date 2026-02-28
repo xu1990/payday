@@ -43,7 +43,17 @@ export interface UserAddressUpdate {
 export interface UserAddressListParams {
   user_id?: string
   phone?: string
+  contact_name?: string
   active_only?: boolean
+  page?: number
+  page_size?: number
+}
+
+export interface UserAddressListResponse {
+  items: UserAddress[]
+  total: number
+  page: number
+  page_size: number
 }
 
 // ==================== API Functions ====================
@@ -52,10 +62,13 @@ export function listAddresses(params?: UserAddressListParams) {
   const query = new URLSearchParams()
   if (params?.user_id) query.set('user_id', params.user_id)
   if (params?.phone) query.set('phone', params.phone)
+  if (params?.contact_name) query.set('contact_name', params.contact_name)
   if (params?.active_only) query.set('active_only', 'true')
+  if (params?.page) query.set('page', String(params.page))
+  if (params?.page_size) query.set('page_size', String(params.page_size))
 
   const queryString = query.toString()
-  return request<UserAddress[]>({
+  return request<UserAddressListResponse>({
     url: queryString ? `${PREFIX}?${queryString}` : PREFIX,
     method: 'GET',
   })

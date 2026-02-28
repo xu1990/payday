@@ -28,7 +28,7 @@ async function loadData() {
   loading.value = true
   try {
     const res = await listConfigs()
-    list.value = res?.data || []
+    list.value = res || []
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : '加载失败'
     ElMessage.error(errorMessage)

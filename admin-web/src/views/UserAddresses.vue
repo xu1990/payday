@@ -13,10 +13,14 @@ import { formatDate } from '@/utils/format'
 
 const list = ref<UserAddress[]>([])
 const loading = ref(false)
+const total = ref(0)
+const page = ref(1)
+const pageSize = ref(20)
 
 // Search form
 const searchUserId = ref('')
 const searchPhone = ref('')
+const searchContactName = ref('')
 
 // Edit dialog
 const showDialog = ref(false)
@@ -43,30 +47,46 @@ function formatRegion(item: UserAddress): string {
 async function loadData() {
   loading.value = true
   try {
-    const params: { user_id?: string; phone?: string } = {}
-    // 只有输入了搜索条件才带上，否则查询所有
-    if (searchUserId.value) params.user_id = searchUserId.value
-    if (searchPhone.value) params.phone = searchPhone.value
-
-    const res = await listAddresses(Object.keys(params).length > 0 ? params : undefined)
-    // request 函数已直接返回解包后的数据
-    list.value = res || []
+    const res = await listAddresses({
+      user_id: searchUserId.value || undefined,
+      phone: searchPhone.value || undefined,
+      contact_name: searchContactName.value || undefined,
+      page: page.value,
+      page_size: pageSize.value,
+    })
+    list.value = res?.items || []
+    total.value = res?.total || 0
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : '加载失败'
     ElMessage.error(errorMessage)
     list.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
 }
 
 function handleSearch() {
+  page.value = 1
   loadData()
 }
 
 function handleReset() {
   searchUserId.value = ''
   searchPhone.value = ''
+  searchContactName.value = ''
+  page.value = 1
+  loadData()
+}
+
+function handlePageChange(newPage: number) {
+  page.value = newPage
+  loadData()
+}
+
+function handleSizeChange(newSize: number) {
+  pageSize.value = newSize
+  page.value = 1
   loadData()
 }
 
@@ -180,12 +200,20 @@ onMounted(() => {
             style="width: 200px"
           />
         </el-form-item>
+        <el-form-item label="联系人">
+          <el-input
+            v-model="searchContactName"
+            placeholder="请输入联系人姓名"
+            clearable
+            style="width: 150px"
+          />
+        </el-form-item>
         <el-form-item label="手机号">
           <el-input
             v-model="searchPhone"
             placeholder="请输入手机号"
             clearable
-            style="width: 200px"
+            style="width: 150px"
           />
         </el-form-item>
         <el-form-item>
@@ -259,6 +287,19 @@ onMounted(() => {
       </el-table-column>
     </el-table>
 
+    <!-- Pagination -->
+    <div class="pagination-container">
+      <el-pagination
+        v-model:current-page="page"
+        v-model:page-size="pageSize"
+        :total="total"
+        :page-sizes="[10, 20, 50, 100]"
+        layout="total, sizes, prev, pager, next, jumper"
+        @current-change="handlePageChange"
+        @size-change="handleSizeChange"
+      />
+    </div>
+
     <!-- Edit Dialog -->
     <el-dialog v-model="showDialog" title="编辑地址" width="600px">
       <el-form v-if="editItem" :model="editForm" label-width="100px">
@@ -326,5 +367,11 @@ onMounted(() => {
   padding: 20px;
   background-color: #f5f7fa;
   border-radius: 4px;
+}
+
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

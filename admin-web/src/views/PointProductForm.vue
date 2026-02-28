@@ -567,52 +567,39 @@ async function save() {
 
   saving.value = true
   try {
-    // 保存商品基本信息
-    let savedProductId = productId
-
-    if (productId) {
-      // 编辑模式
-      await updatePointProduct(productId, form.value)
-    } else {
-      // 新建模式
-      const res = await createPointProduct(form.value)
-      savedProductId = res.id
+    // 准备提交数据 - 一次性提交规格和SKU信息
+    const submitData: PointProductCreate = {
+      ...form.value,
+      // 如果是SKU商品，添加规格和SKU信息
+      specifications: form.value.has_sku
+        ? specifications.value.map(spec => ({
+            name: spec.name,
+            values: productId
+              ? (spec.values || []).map((v: any) => v.value).filter(v => v.trim())
+              : (newSpecValues.value[spec.name] || []).filter(v => v.trim()),
+          }))
+        : [],
+      skus: form.value.has_sku
+        ? skus.value.map((sku, index) => ({
+          ...sku,
+          sku_code: sku.sku_code || `SKU-${index + 1}`,
+          specs: typeof sku.specs === 'string' ? JSON.parse(sku.specs) : sku.specs,
+          stock: sku.stock,
+          stock_unlimited: sku.stock_unlimited,
+          points_cost: sku.points_cost,
+          image_url: sku.image_url || '',
+          sort_order: index,
+          is_active: sku.is_active ?? true,
+        }))
+        : [],
     }
 
-    // 如果是SKU商品，保存规格和SKU
-    if (form.value.has_sku && savedProductId) {
-      // 新建模式下，先保存规格
-      if (!productId) {
-        for (const spec of specifications.value) {
-          const createdSpec = await createSpecification(savedProductId, {
-            name: spec.name,
-            sort_order: spec.sort_order,
-          })
-
-          // 保存规格值
-          const values = newSpecValues.value[spec.name] || []
-          for (const value of values) {
-            if (value && value.trim()) {
-              await createSpecificationValue(createdSpec.id, { value, sort_order: 0 })
-            }
-          }
-        }
-
-        // 重新加载规格以获取正确的ID
-        await loadSpecifications()
-
-        // 生成SKU
-        await generateSKUCombinations()
-      }
-
-      // 批量更新SKU
-      const skusToSave = skus.value.map(sku => ({
-        ...sku,
-        product_id: savedProductId,
-        specs: typeof sku.specs === 'string' ? sku.specs : JSON.stringify(sku.specs),
-      }))
-
-      await batchUpdateSKUs({ skus: skusToSave })
+    if (productId) {
+      // 编辑模式 - 一次性提交所有数据（后端会处理更新逻辑）
+      await updatePointProduct(productId, submitData)
+    } else {
+      // 新建模式 - 一次性提交所有数据
+      const res = await createPointProduct(submitData)
     }
 
     ElMessage.success(productId ? '更新成功' : '创建成功')

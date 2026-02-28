@@ -27,8 +27,8 @@ async function loadData() {
   loading.value = true
   try {
     const res = await getAgreements()
-    userContent.value = res.data?.user_agreement || ''
-    privacyContent.value = res.data?.privacy_agreement || ''
+    userContent.value = res?.user_agreement || ''
+    privacyContent.value = res?.privacy_agreement || ''
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : '加载失败'
     ElMessage.error(errorMessage)
