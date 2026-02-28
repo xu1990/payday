@@ -30,6 +30,11 @@ router = APIRouter(prefix="/point-shop", tags=["point-shop"])
 class ProductCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     points_cost: int = Field(..., gt=0)
+    # 支付模式相关字段
+    payment_mode: Literal["points_only", "cash_only", "mixed"] = Field("points_only", description="支付模式")
+    cash_price: Optional[int] = Field(None, ge=0, description="现金价格（分）- 纯现金模式")
+    mixed_points_cost: Optional[int] = Field(None, ge=0, description="混合支付时的积分价格")
+    mixed_cash_price: Optional[int] = Field(None, ge=0, description="混合支付时的现金价格（分）")
     stock: int = Field(..., ge=0)
     stock_unlimited: bool = False
     description: Optional[str] = None
@@ -51,6 +56,11 @@ class ProductCreate(BaseModel):
 class ProductUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     points_cost: Optional[int] = Field(None, gt=0)
+    # 支付模式相关字段
+    payment_mode: Optional[Literal["points_only", "cash_only", "mixed"]] = Field(None, description="支付模式")
+    cash_price: Optional[int] = Field(None, ge=0, description="现金价格（分）")
+    mixed_points_cost: Optional[int] = Field(None, ge=0, description="混合支付时的积分价格")
+    mixed_cash_price: Optional[int] = Field(None, ge=0, description="混合支付时的现金价格（分）")
     stock: Optional[int] = Field(None, ge=0)
     stock_unlimited: Optional[bool] = None
     description: Optional[str] = None
@@ -65,6 +75,9 @@ class ProductUpdate(BaseModel):
     category_id: Optional[str] = None
     fake_sold: Optional[int] = Field(None, ge=0, description="注水销量")
     off_shelf_reason: Optional[str] = Field(None, max_length=255, description="下架原因")
+    # SKU相关数据
+    specifications: Optional[List[dict]] = Field(None, description="规格列表")
+    skus: Optional[List[dict]] = Field(None, description="SKU列表")
 
 
 class OffShelfRequest(BaseModel):
@@ -727,6 +740,11 @@ async def admin_list_products(
             "image_urls": image_urls,
             "image_url": image_urls[0] if image_urls else None,  # 兼容旧版
             "points_cost": p.points_cost,
+            # 支付模式相关字段
+            "payment_mode": p.payment_mode or "points_only",
+            "cash_price": p.cash_price,
+            "mixed_points_cost": p.mixed_points_cost,
+            "mixed_cash_price": p.mixed_cash_price,
             "stock": stock,
             "stock_unlimited": stock_unlimited,
             "sold": sold,
@@ -775,6 +793,10 @@ async def admin_create_product(
         category_id=body.category_id,
         is_active=body.is_active,
         fake_sold=body.fake_sold,
+        payment_mode=body.payment_mode,
+        cash_price=body.cash_price,
+        mixed_points_cost=body.mixed_points_cost,
+        mixed_cash_price=body.mixed_cash_price,
     )
 
     # 如果是SKU商品，一起创建规格和SKU
@@ -834,6 +856,10 @@ async def admin_create_product(
                 image_url=sku_data.get("image_url"),
                 sort_order=sku_data.get("sort_order", idx),
                 is_active=sku_data.get("is_active", True),
+                # 支付价格字段
+                cash_price=sku_data.get("cash_price"),
+                mixed_points_cost=sku_data.get("mixed_points_cost"),
+                mixed_cash_price=sku_data.get("mixed_cash_price"),
             )
             db.add(sku)
 
@@ -866,6 +892,11 @@ async def admin_get_product(
         "image_urls": image_urls,
         "image_url": image_urls[0] if image_urls else None,
         "points_cost": product.points_cost,
+        # 支付模式相关字段
+        "payment_mode": product.payment_mode or "points_only",
+        "cash_price": product.cash_price,
+        "mixed_points_cost": product.mixed_points_cost,
+        "mixed_cash_price": product.mixed_cash_price,
         "stock": product.stock,
         "stock_unlimited": product.stock_unlimited,
         "category": product.category,
@@ -876,6 +907,7 @@ async def admin_get_product(
         "shipping_template_id": product.shipping_template_id,
         "is_active": product.is_active,
         "sort_order": product.sort_order,
+        "fake_sold": product.fake_sold or 0,
         "created_at": product.created_at.isoformat(),
     }
 
@@ -956,6 +988,9 @@ async def admin_update_product(
             # 格式: SKU-{product_id前8位}-{序号}
             sku_code = f"SKU-{product_id[:8]}-{idx+1}"
 
+            # 获取SKU数据中的支付价格字段
+            sku_dict = sku_data.model_dump() if hasattr(sku_data, 'model_dump') else sku_data
+
             # 创建SKU
             sku = PointProductSKU(
                 product_id=product_id,
@@ -967,6 +1002,10 @@ async def admin_update_product(
                 image_url=sku_data.image_url,
                 sort_order=sku_data.sort_order or idx,
                 is_active=sku_data.is_active,
+                # 支付价格字段
+                cash_price=sku_dict.get("cash_price"),
+                mixed_points_cost=sku_dict.get("mixed_points_cost"),
+                mixed_cash_price=sku_dict.get("mixed_cash_price"),
             )
             db.add(sku)
 

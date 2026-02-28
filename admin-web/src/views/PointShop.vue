@@ -46,6 +46,7 @@ const statusOptions = [
 const skuDialogVisible = ref(false)
 const currentSkus = ref<SKUResponse[]>([])
 const skuLoading = ref(false)
+const currentProductPaymentMode = ref<string>('points_only')
 
 // 下架/删除原因相关
 const reasonDialogVisible = ref(false)
@@ -113,6 +114,7 @@ async function openSkuList(row: PointProduct) {
   skuDialogVisible.value = true
   skuLoading.value = true
   currentSkus.value = []
+  currentProductPaymentMode.value = row.payment_mode || 'points_only'
   try {
     const res = await listSKUs(row.id, false)
     currentSkus.value = res?.skus || []
@@ -271,9 +273,25 @@ onMounted(() => {
           <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column prop="points_cost" label="积分" width="80">
+      <el-table-column prop="points_cost" label="价格" width="140">
         <template #default="{ row }">
-          {{ row.points_cost }}
+          <div v-if="row.payment_mode === 'points_only'">
+            <span class="price-points">{{ row.points_cost }}</span>
+            <span class="price-unit">积分</span>
+          </div>
+          <div v-else-if="row.payment_mode === 'cash_only'">
+            <span class="price-cash">¥{{ ((row.cash_price || 0) / 100).toFixed(2) }}</span>
+          </div>
+          <div v-else-if="row.payment_mode === 'mixed'">
+            <span class="price-points">{{ row.mixed_points_cost }}</span>
+            <span class="price-unit">积分</span>
+            <span class="price-separator">+</span>
+            <span class="price-cash">¥{{ ((row.mixed_cash_price || 0) / 100).toFixed(2) }}</span>
+          </div>
+          <div v-else>
+            <span class="price-points">{{ row.points_cost }}</span>
+            <span class="price-unit">积分</span>
+          </div>
         </template>
       </el-table-column>
       <el-table-column label="库存" width="80">
@@ -342,7 +360,7 @@ onMounted(() => {
   </div>
 
   <!-- SKU Dialog -->
-  <el-dialog v-model="skuDialogVisible" title="SKU列表" width="800">
+  <el-dialog v-model="skuDialogVisible" title="SKU列表" width="900">
     <el-table v-loading="skuLoading" :data="currentSkus" stripe>
       <el-table-column prop="sku_code" label="SKU编码" width="120" />
       <el-table-column label="规格" width="150">
@@ -355,17 +373,35 @@ onMounted(() => {
           {{ row.stock_unlimited ? '无限' : row.stock }}
         </template>
       </el-table-column>
-      <el-table-column label="销量" width="80">
+      <el-table-column label="销量" width="70">
         <template #default="{ row }">
           {{ row.sold || 0 }}
         </template>
       </el-table-column>
-      <el-table-column prop="points_cost" label="积分" width="80">
+      <!-- 纯积分模式 -->
+      <el-table-column v-if="currentProductPaymentMode === 'points_only'" label="积分" width="80">
         <template #default="{ row }">
-          {{ row.points_cost }}
+          <span class="price-points">{{ row.points_cost }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="状态" width="80">
+      <!-- 纯现金模式 -->
+      <el-table-column v-if="currentProductPaymentMode === 'cash_only'" label="现金" width="90">
+        <template #default="{ row }">
+          <span class="price-cash">¥{{ ((row.cash_price || 0) / 100).toFixed(2) }}</span>
+        </template>
+      </el-table-column>
+      <!-- 混合模式 -->
+      <el-table-column v-if="currentProductPaymentMode === 'mixed'" label="积分" width="80">
+        <template #default="{ row }">
+          <span class="price-points">{{ row.mixed_points_cost }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column v-if="currentProductPaymentMode === 'mixed'" label="现金" width="90">
+        <template #default="{ row }">
+          <span class="price-cash">¥{{ ((row.mixed_cash_price || 0) / 100).toFixed(2) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="状态" width="70">
         <template #default="{ row }">
           <el-tag :type="row.is_active ? 'success' : 'info'" size="small">
             {{ row.is_active ? '启用' : '禁用' }}
@@ -433,6 +469,28 @@ onMounted(() => {
 
 .stock-unlimited {
   color: #67c23a;
+}
+
+/* 价格显示样式 */
+.price-points {
+  color: #e6a23c;
+  font-weight: 500;
+}
+
+.price-cash {
+  color: #f56c6c;
+  font-weight: 500;
+}
+
+.price-unit {
+  color: #909399;
+  font-size: 12px;
+  margin-left: 2px;
+}
+
+.price-separator {
+  color: #909399;
+  margin: 0 4px;
 }
 
 .dialog-footer {

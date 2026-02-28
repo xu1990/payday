@@ -36,6 +36,10 @@ export interface PointProductSKU {
   stock: number
   stock_unlimited: boolean
   points_cost: number
+  // 支付价格字段
+  cash_price?: number | null // 现金价格（分）- 覆盖商品默认
+  mixed_points_cost?: number | null // 混合支付时的积分价格
+  mixed_cash_price?: number | null // 混合支付时的现金价格（分）
   image_url?: string
   is_active: boolean
   sort_order: number
@@ -81,6 +85,10 @@ export interface SKUCreate {
   sku_code: string
   specs: Record<string, string>
   points_cost: number
+  // 支付价格字段
+  cash_price?: number | null
+  mixed_points_cost?: number | null
+  mixed_cash_price?: number | null
   stock: number
   stock_unlimited?: boolean
   image_url?: string
@@ -91,6 +99,10 @@ export interface SKUUpdate {
   sku_code?: string
   specs?: Record<string, string>
   points_cost?: number
+  // 支付价格字段
+  cash_price?: number | null
+  mixed_points_cost?: number | null
+  mixed_cash_price?: number | null
   stock?: number
   stock_unlimited?: boolean
   image_url?: string
@@ -106,6 +118,10 @@ export interface SKUResponse {
   stock: number
   stock_unlimited: boolean
   points_cost: number
+  // 支付价格字段
+  cash_price?: number | null
+  mixed_points_cost?: number | null
+  mixed_cash_price?: number | null
   sold: number
   image_url?: string
   is_active: boolean

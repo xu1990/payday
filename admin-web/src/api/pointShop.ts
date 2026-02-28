@@ -8,6 +8,7 @@ const PREFIX = '/point-shop/admin'
 // ==================== 商品类型和物流方式 ====================
 export type ProductType = 'virtual' | 'physical' | 'bundle'
 export type ShippingMethod = 'express' | 'self_pickup' | 'no_shipping'
+export type PaymentMode = 'points_only' | 'cash_only' | 'mixed'
 
 // ==================== 商品管理 ====================
 export interface PointProduct {
@@ -17,6 +18,11 @@ export interface PointProduct {
   image_urls: string[]
   image_url: string | null // 兼容旧版，第一张图片
   points_cost: number
+  // 支付模式相关字段
+  payment_mode: PaymentMode
+  cash_price: number | null // 现金价格（分）- 纯现金模式
+  mixed_points_cost: number | null // 混合支付时的积分价格
+  mixed_cash_price: number | null // 混合支付时的现金价格（分）
   stock: number
   stock_unlimited: boolean
   sold: number
@@ -45,6 +51,10 @@ export interface SKUInput {
   stock: number
   stock_unlimited?: boolean
   points_cost: number
+  // 支付价格字段
+  cash_price?: number | null
+  mixed_points_cost?: number | null
+  mixed_cash_price?: number | null
   image_url?: string
   sort_order?: number
   is_active?: boolean
@@ -55,6 +65,11 @@ export interface PointProductCreate {
   description?: string | null
   image_urls?: string[]
   points_cost: number
+  // 支付模式相关字段
+  payment_mode?: PaymentMode
+  cash_price?: number | null // 现金价格（分）- 纯现金模式
+  mixed_points_cost?: number | null // 混合支付时的积分价格
+  mixed_cash_price?: number | null // 混合支付时的现金价格（分）
   stock: number
   stock_unlimited?: boolean
   fake_sold?: number // 注水销量
@@ -76,6 +91,11 @@ export interface PointProductUpdate {
   description?: string | null
   image_urls?: string[]
   points_cost?: number
+  // 支付模式相关字段
+  payment_mode?: PaymentMode
+  cash_price?: number | null // 现金价格（分）- 纯现金模式
+  mixed_points_cost?: number | null // 混合支付时的积分价格
+  mixed_cash_price?: number | null // 混合支付时的现金价格（分）
   stock?: number
   stock_unlimited?: boolean
   fake_sold?: number // 注水销量

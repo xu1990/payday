@@ -95,6 +95,12 @@ async def create_product(
     shipping_template_id: Optional[str] = None,
     category_id: Optional[str] = None,
     is_active: bool = True,
+    fake_sold: int = 0,
+    # 支付模式相关字段
+    payment_mode: str = "points_only",
+    cash_price: Optional[int] = None,
+    mixed_points_cost: Optional[int] = None,
+    mixed_cash_price: Optional[int] = None,
 ) -> PointProduct:
     """创建商品（管理员）"""
     if points_cost <= 0:
@@ -121,6 +127,11 @@ async def create_product(
         shipping_method=shipping_method,
         shipping_template_id=shipping_template_id,
         category_id=category_id,
+        fake_sold=fake_sold,
+        payment_mode=payment_mode,
+        cash_price=cash_price,
+        mixed_points_cost=mixed_points_cost,
+        mixed_cash_price=mixed_cash_price,
     )
     db.add(product)
     await db.commit()

@@ -12,6 +12,7 @@ import {
   type PointProductCreate,
   type ProductType,
   type ShippingMethod,
+  type PaymentMode,
 } from '@/api/pointShop'
 import {
   listSpecifications,
@@ -47,6 +48,11 @@ const form = ref<PointProductCreate>({
   description: '',
   image_urls: [],
   points_cost: 0,
+  // 支付模式相关字段
+  payment_mode: 'points_only',
+  cash_price: null,
+  mixed_points_cost: null,
+  mixed_cash_price: null,
   stock: 0,
   stock_unlimited: false,
   fake_sold: 0,
@@ -93,6 +99,17 @@ const shippingMethodOptions = [
   { label: '用户自提', value: 'self_pickup' as ShippingMethod },
   { label: '无需快递', value: 'no_shipping' as ShippingMethod },
 ]
+
+// 支付模式选项
+const paymentModeOptions = [
+  { label: '纯积分', value: 'points_only' as PaymentMode, desc: '仅使用积分兑换' },
+  { label: '纯现金', value: 'cash_only' as PaymentMode, desc: '仅使用现金购买' },
+  { label: '积分+现金', value: 'mixed' as PaymentMode, desc: '积分和现金混合支付' },
+]
+
+// 现金价格（元）- 用于表单显示
+const cashPriceYuan = ref<number | undefined>(undefined)
+const mixedCashPriceYuan = ref<number | undefined>(undefined)
 
 // 根据商品类型过滤物流方式
 const availableShippingMethods = computed(() => {
@@ -241,6 +258,11 @@ async function loadProduct() {
       description: product.description || '',
       image_urls: product.image_urls || [],
       points_cost: product.points_cost,
+      // 支付模式相关字段
+      payment_mode: product.payment_mode || 'points_only',
+      cash_price: product.cash_price,
+      mixed_points_cost: product.mixed_points_cost,
+      mixed_cash_price: product.mixed_cash_price,
       stock: product.stock,
       stock_unlimited: product.stock_unlimited,
       fake_sold: product.fake_sold || 0,
@@ -252,6 +274,14 @@ async function loadProduct() {
       shipping_template_id: product.shipping_template_id ?? undefined,
       sort_order: product.sort_order,
       is_active: product.is_active,
+    }
+
+    // 转换分到元用于显示
+    if (product.cash_price) {
+      cashPriceYuan.value = product.cash_price / 100
+    }
+    if (product.mixed_cash_price) {
+      mixedCashPriceYuan.value = product.mixed_cash_price / 100
     }
 
     // 如果是SKU商品，加载规格和SKU数据
@@ -293,7 +323,12 @@ async function loadSKUs() {
   skuLoading.value = true
   try {
     const res = await listSKUs(productId)
-    skus.value = res.skus || []
+    // 转换分到元用于显示
+    skus.value = (res.skus || []).map(sku => ({
+      ...sku,
+      cashPriceYuan: sku.cash_price ? sku.cash_price / 100 : undefined,
+      mixedCashPriceYuan: sku.mixed_cash_price ? sku.mixed_cash_price / 100 : undefined,
+    }))
   } catch (e) {
     ElMessage.error('加载SKU失败')
   } finally {
@@ -554,7 +589,14 @@ function generateSKUCombinations() {
       specs: JSON.stringify(specs),
       stock: form.value.stock_unlimited ? 0 : form.value.stock,
       stock_unlimited: form.value.stock_unlimited,
-      points_cost: form.value.points_cost,
+      // 根据支付模式设置默认价格
+      points_cost: form.value.points_cost || 0,
+      cash_price: form.value.cash_price || null,
+      mixed_points_cost: form.value.mixed_points_cost || null,
+      mixed_cash_price: form.value.mixed_cash_price || null,
+      // 元显示的辅助属性
+      cashPriceYuan: form.value.cash_price ? form.value.cash_price / 100 : undefined,
+      mixedCashPriceYuan: form.value.mixed_cash_price ? form.value.mixed_cash_price / 100 : undefined,
       image_url: '',
       is_active: true,
       sort_order: index,
@@ -574,9 +616,31 @@ async function save() {
     return
   }
 
-  if (form.value.points_cost <= 0) {
-    ElMessage.warning('请输入有效的积分价格')
-    return
+  // 支付模式验证（仅非SKU模式）
+  if (!form.value.has_sku) {
+    if (form.value.payment_mode === 'cash_only') {
+      if (!cashPriceYuan.value || cashPriceYuan.value <= 0) {
+        ElMessage.warning('请输入有效的现金价格')
+        return
+      }
+      form.value.cash_price = Math.round(cashPriceYuan.value * 100)
+    } else if (form.value.payment_mode === 'mixed') {
+      if (!form.value.mixed_points_cost || form.value.mixed_points_cost <= 0) {
+        ElMessage.warning('请输入有效的混合支付积分价格')
+        return
+      }
+      if (!mixedCashPriceYuan.value || mixedCashPriceYuan.value <= 0) {
+        ElMessage.warning('请输入有效的混合支付现金价格')
+        return
+      }
+      form.value.mixed_cash_price = Math.round(mixedCashPriceYuan.value * 100)
+    } else {
+      // 纯积分模式
+      if (form.value.points_cost <= 0) {
+        ElMessage.warning('请输入有效的积分价格')
+        return
+      }
+    }
   }
 
   if (!form.value.has_sku && !form.value.stock_unlimited && form.value.stock < 0) {
@@ -606,15 +670,36 @@ async function save() {
       return
     }
 
-    // 验证SKU数据
+    // 验证SKU数据（根据支付模式验证价格）
     for (const sku of skus.value) {
       if (!sku.stock_unlimited && sku.stock < 0) {
         ElMessage.warning('SKU库存不能为负数')
         return
       }
-      if (sku.points_cost <= 0) {
-        ElMessage.warning('SKU积分价格必须大于0')
-        return
+      // 根据支付模式验证价格
+      if (form.value.payment_mode === 'points_only') {
+        if (!sku.points_cost || sku.points_cost <= 0) {
+          ElMessage.warning('SKU积分价格必须大于0')
+          return
+        }
+      } else if (form.value.payment_mode === 'cash_only') {
+        if (!sku.cashPriceYuan || sku.cashPriceYuan <= 0) {
+          ElMessage.warning('SKU现金价格必须大于0')
+          return
+        }
+        // 转换元到分
+        sku.cash_price = Math.round(sku.cashPriceYuan * 100)
+      } else if (form.value.payment_mode === 'mixed') {
+        if (!sku.mixed_points_cost || sku.mixed_points_cost <= 0) {
+          ElMessage.warning('SKU混合支付积分价格必须大于0')
+          return
+        }
+        if (!sku.mixedCashPriceYuan || sku.mixedCashPriceYuan <= 0) {
+          ElMessage.warning('SKU混合支付现金价格必须大于0')
+          return
+        }
+        // 转换元到分
+        sku.mixed_cash_price = Math.round(sku.mixedCashPriceYuan * 100)
       }
     }
   }
@@ -635,12 +720,15 @@ async function save() {
         : [],
       skus: form.value.has_sku
         ? skus.value.map((sku, index) => ({
-            ...sku,
             sku_code: sku.sku_code || `SKU-${index + 1}`,
             specs: typeof sku.specs === 'string' ? JSON.parse(sku.specs) : sku.specs,
             stock: sku.stock,
             stock_unlimited: sku.stock_unlimited,
-            points_cost: sku.points_cost,
+            points_cost: sku.points_cost || 0,
+            // 支付价格字段
+            cash_price: sku.cash_price || null,
+            mixed_points_cost: sku.mixed_points_cost || null,
+            mixed_cash_price: sku.mixed_cash_price || null,
             image_url: sku.image_url || '',
             sort_order: index,
             is_active: sku.is_active ?? true,
@@ -870,11 +958,59 @@ onMounted(async () => {
           >
         </el-form-item>
 
+        <!-- 支付模式（所有模式都需要） -->
+        <el-form-item label="支付模式" required>
+          <el-radio-group v-model="form.payment_mode">
+            <el-radio-button
+              v-for="option in paymentModeOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </el-radio-button>
+          </el-radio-group>
+          <div style="margin-top: 5px; color: #999; font-size: 12px">
+            {{ paymentModeOptions.find(o => o.value === form.payment_mode)?.desc }}
+          </div>
+        </el-form-item>
+
         <!-- 非SKU模式：价格和库存 -->
         <template v-if="!form.has_sku">
-          <el-form-item label="积分价格" required>
+          <!-- 纯积分模式 -->
+          <el-form-item v-if="form.payment_mode === 'points_only'" label="积分价格" required>
             <el-input-number v-model="form.points_cost" :min="1" :max="999999" />
+            <span style="margin-left: 10px; color: #999; font-size: 12px">积分</span>
           </el-form-item>
+
+          <!-- 纯现金模式 -->
+          <el-form-item v-if="form.payment_mode === 'cash_only'" label="现金价格" required>
+            <el-input-number
+              v-model="cashPriceYuan"
+              :min="0.01"
+              :precision="2"
+              :step="1"
+              :max="999999"
+            />
+            <span style="margin-left: 10px; color: #999; font-size: 12px">元</span>
+          </el-form-item>
+
+          <!-- 混合支付模式 -->
+          <template v-if="form.payment_mode === 'mixed'">
+            <el-form-item label="积分价格" required>
+              <el-input-number v-model="form.mixed_points_cost" :min="1" :max="999999" />
+              <span style="margin-left: 10px; color: #999; font-size: 12px">积分</span>
+            </el-form-item>
+            <el-form-item label="现金价格" required>
+              <el-input-number
+                v-model="mixedCashPriceYuan"
+                :min="0.01"
+                :precision="2"
+                :step="1"
+                :max="999999"
+              />
+              <span style="margin-left: 10px; color: #999; font-size: 12px">元</span>
+            </el-form-item>
+          </template>
 
           <el-form-item label="库存">
             <el-checkbox v-model="form.stock_unlimited">无限库存</el-checkbox>
@@ -1027,15 +1163,15 @@ onMounted(async () => {
       <!-- SKU列表 -->
       <el-card v-if="form.has_sku && skus.length > 0" class="form-section" header="SKU列表">
         <el-table :data="skus" border>
-          <el-table-column label="规格" width="250">
+          <el-table-column label="规格" width="200">
             <template #default="{ row }">{{ formatSpecs(row) }}</template>
           </el-table-column>
-          <el-table-column label="SKU编码" width="150">
+          <el-table-column label="SKU编码" width="140">
             <template #default="{ row }">
-              <el-input v-model="row.sku_code" placeholder="自动生成或手动输入" />
+              <el-input v-model="row.sku_code" placeholder="自动生成或手动输入" size="small" />
             </template>
           </el-table-column>
-          <el-table-column label="库存" width="150">
+          <el-table-column label="库存" width="140">
             <template #default="{ row }">
               <el-checkbox v-model="row.stock_unlimited" size="small" />
               <el-input-number
@@ -1048,12 +1184,51 @@ onMounted(async () => {
               />
             </template>
           </el-table-column>
-          <el-table-column label="积分价格" width="150">
+          <!-- 纯积分模式：积分价格 -->
+          <el-table-column v-if="form.payment_mode === 'points_only'" label="积分价格" width="130">
             <template #default="{ row }">
               <el-input-number v-model="row.points_cost" :min="1" :max="999999" size="small" />
             </template>
           </el-table-column>
-          <el-table-column label="状态" width="100">
+          <!-- 纯现金模式：现金价格 -->
+          <el-table-column v-if="form.payment_mode === 'cash_only'" label="现金价格(元)" width="140">
+            <template #default="{ row }">
+              <el-input-number
+                v-model="row.cashPriceYuan"
+                :min="0.01"
+                :precision="2"
+                :step="1"
+                :max="999999"
+                size="small"
+                @change="val => (row.cash_price = val ? Math.round(val * 100) : null)"
+              />
+            </template>
+          </el-table-column>
+          <!-- 混合模式：积分价格 + 现金价格 -->
+          <el-table-column v-if="form.payment_mode === 'mixed'" label="积分价格" width="120">
+            <template #default="{ row }">
+              <el-input-number
+                v-model="row.mixed_points_cost"
+                :min="1"
+                :max="999999"
+                size="small"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column v-if="form.payment_mode === 'mixed'" label="现金价格(元)" width="140">
+            <template #default="{ row }">
+              <el-input-number
+                v-model="row.mixedCashPriceYuan"
+                :min="0.01"
+                :precision="2"
+                :step="1"
+                :max="999999"
+                size="small"
+                @change="val => (row.mixed_cash_price = val ? Math.round(val * 100) : null)"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="80">
             <template #default="{ row }">
               <el-switch v-model="row.is_active" size="small" />
             </template>
