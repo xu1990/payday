@@ -263,6 +263,94 @@ async def get_product_detail(
     return success_response(data=data)
 
 
+class ShippingCostRequest(BaseModel):
+    """运费计算请求"""
+    product_id: str = Field(..., description="商品ID")
+    address_id: str = Field(..., description="收货地址ID")
+    sku_id: Optional[str] = Field(None, description="SKU ID（多规格商品时需要）")
+    quantity: int = Field(1, ge=1, description="购买数量")
+
+
+class ShippingCostResponse(BaseModel):
+    """运费计算响应"""
+    deliverable: bool = Field(..., description="是否可配送")
+    shipping_cost: int = Field(..., description="运费（分）")
+    free_shipping: bool = Field(..., description="是否包邮")
+    free_shipping_reason: Optional[str] = Field(None, description="包邮原因")
+    reason: Optional[str] = Field(None, description="不可配送原因")
+    region_name: Optional[str] = Field(None, description="区域名称")
+    estimate_days_min: Optional[int] = Field(None, description="预计最少天数")
+    estimate_days_max: Optional[int] = Field(None, description="预计最多天数")
+
+
+@router.post("/shipping-cost", response_model=ShippingCostResponse)
+async def calculate_shipping_cost(
+    body: ShippingCostRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """计算运费
+
+    根据商品、收货地址和数量计算运费
+    """
+    from app.models.point_product import PointProduct
+    from app.models.address import UserAddress
+    from app.services.shipping_service import ShippingTemplateService
+
+    # 1. 查询商品信息
+    result = await db.execute(
+        select(PointProduct).where(PointProduct.id == body.product_id)
+    )
+    product = result.scalar_one_or_none()
+    if not product:
+        raise NotFoundException("商品不存在", code="PRODUCT_NOT_FOUND")
+
+    # 2. 检查是否需要运费（虚拟商品或无需快递的商品）
+    if product.product_type == "virtual" or product.shipping_method == "no_shipping":
+        return ShippingCostResponse(
+            deliverable=True,
+            shipping_cost=0,
+            free_shipping=True,
+            free_shipping_reason="no_shipping_needed",
+        )
+
+    # 3. 如果没有运费模板，默认免运费
+    if not product.shipping_template_id:
+        return ShippingCostResponse(
+            deliverable=True,
+            shipping_cost=0,
+            free_shipping=True,
+            free_shipping_reason="no_template",
+        )
+
+    # 4. 查询收货地址
+    result = await db.execute(
+        select(UserAddress).where(UserAddress.id == body.address_id)
+    )
+    address = result.scalar_one_or_none()
+    if not address:
+        raise NotFoundException("地址不存在", code="ADDRESS_NOT_FOUND")
+
+    # 5. 计算运费
+    service = ShippingTemplateService(db)
+    cost_result = await service.calculate_shipping_cost(
+        template_id=str(product.shipping_template_id),
+        region_code=address.province_code,
+        quantity=body.quantity,
+    )
+
+    return ShippingCostResponse(
+        deliverable=cost_result.get("deliverable", True),
+        shipping_cost=cost_result.get("shipping_cost", 0),
+        free_shipping=cost_result.get("free_shipping", False),
+        free_shipping_reason=cost_result.get("free_shipping_reason"),
+        reason=cost_result.get("reason"),
+        region_name=cost_result.get("region_name"),
+        estimate_days_min=cost_result.get("estimate_days_min"),
+        estimate_days_max=cost_result.get("estimate_days_max"),
+    )
+
+
 @router.post("/orders")
 async def create_user_order(
     body: OrderCreate,

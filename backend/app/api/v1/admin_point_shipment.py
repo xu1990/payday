@@ -70,18 +70,24 @@ async def get_pending_point_orders(
     current_admin: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """获取待发货订单列表（没有发货记录的已支付积分订单）"""
+    """获取待发货订单列表（没有发货记录的已支付积分订单，仅返回需要发货的实物商品）"""
     try:
         from app.models.point_order import PointOrder
+        from app.models.point_product import PointProduct
         from sqlalchemy import select
+        from sqlalchemy.orm import joinedload
 
-        # 获取已完成的积分订单（可以发货的订单）
-        query = select(PointOrder).where(PointOrder.status == "completed")
+        # 获取已完成的积分订单，并关联查询商品信息
+        query = (
+            select(PointOrder)
+            .options(joinedload(PointOrder.product))
+            .where(PointOrder.status == "completed")
+        )
 
         result = await db.execute(query)
-        orders = result.scalars().all()
+        orders = result.scalars().unique().all()
 
-        # 过滤出没有发货记录的订单
+        # 过滤出没有发货记录且需要发货的订单
         pending_orders = []
         for order in orders:
             # 检查是否已有发货记录
@@ -89,8 +95,21 @@ async def get_pending_point_orders(
             shipment_result = await db.execute(shipment_query)
             existing_shipment = shipment_result.scalar_one_or_none()
 
-            if not existing_shipment:
-                pending_orders.append(order)
+            if existing_shipment:
+                continue
+
+            # 检查商品是否需要发货
+            # 虚拟商品和无需快递的商品不需要发货
+            product = order.product
+            if product:
+                if product.product_type == "virtual":
+                    # 虚拟商品不需要发货
+                    continue
+                if product.shipping_method == "no_shipping":
+                    # 无需快递的商品不需要发货
+                    continue
+
+            pending_orders.append(order)
 
         return [
             PointOrderBasic(

@@ -116,12 +116,14 @@ async function loadProducts(category = '') {
     const res = await getPointProducts(category || undefined)
     products.value = res.products || []
 
-    // 提取分类
-    const cats = new Set()
-    products.value.forEach(p => {
-      if (p.category) cats.add(p.category)
-    })
-    categories.value = Array.from(cats)
+    // 只有在加载全部商品时才更新分类列表
+    if (!category) {
+      const cats = new Set()
+      products.value.forEach(p => {
+        if (p.category) cats.add(p.category)
+      })
+      categories.value = Array.from(cats)
+    }
   } catch (err) {
     console.error('Failed to load products:', err)
     uni.showToast({

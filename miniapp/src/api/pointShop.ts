@@ -289,3 +289,34 @@ export function cancelPointOrder(orderId: string, reason?: string) {
     data: reason ? { reason } : undefined,
   })
 }
+
+// ==================== 运费计算 ====================
+
+/** 运费计算请求 */
+export interface ShippingCostRequest {
+  product_id: string
+  address_id: string
+  sku_id?: string
+  quantity?: number
+}
+
+/** 运费计算响应 */
+export interface ShippingCostResult {
+  deliverable: boolean
+  shipping_cost: number  // 运费（分）
+  free_shipping: boolean
+  free_shipping_reason?: string
+  reason?: string
+  region_name?: string
+  estimate_days_min?: number
+  estimate_days_max?: number
+}
+
+/** 计算运费 */
+export function calculateShippingCost(data: ShippingCostRequest) {
+  return request<ShippingCostResult>({
+    url: `${PREFIX}/shipping-cost`,
+    method: 'POST',
+    data,
+  })
+}

@@ -69,8 +69,11 @@
         </view>
 
         <!-- 规格选择 -->
-        <view v-for="spec in product.specifications" :key="spec.id" class="spec-group">
-          <text class="spec-name">{{ spec.name }}</text>
+        <view v-for="(spec, specIndex) in product.specifications" :key="spec.id" class="spec-group" :class="`spec-group-${specIndex % 3}`">
+          <view class="spec-label">
+            <text class="spec-name">{{ spec.name }}</text>
+            <text class="spec-required">*</text>
+          </view>
           <view class="spec-values">
             <view
               v-for="value in spec.values"
@@ -78,11 +81,19 @@
               class="spec-value"
               :class="{
                 active: selectedSpecs[spec.name] === value.value,
-                disabled: !isSpecValueAvailable(spec.name, value.value)
+                disabled: !isSpecValueAvailable(spec.name, value.value),
+                'has-image': value.image_url
               }"
               @tap="selectSpec(spec.name, value.value)"
             >
-              <text>{{ value.value }}</text>
+              <image
+                v-if="value.image_url"
+                class="spec-value-image"
+                :src="value.image_url"
+                mode="aspectFill"
+              />
+              <text class="spec-value-text">{{ value.value }}</text>
+              <view v-if="selectedSpecs[spec.name] === value.value" class="spec-check-icon">✓</view>
             </view>
           </view>
         </view>
@@ -129,6 +140,21 @@
           <text class="section-title">配送信息</text>
         </view>
         <view class="shipping-info">
+          <!-- 运费显示 -->
+          <view v-if="selectedAddress" class="shipping-row shipping-cost-row">
+            <text class="shipping-label">运费</text>
+            <view v-if="shippingCostLoading" class="shipping-value loading-text">计算中...</view>
+            <view v-else-if="shippingCostInfo" class="shipping-value shipping-cost-value">
+              <text v-if="shippingCostInfo.free_shipping" class="free-shipping">免运费</text>
+              <text v-else class="cost">¥{{ (shippingCostInfo.shipping_cost / 100).toFixed(2) }}</text>
+              <text v-if="shippingCostInfo.free_shipping && shippingCostInfo.free_shipping_reason" class="free-reason">
+                （{{ shippingCostInfo.free_shipping_reason === 'seller' ? '商家承担' :
+                    shippingCostInfo.free_shipping_reason === 'quantity' ? '满件包邮' :
+                    shippingCostInfo.free_shipping_reason === 'amount' ? '满额包邮' : '' }}）
+              </text>
+            </view>
+            <view v-else class="shipping-value">-</view>
+          </view>
           <!-- 预计到达时间 -->
           <view v-if="product.shipping_template.estimate_days_min" class="shipping-row">
             <text class="shipping-label">预计到达</text>
@@ -165,9 +191,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { getPointProduct, createPointOrder, getMyAddresses } from '@/api/pointShop'
+import { getPointProduct, createPointOrder, getMyAddresses, calculateShippingCost } from '@/api/pointShop'
 import { getMyPoints } from '@/api/ability-points'
 
 const product = ref(null)
@@ -176,6 +202,10 @@ const availablePoints = ref(0)
 const productId = ref('')
 const selectedAddress = ref(null)
 const isInitialized = ref(false)
+
+// 运费状态
+const shippingCostInfo = ref(null)
+const shippingCostLoading = ref(false)
 
 // SKU相关状态
 const selectedSpecs = reactive({}) // { "颜色": "红色", "尺寸": "L" }
@@ -476,11 +506,75 @@ async function loadDefaultAddress() {
     const defaultAddr = addresses.find(addr => addr.is_default)
     if (defaultAddr) {
       selectedAddress.value = defaultAddr
+      // 加载运费信息
+      loadShippingCost()
     }
   } catch (err) {
     console.error('Failed to load addresses:', err)
   }
 }
+
+// 计算运费
+async function loadShippingCost() {
+  if (!product.value || !selectedAddress.value) {
+    shippingCostInfo.value = null
+    return
+  }
+
+  // 虚拟商品或无需快递的商品不计算运费
+  if (product.value.product_type === 'virtual' || product.value.shipping_method === 'no_shipping') {
+    shippingCostInfo.value = {
+      deliverable: true,
+      shipping_cost: 0,
+      free_shipping: true,
+      free_shipping_reason: 'no_shipping_needed'
+    }
+    return
+  }
+
+  // 没有运费模板，不计算
+  if (!product.value.shipping_template_id) {
+    shippingCostInfo.value = {
+      deliverable: true,
+      shipping_cost: 0,
+      free_shipping: true,
+      free_shipping_reason: 'no_template'
+    }
+    return
+  }
+
+  try {
+    shippingCostLoading.value = true
+    const res = await calculateShippingCost({
+      product_id: productId.value,
+      address_id: selectedAddress.value.id,
+      sku_id: selectedSku.value?.id,
+      quantity: 1
+    })
+    shippingCostInfo.value = res
+  } catch (err) {
+    console.error('Failed to calculate shipping cost:', err)
+    shippingCostInfo.value = null
+  } finally {
+    shippingCostLoading.value = false
+  }
+}
+
+// 监听地址变化，重新计算运费
+watch(selectedAddress, () => {
+  if (selectedAddress.value && product.value) {
+    loadShippingCost()
+  } else {
+    shippingCostInfo.value = null
+  }
+})
+
+// 监听SKU变化，重新计算运费（如果SKU影响运费）
+watch(selectedSku, () => {
+  if (selectedAddress.value && product.value) {
+    loadShippingCost()
+  }
+})
 
 function goToAddresses() {
   // 跳转到地址列表，传递select=true表示选择模式
@@ -636,23 +730,53 @@ async function handleExchange() {
 
 .section-hint {
   font-size: $font-size-xs;
-  color: var(--text-tertiary);
+  color: $brand-primary;
+  background: rgba($brand-primary, 0.1);
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
 }
 
 .spec-group {
-  margin-top: $spacing-md;
+  margin-top: $spacing-lg;
+  padding: $spacing-md;
+  background: var(--bg-glass-subtle);
+  border-radius: $radius-md;
+  border-left: 6rpx solid $brand-primary;
 
   &:first-child {
     margin-top: 0;
   }
+
+  // 不同规格组的颜色区分
+  &.spec-group-0 {
+    border-left-color: $brand-primary;
+  }
+
+  &.spec-group-1 {
+    border-left-color: $semantic-success;
+  }
+
+  &.spec-group-2 {
+    border-left-color: $semantic-warning;
+  }
+}
+
+.spec-label {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-md;
 }
 
 .spec-name {
-  display: block;
   font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
+  font-weight: $font-weight-bold;
   color: var(--text-primary);
-  margin-bottom: $spacing-sm;
+}
+
+.spec-required {
+  margin-left: $spacing-xs;
+  font-size: $font-size-xs;
+  color: $semantic-error;
 }
 
 .spec-values {
@@ -662,24 +786,72 @@ async function handleExchange() {
 }
 
 .spec-value {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: $spacing-sm $spacing-md;
-  background: var(--bg-glass-subtle);
+  min-width: 120rpx;
+  background: var(--bg-base);
   border: 2rpx solid var(--border-regular);
   border-radius: $radius-md;
-  font-size: $font-size-sm;
-  color: var(--text-secondary);
-  transition: all 0.2s;
+  transition: all 0.25s ease;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+
+  &.has-image {
+    padding: $spacing-sm;
+    min-width: 140rpx;
+  }
 
   &.active {
-    background: $gradient-brand;
+    background: linear-gradient(135deg, rgba($brand-primary, 0.1), rgba($brand-primary, 0.05));
     border-color: $brand-primary;
-    color: #fff;
+    border-width: 3rpx;
+    box-shadow: 0 4rpx 12rpx rgba($brand-primary, 0.2);
+    transform: scale(1.02);
   }
 
   &.disabled {
-    opacity: 0.4;
-    text-decoration: line-through;
+    opacity: 0.35;
+    background: var(--bg-base);
+    border-style: dashed;
+
+    .spec-value-text {
+      text-decoration: line-through;
+      color: var(--text-tertiary);
+    }
   }
+}
+
+.spec-value-image {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-sm;
+  margin-bottom: $spacing-xs;
+  border: 2rpx solid var(--border-subtle);
+}
+
+.spec-value-text {
+  font-size: $font-size-sm;
+  color: var(--text-primary);
+  font-weight: $font-weight-medium;
+  text-align: center;
+}
+
+.spec-check-icon {
+  position: absolute;
+  top: -8rpx;
+  right: -8rpx;
+  width: 36rpx;
+  height: 36rpx;
+  background: $brand-primary;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-xs;
+  color: #fff;
+  box-shadow: 0 2rpx 6rpx rgba($brand-primary, 0.4);
 }
 
 .product-name {
@@ -937,6 +1109,41 @@ async function handleExchange() {
 
 .shipping-row.excluded .shipping-value {
   color: $semantic-error;
+}
+
+/* 运费样式 */
+.shipping-cost-row {
+  padding: $spacing-sm;
+  background: var(--bg-glass-subtle);
+  border-radius: $radius-sm;
+  margin-bottom: $spacing-sm;
+}
+
+.shipping-cost-value {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+}
+
+.shipping-cost-value .free-shipping {
+  color: $semantic-success;
+  font-weight: $font-weight-bold;
+}
+
+.shipping-cost-value .cost {
+  color: $semantic-error;
+  font-weight: $font-weight-bold;
+  font-size: $font-size-base;
+}
+
+.shipping-cost-value .free-reason {
+  color: var(--text-tertiary);
+  font-size: $font-size-xs;
+}
+
+.loading-text {
+  color: var(--text-tertiary);
 }
 
 .action-section {

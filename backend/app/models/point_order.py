@@ -2,6 +2,7 @@
 from datetime import datetime
 
 from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import relationship
 
 from .base import Base
 from .user import gen_uuid
@@ -51,5 +52,5 @@ class PointOrder(Base):
 
     # 关系
     user = None  # relationship("User", back_populates="point_orders")
-    product = None  # relationship("PointProduct", back_populates="orders")
+    product = relationship("PointProduct", foreign_keys=[product_id])
     admin = None  # relationship("AdminUser", back_populates="processed_point_orders")
