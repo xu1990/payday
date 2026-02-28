@@ -3,7 +3,10 @@
     <view class="login-container">
       <!-- Logo 区域 -->
       <view class="logo-section">
-        <image class="logo" src="/static/logo.png" mode="aspectFit" />
+        <view class="logo-wrapper">
+          <text class="logo-emoji">💰</text>
+          <image class="logo" src="/static/logo.png" mode="aspectFit" />
+        </view>
         <text class="app-name">薪日 PayDay</text>
         <text class="app-slogan">记录发薪日，分享打工心情</text>
       </view>
@@ -21,20 +24,14 @@
           <text class="invite-code-hint">填写邀请码，双方均可获得积分奖励</text>
         </view>
 
-        <!-- 快捷登录（无需手机号） -->
-        <button class="login-btn login-btn-quick" :disabled="isLoading" @tap="handleQuickLogin">
-          <text v-if="!isLoading">快捷登录</text>
-          <text v-else>登录中...</text>
-        </button>
-
-        <!-- 手机号登录（需要授权） -->
+        <!-- 微信授权登录 -->
         <button
-          class="login-btn login-btn-phone"
+          class="login-btn"
           open-type="getPhoneNumber"
           :disabled="isLoading"
-          @getphonenumber="handlePhoneLogin"
+          @getphonenumber="handleWechatLogin"
         >
-          <text v-if="!isLoading">手机号登录</text>
+          <text v-if="!isLoading">微信授权登录</text>
           <text v-else>登录中...</text>
         </button>
 
@@ -137,103 +134,9 @@ onMounted(async () => {
 })
 
 /**
- * 快捷登录（不授权手机号）
+ * 微信授权登录（获取手机号）
  */
-async function handleQuickLogin() {
-  if (isLoading.value) return
-
-  try {
-    isLoading.value = true
-
-    console.log('[login] 开始快捷登录...')
-
-    // 调用微信登录
-    const loginRes: any = await uni.login({
-      provider: 'weixin',
-    })
-
-    console.log('[login] uni.login 结果:', loginRes)
-
-    // 检查是否有错误
-    if (loginRes.errMsg && loginRes.errMsg !== 'login:ok') {
-      const errMsg = loginRes.errMsg || ''
-      console.error('[login] 微信登录失败:', loginRes)
-
-      // 用户取消授权
-      if (errMsg.includes('cancel') || errMsg.includes('auth deny')) {
-        console.info('[login] 用户取消授权')
-        return
-      }
-
-      // 网络错误
-      if (errMsg.includes('network') || errMsg.includes('timeout')) {
-        showError('网络连接失败，请检查网络后重试')
-        return
-      }
-
-      // 其他错误
-      showError('微信登录失败：' + (errMsg || '未知错误'))
-      return
-    }
-
-    if (!loginRes?.code) {
-      console.error('[login] 未获取到微信授权码')
-      showError('获取微信授权码失败，请重试')
-      return
-    }
-
-    console.log('[login] 获取到微信授权码')
-
-    // 调用后端登录接口（不带手机号，但带邀请码）
-    console.log('[login] 开始调用后端登录接口...')
-    const success = await authStore.login(loginRes.code, undefined, inviteCode.value || undefined)
-
-    console.log('[login] 后端登录结果:', success)
-
-    if (success) {
-      showSuccess('登录成功')
-
-      // 不在登录页获取用户信息，由首页的 onShow 处理
-      // 避免真机环境下 token 存储异步问题导致 401
-
-      // 延迟跳转首页，确保 token 完全写入存储
-      // 使用 reLaunch 而不是 switchTab，确保页面完全重新加载
-      setTimeout(async () => {
-        console.log('[login] 准备跳转到首页，先验证 token...')
-
-        // 验证 token 是否确实存储成功
-        const tokenCheck = await getToken()
-
-        if (!tokenCheck) {
-          console.error('[login] 跳转前验证失败：token未找到')
-          showError('登录状态保存失败，请重试')
-          return
-        }
-
-        console.log('[login] Token验证成功，准备跳转，length:', tokenCheck.length)
-
-        // 使用 reLaunch 确保页面完全重新加载
-        uni.reLaunch({
-          url: '/pages/index',
-        })
-      }, 1000) // 增加延迟到 1000ms
-    } else {
-      console.error('[login] 后端登录接口返回失败')
-      showError('登录失败，请检查后端服务是否启动')
-    }
-  } catch (error: unknown) {
-    console.error('[login] 登录过程抛出异常:', error)
-    const message = error instanceof Error ? error.message : '登录失败，请重试'
-    showError(message)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-/**
- * 手机号登录（需要用户授权手机号）
- */
-async function handlePhoneLogin(e: any) {
+async function handleWechatLogin(e: any) {
   if (isLoading.value) return
 
   console.log('[login] 手机号授权回调:', e)
@@ -244,8 +147,8 @@ async function handlePhoneLogin(e: any) {
 
     // 用户拒绝授权
     if (e.detail.errMsg.includes('cancel')) {
-      console.info('[login] 用户取消手机号授权')
-      showError('已取消手机号授权')
+      console.info('[login] 用户取消授权')
+      showError('已取消授权')
       return
     }
 
@@ -267,7 +170,7 @@ async function handlePhoneLogin(e: any) {
   try {
     isLoading.value = true
 
-    console.log('[login] 开始手机号登录...')
+    console.log('[login] 开始微信授权登录...')
 
     // 调用微信登录获取登录授权码
     const loginRes: any = await uni.login({
@@ -307,7 +210,7 @@ async function handlePhoneLogin(e: any) {
     console.log('[login] 获取到微信授权码')
 
     // 调用后端登录接口（带手机号授权码和邀请码）
-    console.log('[login] 开始调用后端登录接口（带手机号）...')
+    console.log('[login] 开始调用后端登录接口...')
     const success = await authStore.login(
       loginRes.code,
       phoneNumberCode,
@@ -398,12 +301,27 @@ function goToPrivacyPolicy() {
   margin-bottom: 120rpx;
 }
 
+.logo-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40rpx;
+}
+
 .logo {
   width: 160rpx;
   height: 160rpx;
   border-radius: 32rpx;
   background: rgba(255, 255, 255, 0.2);
-  margin-bottom: 40rpx;
+}
+
+.logo-emoji {
+  position: absolute;
+  top: -16rpx;
+  right: -16rpx;
+  font-size: 48rpx;
+  z-index: 1;
 }
 
 .app-name {
@@ -485,16 +403,6 @@ function goToPrivacyPolicy() {
 
   &[disabled] {
     opacity: 0.7;
-  }
-
-  &.login-btn-phone {
-    background: $gradient-brand;
-    color: #ffffff;
-    border: 2rpx solid rgba(255, 255, 255, 0.3);
-
-    &:active {
-      background: linear-gradient(135deg, $brand-primary-strong 0%, darken($brand-secondary, 10%) 100%);
-    }
   }
 }
 
