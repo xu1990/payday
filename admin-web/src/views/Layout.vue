@@ -63,7 +63,9 @@
           <el-menu-item index="/point-returns" aria-label="退货管理">退货管理</el-menu-item>
           <el-menu-item index="/couriers" aria-label="物流公司">物流公司</el-menu-item>
           <el-menu-item index="/shipping-templates" aria-label="运费模板">运费模板</el-menu-item>
-          <el-menu-item index="/specification-templates" aria-label="规格模板">规格模板</el-menu-item>
+          <el-menu-item index="/specification-templates" aria-label="规格模板"
+            >规格模板</el-menu-item
+          >
           <el-menu-item index="/user-addresses" aria-label="用户地址">用户地址</el-menu-item>
         </el-sub-menu>
 
@@ -112,7 +114,12 @@
 
     <!-- 修改密码弹窗 -->
     <el-dialog v-model="passwordDialogVisible" title="修改密码" width="400px">
-      <el-form ref="passwordFormRef" :model="passwordForm" :rules="passwordRules" label-width="80px">
+      <el-form
+        ref="passwordFormRef"
+        :model="passwordForm"
+        :rules="passwordRules"
+        label-width="80px"
+      >
         <el-form-item label="旧密码" prop="old_password">
           <el-input
             v-model="passwordForm.old_password"
@@ -179,7 +186,11 @@ const passwordForm = reactive({
   confirm_password: '',
 })
 
-const validateConfirmPassword = (_rule: unknown, value: string, callback: (error?: Error) => void) => {
+const validateConfirmPassword = (
+  _rule: unknown,
+  value: string,
+  callback: (error?: Error) => void
+) => {
   if (value !== passwordForm.new_password) {
     callback(new Error('两次输入的密码不一致'))
   } else {

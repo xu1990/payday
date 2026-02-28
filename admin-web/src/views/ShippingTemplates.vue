@@ -577,7 +577,9 @@ onMounted(() => {
               </el-form-item>
               <el-form-item label="默认首件运费" required>
                 <el-input-number v-model="form.default_first_cost" :min="0" :max="999999" />
-                <span style="margin-left: 10px">分 ({{ formatCost(form.default_first_cost) }})</span>
+                <span style="margin-left: 10px"
+                  >分 ({{ formatCost(form.default_first_cost) }})</span
+                >
               </el-form-item>
               <el-form-item label="默认续件/续重" required>
                 <el-input-number v-model="form.default_continue_unit" :min="1" :max="999999" />
@@ -592,7 +594,9 @@ onMounted(() => {
             </template>
             <el-form-item v-if="!showPricingFields" label="固定运费" required>
               <el-input-number v-model="form.default_first_cost" :min="0" :max="999999" />
-              <span style="margin-left: 10px">分 ({{ formatCost(form.default_first_cost || 0) }})</span>
+              <span style="margin-left: 10px"
+                >分 ({{ formatCost(form.default_first_cost || 0) }})</span
+              >
             </el-form-item>
             <el-form-item label="预计送达天数">
               <el-input-number
@@ -731,7 +735,9 @@ onMounted(() => {
             </el-form-item>
             <el-form-item v-if="freeShippingType === 'amount'" label="满金额">
               <el-input-number v-model="form.free_threshold" :min="0" :max="99999999" />
-              <span style="margin-left: 10px">分 ({{ form.free_threshold ? formatCost(form.free_threshold) : '¥0.00' }})</span>
+              <span style="margin-left: 10px"
+                >分 ({{ form.free_threshold ? formatCost(form.free_threshold) : '¥0.00' }})</span
+              >
             </el-form-item>
             <el-form-item v-if="freeShippingType === 'quantity'" label="满件数">
               <el-input-number v-model="form.free_quantity" :min="1" :max="9999" />

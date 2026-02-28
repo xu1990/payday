@@ -79,7 +79,7 @@ export function listShipments(params?: PointShipmentListParams) {
     offset = 0,
   } = params ?? {}
   const q = new URLSearchParams()
-  q.set('skip', String(offset))  // 后端使用 skip 而不是 offset
+  q.set('skip', String(offset)) // 后端使用 skip 而不是 offset
   q.set('limit', String(limit))
   if (order_number) q.set('order_number', order_number)
   if (status) q.set('status', status)

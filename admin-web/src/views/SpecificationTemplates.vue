@@ -104,9 +104,7 @@ function handleValueInput(index: number, value: string) {
 
 // Get valid values (non-empty)
 function getValidValues(): string[] {
-  return form.value.values
-    .map(v => v.trim())
-    .filter(v => v.length > 0)
+  return form.value.values.map(v => v.trim()).filter(v => v.length > 0)
 }
 
 // Submit form
@@ -156,15 +154,11 @@ async function submit() {
 // Delete template
 async function handleDelete(template: SpecificationTemplate) {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除规格模板"${template.name}"吗？`,
-      '确认删除',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    )
+    await ElMessageBox.confirm(`确定要删除规格模板"${template.name}"吗？`, '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
 
     await deleteSpecificationTemplate(template.id)
     ElMessage.success('删除成功')
@@ -229,7 +223,12 @@ onMounted(() => {
         >
           <div class="preset-name">{{ preset.name }}</div>
           <div class="preset-values">
-            <el-tag v-for="v in preset.values.slice(0, 4)" :key="v" size="small" style="margin: 2px">
+            <el-tag
+              v-for="v in preset.values.slice(0, 4)"
+              :key="v"
+              size="small"
+              style="margin: 2px"
+            >
               {{ v }}
             </el-tag>
             <el-tag v-if="preset.values.length > 4" size="small" type="info" style="margin: 2px">
@@ -242,7 +241,7 @@ onMounted(() => {
 
     <!-- Templates list -->
     <el-card class="list-card">
-      <el-table :data="templates" v-loading="loading" border>
+      <el-table v-loading="loading" :data="templates" border>
         <el-table-column prop="name" label="规格名称" width="150" />
         <el-table-column prop="description" label="描述" min-width="150">
           <template #default="{ row }">
@@ -251,12 +250,7 @@ onMounted(() => {
         </el-table-column>
         <el-table-column label="规格值" min-width="300">
           <template #default="{ row }">
-            <el-tag
-              v-for="value in row.values"
-              :key="value"
-              size="small"
-              style="margin: 2px"
-            >
+            <el-tag v-for="value in row.values" :key="value" size="small" style="margin: 2px">
               {{ value }}
             </el-tag>
           </template>
@@ -266,9 +260,9 @@ onMounted(() => {
           <template #default="{ row }">
             <el-switch
               :model-value="row.is_active"
-              @change="toggleActive(row)"
               active-text="启用"
               inactive-text="禁用"
+              @change="toggleActive(row)"
             />
           </template>
         </el-table-column>
@@ -302,9 +296,9 @@ onMounted(() => {
               <el-input
                 :model-value="form.values[index]"
                 placeholder="输入规格值"
-                @input="handleValueInput(index, $event)"
                 maxlength="50"
                 style="width: 200px"
+                @input="handleValueInput(index, $event)"
               />
               <el-button
                 v-if="form.values.length > 1"

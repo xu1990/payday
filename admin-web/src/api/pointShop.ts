@@ -187,6 +187,10 @@ export interface PointOrder {
   created_at: string
   processed_at: string | null
   notes_admin: string | null
+  // 发货相关字段
+  product_type?: ProductType
+  shipping_method?: ShippingMethod
+  shipment_id?: string | null
 }
 
 export interface PointOrderListResult {
@@ -213,5 +217,17 @@ export function processPointOrder(orderId: string, action: 'complete' | 'cancel'
     url: `${PREFIX}/orders/${orderId}/process`,
     method: 'POST',
     data: { action, notes },
+  })
+}
+
+/** 订单发货 */
+export function shipPointOrder(
+  orderId: string,
+  data: { courier_code: string; tracking_number: string }
+) {
+  return request<{ id: string }>({
+    url: `/admin/point-shipments/point-orders/${orderId}/ship`,
+    method: 'POST',
+    data,
   })
 }

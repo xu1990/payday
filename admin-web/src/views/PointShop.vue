@@ -216,12 +216,7 @@ onMounted(() => {
         style="width: 150px"
         @change="handleFilter"
       >
-        <el-option
-          v-for="cat in categoryOptions"
-          :key="cat.id"
-          :label="cat.name"
-          :value="cat.id"
-        />
+        <el-option v-for="cat in categoryOptions" :key="cat.id" :label="cat.name" :value="cat.id" />
       </el-select>
       <el-select
         v-model="filters.is_active"
@@ -248,7 +243,7 @@ onMounted(() => {
       <el-button type="primary" @click="handleFilter">搜索</el-button>
     </div>
 
-    <el-table :data="list" v-loading="loading" stripe>
+    <el-table v-loading="loading" :data="list" stripe>
       <el-table-column prop="name" label="商品名称" width="180" />
       <el-table-column prop="category" label="分类" width="100">
         <template #default="{ row }">
@@ -258,7 +253,9 @@ onMounted(() => {
       <el-table-column label="类型" width="80">
         <template #default="{ row }">
           <el-tag v-if="row.product_type === 'virtual'" type="info" size="small">虚拟</el-tag>
-          <el-tag v-else-if="row.product_type === 'bundle'" type="warning" size="small">套餐</el-tag>
+          <el-tag v-else-if="row.product_type === 'bundle'" type="warning" size="small"
+            >套餐</el-tag
+          >
           <el-tag v-else type="success" size="small">实物</el-tag>
         </template>
       </el-table-column>
@@ -321,7 +318,9 @@ onMounted(() => {
         <template #default="{ row }">
           <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
           <template v-if="row.is_active">
-            <el-button link type="warning" size="small" @click="handleOffShelf(row)">下架</el-button>
+            <el-button link type="warning" size="small" @click="handleOffShelf(row)"
+              >下架</el-button
+            >
           </template>
           <template v-else>
             <el-button link type="success" size="small" @click="handleOnShelf(row)">上架</el-button>
@@ -344,13 +343,11 @@ onMounted(() => {
 
   <!-- SKU Dialog -->
   <el-dialog v-model="skuDialogVisible" title="SKU列表" width="800">
-    <el-table :data="currentSkus" v-loading="skuLoading" stripe>
+    <el-table v-loading="skuLoading" :data="currentSkus" stripe>
       <el-table-column prop="sku_code" label="SKU编码" width="120" />
       <el-table-column label="规格" width="150">
         <template #default="{ row }">
-          <div v-for="(value, key) in row.specs" :key="key">
-            {{ key }}: {{ value }}
-          </div>
+          <div v-for="(value, key) in row.specs" :key="key">{{ key }}: {{ value }}</div>
         </template>
       </el-table-column>
       <el-table-column label="库存" width="80">
@@ -395,7 +392,7 @@ onMounted(() => {
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="reasonDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmAction" :disabled="!reasonForm.reason.trim()">
+        <el-button type="primary" :disabled="!reasonForm.reason.trim()" @click="confirmAction">
           确定
         </el-button>
       </span>

@@ -29,10 +29,7 @@ import {
 } from '@/api/pointSku'
 import { getCategoryTree } from '@/api/pointCategory'
 import { listShippingTemplates, type ShippingTemplate } from '@/api/shippingTemplate'
-import {
-  listSpecificationTemplates,
-  type SpecificationTemplate,
-} from '@/api/specificationTemplate'
+import { listSpecificationTemplates, type SpecificationTemplate } from '@/api/specificationTemplate'
 import adminApi from '@/api/admin'
 
 const route = useRoute()
@@ -339,7 +336,10 @@ function selectSpecTemplate(template: SpecificationTemplate) {
 // 编辑模式下添加规格和值
 async function addSpecificationWithValues(name: string, values: string[]) {
   try {
-    const specRes = await createSpecification(productId!, { name, sort_order: specifications.value.length })
+    const specRes = await createSpecification(productId!, {
+      name,
+      sort_order: specifications.value.length,
+    })
     const specId = specRes.id
 
     // 添加规格值
@@ -369,7 +369,10 @@ async function addSpecification() {
   if (productId) {
     // 编辑模式：调用API创建
     try {
-      await createSpecification(productId, { name: newSpecName.value, sort_order: specifications.value.length })
+      await createSpecification(productId, {
+        name: newSpecName.value,
+        sort_order: specifications.value.length,
+      })
       await loadSpecifications()
       newSpecName.value = ''
       ElMessage.success('添加规格成功')
@@ -459,7 +462,10 @@ async function addSpecValueInEditMode(spec: PointSpecification) {
   }
 
   try {
-    await createSpecificationValue(spec.id, { value: value.trim(), sort_order: (spec.values?.length || 0) })
+    await createSpecificationValue(spec.id, {
+      value: value.trim(),
+      sort_order: spec.values?.length || 0,
+    })
     newSpecValues.value[spec.name] = ''
     await loadSpecifications()
     ElMessage.success('添加规格值成功')
@@ -476,7 +482,9 @@ function generateSKUCombinations() {
   }
 
   const validSpecs = specifications.value.filter(spec => {
-    const values = productId ? (spec.values || []).map(v => v.value) : (newSpecValues.value[spec.name] || [])
+    const values = productId
+      ? (spec.values || []).map(v => v.value)
+      : newSpecValues.value[spec.name] || []
     return values.length > 0
   })
 
@@ -500,14 +508,16 @@ function generateSKUCombinations() {
   }
 
   const allValues = validSpecs.map(spec => {
-    const values = productId ? (spec.values || []).map(v => v.value) : (newSpecValues.value[spec.name] || [])
+    const values = productId
+      ? (spec.values || []).map(v => v.value)
+      : newSpecValues.value[spec.name] || []
     return values.map(v => ({ name: spec.name, value: v }))
   })
 
   const combinations = cartesian(allValues)
 
   // 创建一个映射，用于查找现有SKU数据
-  const existingSkuMap = new Map<string, typeof skus.value[0]>()
+  const existingSkuMap = new Map<string, (typeof skus.value)[0]>()
   for (const sku of skus.value) {
     try {
       const specsObj = typeof sku.specs === 'string' ? JSON.parse(sku.specs) : sku.specs
@@ -582,7 +592,7 @@ async function save() {
     }
 
     const hasValues = specifications.value.some(spec => {
-      const values = productId ? (spec.values || []) : (newSpecValues.value[spec.name] || [])
+      const values = productId ? spec.values || [] : newSpecValues.value[spec.name] || []
       return values.length > 0
     })
 
@@ -625,16 +635,16 @@ async function save() {
         : [],
       skus: form.value.has_sku
         ? skus.value.map((sku, index) => ({
-          ...sku,
-          sku_code: sku.sku_code || `SKU-${index + 1}`,
-          specs: typeof sku.specs === 'string' ? JSON.parse(sku.specs) : sku.specs,
-          stock: sku.stock,
-          stock_unlimited: sku.stock_unlimited,
-          points_cost: sku.points_cost,
-          image_url: sku.image_url || '',
-          sort_order: index,
-          is_active: sku.is_active ?? true,
-        }))
+            ...sku,
+            sku_code: sku.sku_code || `SKU-${index + 1}`,
+            specs: typeof sku.specs === 'string' ? JSON.parse(sku.specs) : sku.specs,
+            stock: sku.stock,
+            stock_unlimited: sku.stock_unlimited,
+            points_cost: sku.points_cost,
+            image_url: sku.image_url || '',
+            sort_order: index,
+            is_active: sku.is_active ?? true,
+          }))
         : [],
     }
 
@@ -664,7 +674,9 @@ function goBack() {
 function formatSpecs(sku: PointProductSKU) {
   try {
     const specs = typeof sku.specs === 'string' ? JSON.parse(sku.specs) : sku.specs
-    return Object.entries(specs).map(([k, v]) => `${k}: ${v}`).join(' / ')
+    return Object.entries(specs)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join(' / ')
   } catch {
     return sku.specs
   }
@@ -708,15 +720,20 @@ onMounted(async () => {
       <!-- 基本信息 -->
       <el-card class="form-section" header="基本信息">
         <el-form-item label="商品名称" required>
-          <el-input v-model="form.name" placeholder="请输入商品名称" maxlength="100" show-word-limit />
+          <el-input
+            v-model="form.name"
+            placeholder="请输入商品名称"
+            maxlength="100"
+            show-word-limit
+          />
         </el-form-item>
 
         <el-form-item label="商品类型">
           <el-select
             v-model="form.product_type"
             placeholder="请选择商品类型"
-            @change="handleProductTypeChange"
             style="width: 200px"
+            @change="handleProductTypeChange"
           >
             <el-option
               v-for="option in productTypeOptions"
@@ -735,8 +752,8 @@ onMounted(async () => {
             v-model="form.shipping_method"
             placeholder="请选择物流方式"
             :disabled="form.product_type === 'virtual'"
-            @change="handleShippingMethodChange"
             style="width: 200px"
+            @change="handleShippingMethodChange"
           >
             <el-option
               v-for="option in availableShippingMethods"
@@ -746,18 +763,10 @@ onMounted(async () => {
             />
           </el-select>
           <span style="margin-left: 10px; color: #999; font-size: 12px">
-            <template v-if="form.product_type === 'virtual'">
-              虚拟商品无需物流
-            </template>
-            <template v-else-if="form.shipping_method === 'express'">
-              需要选择运费模板
-            </template>
-            <template v-else-if="form.shipping_method === 'self_pickup'">
-              用户到店自提
-            </template>
-            <template v-else>
-              无需物流配送
-            </template>
+            <template v-if="form.product_type === 'virtual'"> 虚拟商品无需物流 </template>
+            <template v-else-if="form.shipping_method === 'express'"> 需要选择运费模板 </template>
+            <template v-else-if="form.shipping_method === 'self_pickup'"> 用户到店自提 </template>
+            <template v-else> 无需物流配送 </template>
           </span>
         </el-form-item>
 
@@ -821,10 +830,16 @@ onMounted(async () => {
           <div class="upload-tip">已上传 {{ form.image_urls?.length || 0 }} / 6 张</div>
           <div class="image-upload-list">
             <div v-for="(url, index) in form.image_urls" :key="index" class="upload-item">
-              <el-image :src="url" fit="cover" class="upload-image" :preview-src-list="form.image_urls" :initial-index="index" />
+              <el-image
+                :src="url"
+                fit="cover"
+                class="upload-image"
+                :preview-src-list="form.image_urls"
+                :initial-index="index"
+              />
               <div class="upload-mask">
                 <span class="mask-actions">
-                  <el-icon @click="removeImage(index)" class="delete-icon"><Close /></el-icon>
+                  <el-icon class="delete-icon" @click="removeImage(index)"><Close /></el-icon>
                 </span>
               </div>
             </div>
@@ -843,12 +858,16 @@ onMounted(async () => {
               </div>
             </el-upload>
           </div>
-          <div class="upload-hint">支持 jpg/png/gif 格式，单个文件不超过 5MB，最多上传 6 张图片</div>
+          <div class="upload-hint">
+            支持 jpg/png/gif 格式，单个文件不超过 5MB，最多上传 6 张图片
+          </div>
         </el-form-item>
 
         <el-form-item label="SKU管理">
           <el-switch v-model="form.has_sku" active-text="启用" inactive-text="不启用" />
-          <span style="margin-left: 10px; color: #999; font-size: 12px">启用后可为商品设置多规格（如颜色、尺寸等）</span>
+          <span style="margin-left: 10px; color: #999; font-size: 12px"
+            >启用后可为商品设置多规格（如颜色、尺寸等）</span
+          >
         </el-form-item>
 
         <!-- 非SKU模式：价格和库存 -->
@@ -871,7 +890,9 @@ onMounted(async () => {
 
         <el-form-item label="注水销量">
           <el-input-number v-model="form.fake_sold" :min="0" :max="999999" />
-          <span style="margin-left: 10px; color: #999; font-size: 12px">前台显示销量 = 实际销量 + 注水销量</span>
+          <span style="margin-left: 10px; color: #999; font-size: 12px"
+            >前台显示销量 = 实际销量 + 注水销量</span
+          >
         </el-form-item>
 
         <el-form-item label="排序权重">
@@ -889,14 +910,18 @@ onMounted(async () => {
         <!-- 规格模板选择 -->
         <div style="margin-bottom: 15px">
           <el-button type="success" @click="showPresetDialog = true">选择规格模板</el-button>
-          <span style="margin-left: 10px; color: #999; font-size: 12px">从已保存的规格模板中快速添加</span>
+          <span style="margin-left: 10px; color: #999; font-size: 12px"
+            >从已保存的规格模板中快速添加</span
+          >
         </div>
 
         <div class="spec-editor">
           <div v-for="(spec, index) in specifications" :key="spec.id" class="spec-item">
             <div class="spec-header">
               <span class="spec-name">{{ spec.name }}</span>
-              <el-button link type="danger" size="small" @click="removeSpecification(spec, index)">删除</el-button>
+              <el-button link type="danger" size="small" @click="removeSpecification(spec, index)"
+                >删除</el-button
+              >
             </div>
             <div class="spec-values">
               <template v-if="productId">
@@ -948,15 +973,21 @@ onMounted(async () => {
             <div v-for="spec in specifications" :key="spec.id" class="spec-value-input-item">
               <div class="spec-label">{{ spec.name }}：</div>
               <div v-if="!productId" class="spec-value-inputs">
-                <div v-for="(value, index) in newSpecValues[spec.name] || []" :key="index" class="spec-value-input-row">
+                <div
+                  v-for="(value, index) in newSpecValues[spec.name] || []"
+                  :key="index"
+                  class="spec-value-input-row"
+                >
                   <el-input
                     :model-value="value"
                     placeholder="输入规格值，按Enter添加"
-                    @input="handleSpecValueInput(spec.name, index, $event)"
-                    @keyup.enter="(e) => e.target.blur()"
                     style="width: 150px; margin-right: 5px"
+                    @input="handleSpecValueInput(spec.name, index, $event)"
+                    @keyup.enter="e => e.target.blur()"
                   />
-                  <el-button link type="danger" size="small" @click="removeSpecValue(spec, value)">删除</el-button>
+                  <el-button link type="danger" size="small" @click="removeSpecValue(spec, value)"
+                    >删除</el-button
+                  >
                 </div>
                 <el-button
                   v-if="!newSpecValues[spec.name] || newSpecValues[spec.name].length === 0"
@@ -969,7 +1000,9 @@ onMounted(async () => {
                 </el-button>
               </div>
               <div v-else class="spec-hint">
-                <span style="color: #999; font-size: 12px">修改规格后点击"生成SKU组合"更新SKU列表</span>
+                <span style="color: #999; font-size: 12px"
+                  >修改规格后点击"生成SKU组合"更新SKU列表</span
+                >
               </div>
             </div>
           </div>
@@ -977,12 +1010,15 @@ onMounted(async () => {
           <el-button
             v-if="specifications.length > 0"
             type="success"
-            @click="generateSKUCombinations"
             style="margin-top: 15px"
+            @click="generateSKUCombinations"
           >
             生成SKU组合
           </el-button>
-          <span v-if="productId && skus.length > 0" style="margin-left: 10px; color: #e6a23c; font-size: 12px">
+          <span
+            v-if="productId && skus.length > 0"
+            style="margin-left: 10px; color: #e6a23c; font-size: 12px"
+          >
             重新生成将覆盖现有SKU数据
           </span>
         </div>
@@ -1044,10 +1080,20 @@ onMounted(async () => {
             @click="selectSpecTemplate(template)"
           >
             <div class="preset-spec-name">{{ template.name }}</div>
-            <div v-if="template.description" class="preset-spec-desc">{{ template.description }}</div>
+            <div v-if="template.description" class="preset-spec-desc">
+              {{ template.description }}
+            </div>
             <div class="preset-spec-values">
-              <el-tag v-for="v in template.values.slice(0, 5)" :key="v" size="small" style="margin: 2px">{{ v }}</el-tag>
-              <el-tag v-if="template.values.length > 5" size="small" type="info" style="margin: 2px">+{{ template.values.length - 5 }}</el-tag>
+              <el-tag
+                v-for="v in template.values.slice(0, 5)"
+                :key="v"
+                size="small"
+                style="margin: 2px"
+                >{{ v }}</el-tag
+              >
+              <el-tag v-if="template.values.length > 5" size="small" type="info" style="margin: 2px"
+                >+{{ template.values.length - 5 }}</el-tag
+              >
             </div>
           </div>
         </div>

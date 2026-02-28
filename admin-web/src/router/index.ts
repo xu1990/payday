@@ -60,8 +60,16 @@ const router = createRouter({
         { path: 'splash', name: 'Splash', component: () => import('@/views/SplashSettings.vue') },
         { path: 'feedback', name: 'Feedback', component: () => import('@/views/FeedbackList.vue') },
         { path: 'point-shop', name: 'PointShop', component: () => import('@/views/PointShop.vue') },
-        { path: 'point-shop/create', name: 'PointProductCreate', component: () => import('@/views/PointProductForm.vue') },
-        { path: 'point-shop/:id/edit', name: 'PointProductEdit', component: () => import('@/views/PointProductForm.vue') },
+        {
+          path: 'point-shop/create',
+          name: 'PointProductCreate',
+          component: () => import('@/views/PointProductForm.vue'),
+        },
+        {
+          path: 'point-shop/:id/edit',
+          name: 'PointProductEdit',
+          component: () => import('@/views/PointProductForm.vue'),
+        },
         {
           path: 'point-categories',
           name: 'PointCategories',

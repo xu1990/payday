@@ -977,17 +977,40 @@ async def admin_list_orders(
     db: AsyncSession = Depends(get_db),
 ):
     """获取所有订单（管理员）"""
-    orders = await list_all_orders(db, status, limit, offset)
+    from sqlalchemy.orm import joinedload
 
-    data = [{
-        "id": o.id,
-        "order_number": o.order_number,
-        "user_id": o.user_id,
-        "product_name": o.product_name,
-        "points_cost": o.points_cost,
-        "status": o.status,
-        "created_at": o.created_at.isoformat(),
-    } for o in orders]
+    # 构建查询，关联加载商品信息
+    query = select(PointOrder).options(joinedload(PointOrder.product))
+
+    if status:
+        query = query.where(PointOrder.status == status)
+
+    query = query.order_by(PointOrder.created_at.desc())
+    query = query.limit(limit).offset(offset)
+
+    result = await db.execute(query)
+    orders = result.scalars().unique().all()
+
+    data = []
+    for o in orders:
+        # 获取商品的发货相关信息
+        product = o.product
+        product_type = product.product_type if product else None
+        shipping_method = product.shipping_method if product else None
+
+        data.append({
+            "id": o.id,
+            "order_number": o.order_number,
+            "user_id": o.user_id,
+            "product_name": o.product_name,
+            "points_cost": o.points_cost,
+            "status": o.status,
+            "product_type": product_type,
+            "shipping_method": shipping_method,
+            "shipment_id": str(o.shipment_id) if o.shipment_id else None,
+            "created_at": o.created_at.isoformat(),
+            "processed_at": o.processed_at.isoformat() if o.processed_at else None,
+        })
 
     return success_response(data={"orders": data, "total": len(data)})
 
