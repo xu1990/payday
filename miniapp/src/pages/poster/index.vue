@@ -173,7 +173,7 @@ async function generateQRCodeUrl(id: string, type: 'salary' | 'post' = 'salary')
       noAuth: true, // 二维码生成不需要认证
     })
 
-    console.log('[poster] QR code API response:', response)
+    //console.log('[poster] QR code API response:', response)
 
     // request 工具函数已经解析了响应数据，直接访问即可
     if (response && response.base64) {
