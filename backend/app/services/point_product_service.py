@@ -246,6 +246,7 @@ async def create_order(
     notes: Optional[str] = None,
     address_id: Optional[str] = None,
     sku_id: Optional[str] = None,
+    shipping_cost: int = 0,  # 运费（分）
 ) -> Tuple[PointOrder, Dict]:
     """
     创建订单（用户下单）- 支持混合支付
@@ -309,8 +310,17 @@ async def create_order(
     price_info = calculate_order_price(product, sku)
     payment_mode = price_info["payment_mode"]
     points_cost = price_info["points_cost"]
-    cash_amount = price_info["cash_amount"]
+    cash_amount = price_info["cash_amount"] or 0
     need_payment = price_info["need_payment"]
+
+    # 3.5 将运费加到现金价格中
+    if shipping_cost > 0:
+        cash_amount = cash_amount + shipping_cost
+        price_info["cash_amount"] = cash_amount
+        price_info["shipping_cost"] = shipping_cost
+        if cash_amount > 0:
+            need_payment = True
+            price_info["need_payment"] = True
 
     # 4. 根据支付模式处理积分
     points_deducted = False
@@ -372,12 +382,15 @@ async def create_order(
             pass
 
     # 根据支付模式设置订单支付状态和订单状态
-    if payment_mode == "points_only":
-        payment_status = "paid"  # 纯积分模式，直接为已支付
-        order_status = "completed"  # 纯积分模式无需额外支付，直接完成
+    # 注意：如果有运费（shipping_cost > 0），即使是纯积分商品也需要支付现金
+    if payment_mode == "points_only" and cash_amount == 0:
+        # 纯积分模式且无运费：直接为已支付
+        payment_status = "paid"
+        order_status = "completed"
     else:
-        payment_status = "unpaid"  # 需要现金支付
-        order_status = "pending"  # 等待支付
+        # 需要现金支付（纯现金、混合模式、或纯积分+运费）
+        payment_status = "unpaid"
+        order_status = "pending"
 
     order = PointOrder(
         user_id=user_id,

@@ -81,9 +81,19 @@ const router = createRouter({
           component: () => import('@/views/PointOrders.vue'),
         },
         {
+          path: 'point-orders/:id',
+          name: 'PointOrderDetail',
+          component: () => import('@/views/PointOrderDetail.vue'),
+        },
+        {
           path: 'point-shipments',
           name: 'PointShipments',
           component: () => import('@/views/PointShipments.vue'),
+        },
+        {
+          path: 'point-shipments/:id',
+          name: 'PointShipmentDetail',
+          component: () => import('@/views/PointShipmentDetail.vue'),
         },
         {
           path: 'user-addresses',
@@ -95,6 +105,11 @@ const router = createRouter({
           path: 'point-returns',
           name: 'PointReturns',
           component: () => import('@/views/PointReturns.vue'),
+        },
+        {
+          path: 'point-returns/:id',
+          name: 'PointReturnDetail',
+          component: () => import('@/views/PointReturnDetail.vue'),
         },
         {
           path: 'shipping-templates',

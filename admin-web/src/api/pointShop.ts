@@ -214,7 +214,11 @@ export interface PointOrder {
   product_name: string
   product_image: string | null
   points_cost: number
+  // 支付模式相关字段
+  payment_mode: PaymentMode
+  cash_amount: number
   status: 'pending' | 'completed' | 'cancelled' | 'refunded'
+  payment_status?: 'unpaid' | 'paid'
   created_at: string
   processed_at: string | null
   notes_admin: string | null
@@ -226,6 +230,10 @@ export interface PointOrder {
   address?: OrderAddress | null
   delivery_info?: string | null
   notes?: string | null
+  // 关联的发货信息
+  shipment?: PointShipment
+  // 关联的退货信息
+  return_request?: PointReturn
 }
 
 export interface PointOrderListResult {
@@ -264,5 +272,13 @@ export function shipPointOrder(
     url: `/admin/point-shipments/point-orders/${orderId}/ship`,
     method: 'POST',
     data,
+  })
+}
+
+/** 获取订单详情（管理员） */
+export function getPointOrderDetail(orderId: string) {
+  return request<PointOrder>({
+    url: `${PREFIX}/orders/${orderId}`,
+    method: 'GET',
   })
 }

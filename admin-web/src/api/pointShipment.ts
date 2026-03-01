@@ -134,3 +134,11 @@ export function deleteShipment(shipmentId: string) {
     method: 'DELETE',
   })
 }
+
+/** 获取发货详情 */
+export function getShipmentDetail(shipmentId: string) {
+  return request<PointShipment>({
+    url: `${PREFIX}/${shipmentId}`,
+    method: 'GET',
+  })
+}

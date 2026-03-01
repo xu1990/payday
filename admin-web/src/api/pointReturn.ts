@@ -115,3 +115,13 @@ export function rejectReturn(returnId: string, adminNotes: string) {
     data: { admin_notes: adminNotes },
   })
 }
+
+/**
+ * 获取退货详情
+ */
+export function getReturnDetail(returnId: string) {
+  return request<PointReturn>({
+    url: `${PREFIX}/${returnId}`,
+    method: 'GET',
+  })
+}

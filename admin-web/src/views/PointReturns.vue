@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   listReturns,
@@ -10,6 +11,7 @@ import {
 } from '@/api/pointReturn'
 import { formatDateTime } from '@/utils/format'
 
+const router = useRouter()
 const list = ref<PointReturn[]>([])
 const loading = ref(false)
 const total = ref(0)
@@ -62,8 +64,7 @@ function handleDateChange() {
 }
 
 function handleViewDetail(item: PointReturn) {
-  currentReturn.value = item
-  detailDialogVisible.value = true
+  router.push({ name: 'PointReturnDetail', params: { id: item.id } })
 }
 
 async function handleApprove(item: PointReturn) {

@@ -13,26 +13,26 @@ const tabs: TabItem[] = [
   {
     pagePath: '/pages/index',
     text: '首页',
-    icon: 'home',
-    activeIcon: 'home-fill',
+    icon: '/static/tabbar/home.png',
+    activeIcon: '/static/tabbar/home-active.png',
   },
   {
     pagePath: '/pages/square/index',
     text: '广场',
-    icon: 'compass',
-    activeIcon: 'compass-fill',
+    icon: '/static/tabbar/square.png',
+    activeIcon: '/static/tabbar/square-active.png',
   },
   {
     pagePath: '/pages/feed/index',
     text: '关注',
-    icon: 'heart',
-    activeIcon: 'heart-fill',
+    icon: '/static/tabbar/feed.png',
+    activeIcon: '/static/tabbar/feed-active.png',
   },
   {
     pagePath: '/pages/profile/index',
     text: '我的',
-    icon: 'user',
-    activeIcon: 'user-fill',
+    icon: '/static/tabbar/profile.png',
+    activeIcon: '/static/tabbar/profile-active.png',
   },
 ]
 
@@ -91,21 +91,6 @@ function switchTab(path: string) {
   })
 }
 
-// 图标渲染
-function getIconSvg(icon: string, filled: boolean) {
-  const color = filled ? 'var(--brand-primary)' : 'var(--text-tertiary)'
-  const icons: Record<string, string> = {
-    home: `<svg viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
-    'home-fill': `<svg viewBox="0 0 24 24" fill="${color}"><path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/></svg>`,
-    compass: `<svg viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>`,
-    'compass-fill': `<svg viewBox="0 0 24 24" fill="${color}"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.23 6.77l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z"/></svg>`,
-    heart: `<svg viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
-    'heart-fill': `<svg viewBox="0 0 24 24" fill="${color}"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
-    user: `<svg viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
-    'user-fill': `<svg viewBox="0 0 24 24" fill="${color}"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`,
-  }
-  return icons[icon] || ''
-}
 </script>
 
 <template>
@@ -130,9 +115,10 @@ function getIconSvg(icon: string, filled: boolean) {
       >
         <!-- 图标 -->
         <view class="tab-icon">
-          <view
-            class="icon-svg"
-            v-html="getIconSvg(isActive(tab.pagePath) ? tab.activeIcon : tab.icon, isActive(tab.pagePath))"
+          <image
+            class="icon-img"
+            :src="isActive(tab.pagePath) ? tab.activeIcon : tab.icon"
+            mode="aspectFit"
           />
         </view>
 
@@ -265,14 +251,9 @@ function getIconSvg(icon: string, filled: boolean) {
   transform: translateY(-2rpx);
 }
 
-.icon-svg {
+.icon-img {
   width: 44rpx;
   height: 44rpx;
-
-  :deep(svg) {
-    width: 100%;
-    height: 100%;
-  }
 }
 
 /* 暗黑模式适配 */

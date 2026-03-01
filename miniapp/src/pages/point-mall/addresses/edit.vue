@@ -131,8 +131,6 @@ import {
   getAddress,
   createAddress,
   updateAddress,
-  AddressCreate,
-  UserAddress,
 } from '@/api/pointShop'
 
 const isEdit = ref(false)

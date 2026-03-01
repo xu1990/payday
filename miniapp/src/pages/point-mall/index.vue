@@ -75,8 +75,11 @@
               <text v-else class="stock-empty">已售罄</text>
             </view>
             <view class="price-tag">
-              <text class="points">{{ product.points_cost }}</text>
-              <text class="label">积分</text>
+              <text class="points">{{ getPriceDisplay(product).main }}</text>
+              <text class="label">{{ getPriceDisplay(product).unit }}</text>
+              <text v-if="getPriceDisplay(product).showPlus" class="plus-cash">
+                + ¥{{ (getPriceDisplay(product).cashAmount / 100).toFixed(2) }}
+              </text>
             </view>
           </view>
         </view>
@@ -150,6 +153,46 @@ function goToOrders() {
   uni.navigateTo({
     url: '/pages/point-mall/orders/index',
   })
+}
+
+/**
+ * 根据支付模式获取价格显示文本
+ */
+function getPriceDisplay(product) {
+  const mode = product.payment_mode || 'points_only'
+
+  if (mode === 'points_only') {
+    return {
+      main: product.points_cost,
+      unit: '积分',
+      showPlus: false,
+      cashAmount: 0,
+    }
+  } else if (mode === 'cash_only') {
+    const cash = product.cash_price || 0
+    return {
+      main: (cash / 100).toFixed(2),
+      unit: '元',
+      showPlus: false,
+      cashAmount: cash,
+    }
+  } else if (mode === 'mixed') {
+    const points = product.mixed_points_cost || 0
+    const cash = product.mixed_cash_price || 0
+    return {
+      main: points,
+      unit: '积分',
+      showPlus: true,
+      cashAmount: cash,
+    }
+  }
+
+  return {
+    main: product.points_cost,
+    unit: '积分',
+    showPlus: false,
+    cashAmount: 0,
+  }
 }
 </script>
 
@@ -322,6 +365,12 @@ function goToOrders() {
 
           .label {
             font-size: $font-size-xs;
+            opacity: 0.9;
+          }
+
+          .plus-cash {
+            font-size: $font-size-xs;
+            margin-left: $spacing-xs;
             opacity: 0.9;
           }
         }

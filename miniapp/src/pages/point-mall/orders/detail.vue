@@ -58,6 +58,29 @@
         </view>
       </view>
 
+      <!-- 支付信息（如果有现金支付） -->
+      <view v-if="order.payment_mode !== 'points_only' || (order.cash_amount && order.cash_amount > 0)" class="payment-section">
+        <view class="section-title">支付信息</view>
+        <view class="payment-card">
+          <view class="payment-item">
+            <text class="label">支付方式</text>
+            <text class="value">
+              <text v-if="order.payment_mode === 'points_only'">纯积分</text>
+              <text v-else-if="order.payment_mode === 'cash_only'">纯现金</text>
+              <text v-else-if="order.payment_mode === 'mixed'">积分+现金</text>
+            </text>
+          </view>
+          <view v-if="order.points_cost > 0" class="payment-item">
+            <text class="label">积分</text>
+            <text class="value points-value">{{ order.points_cost }} 积分</text>
+          </view>
+          <view v-if="order.cash_amount && order.cash_amount > 0" class="payment-item">
+            <text class="label">现金</text>
+            <text class="value cash-value">¥{{ (order.cash_amount / 100).toFixed(2) }}</text>
+          </view>
+        </view>
+      </view>
+
       <!-- 收货地址（如果有） -->
       <view v-if="order.address" class="address-section">
         <view class="section-title">收货地址</view>
@@ -268,12 +291,50 @@ function formatFullTime(timeStr) {
 
 /* 通用区块样式 */
 .product-section,
+.payment-section,
 .address-section,
 .shipment-section,
 .notes-section {
   margin-top: $spacing-md;
   padding: $spacing-lg;
   @include glass-card();
+}
+
+/* 支付信息 */
+.payment-card {
+  padding: $spacing-md;
+  background: var(--bg-glass-subtle);
+  border-radius: $radius-md;
+}
+
+.payment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-sm 0;
+
+  &:not(:last-child) {
+    border-bottom: 1rpx solid var(--border-subtle);
+  }
+}
+
+.payment-item .label {
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
+}
+
+.payment-item .value {
+  font-size: $font-size-sm;
+  color: var(--text-primary);
+  font-weight: $font-weight-medium;
+}
+
+.payment-item .points-value {
+  color: $brand-primary;
+}
+
+.payment-item .cash-value {
+  color: $semantic-error;
 }
 
 .section-title {

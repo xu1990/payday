@@ -18,7 +18,7 @@ from app.utils.distributed_lock import CombinedLock
 from app.utils.client_ip import get_client_ip
 from fastapi import APIRouter, Body, Depends, Query, Request
 from pydantic import BaseModel, Field
-from sqlalchemy import delete, func, select
+from sqlalchemy import Integer, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from typing import Literal
@@ -109,16 +109,39 @@ async def get_products(
     product_ids = [p.id for p in products]
 
     # 批量查询SKU库存信息（用于SKU商品的库存判断）
+    # 同时检查是否有无限库存的SKU
     sku_stock_result = await db.execute(
         select(
             PointProductSKU.product_id,
             func.sum(PointProductSKU.stock).label('total_stock'),
+            func.sum(func.coalesce(PointProductSKU.stock_unlimited, False).cast(Integer)).label('has_unlimited'),
         ).where(
             PointProductSKU.product_id.in_(product_ids),
             PointProductSKU.is_active == True
         ).group_by(PointProductSKU.product_id)
     )
-    sku_stock_map = {row.product_id: row.total_stock for row in sku_stock_result.fetchall()}
+    sku_stock_map = {}
+    for row in sku_stock_result.fetchall():
+        sku_stock_map[row.product_id] = {
+            'total_stock': row.total_stock or 0,
+            'has_unlimited': row.has_unlimited > 0
+        }
+
+    # 批量查询SKU商品的第一个SKU价格信息（用于多规格商品的价格显示）
+    # 使用子查询获取每个商品的最小SKU ID
+    first_sku_result = await db.execute(
+        select(PointProductSKU).where(
+            PointProductSKU.id.in_(
+                select(func.min(PointProductSKU.id)).where(
+                    PointProductSKU.product_id.in_(product_ids),
+                    PointProductSKU.is_active == True
+                ).group_by(PointProductSKU.product_id)
+            )
+        )
+    )
+    first_sku_map = {}
+    for sku in first_sku_result.scalars().all():
+        first_sku_map[sku.product_id] = sku
 
     # 批量查询所有需要的分类
     category_ids = [p.category_id for p in products if p.category_id]
@@ -134,12 +157,14 @@ async def get_products(
     for p in products:
         # 检查库存：过滤掉无库存的商品
         if p.has_sku:
-            # SKU商品：检查是否有SKU库存
-            total_sku_stock = sku_stock_map.get(p.id, 0) or 0
-            if total_sku_stock <= 0:
+            # SKU商品：检查是否有SKU库存或无限库存
+            sku_info = sku_stock_map.get(p.id, {'total_stock': 0, 'has_unlimited': False})
+            has_unlimited = sku_info['has_unlimited']
+            total_stock = sku_info['total_stock']
+            if not has_unlimited and total_stock <= 0:
                 continue  # 跳过无库存的SKU商品
-            stock = total_sku_stock
-            stock_unlimited = False
+            stock = total_stock
+            stock_unlimited = has_unlimited
         else:
             # 非SKU商品：检查商品库存
             if not p.stock_unlimited and p.stock <= 0:
@@ -160,13 +185,31 @@ async def get_products(
         if p.category_id and str(p.category_id) in category_map:
             category_name = category_map[str(p.category_id)]
 
+        # 对于多规格商品，使用第一个SKU的价格
+        first_sku = first_sku_map.get(p.id) if p.has_sku else None
+        if first_sku:
+            points_cost = first_sku.points_cost or p.points_cost
+            cash_price = first_sku.cash_price if first_sku.cash_price is not None else p.cash_price
+            mixed_points_cost = first_sku.mixed_points_cost if first_sku.mixed_points_cost is not None else p.mixed_points_cost
+            mixed_cash_price = first_sku.mixed_cash_price if first_sku.mixed_cash_price is not None else p.mixed_cash_price
+        else:
+            points_cost = p.points_cost
+            cash_price = p.cash_price
+            mixed_points_cost = p.mixed_points_cost
+            mixed_cash_price = p.mixed_cash_price
+
         data.append({
             "id": p.id,
             "name": p.name,
             "description": p.description,
             "image_urls": image_urls,
             "image_url": image_urls[0] if image_urls else None,  # 兼容旧版
-            "points_cost": p.points_cost,
+            "points_cost": points_cost,
+            # 支付模式相关字段
+            "payment_mode": p.payment_mode or "points_only",
+            "cash_price": cash_price,
+            "mixed_points_cost": mixed_points_cost,
+            "mixed_cash_price": mixed_cash_price,
             "stock": stock if not stock_unlimited else 999,
             "stock_unlimited": stock_unlimited,
             "category": category_name,
@@ -202,6 +245,11 @@ async def get_product_detail(
         "image_urls": image_urls,
         "image_url": image_urls[0] if image_urls else None,  # 兼容旧版
         "points_cost": product.points_cost,
+        # 支付模式相关字段
+        "payment_mode": product.payment_mode or "points_only",
+        "cash_price": product.cash_price,
+        "mixed_points_cost": product.mixed_points_cost,
+        "mixed_cash_price": product.mixed_cash_price,
         "stock": product.stock if not product.stock_unlimited else 999,
         "stock_unlimited": product.stock_unlimited,
         "category": product.category,
@@ -455,6 +503,38 @@ async def create_user_order(
         # 3. 计算订单价格（根据支付模式）
         price_info = calculate_order_price(product, sku)
         points_cost = price_info["points_cost"]
+        cash_amount = price_info["cash_amount"] or 0
+
+        # 3.5 计算运费（如果需要配送）
+        shipping_cost = 0
+        need_address = (
+            product.product_type != 'virtual' and
+            product.shipping_method != 'no_shipping'
+        )
+        if need_address and product.shipping_template_id and body.address_id:
+            # 查询地址
+            result = await db.execute(
+                select(UserAddress).where(UserAddress.id == body.address_id)
+            )
+            address = result.scalar_one_or_none()
+            if address:
+                # 计算运费
+                shipping_service = ShippingTemplateService(db)
+                shipping_result = await shipping_service.calculate_shipping_cost(
+                    template_id=str(product.shipping_template_id),
+                    region_code=address.province_code,
+                    quantity=1,
+                )
+                if shipping_result.get("deliverable", True) and not shipping_result.get("free_shipping", False):
+                    shipping_cost = shipping_result.get("shipping_cost", 0)
+
+        # 将运费加到现金价格中
+        if shipping_cost > 0:
+            cash_amount = cash_amount + shipping_cost
+            price_info["cash_amount"] = cash_amount
+            price_info["shipping_cost"] = shipping_cost
+            if cash_amount > 0:
+                price_info["need_payment"] = True
 
         # 4. 检查积分是否足够（如果需要积分）
         if points_cost > 0:
@@ -467,19 +547,15 @@ async def create_user_order(
                 )
 
         # 5. 配送区域校验
-        need_address = (
-            product.product_type != 'virtual' and
-            product.shipping_method != 'no_shipping'
-        )
-
         if need_address:
             if not body.address_id:
                 raise BusinessException("请选择收货地址", code="ADDRESS_REQUIRED")
 
-            result = await db.execute(
+            # 查询地址
+            addr_result = await db.execute(
                 select(UserAddress).where(UserAddress.id == body.address_id)
             )
-            address = result.scalar_one_or_none()
+            address = addr_result.scalar_one_or_none()
             if not address:
                 raise NotFoundException("地址不存在", code="ADDRESS_NOT_FOUND")
 
@@ -514,9 +590,11 @@ async def create_user_order(
             body.notes,
             body.address_id,
             body.sku_id,
+            shipping_cost=shipping_cost,  # 传入运费
         )
 
         need_payment = order_price_info["need_payment"]
+        order_shipping_cost = order_price_info.get("shipping_cost", 0)
 
         data = {
             "id": order.id,
@@ -525,6 +603,7 @@ async def create_user_order(
             "payment_mode": order.payment_mode,
             "points_cost": order.points_cost,
             "cash_amount": order.cash_amount,
+            "shipping_cost": order_shipping_cost,  # 运费
             "need_payment": need_payment,
             "status": order.status,
             "created_at": order.created_at.isoformat(),
@@ -546,9 +625,15 @@ async def create_user_order(
                 )
                 data["payment_id"] = payment.id
                 data["payment_params"] = payment_params
+            except BusinessException as e:
+                # 业务异常（如重复支付、状态不正确等），向上传递让前端处理
+                raise e
             except Exception as e:
-                # 支付创建失败，订单仍然有效，用户可以稍后重试支付
-                pass
+                # 其他异常（如微信支付接口调用失败），记录日志但订单仍然有效
+                # 用户可以稍后在订单详情页重试支付
+                import logging
+                logging.getLogger(__name__).error(f"Failed to create payment for order {order.id}: {e}")
+                # 不设置 payment_params，前端会提示用户稍后重试支付
 
         message = "下单成功" if not need_payment else "下单成功，请完成支付"
         return success_response(data=data, message=message)
@@ -571,6 +656,8 @@ async def get_my_orders(
         "product_name": o.product_name,
         "product_image": o.product_image,
         "points_cost": o.points_cost,
+        "payment_mode": o.payment_mode or "points_only",
+        "cash_amount": o.cash_amount,
         "status": o.status,
         "created_at": o.created_at.isoformat(),
     } for o in orders]
@@ -610,7 +697,9 @@ async def get_order_detail(
         "order_number": order.order_number,
         "product_name": order.product_name,
         "product_image": order.product_image,
+        "payment_mode": order.payment_mode or "points_only",
         "points_cost": order.points_cost,
+        "cash_amount": order.cash_amount,
         "delivery_info": order.delivery_info,
         "notes": order.notes,
         "notes_admin": order.notes_admin,
@@ -951,8 +1040,8 @@ async def admin_update_product(
         spec_id_map = {}  # 规格名 -> 规格ID
 
         for spec_data in body.specifications:
-            spec_name = spec_data.name
-            spec_values = spec_data.values
+            spec_name = spec_data.get('name') if isinstance(spec_data, dict) else spec_data.name
+            spec_values = spec_data.get('values', []) if isinstance(spec_data, dict) else spec_data.values
 
             if not spec_name:
                 continue
@@ -980,7 +1069,7 @@ async def admin_update_product(
 
         # 创建SKU
         for idx, sku_data in enumerate(body.skus):
-            specs_dict = sku_data.specs
+            specs_dict = sku_data.get('specs') if isinstance(sku_data, dict) else sku_data.specs
             if not specs_dict:
                 continue
 
@@ -989,19 +1078,19 @@ async def admin_update_product(
             sku_code = f"SKU-{product_id[:8]}-{idx+1}"
 
             # 获取SKU数据中的支付价格字段
-            sku_dict = sku_data.model_dump() if hasattr(sku_data, 'model_dump') else sku_data
+            sku_dict = sku_data if isinstance(sku_data, dict) else sku_data.model_dump()
 
             # 创建SKU
             sku = PointProductSKU(
                 product_id=product_id,
                 sku_code=sku_code,
                 specs=json.dumps(specs_dict, ensure_ascii=False),
-                points_cost=sku_data.points_cost or body.points_cost or 0,
-                stock=sku_data.stock,
-                stock_unlimited=sku_data.stock_unlimited,
-                image_url=sku_data.image_url,
-                sort_order=sku_data.sort_order or idx,
-                is_active=sku_data.is_active,
+                points_cost=sku_dict.get('points_cost') or body.points_cost or 0,
+                stock=sku_dict.get('stock'),
+                stock_unlimited=sku_dict.get('stock_unlimited'),
+                image_url=sku_dict.get('image_url'),
+                sort_order=sku_dict.get('sort_order') or idx,
+                is_active=sku_dict.get('is_active', True),
                 # 支付价格字段
                 cash_price=sku_dict.get("cash_price"),
                 mixed_points_cost=sku_dict.get("mixed_points_cost"),
@@ -1097,7 +1186,9 @@ async def admin_list_orders(
             "order_number": o.order_number,
             "user_id": o.user_id,
             "product_name": o.product_name,
+            "payment_mode": o.payment_mode or "points_only",
             "points_cost": o.points_cost,
+            "cash_amount": o.cash_amount,
             "status": o.status,
             "product_type": product_type,
             "shipping_method": shipping_method,
@@ -1110,6 +1201,98 @@ async def admin_list_orders(
         })
 
     return success_response(data={"orders": data, "total": len(data)})
+
+
+@router.get("/admin/orders/{order_id}")
+async def admin_get_order_detail(
+    order_id: str,
+    current_admin: User = Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """获取订单详情（管理员）"""
+    from sqlalchemy.orm import joinedload
+
+    # 查询订单
+    result = await db.execute(
+        select(PointOrder)
+        .options(joinedload(PointOrder.product))
+        .where(PointOrder.id == order_id)
+    )
+    order = result.scalar_one_or_none()
+
+    if not order:
+        raise NotFoundException("订单不存在", code="ORDER_NOT_FOUND")
+
+    # 查询收货地址
+    address = None
+    if order.address_id:
+        addr_result = await db.execute(
+            select(UserAddress).where(UserAddress.id == order.address_id)
+        )
+        addr = addr_result.scalar_one_or_none()
+        if addr:
+            address = {
+                "id": str(addr.id),
+                "contact_name": addr.contact_name,
+                "contact_phone": addr.contact_phone,
+                "province_name": addr.province_name,
+                "city_name": addr.city_name,
+                "district_name": addr.district_name,
+                "detailed_address": addr.detailed_address,
+                "full_address": f"{addr.province_name or ''}{addr.city_name or ''}{addr.district_name or ''}{addr.detailed_address or ''}",
+            }
+
+    # 查询发货信息
+    shipment = None
+    if order.shipment_id:
+        from app.models.point_shipment import PointShipment
+        ship_result = await db.execute(
+            select(PointShipment).where(PointShipment.id == order.shipment_id)
+        )
+        ship = ship_result.scalar_one_or_none()
+        if ship:
+            shipment = {
+                "id": str(ship.id),
+                "courier_code": ship.courier_code,
+                "courier_name": ship.courier_name,
+                "tracking_number": ship.tracking_number,
+                "status": ship.status,
+                "shipped_at": ship.shipped_at.isoformat() if ship.shipped_at else None,
+                "delivered_at": ship.delivered_at.isoformat() if ship.delivered_at else None,
+            }
+
+    # 获取商品信息
+    product = order.product
+    product_type = product.product_type if product else None
+    shipping_method = product.shipping_method if product else None
+
+    data = {
+        "id": order.id,
+        "order_number": order.order_number,
+        "user_id": order.user_id,
+        "product_id": str(order.product_id) if order.product_id else None,
+        "product_name": order.product_name,
+        "product_image": order.product_image,
+        "payment_mode": order.payment_mode or "points_only",
+        "points_cost": order.points_cost,
+        "cash_amount": order.cash_amount,
+        "payment_status": order.payment_status,
+        "points_deducted": order.points_deducted,
+        "status": order.status,
+        "product_type": product_type,
+        "shipping_method": shipping_method,
+        "address": address,
+        "shipment": shipment,
+        "shipment_id": str(order.shipment_id) if order.shipment_id else None,
+        "delivery_info": order.delivery_info,
+        "notes": order.notes,
+        "notes_admin": order.notes_admin,
+        "transaction_id": order.transaction_id,
+        "created_at": order.created_at.isoformat(),
+        "processed_at": order.processed_at.isoformat() if order.processed_at else None,
+    }
+
+    return success_response(data=data)
 
 
 @router.post("/admin/orders/{order_id}/process")

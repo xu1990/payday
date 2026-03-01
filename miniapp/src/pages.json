@@ -334,19 +334,27 @@
     "list": [
       {
         "pagePath": "pages/index",
-        "text": "首页"
+        "text": "首页",
+        "iconPath": "static/tabbar/home.png",
+        "selectedIconPath": "static/tabbar/home-active.png"
       },
       {
         "pagePath": "pages/square/index",
-        "text": "广场"
+        "text": "广场",
+        "iconPath": "static/tabbar/square.png",
+        "selectedIconPath": "static/tabbar/square-active.png"
       },
       {
         "pagePath": "pages/feed/index",
-        "text": "关注"
+        "text": "关注",
+        "iconPath": "static/tabbar/feed.png",
+        "selectedIconPath": "static/tabbar/feed-active.png"
       },
       {
         "pagePath": "pages/profile/index",
-        "text": "我的"
+        "text": "我的",
+        "iconPath": "static/tabbar/profile.png",
+        "selectedIconPath": "static/tabbar/profile-active.png"
       }
     ]
   },

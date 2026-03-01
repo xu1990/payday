@@ -76,6 +76,10 @@
           <view class="order-points">
             <text class="points">-{{ order.points_cost }}</text>
             <text class="label">积分</text>
+            <!-- 显示现金金额（如果有） -->
+            <text v-if="order.cash_amount && order.cash_amount > 0" class="cash-amount">
+              +¥{{ (order.cash_amount / 100).toFixed(2) }}
+            </text>
           </view>
         </view>
 
@@ -313,6 +317,9 @@ function goToDetail(order) {
 
       .order-points {
         text-align: right;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
 
         .points {
           display: block;
@@ -324,6 +331,13 @@ function goToDetail(order) {
         .label {
           font-size: $font-size-xs;
           color: #94a3b8;
+        }
+
+        .cash-amount {
+          display: block;
+          font-size: $font-size-sm;
+          color: $semantic-error;
+          margin-top: 4rpx;
         }
       }
     }

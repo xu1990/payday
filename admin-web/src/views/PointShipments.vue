@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   listShipments,
@@ -17,6 +18,7 @@ import {
 import { listActiveCouriers, type CourierCompany } from '@/api/courier'
 import { formatDateTime } from '@/utils/format'
 
+const router = useRouter()
 const list = ref<PointShipment[]>([])
 const loading = ref(false)
 const total = ref(0)
@@ -148,6 +150,10 @@ function handleReset() {
   dateRangeFilter.value = null
   currentPage.value = 1
   loadData()
+}
+
+function handleViewDetail(shipment: PointShipment) {
+  router.push({ name: 'PointShipmentDetail', params: { id: shipment.id } })
 }
 
 async function openCreateDialog() {
@@ -345,6 +351,9 @@ onMounted(() => {
       </el-table-column>
       <el-table-column label="操作" width="220" fixed="right">
         <template #default="{ row }">
+          <el-button link type="primary" size="small" @click="handleViewDetail(row)">
+            详情
+          </el-button>
           <el-button link type="primary" size="small" @click="openTrackingDialog(row)">
             跟踪
           </el-button>

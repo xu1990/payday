@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   listPointOrders,
@@ -10,6 +11,7 @@ import {
 import { listActiveCouriers, type CourierCompany } from '@/api/courier'
 import { formatDate } from '@/utils/format'
 
+const router = useRouter()
 const list = ref<PointOrder[]>([])
 const loading = ref(false)
 const total = ref(0)
@@ -65,6 +67,10 @@ async function loadData() {
 function handleStatusChange() {
   currentPage.value = 1
   loadData()
+}
+
+function handleViewDetail(order: PointOrder) {
+  router.push({ name: 'PointOrderDetail', params: { id: order.id } })
 }
 
 async function handleComplete(order: PointOrder) {
@@ -214,8 +220,27 @@ onMounted(() => {
     <el-table v-loading="loading" :data="list" stripe>
       <el-table-column prop="order_number" label="订单号" width="200" />
       <el-table-column prop="product_name" label="商品名称" width="180" />
+      <el-table-column label="支付方式" width="120">
+        <template #default="{ row }">
+          <el-tag v-if="row.payment_mode === 'points_only'" type="success" size="small">纯积分</el-tag>
+          <el-tag v-else-if="row.payment_mode === 'cash_only'" type="warning" size="small">纯现金</el-tag>
+          <el-tag v-else-if="row.payment_mode === 'mixed'" type="primary" size="small">积分+现金</el-tag>
+          <el-tag v-else type="info" size="small">纯积分</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column prop="points_cost" label="积分" width="100">
-        <template #default="{ row }"> {{ row.points_cost }} 积分 </template>
+        <template #default="{ row }">
+          <span v-if="row.points_cost > 0">{{ row.points_cost }} 积分</span>
+          <span v-else style="color: #999">-</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="cash_amount" label="现金" width="100">
+        <template #default="{ row }">
+          <span v-if="row.cash_amount && row.cash_amount > 0" style="color: #f56c6c">
+            ¥{{ (row.cash_amount / 100).toFixed(2) }}
+          </span>
+          <span v-else style="color: #67c23a">免支付</span>
+        </template>
       </el-table-column>
       <el-table-column prop="user_id" label="用户ID" width="180" />
       <el-table-column label="收货信息" width="220">
@@ -254,6 +279,14 @@ onMounted(() => {
       <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
           <el-button
+            link
+            type="primary"
+            size="small"
+            @click="handleViewDetail(row)"
+          >
+            详情
+          </el-button>
+          <el-button
             v-if="row.status === 'pending'"
             link
             type="success"
@@ -280,12 +313,6 @@ onMounted(() => {
           >
             发货
           </el-button>
-          <span
-            v-if="row.status !== 'pending' && !needsShipping(row)"
-            style="color: #999; font-size: 12px"
-          >
-            已处理
-          </span>
         </template>
       </el-table-column>
     </el-table>

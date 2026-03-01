@@ -54,10 +54,11 @@
         <view class="price-section">
           <text class="price-label">兑换所需</text>
           <view class="price-tag">
-            <text class="points">{{ displayPointsCost }}</text>
-            <text class="label">积分</text>
+            <text class="points">{{ priceInfo.main }}</text>
+            <text class="label">{{ priceInfo.unit }}</text>
+            <text v-if="priceInfo.showPlus" class="plus-cash">+ ¥{{ (priceInfo.cashAmount / 100).toFixed(2) }}</text>
           </view>
-          <text class="my-balance">我的积分：{{ availablePoints }}</text>
+          <text v-if="paymentMode === 'points_only' || paymentMode === 'mixed'" class="my-balance">我的积分：{{ availablePoints }}</text>
         </view>
       </view>
 
@@ -243,6 +244,92 @@ const displayPointsCost = computed(() => {
   return product.value?.points_cost || 0
 })
 
+// 计算属性 - 商品支付模式
+const paymentMode = computed(() => {
+  return product.value?.payment_mode || 'points_only'
+})
+
+// 计算属性 - 根据支付模式和SKU获取价格信息（含运费）
+const priceInfo = computed(() => {
+  if (!product.value) {
+    return { main: 0, unit: '积分', showPlus: false, cashAmount: 0, needPayment: false, shippingCost: 0 }
+  }
+
+  const mode = paymentMode.value
+  // 获取运费（如果有地址且不免运费）
+  const shippingCost = (shippingCostInfo.value && !shippingCostInfo.value.free_shipping)
+    ? (shippingCostInfo.value.shipping_cost || 0)
+    : 0
+
+  if (mode === 'points_only') {
+    const points = displayPointsCost.value
+    // 纯积分模式：如果有运费，需要显示积分+现金
+    if (shippingCost > 0) {
+      return {
+        main: points,
+        unit: '积分',
+        showPlus: true,
+        cashAmount: shippingCost,
+        needPayment: shippingCost > 0,
+        shippingCost: shippingCost,
+      }
+    }
+    return {
+      main: points,
+      unit: '积分',
+      showPlus: false,
+      cashAmount: 0,
+      needPayment: false,
+      shippingCost: 0,
+    }
+  } else if (mode === 'cash_only') {
+    let cash = product.value.cash_price || 0
+    // SKU可能有不同的现金价格
+    if (product.value.has_sku && selectedSku.value && selectedSku.value.cash_price !== undefined) {
+      cash = selectedSku.value.cash_price
+    }
+    const totalCash = cash + shippingCost
+    return {
+      main: (totalCash / 100).toFixed(2),
+      unit: '元',
+      showPlus: false,
+      cashAmount: totalCash,
+      needPayment: totalCash > 0,
+      shippingCost: shippingCost,
+    }
+  } else if (mode === 'mixed') {
+    let points = product.value.mixed_points_cost || 0
+    let cash = product.value.mixed_cash_price || 0
+    // SKU可能有不同的混合价格
+    if (product.value.has_sku && selectedSku.value) {
+      if (selectedSku.value.mixed_points_cost !== undefined) {
+        points = selectedSku.value.mixed_points_cost
+      }
+      if (selectedSku.value.mixed_cash_price !== undefined) {
+        cash = selectedSku.value.mixed_cash_price
+      }
+    }
+    const totalCash = cash + shippingCost
+    return {
+      main: points,
+      unit: '积分',
+      showPlus: true,
+      cashAmount: totalCash,
+      needPayment: totalCash > 0,
+      shippingCost: shippingCost,
+    }
+  }
+
+  return {
+    main: displayPointsCost.value,
+    unit: '积分',
+    showPlus: false,
+    cashAmount: 0,
+    needPayment: false,
+    shippingCost: 0,
+  }
+})
+
 // 计算属性 - 选中SKU的规格文本
 const selectedSkuSpecsText = computed(() => {
   if (!selectedSku.value) return ''
@@ -345,14 +432,22 @@ const canExchange = computed(() => {
   } else {
     hasStock = product.value.stock_unlimited || product.value.stock > 0
   }
+  if (!hasStock) return false
 
-  const displayCost = product.value.has_sku && selectedSku.value
-    ? selectedSku.value.points_cost
-    : product.value.points_cost
-  const hasPoints = availablePoints.value >= displayCost
+  // 根据支付模式检查积分
+  const mode = paymentMode.value
+  if (mode === 'points_only') {
+    const points = priceInfo.value.main
+    if (availablePoints.value < points) return false
+  } else if (mode === 'mixed') {
+    const points = priceInfo.value.main
+    if (availablePoints.value < points) return false
+  }
+  // cash_only 模式不需要检查积分
+
   const hasAddress = !needAddress.value || selectedAddress.value !== null
   const canDeliver = !deliveryStatus.value || deliveryStatus.value.canDeliver
-  return hasStock && hasPoints && hasAddress && canDeliver
+  return hasAddress && canDeliver
 })
 
 const needAddress = computed(() => {
@@ -380,14 +475,30 @@ const exchangeButtonText = computed(() => {
   }
   if (stockEmpty) return '已售罄'
 
-  // 检查积分
-  const displayCost = product.value.has_sku && selectedSku.value
-    ? selectedSku.value.points_cost
-    : product.value.points_cost
-  if (availablePoints.value < displayCost) return '积分不足'
+  // 根据支付模式检查
+  const mode = paymentMode.value
+  if (mode === 'points_only') {
+    const points = priceInfo.value.main
+    if (availablePoints.value < points) return '积分不足'
+  } else if (mode === 'mixed') {
+    const points = priceInfo.value.main
+    if (availablePoints.value < points) return '积分不足'
+  }
 
   if (needAddress.value && !selectedAddress.value) return '请选择收货地址'
   if (deliveryStatus.value && !deliveryStatus.value.canDeliver) return '该地址不可配送'
+
+  // 根据支付模式返回不同的按钮文本（priceInfo已包含运费）
+  if (mode === 'cash_only') {
+    return `¥${priceInfo.value.main} 购买`
+  } else if (mode === 'mixed') {
+    return `${priceInfo.value.main}积分 + ¥${(priceInfo.value.cashAmount / 100).toFixed(2)} 兑换`
+  } else if (mode === 'points_only') {
+    // 纯积分模式：如果有运费，显示积分+运费
+    if (priceInfo.value.shippingCost > 0) {
+      return `${priceInfo.value.main}积分 + ¥${(priceInfo.value.cashAmount / 100).toFixed(2)} 兑换`
+    }
+  }
   return '立即兑换'
 })
 
@@ -483,6 +594,11 @@ async function loadData() {
     // 后端返回 snake_case 字段，需要兼容
     availablePoints.value = pointsRes.available_points ?? pointsRes.availablePoints ?? 0
 
+    // 如果是SKU商品，默认选择第一个SKU的规格
+    if (product.value.has_sku && product.value.skus && product.value.skus.length > 0) {
+      selectFirstSku()
+    }
+
     // 如果需要地址，加载默认地址
     if (needAddress.value) {
       await loadDefaultAddress()
@@ -496,6 +612,27 @@ async function loadData() {
   } finally {
     loading.value = false
   }
+}
+
+/**
+ * 选择第一个SKU的规格（默认选择）
+ */
+function selectFirstSku() {
+  if (!product.value?.specifications || !product.value?.skus) return
+
+  const firstSku = product.value.skus[0]
+  if (!firstSku) return
+
+  // 解析第一个SKU的规格
+  const specs = typeof firstSku.specs === 'string' ? JSON.parse(firstSku.specs) : firstSku.specs
+
+  // 设置每个规格的选中值
+  for (const [specName, specValue] of Object.entries(specs)) {
+    selectedSpecs[specName] = specValue
+  }
+
+  // 更新选中的SKU
+  updateSelectedSku()
 }
 
 async function loadDefaultAddress() {
@@ -594,14 +731,34 @@ function generateIdempotencyKey() {
 async function handleExchange() {
   if (!canExchange.value || !product.value) return
 
-  const displayCost = product.value.has_sku && selectedSku.value
-    ? selectedSku.value.points_cost
-    : product.value.points_cost
+  const mode = paymentMode.value
+  let confirmContent = ''
+
+  // priceInfo 已包含运费
+  if (mode === 'points_only') {
+    if (priceInfo.value.shippingCost > 0) {
+      confirmContent = `确定要消耗${priceInfo.value.main}积分 + ¥${(priceInfo.value.cashAmount / 100).toFixed(2)}（含运费）兑换"${product.value.name}"吗？`
+    } else {
+      confirmContent = `确定要消耗${priceInfo.value.main}积分兑换"${product.value.name}"吗？`
+    }
+  } else if (mode === 'cash_only') {
+    if (priceInfo.value.shippingCost > 0) {
+      confirmContent = `确定要支付¥${priceInfo.value.main}（含运费¥${(priceInfo.value.shippingCost / 100).toFixed(2)}）购买"${product.value.name}"吗？`
+    } else {
+      confirmContent = `确定要支付¥${priceInfo.value.main}购买"${product.value.name}"吗？`
+    }
+  } else if (mode === 'mixed') {
+    if (priceInfo.value.shippingCost > 0) {
+      confirmContent = `确定要消耗${priceInfo.value.main}积分 + ¥${(priceInfo.value.cashAmount / 100).toFixed(2)}（含运费）兑换"${product.value.name}"吗？`
+    } else {
+      confirmContent = `确定要消耗${priceInfo.value.main}积分 + ¥${(priceInfo.value.cashAmount / 100).toFixed(2)}兑换"${product.value.name}"吗？`
+    }
+  }
 
   try {
     const result = await uni.showModal({
       title: '确认兑换',
-      content: `确定要消耗${displayCost}积分兑换"${product.value.name}"吗？`,
+      content: confirmContent,
     })
 
     if (!result.confirm) return
@@ -623,14 +780,46 @@ async function handleExchange() {
       orderData.sku_id = selectedSku.value.id
     }
 
-    await createPointOrder(orderData)
+    const orderRes = await createPointOrder(orderData)
 
     uni.hideLoading()
 
-    uni.showToast({
-      title: '兑换成功',
-      icon: 'success',
-    })
+    // 如果需要支付（现金或混合模式），跳转到支付页面
+    if (orderRes.need_payment) {
+      if (orderRes.payment_params) {
+        // 调用微信支付
+        try {
+          await uni.requestPayment({
+            provider: 'wxpay',
+            ...orderRes.payment_params,
+          })
+
+          uni.showToast({
+            title: '支付成功',
+            icon: 'success',
+          })
+        } catch (payErr) {
+          console.error('Payment error:', payErr)
+          uni.showToast({
+            title: payErr.errMsg?.includes('cancel') ? '支付取消' : '支付失败',
+            icon: 'none',
+          })
+          // 支付取消/失败也跳转到订单页面，用户可以稍后继续支付
+        }
+      } else {
+        // 需要支付但支付参数创建失败
+        uni.showToast({
+          title: '订单创建成功，请稍后在订单列表完成支付',
+          icon: 'none',
+          duration: 2000,
+        })
+      }
+    } else {
+      uni.showToast({
+        title: '兑换成功',
+        icon: 'success',
+      })
+    }
 
     setTimeout(() => {
       uni.redirectTo({
@@ -640,7 +829,7 @@ async function handleExchange() {
   } catch (err) {
     uni.hideLoading()
     uni.showToast({
-      title: '兑换失败',
+      title: err.message || '兑换失败',
       icon: 'none',
     })
   }
@@ -931,6 +1120,12 @@ async function handleExchange() {
 .price-tag .label {
   margin-left: $spacing-xs;
   font-size: $font-size-xs;
+  color: #fff;
+}
+
+.price-tag .plus-cash {
+  margin-left: $spacing-sm;
+  font-size: $font-size-sm;
   color: #fff;
 }
 

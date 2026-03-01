@@ -182,6 +182,26 @@ async function loadPointProducts() {
 }
 
 /**
+ * 根据支付模式获取价格显示文本
+ */
+function getPriceDisplay(product: any): string {
+  const mode = product.payment_mode || 'points_only'
+
+  if (mode === 'points_only') {
+    return `${product.points_cost} 积分`
+  } else if (mode === 'cash_only') {
+    const cash = product.cash_price || 0
+    return `¥${(cash / 100).toFixed(2)}`
+  } else if (mode === 'mixed') {
+    const points = product.mixed_points_cost || 0
+    const cash = product.mixed_cash_price || 0
+    return `${points}积分 + ¥${(cash / 100).toFixed(2)}`
+  }
+
+  return `${product.points_cost} 积分`
+}
+
+/**
  * 加载用户剩余积分
  */
 async function loadUserPoints() {
@@ -470,7 +490,7 @@ function createPostWithTopic(topicId: string, topicName: string) {
           <view class="product-info">
             <text class="product-name">{{ product.name }}</text>
             <view class="product-footer">
-              <text class="product-points">{{ product.points_cost }} 积分</text>
+              <text class="product-points">{{ getPriceDisplay(product) }}</text>
               <text
                 v-if="!product.stock_unlimited && product.stock <= 0"
                 class="product-out-of-stock"
