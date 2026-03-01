@@ -126,3 +126,26 @@ export function searchPosts(params: SearchParams): Promise<FeedListRes> {
     method: 'GET',
   })
 }
+
+// ==================== 我的帖子 ====================
+
+export interface MyPostsParams {
+  status?: 'normal' | 'hidden' | 'deleted'
+  risk_status?: 'pending' | 'approved' | 'rejected'
+  limit?: number
+  offset?: number
+}
+
+/** 获取我的帖子列表（包含各种状态） */
+export function getMyPosts(params?: MyPostsParams): Promise<FeedListRes> {
+  const { status, risk_status, limit = 20, offset = 0 } = params || {}
+
+  const query: Record<string, string | number> = { limit, offset }
+  if (status) query.status = status
+  if (risk_status) query.risk_status = risk_status
+
+  return request<FeedListRes>({
+    url: `${PREFIX}/me${queryString(query)}`,
+    method: 'GET',
+  })
+}

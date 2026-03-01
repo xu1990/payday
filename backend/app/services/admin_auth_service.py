@@ -140,9 +140,9 @@ async def refresh_admin_token(
                 7 * 24 * 60 * 60,  # 7天
                 new_refresh_token
             )
-            # 保存新的 CSRF token
+            # 保存新的 CSRF token（key 必须与 csrf.py 中的 cache_prefix 一致）
             pipe.setex(
-                f"csrf_token:{admin_id}",
+                f"csrf:{admin_id}",
                 24 * 60 * 60,  # 24小时
                 new_csrf_token
             )

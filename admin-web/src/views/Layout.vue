@@ -86,6 +86,18 @@
           <el-icon><ChatDotRound /></el-icon>
           <span>用户反馈</span>
         </el-menu-item>
+
+        <!-- 系统消息 -->
+        <el-menu-item index="/system-messages" aria-label="系统消息页面">
+          <el-icon><Bell /></el-icon>
+          <span>系统消息</span>
+        </el-menu-item>
+
+        <!-- 消息列表 -->
+        <el-menu-item index="/notifications" aria-label="消息列表页面">
+          <el-icon><Message /></el-icon>
+          <span>消息列表</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>
@@ -166,6 +178,8 @@ import {
   UserFilled,
   Setting,
   ShoppingCart,
+  Bell,
+  Message,
 } from '@element-plus/icons-vue'
 import { ElMessage, FormInstance, FormRules } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'

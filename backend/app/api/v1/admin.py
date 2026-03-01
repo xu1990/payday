@@ -1,6 +1,7 @@
 """
 管理后台 - 登录、用户、工资、统计、帖子/评论管理、风控待审（Sprint 2.4）
 """
+from datetime import datetime
 from typing import Optional
 
 from app.core.database import get_db
@@ -540,3 +541,144 @@ async def change_admin_password(
     await db.commit()
 
     return success_response(message="密码修改成功")
+
+
+# ----- 系统消息管理 -----
+
+
+class SystemMessageSendRequest(BaseModel):
+    title: str = Field(..., min_length=1, max_length=100, description="消息标题")
+    content: Optional[str] = Field(None, max_length=1000, description="消息内容")
+    user_ids: Optional[list[str]] = Field(None, description="目标用户ID列表，为空则发送给所有用户")
+    send_to_all: bool = Field(False, description="是否发送给所有用户")
+
+
+class SystemMessageResponse(BaseModel):
+    success_count: int = Field(..., description="成功发送数量")
+    failed_count: int = Field(0, description="发送失败数量")
+
+
+@router.post("/notifications/send")
+async def send_system_notification(
+    body: SystemMessageSendRequest,
+    _admin: AdminUser = Depends(get_current_admin),
+    _perm: bool = Depends(require_permission("admin")),  # 需要admin或更高级别权限
+    _csrf: bool = Depends(verify_csrf_token),
+    db: AsyncSession = Depends(get_db),
+):
+    """发送系统消息（需要 CSRF token）
+
+    可以发送给指定用户或全部用户
+    """
+    from app.services import notification_service
+
+    target_user_ids = []
+
+    if body.send_to_all:
+        # 获取所有正常状态的用户
+        from app.models.user import User
+        result = await db.execute(
+            select(User.id).where(User.status == "normal")
+        )
+        target_user_ids = [str(row[0]) for row in result.all()]
+    elif body.user_ids:
+        target_user_ids = body.user_ids
+    else:
+        raise BusinessException("请指定目标用户或选择发送给所有用户", code="NO_TARGET_USERS")
+
+    if not target_user_ids:
+        raise BusinessException("没有可发送的目标用户", code="NO_TARGET_USERS")
+
+    success_count = 0
+    failed_count = 0
+
+    for user_id in target_user_ids:
+        try:
+            await notification_service.create_notification(
+                db,
+                user_id=user_id,
+                type="system",
+                title=body.title,
+                content=body.content,
+                related_id=None,
+            )
+            success_count += 1
+        except Exception:
+            failed_count += 1
+
+    # 提交所有通知
+    try:
+        await db.commit()
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
+
+    return success_response(
+        data=SystemMessageResponse(
+            success_count=success_count,
+            failed_count=failed_count
+        ).model_dump(),
+        message=f"系统消息发送完成，成功{success_count}条，失败{failed_count}条"
+    )
+
+
+# ----- 消息列表管理 -----
+
+
+class AdminNotificationListItem(BaseModel):
+    id: str
+    user_id: str
+    type: str
+    title: str
+    content: Optional[str] = None
+    related_id: Optional[str] = None
+    is_read: bool
+    created_at: datetime
+
+
+class AdminNotificationListResponse(BaseModel):
+    items: list[AdminNotificationListItem]
+    total: int
+
+
+@router.get("/notifications")
+async def admin_notification_list(
+    user_id: Optional[str] = Query(None, description="按用户ID筛选"),
+    type: Optional[str] = Query(None, description="按类型筛选：comment/reply/like/system/follow"),
+    is_read: Optional[bool] = Query(None, description="按已读/未读筛选"),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    _perm: bool = Depends(require_permission("readonly")),
+    _: AdminUser = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """管理端获取所有消息列表"""
+    from app.services import notification_service
+
+    notifications, total = await notification_service.list_all_notifications_for_admin(
+        db,
+        user_id=user_id,
+        type_filter=type,
+        is_read=is_read,
+        limit=limit,
+        offset=offset
+    )
+
+    items = [
+        AdminNotificationListItem(
+            id=n.id,
+            user_id=n.user_id,
+            type=n.type,
+            title=n.title,
+            content=n.content,
+            related_id=n.related_id,
+            is_read=n.is_read,
+            created_at=n.created_at
+        ).model_dump(mode='json')
+        for n in notifications
+    ]
+
+    return success_response(
+        data={"items": items, "total": total},
+        message="获取消息列表成功"
+    )

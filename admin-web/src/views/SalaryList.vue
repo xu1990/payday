@@ -127,9 +127,9 @@ async function fetch() {
       offset: (page.value - 1) * pageSize.value,
     }
     if (filterUserId.value) params.user_id = filterUserId.value
-    const { items: salaries, total } = await getSalaryRecords(params)
+    const { items: salaries, total: totalCount } = await getSalaryRecords(params)
     items.value = salaries
-    total.value = total
+    total.value = totalCount
   } finally {
     loading.value = false
   }

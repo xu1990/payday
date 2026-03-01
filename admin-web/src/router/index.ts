@@ -121,6 +121,16 @@ const router = createRouter({
           name: 'SpecificationTemplates',
           component: () => import('@/views/SpecificationTemplates.vue'),
         },
+        {
+          path: 'system-messages',
+          name: 'SystemMessages',
+          component: () => import('@/views/SystemMessages.vue'),
+        },
+        {
+          path: 'notifications',
+          name: 'Notifications',
+          component: () => import('@/views/NotificationList.vue'),
+        },
       ],
     },
   ],

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { getPostList } from '@/api/post'
+import { ref, watch, computed } from 'vue'
+import { getPostList, getMyPosts, type PostItem } from '@/api/post'
 import { checkBatchFollowStatus } from '@/api/follow'
 import { useDebounceFn } from '@/composables/useDebounce'
 import { useAuthStore } from '@/stores/auth'
@@ -10,12 +10,28 @@ import FollowButton from '@/components/FollowButton.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import { formatRelativeTime } from '@/utils/format'
 
-type Sort = 'hot' | 'latest'
-const activeTab = ref('hot')
-const list = ref([])
+type TabType = 'hot' | 'latest' | 'mine'
+const activeTab = ref<TabType>('hot')
+const list = ref<PostItem[]>([])
+const myPosts = ref<PostItem[]>([])
+const myPostsTotal = ref(0)
 const followingSet = ref<Set<string>>(new Set())
 const loading = ref(false)
 const authStore = useAuthStore()
+
+// 状态标签映射
+const statusLabelMap: Record<string, { text: string; class: string }> = {
+  approved: { text: '已通过', class: 'status-approved' },
+  pending: { text: '待审核', class: 'status-pending' },
+  rejected: { text: '已拒绝', class: 'status-rejected' },
+}
+
+const riskStatusLabel = computed(() => {
+  return (post: PostItem) => {
+    const label = statusLabelMap[post.risk_status]
+    return label || { text: post.risk_status, class: '' }
+  }
+})
 
 function formatTime(created_at: string) {
   return formatRelativeTime(created_at)
@@ -23,20 +39,36 @@ function formatTime(created_at: string) {
 
 async function load() {
   loading.value = true
-  // Clear follow state at start to prevent stale state on tab switch
   followingSet.value.clear()
-  try {
-    const result = await getPostList({ sort: activeTab.value, limit: 20, offset: 0 })
-    list.value = result
 
-    // Fetch follow status for all unique authors
-    await fetchFollowStatus()
+  try {
+    if (activeTab.value === 'mine') {
+      // 加载我的帖子
+      await loadMyPosts()
+    } else {
+      // 加载广场帖子
+      const result = await getPostList({ sort: activeTab.value, limit: 20, offset: 0 })
+      list.value = result
+      await fetchFollowStatus()
+    }
   } catch (error) {
     console.error('[Square] Load failed:', error)
     list.value = []
+    myPosts.value = []
   } finally {
     loading.value = false
   }
+}
+
+async function loadMyPosts() {
+  if (!authStore.isLoggedIn) {
+    uni.navigateTo({ url: '/pages/login/index' })
+    return
+  }
+
+  const result = await getMyPosts({ limit: 50, offset: 0 })
+  myPosts.value = result.items || []
+  myPostsTotal.value = result.total || 0
 }
 
 async function fetchFollowStatus() {
@@ -104,6 +136,19 @@ function handleFollow(data: { targetUserId: string }) {
 function handleUnfollow(data: { targetUserId: string }) {
   followingSet.value.delete(data.targetUserId)
 }
+
+function handleMyPostClick(item: PostItem) {
+  // 如果帖子被拒绝（下架），跳转到编辑页面
+  if (item.risk_status === 'rejected' || item.status === 'hidden') {
+    uni.navigateTo({ url: `/pages/post-create/index?id=${item.id}&edit=1` })
+  } else {
+    goDetail(item.id)
+  }
+}
+
+function editPost(item: PostItem) {
+  uni.navigateTo({ url: `/pages/post-create/index?id=${item.id}&edit=1` })
+}
 </script>
 
 <template>
@@ -115,54 +160,112 @@ function handleUnfollow(data: { targetUserId: string }) {
       <view class="tab" :class="{ active: activeTab === 'latest' }" @click="activeTab = 'latest'">
         最新
       </view>
+      <view class="tab" :class="{ active: activeTab === 'mine' }" @click="activeTab = 'mine'">
+        我的
+      </view>
     </view>
     <view v-if="loading" class="tip">加载中...</view>
-    <view v-else-if="list.length === 0" class="tip">暂无帖子</view>
-    <scroll-view v-else class="list" scroll-y>
-      <view v-for="item in list" :key="item.id" class="card" @click="goDetail(item.id)">
-        <view class="row">
-          <view class="author-section">
-            <UserAvatar
-              :avatar="item.user_avatar"
-              :anonymous-name="item.anonymous_name"
-              size="small"
-            />
-            <text class="name">{{ item.anonymous_name }}</text>
-            <FollowButton
-              v-if="authStore.isLoggedIn && item.user_id !== authStore.user?.id"
-              :target-user-id="item.user_id"
-              :is-following="followingSet.has(item.user_id)"
-              size="small"
-              @follow="handleFollow"
-              @unfollow="handleUnfollow"
-              @click.stop
+
+    <!-- 广场帖子列表（热门/最新） -->
+    <template v-else-if="activeTab !== 'mine'">
+      <view v-if="list.length === 0" class="tip">暂无帖子</view>
+      <scroll-view v-else class="list" scroll-y>
+        <view v-for="item in list" :key="item.id" class="card" @click="goDetail(item.id)">
+          <view class="row">
+            <view class="author-section">
+              <UserAvatar
+                :avatar="item.user_avatar"
+                :anonymous-name="item.anonymous_name"
+                size="small"
+              />
+              <text class="name">{{ item.anonymous_name }}</text>
+              <FollowButton
+                v-if="authStore.isLoggedIn && item.user_id !== authStore.user?.id"
+                :target-user-id="item.user_id"
+                :is-following="followingSet.has(item.user_id)"
+                size="small"
+                @follow="handleFollow"
+                @unfollow="handleUnfollow"
+                @click.stop
+              />
+            </view>
+            <text class="time">{{ formatTime(item.created_at) }}</text>
+          </view>
+          <text class="post-content">{{ item.content }}</text>
+          <view v-if="item.images?.length" class="imgs">
+            <image
+              v-for="(img, i) in (item.images || []).slice(0, 3)"
+              :key="i"
+              class="thumb"
+              :src="img"
+              mode="aspectFill"
             />
           </view>
-          <text class="time">{{ formatTime(item.created_at) }}</text>
-        </view>
-        <text class="post-content">{{ item.content }}</text>
-        <view v-if="item.images?.length" class="imgs">
-          <image
-            v-for="(img, i) in (item.images || []).slice(0, 3)"
-            :key="i"
-            class="thumb"
-            :src="img"
-            mode="aspectFill"
+          <PostActionBar
+            :post-id="item.id"
+            :like-count="item.like_count"
+            :comment-count="item.comment_count"
+            :is-liked="item.is_liked ?? false"
+            :compact="true"
+            :show-view="false"
+            @like="handleLike"
+            @comment="handleComment"
+            @share="handleShare"
           />
         </view>
-        <PostActionBar
-          :post-id="item.id"
-          :like-count="item.like_count"
-          :comment-count="item.comment_count"
-          :is-liked="item.is_liked ?? false"
-          :compact="true"
-          :show-view="false"
-          @like="handleLike"
-          @comment="handleComment"
-          @share="handleShare"
-        />
+      </scroll-view>
+    </template>
+
+    <!-- 我的帖子列表 -->
+    <template v-else>
+      <view v-if="!authStore.isLoggedIn" class="tip">
+        <text>请先登录查看您的帖子</text>
+        <button class="login-btn" @click="uni.navigateTo({ url: '/pages/login/index' })">去登录</button>
       </view>
-    </scroll-view>
+      <view v-else-if="myPosts.length === 0" class="tip">
+        <text>您还没有发布过帖子</text>
+        <button class="create-btn" @click="goCreate">去发帖</button>
+      </view>
+      <scroll-view v-else class="list" scroll-y>
+        <view class="my-posts-count">共 {{ myPostsTotal }} 条帖子</view>
+        <view v-for="item in myPosts" :key="item.id" class="card my-post-card" @click="handleMyPostClick(item)">
+          <view class="row">
+            <view class="status-section">
+              <text class="status-tag" :class="riskStatusLabel(item).class">
+                {{ riskStatusLabel(item).text }}
+              </text>
+              <text v-if="item.status === 'hidden'" class="status-tag status-hidden">已下架</text>
+            </view>
+            <text class="time">{{ formatTime(item.created_at) }}</text>
+          </view>
+          <text class="post-content">{{ item.content }}</text>
+          <view v-if="item.images?.length" class="imgs">
+            <image
+              v-for="(img, i) in (item.images || []).slice(0, 3)"
+              :key="i"
+              class="thumb"
+              :src="img"
+              mode="aspectFill"
+            />
+          </view>
+          <view class="my-post-footer">
+            <view class="stats">
+              <text>赞 {{ item.like_count }}</text>
+              <text>评论 {{ item.comment_count }}</text>
+              <text>浏览 {{ item.view_count }}</text>
+            </view>
+            <view
+              v-if="item.risk_status === 'rejected' || item.status === 'hidden'"
+              class="edit-btn"
+              @click.stop="editPost(item)"
+            >
+              编辑
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+    </template>
+
     <view class="fab" @click="goCreate">发帖</view>
 
     <!-- 液态玻璃 TabBar -->
@@ -256,5 +359,91 @@ function handleUnfollow(data: { targetUserId: string }) {
   border-radius: 50%;
   font-size: $font-size-lg;
   box-shadow: $shadow-brand;
+}
+
+// 我的帖子相关样式
+.my-posts-count {
+  padding: $spacing-sm $spacing-lg;
+  font-size: $font-size-sm;
+  color: var(--text-tertiary);
+}
+
+.my-post-card {
+  .row {
+    margin-bottom: $spacing-sm;
+  }
+}
+
+.status-section {
+  display: flex;
+  gap: $spacing-xs;
+}
+
+.status-tag {
+  font-size: $font-size-xs;
+  padding: 4rpx 12rpx;
+  border-radius: $radius-sm;
+
+  &.status-approved {
+    background: rgba(52, 199, 89, 0.15);
+    color: #34c759;
+  }
+
+  &.status-pending {
+    background: rgba(255, 149, 0, 0.15);
+    color: #ff9500;
+  }
+
+  &.status-rejected {
+    background: rgba(255, 59, 48, 0.15);
+    color: #ff3b30;
+  }
+
+  &.status-hidden {
+    background: rgba(142, 142, 147, 0.15);
+    color: #8e8e93;
+  }
+}
+
+.my-post-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: $spacing-sm;
+  padding-top: $spacing-sm;
+  border-top: 1rpx solid var(--border-subtle);
+
+  .stats {
+    display: flex;
+    gap: $spacing-md;
+    font-size: $font-size-xs;
+    color: var(--text-tertiary);
+  }
+
+  .edit-btn {
+    font-size: $font-size-xs;
+    padding: 8rpx 20rpx;
+    background: $brand-primary;
+    color: #fff;
+    border-radius: $radius-sm;
+  }
+}
+
+.tip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-md;
+
+  .login-btn,
+  .create-btn {
+    margin-top: $spacing-sm;
+    padding: $spacing-sm $spacing-lg;
+    font-size: $font-size-sm;
+    background: $brand-primary;
+    color: #fff;
+    border-radius: $radius-full;
+    border: none;
+  }
 }
 </style>

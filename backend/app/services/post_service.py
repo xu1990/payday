@@ -427,6 +427,76 @@ async def delete_post_for_admin(db: AsyncSession, post_id: str) -> bool:
         raise
 
 
+async def list_my_posts(
+    db: AsyncSession,
+    user_id: str,
+    status: Optional[str] = None,
+    risk_status: Optional[str] = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> Tuple[List[dict], int]:
+    """获取当前用户的帖子列表（包含各种状态）
+
+    Args:
+        user_id: 当前用户ID
+        status: 可选的状态筛选（normal/hidden/deleted）
+        risk_status: 可选的风控状态筛选（pending/approved/rejected）
+        limit: 分页限制
+        offset: 分页偏移
+
+    Returns:
+        (帖子列表, 总数)
+    """
+    base = select(Post).where(Post.user_id == user_id)
+    count_base = select(func.count()).select_from(Post).where(Post.user_id == user_id)
+
+    if status:
+        base = base.where(Post.status == status)
+        count_base = count_base.where(Post.status == status)
+
+    if risk_status:
+        base = base.where(Post.risk_status == risk_status)
+        count_base = count_base.where(Post.risk_status == risk_status)
+
+    total = (await db.execute(count_base)).scalar() or 0
+
+    q = base.order_by(Post.created_at.desc()).limit(limit).offset(offset)
+    result = await db.execute(q)
+    posts = list(result.scalars().all())
+
+    # 转换为字典列表
+    items = []
+    for post in posts:
+        items.append({
+            'id': post.id,
+            'user_id': post.user_id,
+            'anonymous_name': post.anonymous_name,
+            'user_avatar': post.user_avatar,
+            'content': post.content,
+            'images': post.images,
+            'tags': post.tags,
+            'type': post.type,
+            'salary_range': post.salary_range,
+            'industry': post.industry,
+            'city': post.city,
+            'topic_id': post.topic_id,
+            'topic_ids': post.topic_ids,
+            'visibility': post.visibility,
+            'view_count': post.view_count,
+            'like_count': post.like_count,
+            'comment_count': post.comment_count,
+            'status': post.status,
+            'risk_status': post.risk_status,
+            'risk_score': post.risk_score,
+            'risk_reason': post.risk_reason,
+            'created_at': post.created_at.isoformat() if post.created_at else None,
+            'updated_at': post.updated_at.isoformat() if post.updated_at else None,
+            'is_liked': False  # 自己的帖子不需要点赞状态
+        })
+
+    return items, total
+
+
 async def search_posts(
     db: AsyncSession,
     keyword: Optional[str] = None,

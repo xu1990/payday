@@ -430,3 +430,53 @@ export async function getAdminProfile(): Promise<AdminProfile> {
 export async function changeAdminPassword(data: ChangePasswordRequest): Promise<void> {
   await adminApi.put('/admin/password', data)
 }
+
+// ==================== 系统消息 ====================
+
+export interface SystemMessageSendRequest {
+  title: string
+  content?: string
+  user_ids?: string[]
+  send_to_all?: boolean
+}
+
+export interface SystemMessageSendResponse {
+  success_count: number
+  failed_count: number
+}
+
+/** 发送系统消息 */
+export async function sendSystemMessage(data: SystemMessageSendRequest): Promise<SystemMessageSendResponse> {
+  const res = await adminApi.post<SystemMessageSendResponse>('/admin/notifications/send', data)
+  return res.data
+}
+
+// ==================== 消息列表 ====================
+
+export interface AdminNotificationItem {
+  id: string
+  user_id: string
+  type: string
+  title: string
+  content?: string
+  related_id?: string
+  is_read: boolean
+  created_at: string
+}
+
+export interface NotificationListParams {
+  user_id?: string
+  type?: string
+  is_read?: boolean
+  limit?: number
+  offset?: number
+}
+
+/** 获取消息列表 */
+export async function getNotifications(params?: NotificationListParams): Promise<{
+  items: AdminNotificationItem[]
+  total: number
+}> {
+  const res = await adminApi.get('/admin/notifications', { params })
+  return res.data
+}

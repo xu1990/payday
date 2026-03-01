@@ -39,7 +39,7 @@ async function uploadAvatar(filePath: string) {
   try {
     uni.showLoading({ title: '上传中...' })
 
-    const token = uni.getStorageSync('token')
+    const token = uni.getStorageSync('payday_token')
     const uploadRes: any = await uni.uploadFile({
       url: `${baseURL}/api/v1/user/me/upload-avatar`,
       filePath,

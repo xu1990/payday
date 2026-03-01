@@ -10,7 +10,7 @@ from app.core.exceptions import (AuthenticationException, BusinessException, Not
 from app.models.user import User
 from app.schemas.post import PostCreate, PostResponse
 from app.services.post_service import create as create_post
-from app.services.post_service import get_by_id, list_posts, search_posts
+from app.services.post_service import get_by_id, list_posts, list_my_posts, search_posts
 from app.tasks.risk_check import run_risk_check_for_post
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -80,6 +80,27 @@ async def post_list(
     )
     data = [PostResponse.model_validate(p).model_dump(mode='json') for p in posts]
     return success_response(data=data, message="获取帖子列表成功")
+
+
+@router.get("/me")
+async def my_post_list(
+    status: Optional[str] = Query(None, description="状态筛选：normal/hidden/deleted"),
+    risk_status: Optional[str] = Query(None, description="风控状态：pending/approved/rejected"),
+    limit: int = Query(20, ge=1, le=50),
+    offset: int = Query(0, ge=0),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """获取当前用户的帖子列表（包含各种状态）"""
+    items, total = await list_my_posts(
+        db,
+        user_id=current_user.id,
+        status=status,
+        risk_status=risk_status,
+        limit=limit,
+        offset=offset
+    )
+    return success_response(data={"items": items, "total": total}, message="获取我的帖子成功")
 
 
 @router.get("/{post_id}")

@@ -155,3 +155,43 @@ async def delete_notifications(
     except SQLAlchemyError:
         await db.rollback()
         raise
+
+
+async def list_all_notifications_for_admin(
+    db: AsyncSession,
+    user_id: Optional[str] = None,
+    type_filter: Optional[str] = None,
+    is_read: Optional[bool] = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> tuple[list[Notification], int]:
+    """管理端获取所有通知列表
+
+    Args:
+        user_id: 可选，按用户ID筛选
+        type_filter: 可选，按类型筛选
+        is_read: 可选，按已读/未读筛选
+        limit: 分页限制
+        offset: 分页偏移
+
+    Returns:
+        (通知列表, 总数)
+    """
+    q = select(Notification)
+    count_q = select(func.count()).select_from(Notification)
+
+    if user_id:
+        q = q.where(Notification.user_id == user_id)
+        count_q = count_q.where(Notification.user_id == user_id)
+    if type_filter:
+        q = q.where(Notification.type == type_filter)
+        count_q = count_q.where(Notification.type == type_filter)
+    if is_read is not None:
+        q = q.where(Notification.is_read == is_read)
+        count_q = count_q.where(Notification.is_read == is_read)
+
+    total = (await db.execute(count_q)).scalar() or 0
+
+    q = q.order_by(Notification.created_at.desc()).limit(limit).offset(offset)
+    result = await db.execute(q)
+    return list(result.scalars().all()), total

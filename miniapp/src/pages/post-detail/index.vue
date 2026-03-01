@@ -127,6 +127,15 @@ const safeImages = computed(() => {
   return post.value.images.filter((img: string) => isValidImageUrl(img))
 })
 
+// 预览图片
+function previewImage(index: number) {
+  if (!safeImages.value.length) return
+  uni.previewImage({
+    current: index,
+    urls: safeImages.value as string[]
+  })
+}
+
 function commentTime(createdAt: string) {
   return formatDateTime(createdAt)
 }
@@ -270,7 +279,14 @@ function handleUnfollow(data: { targetUserId: string }) {
       </view>
       <text class="content">{{ safeContent }}</text>
       <view v-if="safeImages.length" class="imgs">
-        <image v-for="(img, i) in safeImages" :key="i" class="thumb" :src="img" mode="widthFix" />
+        <image
+          v-for="(img, i) in safeImages"
+          :key="i"
+          class="post-image"
+          :src="img"
+          mode="widthFix"
+          @tap="previewImage(i)"
+        />
       </view>
       <view class="meta">
         <text class="meta-item" @tap="onPostLike">
@@ -406,11 +422,12 @@ function handleUnfollow(data: { targetUserId: string }) {
   margin-top: $spacing-md;
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-xs;
+  gap: $spacing-sm;
 }
-.thumb {
-  width: 200rpx;
-  border-radius: $radius-sm;
+.post-image {
+  width: 100%;
+  max-width: 100%;
+  border-radius: $radius-md;
   background: var(--bg-glass-subtle);
 }
 .meta {
